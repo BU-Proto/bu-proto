@@ -13,6 +13,18 @@ rows.forEach((row, j) => {
   }
 })
 
+/** The colormap as RGBA bytes (width × height, row-major), for uploading as a texture. */
+export function gradientPixels(): { width: number; height: number; data: Uint8Array } {
+  const data = new Uint8Array(MW * MH * 4)
+  for (let k = 0; k < MW * MH; k++) {
+    data[k * 4] = MAP[k * 3]
+    data[k * 4 + 1] = MAP[k * 3 + 1]
+    data[k * 4 + 2] = MAP[k * 3 + 2]
+    data[k * 4 + 3] = 255
+  }
+  return { width: MW, height: MH, data }
+}
+
 /** Bilinearly sample the gradient at normalized (u, v), writing RGB (0–255) into `out`. */
 export function sampleGradient(u: number, v: number, out: Float32Array): void {
   u = u < 0 ? 0 : u > 1 ? 1 : u

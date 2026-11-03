@@ -42,6 +42,8 @@ export interface FieldSettings {
   wind: number
   /** Multiplier on how long the cursor trail lingers. */
   trailLength: number
+  /** Fraction of the wind that slides the background's characters, 0–1 (0 keeps them still). */
+  push: number
   /** Strength of the fluted-glass column modulation, 0–1. */
   ribbing: number
   ramp: RampName
@@ -54,6 +56,7 @@ export const DEFAULT_FIELD_SETTINGS: FieldSettings = {
   glyphContrast: 0.6,
   wind: 1,
   trailLength: 1,
+  push: 0.25,
   ribbing: 0.5,
   ramp: 'fine',
   trailColor: 'white',
@@ -62,7 +65,7 @@ export const DEFAULT_FIELD_SETTINGS: FieldSettings = {
 export const MONO_FAMILY = '"JetBrains Mono"'
 export const MONO_STACK = `${MONO_FAMILY}, ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace`
 
-/** The background field: a glyph per cell, tinted by the gradient (which never moves). */
+/** The background field: a glyph per cell, tinted by the gradient. */
 export const FIELD = {
   /** Dark ground under the gradient wash (#061a2e). */
   BASE_RGB: [6, 26, 46] as const,
@@ -71,6 +74,44 @@ export const FIELD = {
   DENSITY_HI: 0.82,
   /** The reference has a 12px rib on a 783px-wide hero: about 67 ribs across. */
   RIBS_ACROSS: 67,
+  /**
+   * Ambient life: the gradient sways slowly (amplitude as a fraction of the viewport, spatial
+   * frequency per px, phase speed in rad/s) and each glyph shimmers faintly.
+   */
+  SWAY_X: 0.01,
+  SWAY_X_FREQ: 0.0149,
+  SWAY_X_SPEED: 0.33,
+  SWAY_Y: 0.008,
+  SWAY_Y_FREQ: 0.0123,
+  SWAY_Y_SPEED: -0.27,
+  SHIMMER: 0.015,
+  SHIMMER_SPEED: 1.3,
+  /** Glyphs are lifted toward white by LIFT (more on light colors) × glyph contrast. */
+  LIFT: 0.5,
+  LIFT_LIGHT: 0.35,
+  LIGHT_FROM: 0.55,
+  LIGHT_SPAN: 0.25,
+  /**
+   * The cursor moves the characters, not the colors: the glyphs slide with a fraction of the
+   * wind (the `push` setting) and ease back home at PUSH_RELAX per second. The slide is
+   * blurred over about WARP_BLUR px so the glyphs move as one smooth sheet, and where the
+   * wind shears hard it is scaled back so a glyph stretches by at most WARP_LIMIT and the
+   * grid never folds.
+   */
+  PUSH_RELAX: 2.5,
+  WARP_BLUR: 20,
+  WARP_LIMIT: 0.4,
+  /** Extra damping (per second) on the wind from CALM_AFTER seconds after the pointer stops. */
+  CALM_AFTER: 0.5,
+  CALM_DAMPING: 1.5,
+  /**
+   * Ambient breathing: every GUST_EVERY seconds or so, a patch about GUST_RADIUS px across
+   * slides up to GUST_SLIDE px over GUST_LIFE seconds and eases back.
+   */
+  GUST_EVERY: 2.4,
+  GUST_RADIUS: 150,
+  GUST_SLIDE: 14,
+  GUST_LIFE: 1.8,
 } as const
 
 /**
@@ -81,8 +122,12 @@ export const FIELD = {
  */
 export const FOG = {
   REF_CELL: 11,
-  /** Fluid grid resolution relative to a grid of REF_CELL-sized square cells. */
+  /**
+   * Fluid grid resolution relative to a grid of square cells one glyph tall, capped at
+   * MAX_NODES so very large screens stay smooth (the trail just gets slightly softer there).
+   */
   RES_SCALE: 1.3,
+  MAX_NODES: 50000,
   /** Pointer velocity (px/s) to force, brush radius (px), speed-based brush growth. */
   FORCE_SCALE: 0.5,
   HOVER_RADIUS: 13,
@@ -118,16 +163,16 @@ export const FOG = {
   /** luma -> contrast -> gamma -> invert -> quantize into ○ > _ (blank). */
   CONTRAST: 2,
   GAMMA: 0.5,
-  /** Cells below this density keep their background glyph. */
+  /** Cells below this density are untouched by the fog. */
   MIN_DENSITY: 0.02,
   /**
-   * Where the fog is too thin for a glyph, the background character fades out between these
-   * densities. That clears a blank feather around the trail, like the reference's fog on an
-   * empty page, and the field fills back in as the fog dissolves.
+   * Under the fog the background characters dim (by up to VEIL, between these densities) so
+   * the trail's glyphs read clearly without cutting a hole in the art.
    */
-  FEATHER_LO: 0.18,
-  FEATHER_HI: 0.42,
-  ALPHA: 0.92,
+  VEIL_LO: 0.08,
+  VEIL_HI: 0.6,
+  VEIL: 0.6,
+  ALPHA: 0.95,
   /** The fog steps back where it crosses elements marked data-fog-clear. */
   CLEAR_GAIN: 2.4,
   CLEAR_PAD: 5,

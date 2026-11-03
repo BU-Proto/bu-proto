@@ -32,6 +32,7 @@ const SLIDERS: readonly SliderSpec[] = [
   { key: 'baseColor', label: 'Base color', min: 0, max: 100, step: 1, scale: 100 },
   { key: 'wind', label: 'Wind', min: 20, max: 250, step: 5, scale: 100 },
   { key: 'trailLength', label: 'Trail length', min: 30, max: 300, step: 10, scale: 100 },
+  { key: 'push', label: 'Character push', min: 0, max: 100, step: 5, scale: 100 },
   { key: 'ribbing', label: 'Ribbing', min: 0, max: 100, step: 5, scale: 100 },
 ]
 
