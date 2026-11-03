@@ -3,7 +3,7 @@ import { AsciiFieldEngine } from './engine'
 import type { FieldSettings } from './settings'
 
 export interface AsciiFieldHandle {
-  /** Clear the trail and let the gradient settle back to rest. */
+  /** Clear the trail and still the wind. */
   settle(): void
   /** Re-measure the elements marked `data-fog-clear` (call after showing or hiding them). */
   refreshClearMask(): void

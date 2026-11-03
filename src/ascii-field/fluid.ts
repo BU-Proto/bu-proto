@@ -1,59 +1,63 @@
-import { FIELD, FOG } from './settings'
+import { FOG } from './settings'
 
 /** Boundary handling: 0 copies scalars, 1 reflects x-velocity, 2 reflects y-velocity. */
 type Boundary = 0 | 1 | 2
 
-interface Splash {
+interface Ring {
+  /** Center, in grid cells. */
   x: number
   y: number
-  /** Seconds since the ring started; negative while it waits for its stagger. */
+  /** Seconds since the click. */
   age: number
   life: number
+  /** Final radius and half the band width, in grid cells. */
+  maxRadius: number
+  half: number
 }
 
+/** Smoothstep on [0, 1], clamped: the falloff used by brushes and rings. */
+const fall = (v: number) => (v <= 0 ? 0 : v >= 1 ? 1 : v * v * (3 - 2 * v))
+
 /**
- * Jos Stam's stable fluids on a coarse grid spanning the viewport:
- * diffuse → project → advect → project for velocity; density is advected (not diffused)
- * and decays as exp(−k·dt). Reflective walls let the fog swirl instead of blowing off-screen.
+ * Jos Stam's stable fluids, following the reference fog's solver: grid spacing 1, velocities
+ * in grid cells per second, diffuse → project → advect → project for velocity, and density
+ * advected (never diffused) with exp(−k·dt) decay. Reflective walls let the fog swirl.
  *
- * Positions passed in are CSS px; velocities are stored in grid cells per second.
- * The same velocity also advects `uvx`/`uvy`, the coordinates the background samples the
- * gradient at, so the colors smear with the wind and then relax back home.
+ * Positions passed in are CSS px. `sizeScale` scales brush and ring sizes with the glyph size.
  */
 export class FluidField {
   readonly cols: number
   readonly rows: number
   readonly size: number
-  /** CSS px between grid nodes. */
-  readonly pitchX: number
-  readonly pitchY: number
+  /** Grid cells per CSS px. */
+  readonly scaleX: number
+  readonly scaleY: number
 
   readonly vx: Float32Array
   readonly vy: Float32Array
   readonly density: Float32Array
-  readonly uvx: Float32Array
-  readonly uvy: Float32Array
 
-  private readonly width: number
-  private readonly height: number
+  /** False once the fog has dissolved and the wind has died down: nothing to step or draw. */
+  awake = false
+  /**
+   * Grid cells that hold visible fog after the last step, as [minI, maxI, minJ, maxJ],
+   * or null when there is none. Lets the renderer touch only that region.
+   */
+  bounds: [number, number, number, number] | null = null
+
   private readonly vx0: Float32Array
   private readonly vy0: Float32Array
   private readonly density0: Float32Array
   private readonly pressure: Float32Array
   private readonly divergence: Float32Array
-  private readonly uvx0: Float32Array
-  private readonly uvy0: Float32Array
-  private readonly splashes: Splash[] = []
-  private breezeAt = 0
+  private readonly rings: Ring[] = []
 
   constructor(widthPx: number, heightPx: number, cols: number, rows: number) {
-    this.width = widthPx
-    this.height = heightPx
     this.cols = Math.max(16, cols)
     this.rows = Math.max(16, rows)
     this.size = this.cols * this.rows
-    this.pitchX = widthPx / (this.cols - 1)
-    this.pitchY = heightPx / (this.rows - 1)
+    this.scaleX = this.cols / widthPx
+    this.scaleY = this.rows / heightPx
     const field = () => new Float32Array(this.size)
     this.vx = field()
     this.vy = field()
@@ -63,75 +67,63 @@ export class FluidField {
     this.density0 = field()
     this.pressure = field()
     this.divergence = field()
-    this.uvx = field()
-    this.uvy = field()
-    this.uvx0 = field()
-    this.uvy0 = field()
-    this.resetGradient()
   }
 
-  /** Stop all motion, clear the fog and put the gradient back where it rests. */
+  /** Stop all motion and clear the fog. */
   reset(): void {
     this.vx.fill(0)
     this.vy.fill(0)
     this.density.fill(0)
-    this.splashes.length = 0
-    this.resetGradient()
+    this.rings.length = 0
+    this.awake = false
+    this.bounds = null
   }
 
   /**
-   * A pointer moved from (x0, y0) to (x1, y1) in `elapsed` seconds: inject its velocity as
-   * force and deposit fog along the segment, with a brush that grows with speed.
+   * One pointer move by (dx, dy) px, ending at (x, y), `elapsed` seconds after the last one:
+   * the pointer's velocity becomes force, and fog is deposited where the pointer is now.
+   * Faster moves get a larger brush.
    */
-  stroke(x0: number, y0: number, x1: number, y1: number, elapsed: number, wind: number): void {
+  stroke(dx: number, dy: number, x: number, y: number, elapsed: number, wind: number, sizeScale: number): void {
     const dt = elapsed < 0.001 ? 0.001 : elapsed > 0.05 ? 0.05 : elapsed
-    const dx = x1 - x0
-    const dy = y1 - y0
-    const dist = Math.hypot(dx, dy)
-    if (dist < 0.5) return
-
-    const speed = dist / dt
-    const radius = FOG.HOVER_RADIUS + Math.min(FOG.DRAG_MAX, speed * FOG.DRAG_SCALE)
-    let fx = ((dx / dt) * FOG.FORCE_SCALE * wind) / this.pitchX
-    let fy = ((dy / dt) * FOG.FORCE_SCALE * wind) / this.pitchY
-    const magnitude = Math.hypot(fx, fy)
-    if (magnitude > FOG.FORCE_MAX) {
-      fx *= FOG.FORCE_MAX / magnitude
-      fy *= FOG.FORCE_MAX / magnitude
-    }
-    // Interpolate along the segment so fast flicks leave a continuous band.
-    const spacing = Math.max(3, radius * 0.5)
-    const steps = Math.max(1, Math.ceil(dist / spacing))
-    const share = 1 / Math.max(1, radius / spacing)
-    for (let s = 1; s <= steps; s++) {
-      const q = s / steps
-      this.splatDisk(x0 + dx * q, y0 + dy * q, radius, fx * share, fy * share)
-    }
+    const speed = Math.hypot(dx, dy) / dt
+    const boost = Math.min(FOG.DRAG_MAX, speed * FOG.DRAG_SCALE)
+    const radius = (FOG.HOVER_RADIUS + boost) * sizeScale * Math.min(this.scaleX, this.scaleY)
+    const fx = (dx / dt) * this.scaleX * FOG.FORCE_SCALE * wind
+    const fy = (dy / dt) * this.scaleY * FOG.FORCE_SCALE * wind
+    this.splat(x * this.scaleX, y * this.scaleY, fx, fy, radius)
   }
 
-  /** A click: start the staggered shockwave rings. */
-  splash(x: number, y: number): void {
+  /** A click: four rings that start together and ease outward to slightly different reaches. */
+  splash(x: number, y: number, sizeScale: number): void {
+    this.awake = true
+    const cell = Math.min(this.scaleX, this.scaleY)
+    const reach = FOG.SPLASH_RANGE * sizeScale * cell
+    const half = FOG.SPLASH_THICKNESS * sizeScale * cell * 0.5
     for (let r = 0; r < FOG.SPLASH_RINGS; r++) {
-      this.splashes.push({
-        x,
-        y,
-        age: -r * FOG.SPLASH_STAGGER,
+      this.rings.push({
+        x: x * this.scaleX,
+        y: y * this.scaleY,
+        age: 0,
         life: FOG.SPLASH_LIFE * (0.85 + 0.3 * Math.random()),
+        maxRadius: reach * (0.6 + 0.55 * Math.random()),
+        half,
       })
     }
   }
 
-  /** Advance the simulation by dt seconds; `trailLength` scales how long the fog lingers. */
-  step(dt: number, time: number, trailLength: number): void {
+  /**
+   * Advance one frame; `trailLength` scales how long the fog lingers. `visibleDensity` is the
+   * least density worth drawing, used to report `bounds`.
+   */
+  step(dt: number, trailLength: number, visibleDensity: number): void {
     const { vx, vy, vx0, vy0, density, density0 } = this
-    this.stepSplashes(dt)
-    this.breeze(time)
+    this.stepRings(dt)
 
-    const a = dt * FOG.DIFFUSION * FOG.VISCOSITY_SCALE
     vx0.set(vx)
     vy0.set(vy)
-    this.diffuse(1, vx, vx0, a)
-    this.diffuse(2, vy, vy0, a)
+    this.diffuse(1, vx, vx0, FOG.DIFFUSION)
+    this.diffuse(2, vy, vy0, FOG.DIFFUSION)
     this.project()
     vx0.set(vx)
     vy0.set(vy)
@@ -144,144 +136,106 @@ export class FluidField {
 
     const velocityDecay = Math.exp(-FOG.VEL_DISSIP * dt)
     const densityDecay = Math.exp((-FOG.DEN_DISSIP / Math.max(0.3, trailLength)) * dt)
-    for (let k = 0; k < this.size; k++) {
-      vx[k] *= velocityDecay
-      vy[k] *= velocityDecay
-      density[k] *= densityDecay
+    let maxDensity = 0
+    let maxSpeed2 = 0
+    let minI = this.cols
+    let maxI = -1
+    let minJ = this.rows
+    let maxJ = -1
+    for (let j = 0, k = 0; j < this.rows; j++) {
+      for (let i = 0; i < this.cols; i++, k++) {
+        const u = (vx[k] *= velocityDecay)
+        const v = (vy[k] *= velocityDecay)
+        const d = (density[k] *= densityDecay)
+        const speed2 = u * u + v * v
+        if (speed2 > maxSpeed2) maxSpeed2 = speed2
+        if (d > maxDensity) maxDensity = d
+        if (d >= visibleDensity) {
+          if (i < minI) minI = i
+          if (i > maxI) maxI = i
+          if (j < minJ) minJ = j
+          if (j > maxJ) maxJ = j
+        }
+      }
     }
-
-    this.flowGradient(dt, time)
+    this.bounds = maxI >= 0 ? [minI, maxI, minJ, maxJ] : null
+    // Sleep once the fog is gone and what's left of the wind (under 0.5 cells/s) couldn't
+    // visibly move new fog; clear the remainder so the next stroke starts from still air.
+    this.awake = this.rings.length > 0 || maxDensity >= 0.005 || maxSpeed2 >= 0.25
+    if (!this.awake) {
+      vx.fill(0)
+      vy.fill(0)
+      density.fill(0)
+    }
   }
 
   // ---- forces ---------------------------------------------------------------------------
 
-  private splatDisk(px: number, py: number, radius: number, fx: number, fy: number): void {
-    const { cols, rows, vx, vy, density } = this
-    const cx = px / this.pitchX
-    const cy = py / this.pitchY
-    const rx = radius / this.pitchX
-    const ry = radius / this.pitchY
-    const i0 = Math.max(0, Math.floor(cx - rx))
-    const i1 = Math.min(cols - 1, Math.ceil(cx + rx))
-    const j0 = Math.max(0, Math.floor(cy - ry))
-    const j1 = Math.min(rows - 1, Math.ceil(cy + ry))
+  /** Add force and fog in a disk (grid units) with a smoothstep falloff. */
+  private splat(cx: number, cy: number, fx: number, fy: number, radius: number): void {
+    const { cols, rows, vx, vy } = this
+    this.awake = true
+    const r2 = radius * radius
+    const i0 = Math.max(0, Math.floor(cx - radius))
+    const i1 = Math.min(cols - 1, Math.ceil(cx + radius))
+    const j0 = Math.max(0, Math.floor(cy - radius))
+    const j1 = Math.min(rows - 1, Math.ceil(cy + radius))
     for (let j = j0; j <= j1; j++) {
       for (let i = i0; i <= i1; i++) {
-        const ddx = (i - cx) / rx
-        const ddy = (j - cy) / ry
-        const d2 = ddx * ddx + ddy * ddy
-        if (d2 >= 1) continue
-        const f = 1 - d2
+        const dx = i - cx
+        const dy = j - cy
+        const d2 = dx * dx + dy * dy
+        if (d2 > r2) continue
+        const m = fall(1 - Math.sqrt(d2) / radius)
         const k = j * cols + i
-        vx[k] += fx * f
-        vy[k] += fy * f
-        if (density[k] < FOG.MOVE_CAP) {
-          density[k] = Math.min(FOG.MOVE_CAP, density[k] + FOG.STRENGTH * f)
-        }
+        vx[k] += fx * m
+        vy[k] += fy * m
+        this.raise(k, FOG.STRENGTH * m, FOG.MOVE_CAP)
       }
     }
   }
 
-  private stepSplashes(dt: number): void {
-    const { cols, rows, vx, vy, density, splashes } = this
-    const ease = FOG.SPLASH_TRAVEL_EASE
-    const norm = 1 - Math.exp(-ease)
-    const half = FOG.SPLASH_THICKNESS / 2
-    const frames = dt * 60
+  /** Raise density toward a cap; never lowers it, so a stroke can't erase a denser splash. */
+  private raise(k: number, amount: number, cap: number): void {
+    let next = this.density[k] + amount
+    if (next > cap) next = cap
+    if (next > this.density[k]) this.density[k] = next
+  }
 
-    for (let s = splashes.length - 1; s >= 0; s--) {
-      const splash = splashes[s]
-      splash.age += dt
-      if (splash.age < 0) continue
-      const p = splash.age / splash.life
-      if (p >= 1) {
-        splashes.splice(s, 1)
+  private stepRings(dt: number): void {
+    const { cols, rows, vx, vy, rings } = this
+    for (let s = rings.length - 1; s >= 0; s--) {
+      const ring = rings[s]
+      const c = ring.age / ring.life
+      if (c >= 1) {
+        rings.splice(s, 1)
         continue
       }
-      const radius = (FOG.SPLASH_RANGE * (1 - Math.exp(-ease * p))) / norm
-      const reach = radius + half
-      const fade = Math.exp(-FOG.SPLASH_DEN_DECAY * p)
-      const push = FOG.SPLASH_FORCE_MAG * Math.exp(-FOG.SPLASH_FORCE_DECAY * p) * frames * 0.5
-      const cx = splash.x / this.pitchX
-      const cy = splash.y / this.pitchY
-      const i0 = Math.max(0, Math.floor(cx - reach / this.pitchX))
-      const i1 = Math.min(cols - 1, Math.ceil(cx + reach / this.pitchX))
-      const j0 = Math.max(0, Math.floor(cy - reach / this.pitchY))
-      const j1 = Math.min(rows - 1, Math.ceil(cy + reach / this.pitchY))
+      ring.age += dt
+      const left = 1 - c
+      const radius = (1 - Math.pow(left, FOG.SPLASH_TRAVEL_EASE)) * ring.maxRadius
+      const deposit = FOG.SPLASH_DEPOSIT * Math.pow(left, FOG.SPLASH_DEN_DECAY)
+      const push = FOG.SPLASH_FORCE_MAG * Math.pow(left, FOG.SPLASH_FORCE_DECAY)
+      const reach = radius + ring.half
+      const i0 = Math.max(0, Math.floor(ring.x - reach))
+      const i1 = Math.min(cols - 1, Math.ceil(ring.x + reach))
+      const j0 = Math.max(0, Math.floor(ring.y - reach))
+      const j1 = Math.min(rows - 1, Math.ceil(ring.y + reach))
       for (let j = j0; j <= j1; j++) {
         for (let i = i0; i <= i1; i++) {
-          const dpx = (i - cx) * this.pitchX
-          const dpy = (j - cy) * this.pitchY
-          const d = Math.hypot(dpx, dpy)
-          let w = 1 - Math.abs(d - radius) / half
-          if (w <= 0) continue
-          w = w * w * (3 - 2 * w)
+          const dx = i - ring.x
+          const dy = j - ring.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const off = Math.abs(dist - radius)
+          if (off > ring.half) continue
+          const m = fall(1 - off / ring.half)
           const k = j * cols + i
-          if (density[k] < FOG.SPLASH_CAP) {
-            density[k] = Math.min(FOG.SPLASH_CAP, density[k] + FOG.SPLASH_DEPOSIT * w * fade * frames)
+          if (dist > 0.001) {
+            vx[k] += (dx / dist) * push * m
+            vy[k] += (dy / dist) * push * m
           }
-          if (d > 1e-3) {
-            vx[k] += (dpx / d) * push * w
-            vy[k] += (dpy / d) * push * w
-          }
+          this.raise(k, deposit * m, FOG.SPLASH_CAP)
         }
-      }
-    }
-  }
-
-  /** An occasional gentle gust keeps the gradient breathing when nobody is moving. */
-  private breeze(time: number): void {
-    if (time < this.breezeAt) return
-    this.breezeAt = time + 1.8 + Math.random() * 2.4
-    const angle = Math.random() * Math.PI * 2
-    const radius = 120
-    const cx = (Math.random() * this.width) / this.pitchX
-    const cy = (Math.random() * this.height) / this.pitchY
-    const rx = radius / this.pitchX
-    const ry = radius / this.pitchY
-    const gx = Math.cos(angle) * 5
-    const gy = Math.sin(angle) * 5
-    for (let j = Math.max(0, Math.floor(cy - ry)); j <= Math.min(this.rows - 1, Math.ceil(cy + ry)); j++) {
-      for (let i = Math.max(0, Math.floor(cx - rx)); i <= Math.min(this.cols - 1, Math.ceil(cx + rx)); i++) {
-        const ddx = (i - cx) / rx
-        const ddy = (j - cy) / ry
-        const d2 = ddx * ddx + ddy * ddy
-        if (d2 >= 1) continue
-        const k = j * this.cols + i
-        this.vx[k] += gx * (1 - d2)
-        this.vy[k] += gy * (1 - d2)
-      }
-    }
-  }
-
-  // ---- gradient coordinates ---------------------------------------------------------------
-
-  private resetGradient(): void {
-    for (let j = 0; j < this.rows; j++) {
-      for (let i = 0; i < this.cols; i++) {
-        const k = j * this.cols + i
-        this.uvx[k] = i / (this.cols - 1)
-        this.uvy[k] = j / (this.rows - 1)
-      }
-    }
-  }
-
-  /** Carry the gradient's sampling coordinates with the wind, then ease them back home. */
-  private flowGradient(dt: number, time: number): void {
-    const { cols, rows, uvx, uvy, uvx0, uvy0 } = this
-    uvx0.set(uvx)
-    uvy0.set(uvy)
-    this.advect(null, uvx, uvx0, this.vx, this.vy, dt)
-    this.advect(null, uvy, uvy0, this.vx, this.vy, dt)
-    const relax = 1 - Math.exp(-dt * FIELD.GRADIENT_RELAX)
-    for (let j = 0; j < rows; j++) {
-      const wobbleX = 0.01 * Math.sin(j * 0.1265 + time * 0.33)
-      for (let i = 0; i < cols; i++) {
-        const k = j * cols + i
-        const homeX = i / (cols - 1) + wobbleX
-        const homeY = j / (rows - 1) + 0.008 * Math.sin(i * 0.1045 - time * 0.27)
-        uvx[k] += (homeX - uvx[k]) * relax
-        uvy[k] += (homeY - uvy[k]) * relax
       }
     }
   }
@@ -304,7 +258,7 @@ export class FluidField {
     x[size - 1] = 0.5 * (x[size - 2] + x[size - 1 - w])
   }
 
-  /** Implicit diffusion by Gauss–Seidel relaxation. */
+  /** Implicit diffusion by Gauss–Seidel relaxation; `a` is applied per step. */
   private diffuse(b: Boundary, x: Float32Array, x0: Float32Array, a: number): void {
     const { cols: w, rows: h } = this
     const c = 1 / (1 + 4 * a)
@@ -351,26 +305,19 @@ export class FluidField {
     this.setBoundary(2, v)
   }
 
-  /** Semi-Lagrangian advection with bilinear sampling. `b === null` skips boundary handling. */
-  private advect(
-    b: Boundary | null,
-    d: Float32Array,
-    d0: Float32Array,
-    u: Float32Array,
-    v: Float32Array,
-    dt: number,
-  ): void {
+  /** Semi-Lagrangian advection with bilinear sampling. */
+  private advect(b: Boundary, d: Float32Array, d0: Float32Array, u: Float32Array, v: Float32Array, dt: number): void {
     const { cols: w, rows: h } = this
-    const xMax = w - 1.001
-    const yMax = h - 1.001
+    const xMax = w - 1.5
+    const yMax = h - 1.5
     for (let j = 0; j < h; j++) {
       for (let i = 0; i < w; i++) {
         const k = j * w + i
         let x = i - dt * u[k]
         let y = j - dt * v[k]
-        if (x < 0) x = 0
+        if (x < 0.5) x = 0.5
         else if (x > xMax) x = xMax
-        if (y < 0) y = 0
+        if (y < 0.5) y = 0.5
         else if (y > yMax) y = yMax
         const i0 = x | 0
         const j0 = y | 0
@@ -383,6 +330,6 @@ export class FluidField {
           (d0[r1] * (1 - fx) + d0[r1 + 1] * fx) * fy
       }
     }
-    if (b !== null) this.setBoundary(b, d)
+    this.setBoundary(b, d)
   }
 }

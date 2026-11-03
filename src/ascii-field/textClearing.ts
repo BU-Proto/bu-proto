@@ -1,29 +1,32 @@
 import { FOG } from './settings'
 
 /**
- * Elements the fog should step back from so the copy stays legible.
+ * Elements the trail should step back from so the copy stays legible.
  * `data-fog-clear="box"` clears the element's whole box (pills, buttons);
  * any other value clears just the line boxes of its text.
  */
 export const CLEAR_SELECTOR = '[data-fog-clear]'
 
 /**
- * Rasterize the marked elements onto the fog's glyph grid, then blur and boost the
- * coverage so the fog fades out smoothly as it approaches text (0 = no effect, 1 = hidden).
+ * Rasterize the marked elements onto the character grid (cols × rows cells of
+ * cellW × cellH px), then blur and boost the coverage so the trail fades out smoothly as it
+ * approaches text: 0 = no effect, 1 = fully cleared.
  */
 export function buildClearMask(
   elements: Iterable<Element>,
   cols: number,
   rows: number,
+  cellW: number,
+  cellH: number,
 ): Float32Array {
   const coverage = new Float32Array(cols * rows)
   const pad = FOG.CLEAR_PAD
   const fill = (rect: DOMRect) => {
     if (rect.width <= 1 || rect.height <= 1) return
-    const i0 = Math.max(0, Math.floor((rect.left - pad) / FOG.CELL_X))
-    const i1 = Math.min(cols - 1, Math.floor((rect.right + pad) / FOG.CELL_X))
-    const j0 = Math.max(0, Math.floor((rect.top - pad) / FOG.CELL_Y))
-    const j1 = Math.min(rows - 1, Math.floor((rect.bottom + pad) / FOG.CELL_Y))
+    const i0 = Math.max(0, Math.floor((rect.left - pad) / cellW))
+    const i1 = Math.min(cols - 1, Math.floor((rect.right + pad) / cellW))
+    const j0 = Math.max(0, Math.floor((rect.top - pad) / cellH))
+    const j1 = Math.min(rows - 1, Math.floor((rect.bottom + pad) / cellH))
     for (let j = j0; j <= j1; j++) {
       for (let i = i0; i <= i1; i++) coverage[j * cols + i] = 1
     }
