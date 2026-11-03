@@ -1,0 +1,76 @@
+import { FOG } from './settings'
+
+/**
+ * Elements the fog should step back from so the copy stays legible.
+ * `data-fog-clear="box"` clears the element's whole box (pills, buttons);
+ * any other value clears just the line boxes of its text.
+ */
+export const CLEAR_SELECTOR = '[data-fog-clear]'
+
+/**
+ * Rasterize the marked elements onto the fog's glyph grid, then blur and boost the
+ * coverage so the fog fades out smoothly as it approaches text (0 = no effect, 1 = hidden).
+ */
+export function buildClearMask(
+  elements: Iterable<Element>,
+  cols: number,
+  rows: number,
+): Float32Array {
+  const coverage = new Float32Array(cols * rows)
+  const pad = FOG.CLEAR_PAD
+  const fill = (rect: DOMRect) => {
+    if (rect.width <= 1 || rect.height <= 1) return
+    const i0 = Math.max(0, Math.floor((rect.left - pad) / FOG.CELL_X))
+    const i1 = Math.min(cols - 1, Math.floor((rect.right + pad) / FOG.CELL_X))
+    const j0 = Math.max(0, Math.floor((rect.top - pad) / FOG.CELL_Y))
+    const j1 = Math.min(rows - 1, Math.floor((rect.bottom + pad) / FOG.CELL_Y))
+    for (let j = j0; j <= j1; j++) {
+      for (let i = i0; i <= i1; i++) coverage[j * cols + i] = 1
+    }
+  }
+
+  for (const element of elements) {
+    if (getComputedStyle(element).visibility !== 'visible') continue
+    if (element.getAttribute('data-fog-clear') === 'box') {
+      fill(element.getBoundingClientRect())
+    } else {
+      const range = document.createRange()
+      range.selectNodeContents(element)
+      for (const rect of range.getClientRects()) fill(rect)
+    }
+  }
+
+  const blurred = boxBlur(coverage, cols, rows, FOG.CLEAR_BLUR)
+  for (let k = 0; k < blurred.length; k++) {
+    blurred[k] = Math.min(1, blurred[k] * FOG.CLEAR_GAIN)
+  }
+  return blurred
+}
+
+/** Separable box blur with clamped edges. */
+function boxBlur(src: Float32Array, width: number, height: number, radius: number): Float32Array {
+  const tmp = new Float32Array(src.length)
+  const out = new Float32Array(src.length)
+  const norm = 1 / (2 * radius + 1)
+  for (let j = 0; j < height; j++) {
+    for (let i = 0; i < width; i++) {
+      let sum = 0
+      for (let o = -radius; o <= radius; o++) {
+        const ii = i + o
+        if (ii >= 0 && ii < width) sum += src[j * width + ii]
+      }
+      tmp[j * width + i] = sum * norm
+    }
+  }
+  for (let j = 0; j < height; j++) {
+    for (let i = 0; i < width; i++) {
+      let sum = 0
+      for (let o = -radius; o <= radius; o++) {
+        const jj = j + o
+        if (jj >= 0 && jj < height) sum += tmp[jj * width + i]
+      }
+      out[j * width + i] = sum * norm
+    }
+  }
+  return out
+}

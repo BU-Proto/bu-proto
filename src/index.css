@@ -1,0 +1,49 @@
+:root {
+  --base: #061a2e;
+  --ink: #f6fbff;
+  --ink-soft: rgba(246, 251, 255, 0.76);
+  --ink-dim: rgba(246, 251, 255, 0.56);
+  --glass: rgba(255, 255, 255, 0.15);
+  --glass-strong: rgba(255, 255, 255, 0.23);
+  --glass-edge: rgba(255, 255, 255, 0.36);
+  --pill: rgba(6, 30, 56, 0.4);
+  --accent: #9df0a8;
+  --on-light: #0b2a46;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--base);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  color: inherit;
+  font: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
