@@ -1,6 +1,8 @@
 .addForm {
   display: grid;
-  grid-template-columns: minmax(0, 360px) auto;
+  /* max-content and justify-content: start keep the button its own size instead of filling the row. */
+  grid-template-columns: minmax(0, 360px) max-content;
+  justify-content: start;
   align-items: start;
   gap: 12px;
 }
