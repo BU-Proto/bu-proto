@@ -243,6 +243,8 @@ app.get('/api/admin/email/campaigns', async (c) => {
 // whose body is just `List-Unsubscribe=One-Click`. The token alone decides; sameOrigin exempts this path.
 // Known and unknown tokens get the same answer, so the page can't be used to probe tokens.
 
+// The sign-in screen's look: the field's colours behind a glass card, the wordmark top left.
+// The field is a few radial gradients rather than the canvas, so the page needs no script.
 function page(title: string, content: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -250,26 +252,60 @@ function page(title: string, content: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
 <title>${escapeHtml(title)} · BU Proto</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #061a2e; color: #fff;
-    font: 16px/1.6 Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-  main { max-width: 420px; padding: 32px 24px; }
-  .brand { font: 700 13px 'JetBrains Mono', ui-monospace, Menlo, monospace; letter-spacing: .12em; text-transform: uppercase;
-    color: #9df0a8; margin: 0 0 12px; }
-  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 12px; }
-  p { margin: 0 0 20px; color: rgba(255, 255, 255, .78); }
-  button { font: 600 15px Inter, sans-serif; color: #061a2e; background: #9df0a8; border: 0; border-radius: 6px;
-    padding: 12px 20px; cursor: pointer; }
-  button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-  a { color: #9df0a8; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { background: #061a2e; }
+  body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; color: #f6fbff;
+    padding: max(18px, env(safe-area-inset-top, 0px)) 16px max(20px, env(safe-area-inset-bottom, 0px));
+    font: 15px/1.55 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(38% 46% at 42% 30%, rgba(233, 161, 157, .95), rgba(214, 161, 171, .55) 45%, rgba(214, 161, 171, 0) 100%),
+      radial-gradient(45% 55% at 82% 92%, rgba(193, 186, 206, .9), rgba(193, 186, 206, 0) 100%),
+      radial-gradient(60% 80% at 0% 0%, #0576ad, rgba(5, 118, 173, 0) 100%),
+      linear-gradient(115deg, #0477ac 0%, #0391c2 38%, #3aa7c8 62%, #1ea4cc 100%) #061a2e; }
+  .brand { color: inherit; text-decoration: none; font-size: 18px; font-weight: 400;
+    letter-spacing: -.01em; text-shadow: 0 1px 2px rgba(0, 25, 55, .55), 0 0 18px rgba(0, 25, 55, .45); justify-self: start; }
+  main { align-self: center; justify-self: center; width: min(440px, 100%); display: grid; gap: 14px; padding: 26px 28px 28px;
+    border: 1px solid rgba(255, 255, 255, .36); border-radius: 28px;
+    background: linear-gradient(rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)), rgba(6, 30, 56, .34);
+    -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%);
+    box-shadow: 0 40px 90px -40px rgba(0, 15, 35, .85), inset 0 1px 0 rgba(255, 255, 255, .35);
+    text-shadow: 0 1px 2px rgba(0, 25, 55, .3); }
+  .path { margin: 0; color: rgba(246, 251, 255, .76); font: 12px 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
+  .caret { margin-left: 2px; color: #9df0a8; }
+  h1 { margin: 0; font-size: clamp(28px, 6vw, 34px); font-weight: 300; letter-spacing: -.03em; line-height: 1.1; text-wrap: balance; }
+  p { margin: 0; color: rgba(246, 251, 255, .82); }
+  form { margin: 6px 0 0; }
+  button { width: 100%; min-height: 48px; padding: 12px 20px; border: 1px solid #fff; border-radius: 999px; background: #fff;
+    color: #0b2a46; font: 500 14px Inter, system-ui, sans-serif; cursor: pointer; box-shadow: 0 14px 34px -16px rgba(0, 25, 55, .7); }
+  button:hover { background: #eefbf0; }
+  button:focus-visible, a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  .fine { color: rgba(246, 251, 255, .7); font: 11px/1.6 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
+  .fine::before { content: '> '; color: #9df0a8; }
+  .home { justify-self: center; color: rgba(246, 251, 255, .85); font-size: 13px; text-decoration: none;
+    text-shadow: 0 1px 2px rgba(0, 25, 55, .55), 0 0 18px rgba(0, 25, 55, .45); }
+  .home:hover { color: #fff; }
+  @media (prefers-reduced-motion: no-preference) {
+    main { animation: rise 500ms cubic-bezier(.2, .8, .2, 1); }
+    .caret { animation: blink 1.1s steps(1) infinite; }
+    button { transition: background 150ms, transform 150ms; }
+    button:hover { transform: translateY(-1px); }
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+  @keyframes blink { 50% { opacity: 0; } }
 </style>
 </head>
 <body>
+<a class="brand" href="/">Proto<span class="caret">_</span></a>
 <main>
-<p class="brand">BU Proto</p>
+<p class="path">~/unsubscribe<span class="caret">_</span></p>
 ${content}
 </main>
+<a class="home" href="/">Back to BU Proto</a>
 </body>
 </html>
 `
@@ -307,7 +343,8 @@ app.get('/api/unsubscribe', (c) => {
 <p>You'll stop getting member emails from BU Proto. You can join again any time from the site.</p>
 <form method="post" action="/api/unsubscribe?token=${escapeHtml(encodeURIComponent(token))}">
 <button type="submit">Unsubscribe</button>
-</form>`,
+</form>
+<p class="fine">Changed your mind? Just close this page.</p>`,
   )
 })
 
@@ -324,7 +361,7 @@ app.post('/api/unsubscribe', async (c) => {
     "You're unsubscribed",
     `<h1>You're unsubscribed.</h1>
 <p>BU Proto won't send you member emails anymore. Event updates for things you RSVP to may still come through.</p>
-<p>Still hearing from us? Reply to any of our emails and we'll take you off by hand.</p>`,
+<p class="fine">Still hearing from us? Reply to any of our emails and we'll take you off by hand.</p>`,
   )
 })
 
