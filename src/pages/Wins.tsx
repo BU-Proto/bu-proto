@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { useLoaderData } from 'react-router'
+import { Link, useLoaderData } from 'react-router'
 import type { Win } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
@@ -9,8 +9,21 @@ import styles from './Wins.module.css'
 
 const TILTS = [-1.2, 0.8, -0.4, 1.1, -0.9, 0.5]
 
-/** One win: photo, then the placement set large as the card's headline, project, team and Devpost. `rank` tilts the card. */
+/** "Built by Maya, Jordan and Priya", or the first two and a count once the team gets long. */
+function teamLine(team: Win['team']): string {
+  const names = (team ?? []).map((person) => person.name).filter(Boolean)
+  if (names.length === 0) return ''
+  const shown = names.length > 3 ? [...names.slice(0, 2), `${names.length - 2} more`] : names
+  return `Built by ${new Intl.ListFormat('en', { type: 'conjunction' }).format(shown)}`
+}
+
+/**
+ * One win: photo, then the placement set large as the card's headline, project, team and Devpost.
+ * The project name's link stretches over the whole card; Devpost sits above it so it still works.
+ * `rank` tilts the card.
+ */
 export function WinCard({ win, rank }: { win: Win; rank: number }) {
+  const team = teamLine(win.team)
   return (
     <li className={styles.card} style={{ '--tilt': `${TILTS[rank % TILTS.length]}deg` } as CSSProperties}>
       <div className={styles.photo}>
@@ -32,7 +45,9 @@ export function WinCard({ win, rank }: { win: Win; rank: number }) {
           {win.placement}
         </p>
         <h3 className={styles.project} data-fog-clear>
-          {win.project}
+          <Link className={styles.cardLink} to={`/wins/${win.id}`}>
+            {win.project}
+          </Link>
           <SampleTag show={win.placeholder} />
         </h3>
         <p className={styles.event} data-fog-clear>
@@ -43,9 +58,9 @@ export function WinCard({ win, rank }: { win: Win; rank: number }) {
             {win.blurb}
           </p>
         )}
-        {win.team.length > 0 && (
+        {team && (
           <p className={styles.team} data-fog-clear>
-            Built by {win.team.join(', ')}
+            {team}
           </p>
         )}
         {win.devpost ? (

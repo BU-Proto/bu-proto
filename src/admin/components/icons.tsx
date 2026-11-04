@@ -53,3 +53,19 @@ export function ArrowOutIcon(props: IconProps) {
     </Svg>
   )
 }
+
+export function ChevronUpIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 15l6-6 6 6" />
+    </Svg>
+  )
+}
+
+export function ChevronDownIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6 9l6 6 6-6" />
+    </Svg>
+  )
+}

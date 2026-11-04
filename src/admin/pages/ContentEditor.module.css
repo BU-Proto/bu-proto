@@ -26,6 +26,43 @@
   grid-column: 1 / -1;
 }
 
+/* Long editors come in titled sections. Each holds its own grid, so the grid's padding moves here. */
+.sections {
+  display: grid;
+}
+
+.section {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 24px;
+}
+
+/* The form's own gap already spaces the last section from the save bar. */
+.section:last-child {
+  padding-bottom: 0;
+}
+
+.section + .section {
+  border-top: 1px solid var(--line-strong);
+}
+
+.section .grid {
+  padding: 0;
+}
+
+.sectionHead {
+  display: grid;
+  gap: 2px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
 /* The save bar sticks to the bottom of the screen on long forms, as frosted glass over the
    fields scrolling under it. */
 .bar {
@@ -58,6 +95,18 @@
   .grid {
     grid-template-columns: minmax(0, 1fr);
     padding: 18px 16px 0;
+  }
+
+  .section {
+    padding: 20px 16px;
+  }
+
+  .section:last-child {
+    padding-bottom: 0;
+  }
+
+  .section .grid {
+    padding: 0;
   }
 
   .bar {

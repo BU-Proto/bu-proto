@@ -1,5 +1,7 @@
 .top {
   position: relative;
+  /* Above the page, for project pages whose cover photo runs up under the bar. */
+  z-index: 2;
   display: flex;
   /* The same column as every page, so the logo lines up with the titles below it. */
   width: 100%;

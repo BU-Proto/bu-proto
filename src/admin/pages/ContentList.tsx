@@ -119,6 +119,10 @@ export function Component() {
                       className={field?.type === 'date' || field?.type === 'number' ? `${admin.soft} ${admin.figure}` : admin.soft}
                     >
                       {field?.type === 'date' ? formatDay(row[key]) : displayValue(field, row[key])}
+                      {/* A win's prize track reads as part of its placement, so it sits under it. */}
+                      {resource === 'wins' && key === 'placement' && typeof row.track === 'string' && row.track && (
+                        <span className={styles.subline}>{row.track}</span>
+                      )}
                     </td>
                   ))}
                   {isEvents && (

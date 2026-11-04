@@ -2,7 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import { adminRoutes } from './admin/routes'
 import { Layout } from './components/Layout'
 import { LoadError, PageLoading } from './components/RouteStates'
-import { fetchContent, fetchHome } from './lib/content'
+import { fetchContent, fetchHome, fetchWinPage } from './lib/content'
 import { Board } from './pages/Board'
 import { Events } from './pages/Events'
 import { Grants } from './pages/Grants'
@@ -12,6 +12,7 @@ import { Join } from './pages/Join'
 import { NotFound } from './pages/NotFound'
 import { Resources } from './pages/Resources'
 import { TrackRecord } from './pages/TrackRecord'
+import { WinDetail, WinLoadError } from './pages/WinDetail'
 import { Wins } from './pages/Wins'
 
 // Pages that read from the API. Layout has no loader, so on first load it (and the field) renders
@@ -32,6 +33,14 @@ const router = createBrowserRouter([
       },
       { path: 'grants', Component: Grants },
       { path: 'wins', Component: Wins, loader: ({ request }) => fetchContent('wins', request.signal), ...dataRoute },
+      {
+        path: 'wins/:id',
+        Component: WinDetail,
+        loader: ({ params, request }) => fetchWinPage(params.id, request.signal),
+        HydrateFallback: PageLoading,
+        // Like LoadError, but a missing or unpublished win gets a not-found state instead.
+        ErrorBoundary: WinLoadError,
+      },
       { path: 'track-record', Component: TrackRecord },
       { path: 'resources', Component: Resources },
       { path: 'events', Component: Events, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },

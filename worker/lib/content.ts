@@ -30,6 +30,8 @@ function fromColumn(field: FieldSpec, value: unknown): unknown {
       return Number(value)
     case 'list':
     case 'links':
+    case 'people':
+    case 'images':
       return parseList(value)
     default:
       return value ?? null
@@ -52,6 +54,8 @@ function toColumn(field: FieldSpec, value: unknown): string | number | null {
       return value ? 1 : 0
     case 'list':
     case 'links':
+    case 'people':
+    case 'images':
       return JSON.stringify(value ?? [])
     default:
       return (value as string | number | null | undefined) ?? null

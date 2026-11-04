@@ -28,6 +28,17 @@ app.get('/api/content/:resource', async (c) => {
   return c.json({ items: results.map((row) => rowToItem(spec, row)) })
 })
 
+// One published row, for detail pages like /wins/:id.
+app.get('/api/content/:resource/:id', async (c) => {
+  const spec = specFor(c.req.param('resource'))
+  const row = await c.env.DB.prepare(`SELECT * FROM ${spec.table} WHERE id = ? AND published = 1`)
+    .bind(idParam(c))
+    .first<DbRow>()
+  if (!row) throw new ApiError(404, 'Not found.')
+  c.header('Cache-Control', 'no-store')
+  return c.json({ item: rowToItem(spec, row) })
+})
+
 app.get('/api/admin/content/:resource', async (c) => {
   const spec = specFor(c.req.param('resource'))
   const { results } = await c.env.DB.prepare(`SELECT ${adminSelect(spec)} FROM ${spec.table} ORDER BY ${spec.orderBy}`).all<DbRow>()

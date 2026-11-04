@@ -59,14 +59,34 @@ export const hackathonInput = z.object({
   ...flags,
 })
 
+/** One teammate: their name, and optionally where to find them (LinkedIn, a personal site, GitHub). */
+export const personInput = z.object({ name: text(80), href: optionalUrl })
+
+/** A gallery photo: a full URL or a path under public/. */
+const galleryImage = z.union([z.url(), z.string().regex(/^\/[^\s]*$/)], {
+  error: 'Use a full URL (https://…) or a /path under public/.',
+})
+
 export const winInput = z.object({
   project: text(80),
   blurb: optionalText(300),
   event: text(80),
   placement: text(60),
-  team: z.array(text(80)).max(12),
+  /** The prize track or category, when it's not the placement itself (e.g. "Healthcare track"). */
+  track: optionalText(80),
+  team: z.array(personInput).max(12),
   photo: optionalImage,
+  gallery: z.array(galleryImage).max(24),
+  /** What they built and how: plain text, blank lines between paragraphs. */
+  description: optionalText(8000),
+  /** Languages, frameworks, hardware and APIs, one per item. */
+  stack: z.array(text(40)).max(24),
+  github: optionalUrl,
   devpost: optionalUrl,
+  /** Any funding the project got, e.g. a Proto microgrant or a Spark! award. Optional. */
+  funding: optionalText(200),
+  /** Where the team is taking it next. Optional. */
+  nextSteps: optionalText(4000),
   position: z.number().int(),
   ...flags,
 })
@@ -98,6 +118,7 @@ export type Hackathon = z.output<typeof hackathonInput> & Row
 export type Win = z.output<typeof winInput> & Row
 export type BoardMember = z.output<typeof boardMemberInput> & Row
 
+/** GET /api/content/:resource/:id → { item }: one published row, or 404. */
 export interface ContentTypes {
   events: ProtoEvent
   hackathons: Hackathon
@@ -127,6 +148,10 @@ export type FieldType =
   | 'list'
   /** { label, href }[], stored as JSON */
   | 'links'
+  /** { name, href | null }[], stored as JSON: people with an optional link each */
+  | 'people'
+  /** string[] of image URLs or /paths, stored as JSON, shown with previews */
+  | 'images'
 
 export interface FieldSpec {
   /** Key in the API object. */
@@ -209,12 +234,19 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
     orderBy: 'position ASC, id DESC',
     fields: [
       { key: 'project', column: 'project', label: 'Project', type: 'text' },
-      { key: 'blurb', column: 'blurb', label: 'One line', type: 'textarea' },
+      { key: 'blurb', column: 'blurb', label: 'One line', type: 'textarea', hint: 'Shown on the card and under the title.' },
       { key: 'event', column: 'event', label: 'Hackathon', type: 'text' },
-      { key: 'placement', column: 'placement', label: 'Placement', type: 'text', hint: 'e.g. 1st overall, Best hardware hack' },
-      { key: 'team', column: 'team', label: 'Team', type: 'list', hint: 'One name per line.' },
-      { key: 'photo', column: 'photo', label: 'Photo', type: 'image', hint: 'A full URL or a path under public/, e.g. /photos/pantry-pal.jpg' },
+      { key: 'placement', column: 'placement', label: 'Placement', type: 'text', hint: 'e.g. 1st overall, 2nd place, Best hardware hack' },
+      { key: 'track', column: 'track', label: 'Track or prize category', type: 'text', hint: 'Optional, e.g. Healthcare track, Best use of AI' },
+      { key: 'team', column: 'team', label: 'Team', type: 'people', hint: 'Each name can link to a LinkedIn, personal site or GitHub.' },
+      { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'A full URL or a path under public/, e.g. /photos/pantry-pal.jpg' },
+      { key: 'gallery', column: 'gallery', label: 'Photo gallery', type: 'images', hint: 'More photos for the project page.' },
+      { key: 'description', column: 'description', label: 'What they built', type: 'textarea', hint: 'The problem, what it does and how it works. Blank lines make paragraphs.' },
+      { key: 'stack', column: 'stack', label: 'Built with', type: 'list', hint: 'One technology per line, e.g. React, Python, Arduino.' },
+      { key: 'github', column: 'github', label: 'GitHub link', type: 'url' },
       { key: 'devpost', column: 'devpost', label: 'Devpost link', type: 'url' },
+      { key: 'funding', column: 'funding', label: 'Funding', type: 'text', hint: 'Optional, e.g. Proto microgrant ($250) or Spark! Ignite award.' },
+      { key: 'nextSteps', column: 'next_steps', label: 'Where it’s going', type: 'textarea', hint: 'Optional: what the team is doing with it next.' },
       { key: 'position', column: 'position', label: 'Order', type: 'number', hint: 'Lower shows first.' },
       ...FLAG_FIELDS,
     ],

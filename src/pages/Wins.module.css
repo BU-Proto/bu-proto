@@ -9,6 +9,7 @@
 }
 
 .card {
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
@@ -95,9 +96,39 @@
   font-size: 13px;
 }
 
+/* The project name's link covers the card, so a click anywhere opens the project page. */
+.cardLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.cardLink:focus-visible {
+  outline: none;
+}
+
+.card:has(.cardLink:focus-visible) {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.card:has(.cardLink:hover) .project {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
 .link,
 .noLink {
   margin-top: 10px;
+}
+
+/* Above the stretched link, so Devpost still opens Devpost. */
+.link {
+  position: relative;
+  z-index: 2;
 }
 
 .noLink {

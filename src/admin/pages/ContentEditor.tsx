@@ -5,16 +5,17 @@ import admin from '../admin.module.css'
 import { StatusLine, type StatusTone } from '../components/bits'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ContentField } from '../components/ContentField'
+import { ArrowOutIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { RsvpPanel } from '../components/RsvpPanel'
-import { specFor, toForm, toPayload, type ContentRow, type FormValues } from '../lib/content'
+import { layoutFor, sectionsFor, sitePathFor, specFor, toForm, toPayload, type ContentRow, type FieldSection, type FormValues } from '../lib/content'
 import { formatClock, formatTimestamp } from '../lib/format'
 import { messageFor, useAuthGuard } from '../lib/session'
 import type { contentEditorLoader } from '../loaders'
 import styles from './ContentEditor.module.css'
 
 // Wide fields take the whole row; short ones pair up on laptops.
-const WIDE_TYPES = new Set(['textarea', 'list', 'links', 'image', 'boolean'])
+const WIDE_TYPES = new Set(['textarea', 'list', 'links', 'people', 'images', 'image', 'boolean'])
 
 export function Component() {
   const loaded = useLoaderData<typeof contentEditorLoader>()
@@ -58,6 +59,8 @@ function Editor({ resource, item, rsvps }: Loaded) {
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
+  const sections = sectionsFor(spec)
+  const sitePath = sitePathFor(resource, row)
   const title = row ? String(row[spec.titleKey] ?? '') || `${spec.singular} ${row.id}` : `New ${spec.singular.toLowerCase()}`
 
   function setValue(key: string, value: FormValues[string]) {
@@ -120,6 +123,28 @@ function Editor({ resource, item, rsvps }: Loaded) {
     }
   }
 
+  function renderGrid(section: FieldSection) {
+    return (
+      <div className={styles.grid}>
+        {section.fields.map((field) => {
+          const layout = layoutFor(resource, field.key)
+          const wide = layout.wide || WIDE_TYPES.has(field.type) || field.key === spec.titleKey
+          return (
+            <div key={field.key} className={wide ? styles.wide : undefined}>
+              <ContentField
+                field={field}
+                value={values[field.key]}
+                issues={issues}
+                rows={layout.rows}
+                onChange={(value) => setValue(field.key, value)}
+              />
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <div className={`${admin.page} ${admin.narrow}`}>
       <PageHeader
@@ -140,28 +165,49 @@ function Editor({ resource, item, rsvps }: Loaded) {
         }
         actions={
           row && (
-            <button
-              type="button"
-              className={admin.danger}
-              onClick={() => {
-                setDeleteError('')
-                setConfirmDelete(true)
-              }}
-            >
-              Delete
-            </button>
+            <>
+              {sitePath && (
+                // A new tab, so unsaved edits here stay put.
+                <a className={admin.button} href={sitePath} target="_blank" rel="noreferrer">
+                  View on site <ArrowOutIcon />
+                </a>
+              )}
+              <button
+                type="button"
+                className={admin.danger}
+                onClick={() => {
+                  setDeleteError('')
+                  setConfirmDelete(true)
+                }}
+              >
+                Delete
+              </button>
+            </>
           )
         }
       />
 
       <form ref={formRef} className={styles.form} onSubmit={save} noValidate>
-        <div className={styles.grid}>
-          {spec.fields.map((field) => (
-            <div key={field.key} className={WIDE_TYPES.has(field.type) || field.key === spec.titleKey ? styles.wide : undefined}>
-              <ContentField field={field} value={values[field.key]} issues={issues} onChange={(value) => setValue(field.key, value)} />
-            </div>
-          ))}
-        </div>
+        {sections.length === 1 && sections[0].title === null ? (
+          renderGrid(sections[0])
+        ) : (
+          <div className={styles.sections}>
+            {sections.map((section, index) => {
+              const headingId = `section-${index}`
+              return (
+                <section key={section.title} className={styles.section} aria-labelledby={headingId}>
+                  <div className={styles.sectionHead}>
+                    <h2 id={headingId} className={styles.sectionTitle}>
+                      {section.title}
+                    </h2>
+                    {section.hint && <p className={admin.hint}>{section.hint}</p>}
+                  </div>
+                  {renderGrid(section)}
+                </section>
+              )
+            })}
+          </div>
+        )}
 
         <div className={styles.bar}>
           <button type="submit" className={admin.primary} disabled={saving}>

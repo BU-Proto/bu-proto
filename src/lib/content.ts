@@ -25,3 +25,18 @@ export async function fetchHome(signal?: AbortSignal): Promise<HomeData> {
   ])
   return { events, hackathons, wins }
 }
+
+export interface WinPageData {
+  win: Win
+  /** Every published win, in display order, for previous and next. */
+  wins: Win[]
+}
+
+/** One win for its project page, plus the list so the page can link to its neighbours. */
+export async function fetchWinPage(id: string | undefined, signal?: AbortSignal): Promise<WinPageData> {
+  const [{ item }, wins] = await Promise.all([
+    api<{ item: Win }>(`/content/wins/${encodeURIComponent(id ?? '')}`, { signal }),
+    fetchContent('wins', signal),
+  ])
+  return { win: item, wins }
+}

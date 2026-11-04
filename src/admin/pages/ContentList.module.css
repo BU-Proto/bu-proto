@@ -2,3 +2,9 @@
 .dateCol {
   width: 140px;
 }
+
+.subline {
+  display: block;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+}
