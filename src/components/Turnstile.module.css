@@ -1,0 +1,10 @@
+/* Turnstile's iframe sizes itself: 0 high while the check runs unseen, 65px when it wants a click. */
+.widget {
+  grid-column: 1 / -1;
+  max-width: 100%;
+}
+
+/* Unseen, it would still be an empty grid row with a gap of its own. Out of the flow, it isn't. */
+.widget:not([data-shown]) {
+  position: absolute;
+}

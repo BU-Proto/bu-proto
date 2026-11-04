@@ -4,9 +4,12 @@ import { randomToken } from '../lib/crypto'
 import { bostonToday } from '../lib/dates'
 import { limitForms } from '../lib/forms'
 import { ApiError, idParam, readBody } from '../lib/http'
+import { requireHuman } from '../lib/turnstile'
 import type { AppEnv } from '../types'
 
-// The three forms the public site posts. None needs a session; all are rate limited per IP.
+// The three forms the public site posts. None needs a session; all are rate limited per IP, then
+// need a Turnstile token (lib/turnstile) before anything is read or written. The action names
+// match the ones the forms render their widgets with.
 
 const app = new Hono<AppEnv>()
 
@@ -22,7 +25,7 @@ async function isBot(c: Context<AppEnv>): Promise<boolean> {
   return website !== undefined && website !== null && website !== ''
 }
 
-app.post('/api/join', limitForms, async (c) => {
+app.post('/api/join', limitForms, requireHuman('join'), async (c) => {
   if (await isBot(c)) return c.json({ ok: true }, 201)
   const input = await readBody(c, joinInput)
   const token = randomToken()
@@ -39,7 +42,7 @@ app.post('/api/join', limitForms, async (c) => {
   return c.json({ ok: true }, row?.inserted ? 201 : 200)
 })
 
-app.post('/api/fund-interest', limitForms, async (c) => {
+app.post('/api/fund-interest', limitForms, requireHuman('fund-interest'), async (c) => {
   if (await isBot(c)) return c.json({ ok: true }, 201)
   const input = await readBody(c, fundInterestInput)
   await c.env.DB.prepare(
@@ -50,7 +53,7 @@ app.post('/api/fund-interest', limitForms, async (c) => {
   return c.json({ ok: true }, 201)
 })
 
-app.post('/api/events/:id/rsvp', limitForms, async (c) => {
+app.post('/api/events/:id/rsvp', limitForms, requireHuman('rsvp'), async (c) => {
   const id = idParam(c)
   const event = await c.env.DB.prepare('SELECT date FROM events WHERE id = ? AND published = 1')
     .bind(id)

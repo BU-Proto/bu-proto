@@ -211,11 +211,22 @@ It's one Cloudflare Worker: Workers Static Assets serve the built site, and only
 
 **Logs:** **Actions → Deploy →** the run. The migration step lists what's already applied and what it applies; the last step prints the deployed version (also in the run summary). Live Worker logs: `npx wrangler tail`, or **Workers & Pages → bu-proto → Logs** in Cloudflare.
 
-**Runtime secrets stay in Cloudflare.** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAILS` and `RESEND_API_KEY` are set once with `npx wrangler secret put <NAME>` (see [Setting up Google sign-in](#setting-up-google-sign-in)); deploys keep them and CI never sees them. `EMAIL_FROM` is in `wrangler.jsonc`.
+**Runtime secrets stay in Cloudflare.** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAILS`, `RESEND_API_KEY` and `TURNSTILE_SECRET_KEY` are set once with `npx wrangler secret put <NAME>` (see [Setting up Google sign-in](#setting-up-google-sign-in)); deploys keep them and CI never sees them. `EMAIL_FROM` is in `wrangler.jsonc`.
 
 `0002_seed.sql` loads the sample content, all tagged *sample*; replace or delete it in the portal.
 
 **Manual fallback:** `npx wrangler login`, then `CLOUDFLARE_ACCOUNT_ID=0bda3a2560ca48711ef7336cc421abed npm run deploy`.
+
+## Form protection (Turnstile)
+
+The three public forms (join, fund interest, RSVP) carry Cloudflare Turnstile, the "Verify you are human" check. It runs with `appearance: 'interaction-only'` on a **Managed** widget: most people never see it, and the checkbox only appears when Cloudflare wants a click. The Worker checks every token with Siteverify (`worker/lib/turnstile.ts`) after the rate limit and before anything is written, and also requires the token's action to match the form and its hostname to be `buproto.com`. The honeypot stays as a second line.
+
+| Value | Where it lives | Notes |
+| --- | --- | --- |
+| Site key `VITE_TURNSTILE_SITE_KEY` | [`.env.production`](.env.production), committed | Public, it ships in the page. `vite build` reads it; `vite dev` doesn't, and uses Cloudflare's always-pass test key `1x00000000000000000000AA` |
+| Secret `TURNSTILE_SECRET_KEY` | Worker secret | `CLOUDFLARE_ACCOUNT_ID=0bda3a2560ca48711ef7336cc421abed npx wrangler secret put TURNSTILE_SECRET_KEY` (paste it at the prompt). Locally leave it empty in `.dev.vars`: `vite dev` then uses the always-pass test secret |
+
+**Without the secret the deployed site refuses every form submission** ("Form protection isn't set up yet", 503) rather than letting them through unchecked. The test secret only exists in dev builds. The widget (**Turnstile → BU Proto forms** in Cloudflare) lists `buproto.com` and `localhost` as hostnames. To see a refusal locally, set `TURNSTILE_SECRET_KEY=2x0000000000000000000000000000000AA` (always fails) in `.dev.vars` and restart `vite dev`.
 
 ## Notes
 

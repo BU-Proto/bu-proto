@@ -162,6 +162,7 @@ export function Grants() {
         <Form
           submitLabel={INTEREST.submit}
           thanks={INTEREST.thanks}
+          turnstile="fund-interest"
           onSubmit={(values) => api<{ ok: true }>('/fund-interest', { body: values })}
         >
           <Field label="Name">

@@ -55,6 +55,7 @@ export function RsvpForm({ rsvp, className }: { rsvp: RsvpState; className?: str
       <Form
         submitLabel={RSVP.submit}
         pendingLabel={RSVP.pending}
+        turnstile="rsvp"
         onSubmit={submit}
         actions={
           <button type="button" className={ui.secondary} onClick={close} data-fog-clear="box">

@@ -8,3 +8,7 @@ GOOGLE_CLIENT_SECRET=
 ADMIN_EMAILS=
 # Leave empty to log emails to the dev server console instead of sending them.
 RESEND_API_KEY=
+
+# Cloudflare Turnstile secret for the public forms. Leave empty: `vite dev` then uses Cloudflare's
+# always-pass test secret. Production reads it from the Worker secret (see README).
+TURNSTILE_SECRET_KEY=

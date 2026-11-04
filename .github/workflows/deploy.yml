@@ -2,8 +2,9 @@
 # Worker. If lint, build or a migration fails, the job stops and nothing is deployed.
 #
 # Needs the CLOUDFLARE_API_TOKEN repository secret (see "Deploys" in the README).
-# Runtime secrets (GOOGLE_CLIENT_ID, ...) live on the Worker in Cloudflare; `wrangler deploy`
-# never deletes them, and this workflow doesn't touch them.
+# Runtime secrets (GOOGLE_CLIENT_ID, TURNSTILE_SECRET_KEY, ...) live on the Worker in Cloudflare;
+# `wrangler deploy` never deletes them, and this workflow doesn't touch them. The public Turnstile
+# site key is committed in .env.production, which `npm run build` reads.
 name: Deploy
 
 on:

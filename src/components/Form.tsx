@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react'
 import { ApiError } from '../lib/api'
+import { Turnstile, type TurnstileHandle } from './Turnstile'
 import ui from './ui.module.css'
 import styles from './Form.module.css'
 
@@ -74,8 +75,16 @@ interface FormProps {
   /** More buttons beside the submit, e.g. Cancel. */
   actions?: ReactNode
   className?: string
+  /**
+   * Puts a Turnstile check on the form, named for this action (the Worker expects the same name),
+   * and sends its token as `cf-turnstile-response` with the values.
+   */
+  turnstile?: string
   children: ReactNode
 }
+
+/** The token's field in the values, and the key the server's complaint about it comes back under. */
+const TOKEN_FIELD = 'cf-turnstile-response'
 
 const NETWORK_ERROR = 'Couldn’t reach the server. Check your connection and try again.'
 
@@ -84,7 +93,16 @@ const NETWORK_ERROR = 'Couldn’t reach the server. Check your connection and tr
  * that resolves. The browser checks the fields first; the server's per-field messages show under
  * the matching field.
  */
-export function Form({ submitLabel, pendingLabel = 'Sending…', thanks, onSubmit, actions, className, children }: FormProps) {
+export function Form({
+  submitLabel,
+  pendingLabel = 'Sending…',
+  thanks,
+  onSubmit,
+  actions,
+  className,
+  turnstile,
+  children,
+}: FormProps) {
   const [sent, setSent] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -92,6 +110,7 @@ export function Form({ submitLabel, pendingLabel = 'Sending…', thanks, onSubmi
   const idPrefix = useId()
   const thanksRef = useRef<HTMLDivElement>(null)
   const errorRef = useRef<HTMLParagraphElement>(null)
+  const human = useRef<TurnstileHandle>(null)
 
   if (sent && thanks) {
     return (
@@ -121,13 +140,22 @@ export function Form({ submitLabel, pendingLabel = 'Sending…', thanks, onSubmi
     setPending(true)
     setError(null)
     setIssues({})
+    let spent = false
     try {
+      if (turnstile && human.current) {
+        values[TOKEN_FIELD] = await human.current.token()
+        spent = true
+      }
       await onSubmit(values)
+      human.current?.reset()
       setPending(false)
       setSent(true)
       // The submit button is gone with the form, so keep focus somewhere that reads the thanks.
       requestAnimationFrame(() => thanksRef.current?.focus())
     } catch (caught) {
+      // Tokens are single-use, so a retry needs a fresh one. One that never came (the box still
+      // wants a tick) is left alone.
+      if (spent) human.current?.reset()
       setPending(false)
       const found = caught instanceof ApiError ? caught.issues : {}
       setIssues(found)
@@ -162,6 +190,7 @@ export function Form({ submitLabel, pendingLabel = 'Sending…', thanks, onSubmi
         data-fog-ignore
       >
         {children}
+        {turnstile && <Turnstile action={turnstile} ref={human} />}
         {/* Bots fill every field; people never see or reach this one. */}
         <input className={styles.trap} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" defaultValue="" />
         {error && (

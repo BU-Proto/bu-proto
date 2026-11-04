@@ -41,6 +41,7 @@ export function Join() {
             <Form
               submitLabel={JOIN_FORM.submit}
               thanks={JOIN_THANKS}
+              turnstile="join"
               onSubmit={(values) => api<{ ok: true }>('/join', { body: values })}
             >
               <Field label="Name" wide>

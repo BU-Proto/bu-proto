@@ -56,4 +56,5 @@
   //                                            portal. Comma-separated; a secret so personal
   //                                            emails stay out of this public repo
   //   RESEND_API_KEY                           leave unset locally to log emails instead of sending
+  //   TURNSTILE_SECRET_KEY                     the buproto.com widget's secret; empty locally uses the test key
 }

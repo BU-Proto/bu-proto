@@ -41,6 +41,7 @@ export interface LegalDoc {
 const email: LegalLink = { label: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` }
 const privacyLink: LegalLink = { label: 'Privacy Policy', href: '/privacy' }
 const termsLink: LegalLink = { label: 'Terms', href: '/terms' }
+const cloudflarePrivacy: LegalLink = { label: 'Cloudflare’s privacy policy', href: 'https://www.cloudflare.com/privacypolicy/' }
 
 export const PRIVACY: LegalDoc = {
   intro: {
@@ -77,6 +78,10 @@ export const PRIVACY: LegalDoc = {
               ' Like every website, our host receives your IP address, browser type and the pages you request. We use your IP address to limit how often one connection can send our forms, which keeps out spam.',
             ],
             [
+              { strong: 'The human check on our forms.' },
+              ' The join, fund interest and RSVP forms run Cloudflare Turnstile, a quick check that tells people from bots. While the form is open, it looks at signals from your browser and device (such as your IP address and browser details) and, now and then, asks you to tick a box. We only get back a pass or fail, never those signals.',
+            ],
+            [
               { strong: 'Admins.' },
               ' The few people who run the site sign in to a private portal with Google. From Google we get their name, email address, profile picture and Google account ID. We never see their Google password, and we don’t keep Google’s access tokens.',
             ],
@@ -109,7 +114,9 @@ export const PRIVACY: LegalDoc = {
           list: [
             [
               { strong: 'Cloudflare' },
-              ' hosts the site and stores the database. Cloudflare also keeps short-lived request logs (IP address, browser, page) that we use to debug problems.',
+              ' hosts the site and stores the database. Cloudflare also keeps short-lived request logs (IP address, browser, page) that we use to debug problems, and runs Turnstile, the human check on our forms, which sees your IP address and browser details to spot bots. See ',
+              cloudflarePrivacy,
+              '.',
             ],
             [{ strong: 'Resend' }, ' sends our emails, so it receives your name, email address and the message.'],
             [
@@ -166,6 +173,11 @@ export const PRIVACY: LegalDoc = {
       title: 'Cookies and local storage',
       body: [
         'The public site sets no cookies and runs no analytics, ads or third-party trackers.',
+        [
+          'The forms load Cloudflare Turnstile from Cloudflare’s own site, in a small frame of its own. It uses what it gathers only to tell people from bots, not for ads or to follow you around the web; Cloudflare explains what it keeps in ',
+          cloudflarePrivacy,
+          '.',
+        ],
         'When you RSVP, your browser remembers it in local storage, on your own device, so the button still says you’re going after a reload. It holds only the event’s number, never your name or email. Clearing your browser’s site data removes it.',
         'Admins get a cookie when they sign in. It keeps them signed in for up to 14 days, can’t be read by scripts on the page and is cleared when they sign out. A second cookie lasts only a few minutes while the Google sign-in is in progress.',
       ],
@@ -213,7 +225,7 @@ export const PRIVACY: LegalDoc = {
       id: 'security',
       title: 'Security',
       body: [
-        'Everything travels over HTTPS. Only signed-in admins can reach the portal, and the sign-in cookie can’t be read by scripts. The forms are rate limited and screened for spam bots. No system is perfectly secure, though, so please don’t put anything sensitive in a form: we never need passwords, ID numbers or financial details.',
+        'Everything travels over HTTPS. Only signed-in admins can reach the portal, and the sign-in cookie can’t be read by scripts. The forms are rate limited and screened for spam bots, partly with Cloudflare Turnstile. No system is perfectly secure, though, so please don’t put anything sensitive in a form: we never need passwords, ID numbers or financial details.',
       ],
     },
     {
