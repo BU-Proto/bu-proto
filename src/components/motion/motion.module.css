@@ -1,0 +1,91 @@
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.decrypt {
+  white-space: pre-wrap;
+}
+
+/* ---- Marquee ---- */
+
+.marquee {
+  --gap: clamp(28px, 4vw, 56px);
+  display: flex;
+  gap: var(--gap);
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.marqueeTrack {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--gap);
+  min-width: 100%;
+  justify-content: space-around;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marqueeTrack {
+    animation: marquee var(--duration, 40s) linear infinite;
+  }
+
+  .marquee[data-reverse] .marqueeTrack {
+    animation-direction: reverse;
+  }
+
+  .marquee:hover .marqueeTrack {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    flex-wrap: wrap;
+    mask-image: none;
+  }
+
+  .marqueeTrack {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .marqueeTrack[aria-hidden='true'] {
+    display: none;
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+}
+
+/* ---- ScrubWords ---- */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .word {
+      animation: lit linear both;
+      animation-timeline: view();
+      animation-range: entry calc(30% + var(--i) * 3%) cover calc(40% + var(--i) * 2%);
+    }
+  }
+}
+
+@keyframes lit {
+  from {
+    opacity: 0.14;
+    filter: blur(6px);
+  }
+
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}

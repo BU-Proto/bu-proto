@@ -1,16 +1,32 @@
 import { Link, useLoaderData } from 'react-router'
 import { Hero } from '../components/Hero'
-import { NoteIcon } from '../components/icons'
+import { Decrypt } from '../components/motion/Decrypt'
+import { Marquee } from '../components/motion/Marquee'
+import { NumberTicker } from '../components/motion/NumberTicker'
+import { ScrubWords } from '../components/motion/ScrubWords'
 import { SampleTag } from '../components/SampleTag'
 import { ScheduleCard } from '../components/ScheduleCard'
 import ui from '../components/ui.module.css'
-import { HOME_EMPTY, JOIN_CTA, NOTES, RHYTHM, RHYTHM_INTRO, TRACKS, TRACKS_INTRO } from '../content/home'
+import {
+  HOME_EMPTY,
+  JOIN_CTA,
+  MARQUEE,
+  NEXT_UP,
+  NOTES,
+  RHYTHM,
+  RHYTHM_INTRO,
+  TRACKS,
+  TRACKS_INTRO,
+  WINS_TITLE,
+} from '../content/home'
 import { BRAND, SCHEDULE } from '../content/site'
 import { WINS_EMPTY } from '../content/wins'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
 import { WinCard } from './Wins'
 import styles from './Home.module.css'
+
+const SEPARATORS = ['○', '>', '_']
 
 export function Home() {
   const { events, hackathons, wins } = useLoaderData<HomeData>()
@@ -21,63 +37,68 @@ export function Home() {
     .filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
     .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
     .slice(0, 3)
+  const fundNote = NOTES.find((note) => note.link)
 
   return (
     <>
       <title>{`${BRAND.full} · Your home base for making things`}</title>
       <Hero />
 
-      <div className={ui.page}>
-        <section aria-labelledby="tracks">
-          <div className={ui.sectionHead}>
-            <h2 id="tracks" className={ui.sectionTitle} data-fog-clear>
-              {TRACKS_INTRO.title}
+      <div className={styles.flow}>
+        {/* Three ways in: editorial rows, each led by one of the trail's own glyphs. */}
+        <section className={styles.tracks} aria-labelledby="tracks">
+          <header className={styles.head}>
+            <h2 id="tracks" className={styles.title} data-fog-clear>
+              <Decrypt text={TRACKS_INTRO.title} />
             </h2>
-            <p className={ui.sectionLede} data-fog-clear>
+            <p className={styles.lede} data-fog-clear>
               {TRACKS_INTRO.lede}
             </p>
-          </div>
-          <ol className={styles.tracks}>
-            {TRACKS.map((track, index) => (
-              <li key={track.name} className={`${ui.panel} ${styles.track}`}>
-                <span className={styles.glyph} aria-hidden="true">
+          </header>
+
+          <ol className={styles.trackList}>
+            {TRACKS.map((track) => (
+              <li key={track.name} className={styles.track}>
+                <span className={styles.glyph} data-glyph={track.glyph} aria-hidden="true">
                   {track.glyph}
                 </span>
-                <p className={ui.eyebrow} data-fog-clear>
-                  {String(index + 1).padStart(2, '0')} / track
-                </p>
                 <h3 className={styles.trackName} data-fog-clear>
-                  {track.name}
+                  <Decrypt text={track.name} duration={800} />
                 </h3>
-                <p className={styles.who} data-fog-clear>
-                  {track.who}
-                </p>
-                <ul className={styles.offers}>
-                  {track.offers.map((offer) => (
-                    <li key={offer} data-fog-clear>
-                      {offer}
-                    </li>
-                  ))}
-                </ul>
+                <div className={styles.trackBody}>
+                  <p className={styles.who} data-fog-clear>
+                    {track.who}
+                  </p>
+                  <ul className={styles.offers}>
+                    {track.offers.map((offer) => (
+                      <li key={offer} data-fog-clear>
+                        {offer}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </li>
             ))}
           </ol>
         </section>
 
-        <section className={ui.panel} aria-labelledby="rhythm">
-          <div className={ui.sectionHead}>
-            <h2 id="rhythm" className={ui.sectionTitle} data-fog-clear>
-              {RHYTHM_INTRO.title}
+        {/* The rhythm: a sticky heading, and a rail that fills as the beats go by. */}
+        <section className={styles.rhythm} aria-labelledby="rhythm">
+          <header className={styles.rhythmHead}>
+            <h2 id="rhythm" className={styles.title} data-fog-clear>
+              <Decrypt text={RHYTHM_INTRO.title} />
             </h2>
-            <p className={ui.sectionLede} data-fog-clear>
+            <p className={styles.lede} data-fog-clear>
               {RHYTHM_INTRO.lede}
             </p>
-          </div>
-          <ol className={styles.rhythm}>
+          </header>
+
+          <ol className={styles.beats}>
+            <span className={styles.rail} aria-hidden="true" />
             {RHYTHM.map((beat) => (
               <li key={beat.what} className={styles.beat} data-later={beat.later || undefined}>
-                <span className={styles.tick} aria-hidden="true" />
-                <p className={ui.eyebrow} data-fog-clear>
+                <span className={styles.dot} aria-hidden="true" />
+                <p className={styles.when} data-fog-clear>
                   {beat.when}
                 </p>
                 <h3 className={styles.beatWhat} data-fog-clear>
@@ -90,118 +111,133 @@ export function Home() {
             ))}
           </ol>
         </section>
+      </div>
 
-        <ul className={`${ui.panel} ${styles.notes}`}>
-          {NOTES.map((note) => (
-            <li key={note.text} className={styles.note}>
-              <NoteIcon name={note.icon} className={styles.noteIcon} />
-              <span data-fog-clear>{note.text}</span>
-              {note.link && (
-                <Link className={ui.textLink} to={note.link.href} data-fog-clear>
-                  {note.link.label} <span aria-hidden="true">→</span>
-                </Link>
-              )}
-            </li>
+      {/* Full bleed: the one place the page breaks out of its column. */}
+      <div className={styles.band}>
+        <Marquee label="What Proto does" duration={48}>
+          {MARQUEE.map((item, index) => (
+            <span key={item} className={styles.bandItem}>
+              <span data-fog-clear>{item}</span>
+              <span className={styles.bandGlyph} aria-hidden="true">
+                {SEPARATORS[index % SEPARATORS.length]}
+              </span>
+            </span>
           ))}
-        </ul>
+        </Marquee>
+        {fundNote?.link && (
+          <p className={styles.bandNote} data-fog-clear>
+            {fundNote.text}.{' '}
+            <Link className={ui.textLink} to={fundNote.link.href}>
+              {fundNote.link.label}
+            </Link>
+          </p>
+        )}
+      </div>
 
-        <div className={styles.split}>
-          <section className={`${ui.panel} ${styles.next}`} aria-labelledby="next-event">
-            <h2 id="next-event" className={ui.eyebrow} data-fog-clear>
-              Next up
-            </h2>
+      <div className={styles.flow}>
+        {/* What's next: a huge date, the event, hack night, and the countdowns. */}
+        <section className={styles.next} aria-labelledby="next-event">
+          <h2 id="next-event" className={styles.title} data-fog-clear>
+            <Decrypt text={NEXT_UP.title} />
+          </h2>
+
+          <div className={styles.nextGrid}>
             {nextEvent ? (
-              <div className={styles.nextBody}>
-                <div className={styles.tile} data-fog-clear="box">
-                  <span>{dateParts(nextEvent.date).month}</span>
-                  <b>{dateParts(nextEvent.date).day}</b>
-                  <span>{dateParts(nextEvent.date).weekday}</span>
-                </div>
-                <div className={styles.nextCopy}>
+              <article className={styles.event}>
+                <p className={styles.date} data-fog-clear>
+                  <span className={styles.dateDay}>{dateParts(nextEvent.date).day}</span>
+                  <span className={styles.dateMonth}>
+                    {dateParts(nextEvent.date).month} · {dateParts(nextEvent.date).weekday}
+                  </span>
+                </p>
+                <div className={styles.eventCopy}>
                   <p className={styles.kind} data-fog-clear>
                     {nextEvent.kind} <SampleTag show={nextEvent.placeholder} />
                   </p>
-                  <h3 className={styles.nextTitle} data-fog-clear>
+                  <h3 className={styles.eventTitle} data-fog-clear>
                     {nextEvent.title}
                   </h3>
-                  <p className={styles.nextMeta} data-fog-clear>
-                    {nextEvent.time} · {nextEvent.place}
+                  <p className={styles.eventMeta} data-fog-clear>
+                    {nextEvent.time}, {nextEvent.place}
                   </p>
                   {nextEvent.text && (
-                    <p className={styles.nextText} data-fog-clear>
+                    <p className={styles.eventText} data-fog-clear>
                       {nextEvent.text}
                     </p>
                   )}
                   <Link className={ui.textLink} to="/events" data-fog-clear>
-                    All events <span aria-hidden="true">→</span>
+                    {NEXT_UP.allEvents}
                   </Link>
                 </div>
-              </div>
+              </article>
             ) : (
-              <div className={styles.nextCopy}>
-                <p className={styles.nextMeta} data-fog-clear>
+              <div className={styles.eventCopy}>
+                <p className={styles.eventMeta} data-fog-clear>
                   {HOME_EMPTY.next}
                 </p>
                 <Link className={ui.textLink} to="/events" data-fog-clear>
-                  All events <span aria-hidden="true">→</span>
+                  {NEXT_UP.allEvents}
                 </Link>
               </div>
             )}
-          </section>
 
-          <ScheduleCard
-            className={styles.schedule}
-            location={SCHEDULE.location}
-            slots={SCHEDULE.slots}
-            placeholder={SCHEDULE.placeholder}
-          />
+            <ScheduleCard
+              className={styles.schedule}
+              location={SCHEDULE.location}
+              slots={SCHEDULE.slots}
+              placeholder={SCHEDULE.placeholder}
+            />
 
-          <section className={`${ui.panelDeep} ${styles.deadlines}`} aria-labelledby="deadlines">
-            <h2 id="deadlines" className={ui.eyebrow} data-fog-clear>
-              Apply by
-            </h2>
-            {deadlines.length === 0 ? (
-              <p className={styles.nextMeta} data-fog-clear>
-                {HOME_EMPTY.deadlines}
-              </p>
-            ) : (
-              <ol className={styles.deadlineList}>
-                {deadlines.map((hackathon) => (
-                  <li key={hackathon.id} className={styles.deadline}>
-                    <span className={styles.countdown} data-fog-clear>
-                      T-{daysUntil(hackathon.applyBy)}d
-                    </span>
-                    <span className={styles.deadlineName} data-fog-clear>
-                      {hackathon.name} <SampleTag show={hackathon.placeholder} />
-                    </span>
-                    <span className={styles.deadlineDate} data-fog-clear>
-                      {formatDay(hackathon.applyBy)}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-            <Link className={ui.textLink} to="/hackathons" data-fog-clear>
-              Every hackathon <span aria-hidden="true">→</span>
-            </Link>
-          </section>
-        </div>
+            <div className={styles.deadlines}>
+              <h3 className={styles.deadlinesTitle} data-fog-clear>
+                {NEXT_UP.applyBy}
+              </h3>
+              {deadlines.length === 0 ? (
+                <p className={styles.eventMeta} data-fog-clear>
+                  {HOME_EMPTY.deadlines}
+                </p>
+              ) : (
+                <ol className={styles.deadlineList}>
+                  {deadlines.map((hackathon) => (
+                    <li key={hackathon.id} className={styles.deadline}>
+                      <span className={styles.countdown} data-fog-clear>
+                        <NumberTicker value={daysUntil(hackathon.applyBy)} />
+                        <small>days</small>
+                      </span>
+                      <span className={styles.deadlineName} data-fog-clear>
+                        {hackathon.name} <SampleTag show={hackathon.placeholder} />
+                      </span>
+                      <span className={styles.deadlineDate} data-fog-clear>
+                        {formatDay(hackathon.applyBy)}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <Link className={ui.textLink} to="/hackathons" data-fog-clear>
+                {NEXT_UP.allHackathons}
+              </Link>
+            </div>
+          </div>
+        </section>
 
-        <section aria-labelledby="latest-wins">
-          <div className={ui.sectionHead}>
-            <h2 id="latest-wins" className={ui.sectionTitle} data-fog-clear>
-              Latest wins
+        {/* Wins, hung unevenly like photos on a wall. */}
+        <section className={styles.wins} aria-labelledby="latest-wins">
+          <header className={styles.winsHead}>
+            <h2 id="latest-wins" className={styles.title} data-fog-clear>
+              <Decrypt text={WINS_TITLE} />
             </h2>
             <Link className={ui.textLink} to="/wins" data-fog-clear>
-              All wins <span aria-hidden="true">→</span>
+              All wins
             </Link>
-          </div>
+          </header>
           {wins.length === 0 ? (
-            <p className={ui.panel} data-fog-clear>
+            <p className={styles.lede} data-fog-clear>
               {WINS_EMPTY}
             </p>
           ) : (
-            <ul className={styles.wins}>
+            <ul className={styles.winGrid}>
               {wins.slice(0, 3).map((win, index) => (
                 <WinCard key={win.id} win={win} rank={index} />
               ))}
@@ -209,14 +245,19 @@ export function Home() {
           )}
         </section>
 
-        <section className={`${ui.panel} ${styles.join}`} aria-labelledby="join-cta">
+        {/* The ask, lit word by word as it rises up the screen. */}
+        <section className={styles.join} aria-labelledby="join-cta">
           <h2 id="join-cta" className={styles.joinTitle} data-fog-clear>
-            {JOIN_CTA.title}
+            <ScrubWords text={JOIN_CTA.title} />
           </h2>
           <p className={styles.joinLede} data-fog-clear>
             {JOIN_CTA.lede}
           </p>
-          <Link className={ui.primary} to={JOIN_CTA.cta.href} data-fog-clear="box">
+          <Link
+            className={`${ui.primary} ${styles.joinButton}`}
+            to={JOIN_CTA.cta.href}
+            data-fog-clear="box"
+          >
             {JOIN_CTA.cta.label} <span aria-hidden="true">↗</span>
           </Link>
         </section>
