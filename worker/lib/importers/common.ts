@@ -22,7 +22,7 @@ export interface Importer {
 }
 
 /** Sent with every request, so the sources can tell who we are and how to reach us. */
-export const USER_AGENT = 'bu-proto-importer (+https://github.com/Jose-Gael-Cruz-Lopez/bu-proto)'
+export const USER_AGENT = 'bu-proto-importer (+https://github.com/BU-Proto/bu-proto)'
 
 /** GET a URL with our User-Agent and a timeout. Returns the response whatever its status. */
 export function politeFetch(url: string, accept: string): Promise<Response> {
