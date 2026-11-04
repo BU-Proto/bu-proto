@@ -77,6 +77,7 @@ export const COMPARISON = {
 export const INTEREST = {
   title: 'I’d use this',
   submit: 'Add me to the list',
+  privacy: 'We use your answers only for the fund, and show sponsors totals, never names.',
   lede: 'Not an application. Leave your details and we’ll email you when the fund opens. The list also shows sponsors there’s real demand.',
   thanks: {
     title: 'Thanks, you’re on the list',

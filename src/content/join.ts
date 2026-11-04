@@ -34,4 +34,5 @@ export const JOIN_FORM = {
   title: 'Sign up',
   submit: 'Join Proto',
   discordPending: 'The invite link goes up here once the server exists.',
+  privacy: 'We use this to email you about hack nights, trips and events.',
 } as const

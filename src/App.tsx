@@ -12,7 +12,9 @@ import { Hackathons } from './pages/Hackathons'
 import { Home } from './pages/Home'
 import { Join } from './pages/Join'
 import { NotFound } from './pages/NotFound'
+import { Privacy } from './pages/Privacy'
 import { Resources } from './pages/Resources'
+import { Terms } from './pages/Terms'
 import { TrackRecord } from './pages/TrackRecord'
 import { WinDetail, WinLoadError } from './pages/WinDetail'
 import { Wins } from './pages/Wins'
@@ -62,6 +64,8 @@ const router = createBrowserRouter([
       },
       { path: 'board', Component: Board, loader: ({ request }) => fetchContent('board', request.signal), ...dataRoute },
       { path: 'join', Component: Join },
+      { path: 'privacy', Component: Privacy },
+      { path: 'terms', Component: Terms },
       { path: '*', Component: NotFound },
     ],
   },

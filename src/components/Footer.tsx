@@ -1,8 +1,9 @@
 import { Link } from 'react-router'
+import { LEGAL_LINKS } from '../content/legal'
 import { BRAND, FOOTER, NAV_ITEMS } from '../content/site'
 import styles from './Footer.module.css'
 
-/** Every page again, and the working-name note. */
+/** Every page again, the working-name note, and the legal pages on the note's line. */
 export function Footer() {
   return (
     <footer className={styles.footer}>
@@ -21,9 +22,22 @@ export function Footer() {
           ))}
         </ul>
       </nav>
-      <p className={styles.note} data-fog-clear>
-        {FOOTER.note}
-      </p>
+      <div className={styles.fine}>
+        <p className={styles.note} data-fog-clear>
+          {FOOTER.note}
+        </p>
+        <nav aria-label="Legal">
+          <ul className={styles.legal}>
+            {LEGAL_LINKS.map((item) => (
+              <li key={item.href}>
+                <Link to={item.href} data-fog-clear>
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
     </footer>
   )
 }

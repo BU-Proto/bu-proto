@@ -1,0 +1,24 @@
+.note {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.link {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.link:hover {
+  border-bottom-color: #fff;
+}
+
+.link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

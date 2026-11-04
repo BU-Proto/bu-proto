@@ -2,6 +2,7 @@ import { Field, Form } from '../components/Form'
 import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
 import { CoverIcon } from '../components/icons'
 import { PageIntro } from '../components/PageIntro'
+import { PrivacyNote } from '../components/PrivacyNote'
 import ui from '../components/ui.module.css'
 import {
   AMOUNTS,
@@ -154,6 +155,7 @@ export function Grants() {
           <p className={ui.sectionLede} data-fog-clear>
             {INTEREST.lede}
           </p>
+          <PrivacyNote text={INTEREST.privacy} />
         </div>
 
         {/* Interest list only, never an application. */}

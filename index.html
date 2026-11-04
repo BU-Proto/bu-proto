@@ -18,7 +18,25 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <!-- What crawlers (and anyone without JavaScript) read. React replaces it as soon as the app loads. -->
+    <div id="root">
+      <main style="max-width: 68ch; margin: 0 auto; padding: 48px 20px; font-family: Inter, system-ui, sans-serif; line-height: 1.6; color: #f6fbff">
+        <h1>BU Proto</h1>
+        <p>
+          A student-run home base at Boston University for people who make things: weekly hack nights, group
+          trips to hackathons, demo nights, and microgrants coming soon. Anyone at BU can join, from first-time
+          coders to student founders.
+        </p>
+        <p>
+          <a href="/join" style="color: #9df0a8">Join</a> ·
+          <a href="/events" style="color: #9df0a8">Events</a> ·
+          <a href="/hackathons" style="color: #9df0a8">Hackathons</a> ·
+          <a href="/privacy" style="color: #9df0a8">Privacy Policy</a> ·
+          <a href="/terms" style="color: #9df0a8">Terms of Service</a> ·
+          <a href="mailto:hello@buproto.com" style="color: #9df0a8">hello@buproto.com</a>
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

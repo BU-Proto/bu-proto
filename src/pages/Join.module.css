@@ -56,6 +56,10 @@
   margin-bottom: 18px;
 }
 
+.privacy {
+  margin-top: 16px;
+}
+
 /* Lined up with the form's fields above it. */
 .discord {
   display: grid;

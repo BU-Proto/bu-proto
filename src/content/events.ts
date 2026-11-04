@@ -18,6 +18,7 @@ export const RSVP = {
   pending: 'Saving…',
   cancel: 'Cancel',
   hint: 'Any email works. We’ll only use it about this event.',
+  privacy: 'Your browser will remember that you RSVP’d.',
 } as const
 
 /** Copy for an event's own page, /events/:id. */

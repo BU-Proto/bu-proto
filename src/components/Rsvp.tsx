@@ -7,7 +7,9 @@ import { RSVP } from '../content/events'
 import type { RsvpState } from '../lib/useRsvp'
 import { Field, Form } from './Form'
 import { inputClass } from './formFields'
+import { PrivacyNote } from './PrivacyNote'
 import ui from './ui.module.css'
+import styles from './Rsvp.module.css'
 
 /** `prominent` sets the RSVP as the main action, as on the event's own page; in a list it stays quiet. */
 export function RsvpButton({ rsvp, className, prominent }: { rsvp: RsvpState; className?: string; prominent?: boolean }) {
@@ -68,6 +70,7 @@ export function RsvpForm({ rsvp, className }: { rsvp: RsvpState; className?: str
           <input className={inputClass} name="email" type="email" autoComplete="email" required />
         </Field>
       </Form>
+      <PrivacyNote text={RSVP.privacy} className={styles.privacy} />
     </div>
   )
 }

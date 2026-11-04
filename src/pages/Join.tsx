@@ -1,6 +1,7 @@
 import { Field, Form } from '../components/Form'
 import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
 import { PageIntro } from '../components/PageIntro'
+import { PrivacyNote } from '../components/PrivacyNote'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { DISCORD, JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS } from '../content/join'
@@ -78,6 +79,7 @@ export function Join() {
                 </select>
               </Field>
             </Form>
+            <PrivacyNote text={JOIN_FORM.privacy} className={styles.privacy} />
           </section>
 
           {/* Straight on the field under the form: a second, smaller way in, not another card. */}

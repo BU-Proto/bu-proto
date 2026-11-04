@@ -1,0 +1,151 @@
+.effective {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  text-shadow: var(--on-field-shadow);
+}
+
+/* Contents on the field at the left, the text at a reading measure beside it. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 820px);
+  gap: 32px clamp(28px, 4vw, 56px);
+  align-items: start;
+}
+
+.contents {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 12px;
+  padding-top: clamp(18px, 2.6vw, 28px);
+  text-shadow: var(--on-field-shadow);
+}
+
+.contentsTitle {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.contentsList {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.contentsList a {
+  display: block;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.contentsList a:hover {
+  color: var(--accent);
+}
+
+.contentsList a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.doc {
+  display: grid;
+  gap: clamp(28px, 3.4vw, 40px);
+  padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 56px);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.section {
+  display: grid;
+  gap: 14px;
+  max-width: 68ch;
+  /* Lands a contents jump with a little air above the heading. */
+  scroll-margin-top: 24px;
+}
+
+.section p {
+  margin: 0;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.heading {
+  margin: 0;
+  font-size: clamp(21px, 2.3vw, 26px);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.section strong {
+  font-weight: 600;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.list li {
+  padding-left: 4px;
+  text-wrap: pretty;
+}
+
+.list li::marker {
+  color: var(--accent);
+}
+
+.link {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.link:hover {
+  border-bottom-color: #fff;
+}
+
+.link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.other {
+  max-width: 68ch;
+  margin: 0;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Above the text on narrow screens, so it doesn't stick over it. */
+  .contents {
+    position: static;
+    padding-top: 0;
+  }
+
+  .contentsList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .contentsList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
