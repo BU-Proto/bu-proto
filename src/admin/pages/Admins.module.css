@@ -1,0 +1,22 @@
+.addForm {
+  display: grid;
+  grid-template-columns: minmax(0, 360px) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+/* Line the button up with the input, not the label above it. */
+.addForm > button {
+  margin-top: 22px;
+}
+
+@media (max-width: 560px) {
+  .addForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .addForm > button {
+    justify-self: start;
+    margin-top: 0;
+  }
+}

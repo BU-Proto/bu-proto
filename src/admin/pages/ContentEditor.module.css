@@ -1,0 +1,49 @@
+.form {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+  padding: 20px 20px 0;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+/* The save bar sticks to the bottom of the screen on long forms. */
+.bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 16px 16px;
+  background: rgba(8, 30, 52, 0.96);
+}
+
+.barStatus {
+  flex: 1;
+  min-width: 200px;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px 16px 0;
+  }
+
+  .bar {
+    padding: 12px 16px;
+  }
+}

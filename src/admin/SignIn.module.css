@@ -1,0 +1,89 @@
+.screen {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px 16px;
+  background: radial-gradient(120% 80% at 50% 0%, rgba(157, 240, 168, 0.07), transparent 60%), var(--base);
+}
+
+.card {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  width: min(420px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.seal {
+  display: block;
+}
+
+.text {
+  display: grid;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.lede {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.message:empty {
+  display: none;
+}
+
+.error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 150, 150, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 110, 110, 0.08);
+  color: #ffd6d6;
+}
+
+.github {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--on-light);
+  font-weight: 500;
+}
+
+.github:hover {
+  background: #e8f5ff;
+}
+
+.github:focus-visible,
+.back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.back {
+  justify-self: center;
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+.back:hover {
+  color: var(--ink);
+}

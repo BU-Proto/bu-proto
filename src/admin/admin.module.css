@@ -1,0 +1,653 @@
+/* Shared pieces for the portal: page header, panels, buttons, fields, tables, badges, dialogs.
+   The portal is a work tool, so everything here is flatter and denser than the public site. */
+
+.page {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  max-width: 1080px;
+  min-width: 0;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.dim {
+  color: var(--ink-dim);
+}
+
+.soft {
+  color: var(--ink-soft);
+}
+
+/* ---- Page header ------------------------------------------------------------------------ */
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.headerText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--ink-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.eyebrow a:hover {
+  color: var(--ink);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.lede {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Panels ------------------------------------------------------------------------------ */
+
+.panel {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.panelFlush {
+  composes: panel;
+  padding: 0;
+  overflow: hidden;
+}
+
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ---- Buttons ----------------------------------------------------------------------------- */
+
+.button,
+.primary,
+.danger,
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.button:hover,
+.ghost:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.primary {
+  border-color: #fff;
+  background: #fff;
+  color: var(--on-light);
+}
+
+.primary:hover {
+  background: #e8f5ff;
+}
+
+.danger {
+  border-color: rgba(255, 138, 138, 0.45);
+  background: rgba(255, 110, 110, 0.12);
+  color: #ffd0d0;
+}
+
+.danger:hover {
+  background: rgba(255, 110, 110, 0.22);
+}
+
+.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-soft);
+}
+
+.small {
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.button:disabled,
+.primary:disabled,
+.danger:disabled,
+.ghost:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.button:focus-visible,
+.primary:focus-visible,
+.danger:focus-visible,
+.ghost:focus-visible,
+.link:focus-visible,
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.link {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 500;
+}
+
+.link:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---- Fields ------------------------------------------------------------------------------ */
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.label {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 0;
+  text-transform: uppercase;
+}
+
+.hint {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 12px;
+}
+
+.error {
+  margin: 0;
+  color: #ffb4b4;
+  font-size: 12px;
+}
+
+.input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(0, 10, 24, 0.35);
+  color: var(--ink);
+  font: inherit;
+}
+
+.input::placeholder {
+  color: rgba(246, 251, 255, 0.35);
+}
+
+.input:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.input:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid rgba(157, 240, 168, 0.35);
+  outline-offset: 0;
+}
+
+.input[aria-invalid='true'] {
+  border-color: rgba(255, 150, 150, 0.7);
+}
+
+textarea.input {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+select.input {
+  appearance: none;
+  padding-right: 32px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%),
+    linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+  background-position:
+    right 16px center,
+    right 11px center;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+select.input option {
+  background: var(--base);
+}
+
+input[type='date'].input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* A checkbox drawn as a switch. It stays a real checkbox, so space toggles it. */
+.switchRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 4px 12px;
+  cursor: pointer;
+}
+
+.switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  margin: 1px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+}
+
+.switch:checked {
+  border-color: var(--accent);
+  background: rgba(157, 240, 168, 0.3);
+}
+
+.switch:checked::after {
+  left: 18px;
+  background: var(--accent);
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.switchText {
+  display: grid;
+  gap: 2px;
+}
+
+.switchLabel {
+  font-weight: 500;
+}
+
+/* ---- Tables ------------------------------------------------------------------------------ */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--ink-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right !important;
+}
+
+.rowTitle {
+  font-weight: 500;
+}
+
+.rowTitle:hover {
+  color: var(--accent);
+}
+
+.rowTitle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Phones: each row stacks into a small card, with the column name before each value. */
+@media (max-width: 640px) {
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+  }
+
+  .table tr {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table td {
+    padding: 2px 0;
+    border: 0;
+  }
+
+  .table td[data-label]::before {
+    content: attr(data-label) ' ';
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  .num {
+    text-align: left !important;
+  }
+}
+
+/* ---- Badges, tabs ------------------------------------------------------------------------ */
+
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px 2px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The public site's "sample" tag: dashed, with the amber dot. */
+.badgeSample {
+  composes: badge;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.badgeSample::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffd38a;
+}
+
+.badgeDraft {
+  composes: badge;
+  border-color: rgba(255, 211, 138, 0.45);
+  color: #ffe2b0;
+}
+
+.badgeAccent {
+  composes: badge;
+  border-color: rgba(157, 240, 168, 0.5);
+  color: var(--accent);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-current='page'] {
+  background: rgba(157, 240, 168, 0.16);
+  color: var(--accent);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+/* ---- Status line, empty state, error ------------------------------------------------------ */
+
+.status {
+  margin: 0;
+  min-height: 1.45em;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.statusOk {
+  color: var(--accent);
+}
+
+.statusError {
+  color: #ffb4b4;
+}
+
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 28px 20px;
+  color: var(--ink-soft);
+}
+
+.empty h2,
+.empty h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.empty p {
+  margin: 0;
+}
+
+.callout {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 150, 150, 0.35);
+  border-radius: 14px;
+  background: rgba(255, 110, 110, 0.08);
+}
+
+.callout h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.callout p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* ---- Confirm dialog ---------------------------------------------------------------------- */
+
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  background: #0b2440;
+  color: var(--ink);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+}
+
+.dialog::backdrop {
+  background: rgba(2, 10, 20, 0.6);
+}
+
+.dialogBody {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.dialogText {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .button,
+  .primary,
+  .danger,
+  .ghost,
+  .tab,
+  .input {
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .switch::after {
+    transition: left 0.15s ease;
+  }
+
+  .dialog[open] {
+    animation: rise 0.18s ease-out;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
