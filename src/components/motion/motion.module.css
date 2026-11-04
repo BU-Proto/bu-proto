@@ -89,3 +89,18 @@
     filter: none;
   }
 }
+
+/* ---- AsciiFigure ---- */
+
+.figure {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--figure-size, 9px);
+  line-height: 1;
+  letter-spacing: 0;
+  /* Mono ligatures would turn runs like => and ~~ into arrows and break the grid. */
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0;
+  white-space: pre;
+  user-select: none;
+}

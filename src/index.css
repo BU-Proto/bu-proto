@@ -11,6 +11,12 @@
   --on-light: #0b2a46;
   /* For copy that sits straight on the field rather than on glass. */
   --on-field-shadow: 0 1px 2px rgba(0, 25, 55, 0.55), 0 0 18px rgba(0, 25, 55, 0.45);
+  /* Solid grounds the home page's sections and the reading pages stand on (see lib/pageGround.ts). */
+  --ground-ink: #03111f;
+  --ground-paper: #e3eaf0;
+  --bu-red: #cc0000;
+  --on-paper: #0b2a46;
+  --on-paper-soft: rgba(11, 42, 70, 0.72);
   --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
 

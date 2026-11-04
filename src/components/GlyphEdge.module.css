@@ -1,0 +1,21 @@
+.edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: var(--strip-h);
+  /* Overlaps the band by a pixel so no hairline of the field shows through at any zoom. */
+  margin-bottom: -1px;
+  background-image: var(--strip);
+  background-size: var(--strip-w) var(--strip-h);
+  background-repeat: repeat-x;
+  background-position: left bottom;
+  pointer-events: none;
+}
+
+.edge[data-side='bottom'] {
+  top: 100%;
+  bottom: auto;
+  margin: -1px 0 0;
+  transform: scaleY(-1);
+}

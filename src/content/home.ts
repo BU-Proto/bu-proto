@@ -74,6 +74,8 @@ export interface Beat {
   detail: string
   /** Planned for later, not part of the first year. */
   later?: boolean
+  /** The weeks of a typical semester it lands on, for the score on the home page. */
+  weeks: readonly number[]
 }
 
 export const RHYTHM_INTRO = {
@@ -82,11 +84,19 @@ export const RHYTHM_INTRO = {
 } as const
 
 export const RHYTHM: readonly Beat[] = [
-  { when: 'Weekly', what: 'Hack night', detail: 'Open to everyone, with food.' },
-  { when: 'About monthly', what: 'Hackathon trip', detail: 'We go as a group.' },
-  { when: 'Each semester', what: 'Demo night', detail: 'Anyone can show anything.' },
-  { when: 'Year two', what: 'Our own hackathon', detail: 'A BU hackathon, run by us.', later: true },
+  { when: 'Weekly', what: 'Hack night', detail: 'Open to everyone, with food.', weeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] },
+  { when: 'About monthly', what: 'Hackathon trip', detail: 'We go as a group.', weeks: [4, 8, 12] },
+  { when: 'Each semester', what: 'Demo night', detail: 'Anyone can show anything.', weeks: [14] },
+  { when: 'Year two', what: 'Our own hackathon', detail: 'A BU hackathon, run by us.', later: true, weeks: [] },
 ]
+
+/** The score's columns: a semester, roughly week by week. */
+export const SEMESTER = {
+  weeks: 14,
+  caption: 'Roughly how a semester runs, week by week',
+  weekLabel: 'Week',
+  later: 'Not yet: planned for year two',
+} as const
 
 export const NEXT_UP = {
   title: 'Next up',

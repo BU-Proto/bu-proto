@@ -1,14 +1,39 @@
-import { useEffect, useRef } from 'react'
-import { Outlet, ScrollRestoration } from 'react-router'
-import { AsciiField, DEFAULT_FIELD_SETTINGS, type AsciiFieldHandle } from '../ascii-field'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { Outlet, ScrollRestoration, useLocation } from 'react-router'
+import { AsciiField, type AsciiFieldHandle } from '../ascii-field'
+import { glyphTexture } from '../lib/glyphArt'
+import { GROUNDS, groundFor, lightFilter, type GroundName } from '../lib/pageGround'
+import { reducedMotion } from '../lib/useInView'
 import { Footer } from './Footer'
 import { TopBar } from './TopBar'
 import styles from './Layout.module.css'
 
-/** Every page: the ASCII field mounted once behind everything, the top bar, the page, the footer. */
+/** How long the field dims before it takes the next page's settings (see the CSS for the rise). */
+const DIM_MS = 200
+
+/**
+ * Every page: the ASCII field mounted once behind everything, tuned to the page's ground, then the
+ * top bar, the page and the footer.
+ */
 export function Layout() {
   const fieldRef = useRef<AsciiFieldHandle>(null)
   const shellRef = useRef<HTMLDivElement>(null)
+  const { pathname } = useLocation()
+  const target = groundFor(pathname).name
+  // The ground the field is showing. It trails the route by a beat: the field dims, swaps its
+  // settings while it can't be seen (a new glyph size rebuilds its grid), then comes back up.
+  const [trailing, setTrailing] = useState<GroundName>(target)
+  // Under reduced motion there's no dim: the field takes the new page's settings at once.
+  const shown = reducedMotion() ? target : trailing
+  const dimmed = shown !== target
+  const ground = GROUNDS[shown]
+  const texture = useMemo(() => glyphTexture('rgba(190, 215, 240, 0.075)'), [])
+
+  useEffect(() => {
+    if (trailing === target) return
+    const timer = window.setTimeout(() => setTrailing(target), reducedMotion() ? 0 : DIM_MS)
+    return () => window.clearTimeout(timer)
+  }, [trailing, target])
 
   // The field re-measures marked text on scroll and resize, but not when a new page or a
   // form's thank-you state mounts new text. Tell it whenever the content changes.
@@ -32,8 +57,23 @@ export function Layout() {
 
   return (
     <>
-      <AsciiField ref={fieldRef} settings={DEFAULT_FIELD_SETTINGS} className={styles.field} />
-      <div ref={shellRef} className={styles.shell}>
+      <div
+        className={styles.fieldLight}
+        data-dimmed={dimmed || undefined}
+        style={{ filter: lightFilter(ground.light) }}
+      >
+        <AsciiField ref={fieldRef} settings={ground.field} className={styles.field} />
+      </div>
+      <div ref={shellRef} className={styles.shell} data-ground={shown}>
+        {/* For reading pages: the field frames the header, then a solid ground takes over. */}
+        <div
+          className={styles.ground}
+          data-reach={GROUNDS[target].reach}
+          style={{ '--texture': texture ? `url(${texture})` : 'none' } as CSSProperties}
+          aria-hidden="true"
+        >
+          <span className={styles.groundTexture} />
+        </div>
         <TopBar />
         <main className={styles.main}>
           <Outlet />

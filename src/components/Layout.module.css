@@ -1,11 +1,25 @@
-.field {
+/* Carries the page's light (a filter) and the dim between pages, so the canvas itself stays put. */
+.fieldLight {
   position: fixed;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
+  transition:
+    opacity 520ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    filter 900ms cubic-bezier(0.3, 0.6, 0.2, 1);
+}
+
+.fieldLight[data-dimmed] {
+  opacity: 0.12;
+  transition-duration: 200ms, 900ms;
+}
+
+.field {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  pointer-events: none;
 }
 
 .shell {
@@ -21,8 +35,52 @@
   padding-left: max(16px, env(safe-area-inset-left, 0px));
 }
 
+/* Positioned, so they paint over the ground layer below, which comes first. */
+.shell > :not(.ground) {
+  position: relative;
+}
+
 .main {
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+/*
+ * The page's own ground, scrolling with it. On full-field pages it's empty. On reading pages the
+ * field shows behind the header, then fades into solid ink with a faint frozen glyph texture.
+ */
+.ground {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 600ms ease;
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 30vh,
+    rgba(3, 17, 31, 0.7) 52vh,
+    var(--ground-ink) 74vh
+  );
+  pointer-events: none;
+}
+
+.ground[data-reach='top'] {
+  opacity: 1;
+}
+
+.groundTexture {
+  position: absolute;
+  inset: 0;
+  background-image: var(--texture);
+  background-size: 595px 400px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 46vh, #000 90vh);
+  mask-image: linear-gradient(to bottom, transparent 46vh, #000 90vh);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fieldLight,
+  .ground {
+    transition: none;
+  }
 }
