@@ -9,8 +9,9 @@
     "typecheck": "tsc -b",
     "lint": "oxlint",
     "preview": "npm run build && vite preview",
-    "deploy": "npm run build && wrangler d1 migrations apply bu-proto --remote && wrangler deploy",
-    "db:migrate": "wrangler d1 migrations apply bu-proto --local",
+    "deploy": "npm run build && npm run db:migrate:remote && wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "cf-typegen": "wrangler types worker/worker-configuration.d.ts"
   },
   "dependencies": {
