@@ -77,6 +77,17 @@ export function WinCard({ win, rank }: { win: Win; rank: number }) {
   )
 }
 
+/** Wins as cards pinned to a wall, each opening its project page. */
+export function WinGrid({ wins }: { wins: readonly Win[] }) {
+  return (
+    <ul className={styles.grid}>
+      {wins.map((win, index) => (
+        <WinCard key={win.id} win={win} rank={index} />
+      ))}
+    </ul>
+  )
+}
+
 export function Wins() {
   const wins = useLoaderData<Win[]>()
 
@@ -88,11 +99,7 @@ export function Wins() {
           {WINS_EMPTY}
         </p>
       ) : (
-        <ul className={styles.grid}>
-          {wins.map((win, index) => (
-            <WinCard key={win.id} win={win} rank={index} />
-          ))}
-        </ul>
+        <WinGrid wins={wins} />
       )}
     </div>
   )

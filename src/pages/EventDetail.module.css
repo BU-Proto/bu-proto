@@ -1,0 +1,97 @@
+/* What only an event's page has; the shared layout is in components/DetailPage.module.css. */
+
+/* The home page's "Next up" date: the day huge and light, the month and weekday beside it. */
+.date {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(14px, 1.6vw, 22px);
+  margin: 0 0 clamp(14px, 2.6vh, 26px);
+}
+
+.day {
+  font-size: clamp(88px, 11vw, 160px);
+  font-weight: 200;
+  letter-spacing: -0.06em;
+  line-height: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.monthWeek {
+  padding-bottom: 0.15em;
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.35;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 1.1em;
+  margin-top: clamp(14px, 2.2vh, 20px);
+}
+
+.kind {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.time {
+  color: var(--ink);
+}
+
+.past {
+  margin: clamp(20px, 3vh, 28px) 0 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  font-style: italic;
+}
+
+/* The RSVP opens in a small glass panel of its own under the buttons, so the fields hold up over a
+   photo. */
+.rsvp {
+  max-width: 560px;
+  margin-top: 16px;
+}
+
+/* A run of show: the time in a column of its own, so the lines scan down the left. */
+.agenda > li {
+  display: grid;
+  grid-template-columns: 3.4em minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.agendaTime {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.place {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+.map {
+  margin: 10px 0 0;
+  font-size: 15px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rsvp {
+    animation: open 200ms ease-out;
+  }
+}
+
+@keyframes open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

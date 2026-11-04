@@ -23,6 +23,7 @@
 }
 
 .event {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 16px 22px;
@@ -101,8 +102,39 @@
   text-wrap: pretty;
 }
 
+/* The title's link covers the row; the RSVP button and form sit above it so they still work. */
+.rowLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.rowLink:focus-visible {
+  outline: none;
+}
+
+.event:has(.rowLink:focus-visible) {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+.event:has(.rowLink:hover) .title a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.above {
+  position: relative;
+  z-index: 2;
+}
+
 /* The RSVP form opens under its own event, lined up with the event's text, not in a box of its own. */
 .rsvp {
+  position: relative;
+  z-index: 2;
   grid-column: 2 / -1;
   padding: 18px 0 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.18);

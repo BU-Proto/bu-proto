@@ -1,0 +1,22 @@
+/* What only a hackathon's page has; the shared layout is in components/DetailPage.module.css. */
+
+/* The board's status lamp, then the apply-by date in words. */
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-top: clamp(16px, 2.6vh, 24px);
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.lamp {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.wins {
+  display: grid;
+  gap: 18px;
+}

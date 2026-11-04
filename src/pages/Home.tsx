@@ -158,7 +158,10 @@ export function Home() {
                 </p>
                 <div className={styles.eventCopy}>
                   <h3 className={styles.eventTitle} data-fog-clear>
-                    {nextEvent.title}
+                    {/* Stretched over the date and the copy; "All events" sits above it. */}
+                    <Link className={styles.stretch} to={`/events/${nextEvent.id}`}>
+                      {nextEvent.title}
+                    </Link>
                     <SampleTag show={nextEvent.placeholder} />
                   </h3>
                   <p className={styles.eventMeta} data-fog-clear>
@@ -173,7 +176,7 @@ export function Home() {
                       {nextEvent.text}
                     </p>
                   )}
-                  <Link className={ui.textLink} to="/events" data-fog-clear>
+                  <Link className={`${ui.textLink} ${styles.aboveStretch}`} to="/events" data-fog-clear>
                     {NEXT_UP.allEvents}
                   </Link>
                 </div>
@@ -213,7 +216,9 @@ export function Home() {
                         <small>days</small>
                       </span>
                       <span className={styles.deadlineName} data-fog-clear>
-                        {hackathon.name}
+                        <Link className={styles.stretch} to={`/hackathons/${hackathon.id}`}>
+                          {hackathon.name}
+                        </Link>
                         <SampleTag show={hackathon.placeholder} />
                       </span>
                       <span className={styles.deadlineDate} data-fog-clear>

@@ -2,10 +2,12 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import { adminRoutes } from './admin/routes'
 import { Layout } from './components/Layout'
 import { LoadError, PageLoading } from './components/RouteStates'
-import { fetchContent, fetchHome, fetchWinPage } from './lib/content'
+import { fetchContent, fetchEventPage, fetchHackathonPage, fetchHome, fetchWinPage } from './lib/content'
 import { Board } from './pages/Board'
+import { EventDetail, EventLoadError } from './pages/EventDetail'
 import { Events } from './pages/Events'
 import { Grants } from './pages/Grants'
+import { HackathonDetail, HackathonLoadError } from './pages/HackathonDetail'
 import { Hackathons } from './pages/Hackathons'
 import { Home } from './pages/Home'
 import { Join } from './pages/Join'
@@ -31,6 +33,13 @@ const router = createBrowserRouter([
         loader: ({ request }) => fetchContent('hackathons', request.signal),
         ...dataRoute,
       },
+      {
+        path: 'hackathons/:id',
+        Component: HackathonDetail,
+        loader: ({ params, request }) => fetchHackathonPage(params.id, request.signal),
+        HydrateFallback: PageLoading,
+        ErrorBoundary: HackathonLoadError,
+      },
       { path: 'grants', Component: Grants },
       { path: 'wins', Component: Wins, loader: ({ request }) => fetchContent('wins', request.signal), ...dataRoute },
       {
@@ -38,12 +47,19 @@ const router = createBrowserRouter([
         Component: WinDetail,
         loader: ({ params, request }) => fetchWinPage(params.id, request.signal),
         HydrateFallback: PageLoading,
-        // Like LoadError, but a missing or unpublished win gets a not-found state instead.
+        // Detail pages: like LoadError, but a missing or unpublished row gets a not-found state.
         ErrorBoundary: WinLoadError,
       },
       { path: 'track-record', Component: TrackRecord },
       { path: 'resources', Component: Resources },
       { path: 'events', Component: Events, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
+      {
+        path: 'events/:id',
+        Component: EventDetail,
+        loader: ({ params, request }) => fetchEventPage(params.id, request.signal),
+        HydrateFallback: PageLoading,
+        ErrorBoundary: EventLoadError,
+      },
       { path: 'board', Component: Board, loader: ({ request }) => fetchContent('board', request.signal), ...dataRoute },
       { path: 'join', Component: Join },
       { path: '*', Component: NotFound },

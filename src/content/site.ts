@@ -59,3 +59,11 @@ export const ROUTE_STATES = {
     retry: 'Try again',
   },
 } as const
+
+/** The photo viewer every gallery opens into. */
+export const LIGHTBOX = {
+  label: 'Photo viewer',
+  close: 'Close',
+  previous: 'Previous photo',
+  next: 'Next photo',
+} as const

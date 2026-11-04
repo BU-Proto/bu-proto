@@ -83,22 +83,31 @@
   white-space: nowrap;
 }
 
-.name a:hover {
+/* The name's link covers the row, so the whole row opens the hackathon's page. */
+.row {
+  position: relative;
+}
+
+.rowLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.rowLink:focus-visible {
+  outline: none;
+}
+
+.row:has(.rowLink:focus-visible) {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.row:has(.rowLink:hover) .name a {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
-}
-
-.name a:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
-
-.external {
-  margin-left: 4px;
-  color: var(--ink-soft);
-  font-size: 13px;
-  font-weight: 400;
 }
 
 .where {
@@ -111,31 +120,6 @@
   align-items: baseline;
   gap: 2px 12px;
   white-space: nowrap;
-}
-
-/* Status is a coloured word with its lamp, nothing around it. */
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ink-soft);
-  font-size: 13px;
-}
-
-.status::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.status[data-status='open'] {
-  color: var(--accent);
-}
-
-.status[data-status='closing'] {
-  color: #ffd38a;
 }
 
 .travel[data-covered='true'] {
@@ -178,18 +162,6 @@
   padding: 28px clamp(16px, 2.4vw, 24px) 30px;
   color: var(--ink-soft);
   font-size: 15px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .status[data-status='closing']::before {
-    animation: lamp 1.6s ease-in-out infinite;
-  }
-}
-
-@keyframes lamp {
-  50% {
-    opacity: 0.3;
-  }
 }
 
 /* On phones each row becomes a stacked ticket: the name across the top, then pairs of facts. */

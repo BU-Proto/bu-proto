@@ -40,3 +40,39 @@ export async function fetchWinPage(id: string | undefined, signal?: AbortSignal)
   ])
   return { win: item, wins }
 }
+
+export interface EventPageData {
+  event: ProtoEvent
+  /** Every published event, oldest first, for earlier and later. */
+  events: ProtoEvent[]
+}
+
+const byDate = (a: ProtoEvent, b: ProtoEvent) => a.date.localeCompare(b.date) || a.id - b.id
+
+/** One event for its own page, plus the rest so it can link to the ones either side. */
+export async function fetchEventPage(id: string | undefined, signal?: AbortSignal): Promise<EventPageData> {
+  const [{ item }, events] = await Promise.all([
+    api<{ item: ProtoEvent }>(`/content/events/${encodeURIComponent(id ?? '')}`, { signal }),
+    fetchContent('events', signal),
+  ])
+  return { event: item, events: events.toSorted(byDate) }
+}
+
+export interface HackathonPageData {
+  hackathon: Hackathon
+  /** Every published hackathon, by start date, for earlier and later. */
+  hackathons: Hackathon[]
+  /** Every published win, so the page can show the ones from this hackathon. */
+  wins: Win[]
+}
+
+const byStart = (a: Hackathon, b: Hackathon) => a.starts.localeCompare(b.starts) || a.id - b.id
+
+export async function fetchHackathonPage(id: string | undefined, signal?: AbortSignal): Promise<HackathonPageData> {
+  const [{ item }, hackathons, wins] = await Promise.all([
+    api<{ item: Hackathon }>(`/content/hackathons/${encodeURIComponent(id ?? '')}`, { signal }),
+    fetchContent('hackathons', signal),
+    fetchContent('wins', signal),
+  ])
+  return { hackathon: item, hackathons: hackathons.toSorted(byStart), wins }
+}

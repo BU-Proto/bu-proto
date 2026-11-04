@@ -1,0 +1,37 @@
+/* Applications open, closing soon or closed, as on a departures board. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.status::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status[data-status='open'] {
+  color: var(--accent);
+}
+
+.status[data-status='closing'] {
+  color: #ffd38a;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status[data-status='closing']::before {
+    animation: lamp 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes lamp {
+  50% {
+    opacity: 0.3;
+  }
+}

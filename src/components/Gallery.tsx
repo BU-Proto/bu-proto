@@ -1,10 +1,10 @@
 import { useRef, useState, type KeyboardEvent, type MouseEvent } from 'react'
 import { flushSync } from 'react-dom'
-import { WIN_DETAIL } from '../content/wins'
+import { LIGHTBOX } from '../content/site'
 import { CloseIcon } from './icons'
 import styles from './Gallery.module.css'
 
-const COPY = WIN_DETAIL.lightbox
+const COPY = LIGHTBOX
 
 /** A grid of photos that open full screen in a modal lightbox. `label` names them in alt text. */
 export function Gallery({ images, label }: { images: readonly string[]; label: string }) {

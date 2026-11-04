@@ -23,12 +23,6 @@ export const WIN_DETAIL = {
   previous: 'Previous win',
   next: 'Next win',
   allWins: 'All wins',
-  lightbox: {
-    label: 'Photo viewer',
-    close: 'Close',
-    previous: 'Previous photo',
-    next: 'Next photo',
-  },
 } as const
 
 export const WIN_NOT_FOUND = {

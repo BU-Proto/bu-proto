@@ -1,60 +1,18 @@
-import { useId, useRef, useState, type KeyboardEvent } from 'react'
-import { useLoaderData } from 'react-router'
-import type { ProtoEvent, RsvpResult } from '../../shared/api'
-import { Field, Form } from '../components/Form'
-import { inputClass } from '../components/formFields'
+import { Link, useLoaderData } from 'react-router'
+import type { ProtoEvent } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
+import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { EVENTS_INTRO, RSVP } from '../content/events'
-import { api } from '../lib/api'
 import { dateParts, daysUntil, formatMonth } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
+import { useRsvp } from '../lib/useRsvp'
 import styles from './Events.module.css'
 
-const rsvpKey = (id: number) => `proto:rsvp:${id}`
-
-// localStorage throws in some private modes; an RSVP that isn't remembered is still an RSVP.
-function rememberedGoing(id: number): boolean {
-  try {
-    return localStorage.getItem(rsvpKey(id)) === '1'
-  } catch {
-    return false
-  }
-}
-
-function rememberGoing(id: number) {
-  try {
-    localStorage.setItem(rsvpKey(id), '1')
-  } catch {
-    // Nothing to do: the button still shows the RSVP until the page is left.
-  }
-}
-
 function EventRow({ event }: { event: ProtoEvent }) {
-  const [going, setGoing] = useState(() => rememberedGoing(event.id))
-  const [open, setOpen] = useState(false)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const formId = useId()
+  const rsvp = useRsvp(event)
   const { month, day, weekday } = dateParts(event.date)
-
-  const close = () => {
-    setOpen(false)
-    requestAnimationFrame(() => buttonRef.current?.focus())
-  }
-
-  const onKeyDown = (keyEvent: KeyboardEvent) => {
-    if (keyEvent.key !== 'Escape') return
-    keyEvent.stopPropagation()
-    close()
-  }
-
-  const rsvp = async (values: Record<string, string>) => {
-    await api<RsvpResult>(`/events/${event.id}/rsvp`, { body: values })
-    rememberGoing(event.id)
-    setGoing(true)
-    close()
-  }
 
   return (
     <li className={styles.event}>
@@ -66,7 +24,10 @@ function EventRow({ event }: { event: ProtoEvent }) {
 
       <div className={styles.body}>
         <h3 className={styles.title} data-fog-clear>
-          {event.title}
+          {/* Stretched over the whole row, so a click anywhere opens the event's page. */}
+          <Link className={styles.rowLink} to={`/events/${event.id}`}>
+            {event.title}
+          </Link>
           <SampleTag show={event.placeholder} />
         </h3>
         {/* Kind, time and place, set apart by space and tone rather than separators. */}
@@ -82,54 +43,8 @@ function EventRow({ event }: { event: ProtoEvent }) {
         )}
       </div>
 
-      {going ? (
-        // Already in: nothing left to do here, but it stays focusable so the change is announced.
-        <button ref={buttonRef} type="button" className={ui.primary} aria-disabled="true" data-fog-clear="box" data-fog-ignore>
-          {RSVP.going}
-        </button>
-      ) : (
-        <button
-          ref={buttonRef}
-          type="button"
-          className={ui.secondary}
-          aria-expanded={open}
-          aria-controls={open ? formId : undefined}
-          onClick={() => (open ? close() : setOpen(true))}
-          data-fog-clear="box"
-          data-fog-ignore
-        >
-          {RSVP.label}
-        </button>
-      )}
-
-      {open && !going && (
-        <div
-          id={formId}
-          className={styles.rsvp}
-          role="group"
-          aria-label={RSVP.formLabel(event.title)}
-          onKeyDown={onKeyDown}
-        >
-          <Form
-            submitLabel={RSVP.submit}
-            pendingLabel={RSVP.pending}
-            onSubmit={rsvp}
-            actions={
-              <button type="button" className={ui.secondary} onClick={close} data-fog-clear="box">
-                {RSVP.cancel}
-              </button>
-            }
-          >
-            <Field label="Name">
-              {/* The person just asked for this form, so going straight to its first field is expected. */}
-              <input className={inputClass} name="name" autoComplete="name" required autoFocus />
-            </Field>
-            <Field label="Email" hint={RSVP.hint}>
-              <input className={inputClass} name="email" type="email" autoComplete="email" required />
-            </Field>
-          </Form>
-        </div>
-      )}
+      <RsvpButton rsvp={rsvp} className={styles.above} />
+      <RsvpForm rsvp={rsvp} className={styles.rsvp} />
     </li>
   )
 }

@@ -1,21 +1,13 @@
-import { useLoaderData } from 'react-router'
+import { Link, useLoaderData } from 'react-router'
 import type { Hackathon } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
+import { Status } from '../components/Status'
 import ui from '../components/ui.module.css'
 import { BOARD_LABELS, HACKATHONS_EMPTY, HACKATHONS_INTRO, TRAVEL_NOTE } from '../content/hackathons'
 import { daysUntil, formatDay, formatRange } from '../lib/dates'
+import { statusOf } from '../lib/hackathons'
 import styles from './Hackathons.module.css'
-
-type Status = 'open' | 'closing' | 'closed'
-
-const STATUS_LABEL: Record<Status, string> = { open: 'Open', closing: 'Closing soon', closed: 'Closed' }
-
-function statusOf(hackathon: Hackathon): Status {
-  const days = daysUntil(hackathon.applyBy)
-  if (days < 0) return 'closed'
-  return days <= 14 ? 'closing' : 'open'
-}
 
 /** Up to ten seats drawn as dots, then a count. */
 function Seats({ count }: { count: number }) {
@@ -70,21 +62,15 @@ export function Hackathons() {
             {upcoming.map((hackathon) => {
               const status = statusOf(hackathon)
               return (
-                <tr key={hackathon.id}>
+                <tr key={hackathon.id} className={styles.row}>
                   <td className={styles.dates} data-label="Dates">
                     <span data-fog-clear>{formatRange(hackathon.starts, hackathon.ends)}</span>
                   </td>
                   <th scope="row" className={styles.name}>
-                    {hackathon.href ? (
-                      <a href={hackathon.href} target="_blank" rel="noreferrer" data-fog-clear>
-                        {hackathon.name}
-                        <span className={styles.external} aria-hidden="true">
-                          ↗
-                        </span>
-                      </a>
-                    ) : (
-                      <span data-fog-clear>{hackathon.name}</span>
-                    )}
+                    {/* Stretched over the row: the whole row opens the hackathon's page. */}
+                    <Link className={styles.rowLink} to={`/hackathons/${hackathon.id}`} data-fog-clear>
+                      {hackathon.name}
+                    </Link>
                     <SampleTag show={hackathon.placeholder} />
                   </th>
                   <td className={styles.where} data-label="Where">
@@ -93,9 +79,7 @@ export function Hackathons() {
                   <td data-label="Apply by">
                     <span className={styles.apply} data-fog-clear>
                       <span className={styles.applyDate}>{formatDay(hackathon.applyBy)}</span>
-                      <span className={styles.status} data-status={status}>
-                        {STATUS_LABEL[status]}
-                      </span>
+                      <Status status={status} />
                     </span>
                   </td>
                   <td data-label="Travel">
