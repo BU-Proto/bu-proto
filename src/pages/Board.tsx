@@ -4,7 +4,7 @@ import type { BoardMember } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { BOARD_CONTACT, BOARD_EMPTY, BOARD_INTRO } from '../content/board'
+import { BOARD_CONTACT, BOARD_FORMING, BOARD_INTRO } from '../content/board'
 import { PROTO_LINKEDIN } from '../content/site'
 import styles from './Board.module.css'
 
@@ -128,9 +128,40 @@ export function Board() {
       </PageIntro>
 
       {board.length === 0 ? (
-        <p className={ui.panel} data-fog-clear>
-          {BOARD_EMPTY}
-        </p>
+        <section className={styles.forming} aria-labelledby="board-forming">
+          <div className={styles.formingLead}>
+            <h2 id="board-forming" className={styles.formingTitle} data-fog-clear>
+              {BOARD_FORMING.title}
+            </h2>
+            <p className={styles.formingText} data-fog-clear>
+              {BOARD_FORMING.text}
+            </p>
+            <a
+              className={ui.primary}
+              href={`mailto:${BOARD_CONTACT.email}?subject=${encodeURIComponent(BOARD_FORMING.subject)}`}
+              data-fog-clear="box"
+            >
+              {BOARD_FORMING.cta}
+            </a>
+          </div>
+          <div>
+            <h3 className={styles.rolesLabel} data-fog-clear>
+              {BOARD_FORMING.rolesLabel}
+            </h3>
+            <ul className={styles.roles}>
+              {BOARD_FORMING.roles.map((item) => (
+                <li key={item.role}>
+                  <span className={styles.roleName} data-fog-clear>
+                    {item.role}
+                  </span>
+                  <span className={styles.roleDetail} data-fog-clear>
+                    {item.detail}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
       ) : (
         <ul className={styles.grid}>
           {board.map((member) => (

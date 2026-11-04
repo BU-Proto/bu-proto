@@ -16,4 +16,19 @@ export const BOARD_CONTACT = {
   linkedin: 'Follow BU Proto on LinkedIn',
 } as const
 
-export const BOARD_EMPTY = 'The board is being put together. Check back soon.'
+/** While there's no board yet: what it's for, the roles being filled, and how to put your hand up. */
+export const BOARD_FORMING = {
+  title: 'The first board is forming',
+  text: 'We’re picking the people who’ll run Proto this year. If one of these sounds like you, tell us what you’d take on.',
+  rolesLabel: 'Roles we’re filling',
+  roles: [
+    { role: 'President', detail: 'Sets the plan for the year and keeps it moving.' },
+    { role: 'Start track lead', detail: 'Workshops and first-hackathon squads for people just starting.' },
+    { role: 'Build track lead', detail: 'Hack nights, team matching and the regulars.' },
+    { role: 'Launch track lead', detail: 'Demo nights, founder talks and the path into BU’s startup programs.' },
+    { role: 'Trips and travel', detail: 'Getting groups to hackathons and home again.' },
+    { role: 'Sponsorships', detail: 'Finding the companies that fund hack nights, trips and the fund.' },
+  ],
+  cta: 'Put your hand up',
+  subject: 'Joining the BU Proto board',
+} as const

@@ -151,3 +151,75 @@
     max-width: 420px;
   }
 }
+
+/* No board yet: what's forming and how to join it, set on the field like the rest of the page. */
+.forming {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: start;
+  text-shadow: var(--on-field-shadow);
+}
+
+.formingLead {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+}
+
+.formingTitle {
+  margin: 0;
+  font-size: clamp(34px, 4.6vw, 60px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.formingText {
+  max-width: 40ch;
+  margin: 0 0 6px;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.rolesLabel {
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.roles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.roles li {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 6px 24px;
+  align-items: baseline;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.roleName {
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.roleDetail {
+  font-size: 15px;
+  opacity: 0.88;
+}
+
+@media (max-width: 860px) {
+  .forming,
+  .roles li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

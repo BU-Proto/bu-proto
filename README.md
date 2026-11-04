@@ -188,16 +188,34 @@ Every constant lives in `src/ascii-field/settings.ts`. Start with these:
 
 The defaults behind the panel's controls are `DEFAULT_FIELD_SETTINGS` in the same file.
 
-## Deploying
+## Deploys
 
-It's one Cloudflare Worker: Workers Static Assets serve the built site, and only `/api/*` runs the Worker.
+It's one Cloudflare Worker: Workers Static Assets serve the built site, and only `/api/*` (plus `/privacy` and `/terms`) runs the Worker.
 
-1. `npx wrangler login`.
-2. Set `EMAIL_FROM` in `wrangler.jsonc`, and the four secrets (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAILS`, `RESEND_API_KEY`) with `npx wrangler secret put`. See [Setting up Google sign-in](#setting-up-google-sign-in).
-3. Once, create the production database: `npx wrangler d1 create bu-proto`, and paste the `database_id` it prints into the `d1_databases` entry in `wrangler.jsonc`.
-4. `npm run deploy`.
+**Deploys are automatic.** Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): `npm ci`, lint, build, apply any new files in `migrations/` to the production D1, then `wrangler deploy`. If lint, the build or a migration fails, nothing is deployed. Deploys never overlap; a newer push waits for the running one. Pull requests run [`check.yml`](.github/workflows/check.yml) (lint and build, no deploy).
 
-`npm run deploy` applies any new files in `migrations/` to production before deploying. `0002_seed.sql` loads the sample content, all tagged *sample*; replace or delete it in the portal.
+**One-time setup.**
+
+1. In Cloudflare, go to **Manage account → Account API tokens → Create Token → Custom token**, and give it exactly these permissions:
+
+   | Type | Permission | Access | Why |
+   | --- | --- | --- | --- |
+   | Account | Workers Scripts | Edit | Upload the Worker and its static assets, bindings, cron trigger, version status |
+   | Account | D1 | Edit | Apply migrations to the `bu-proto` database |
+   | Zone | Workers Routes | Edit | The `buproto.com` custom domain |
+
+   Under **Account Resources** pick this account only (`0bda3a2560ca48711ef7336cc421abed`); under **Zone Resources** pick **Specific zone → buproto.com**. Nothing else is needed: the rate limit binding, the cron trigger and the assets all come with Workers Scripts.
+2. In GitHub, go to **Settings → Secrets and variables → Actions → New repository secret** and add `CLOUDFLARE_API_TOKEN` with the token. Optionally add `CLOUDFLARE_ACCOUNT_ID` (as a secret or a variable); without it the workflow uses the account id above.
+
+**Rerun a deploy:** **Actions → Deploy → Run workflow** (branch `main`), or **Re-run jobs** on a past run.
+
+**Logs:** **Actions → Deploy →** the run. The migration step lists what's already applied and what it applies; the last step prints the deployed version (also in the run summary). Live Worker logs: `npx wrangler tail`, or **Workers & Pages → bu-proto → Logs** in Cloudflare.
+
+**Runtime secrets stay in Cloudflare.** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAILS` and `RESEND_API_KEY` are set once with `npx wrangler secret put <NAME>` (see [Setting up Google sign-in](#setting-up-google-sign-in)); deploys keep them and CI never sees them. `EMAIL_FROM` is in `wrangler.jsonc`.
+
+`0002_seed.sql` loads the sample content, all tagged *sample*; replace or delete it in the portal.
+
+**Manual fallback:** `npx wrangler login`, then `CLOUDFLARE_ACCOUNT_ID=0bda3a2560ca48711ef7336cc421abed npm run deploy`.
 
 ## Notes
 
