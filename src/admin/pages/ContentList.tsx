@@ -26,11 +26,19 @@ export function Component() {
     <div className={admin.page}>
       <PageHeader
         title={spec.label}
+        eyebrow="Site content"
         lede={`${items.length} in all. Unpublished rows only show here; sample rows carry the “sample” tag on the site.`}
         actions={
-          <Link className={admin.primary} to={`/admin/${resource}/new`}>
-            <PlusIcon /> New {spec.singular.toLowerCase()}
-          </Link>
+          <>
+            {resource === 'hackathons' && (
+              <Link className={admin.button} to="/admin/hackathons/import">
+                Import from MLH &amp; Devpost
+              </Link>
+            )}
+            <Link className={admin.primary} to={`/admin/${resource}/new`}>
+              <PlusIcon /> New {spec.singular.toLowerCase()}
+            </Link>
+          </>
         }
       />
 

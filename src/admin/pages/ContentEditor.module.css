@@ -1,49 +1,67 @@
 .form {
-  display: grid;
-  gap: 22px;
+  position: relative;
   min-width: 0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 20px 22px;
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
+  border-radius: 20px;
+  background: var(--surface, rgba(8, 28, 52, 0.62));
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
+  box-shadow:
+    var(--lift, 0 24px 60px -36px rgba(0, 10, 25, 0.9)),
+    var(--highlight, inset 0 1px 0 rgba(255, 255, 255, 0.1));
+  display: grid;
+  gap: 24px;
+  padding: 0;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 20px;
-  padding: 20px 20px 0;
+  gap: 20px 22px;
+  padding: 24px 24px 0;
 }
 
 .wide {
   grid-column: 1 / -1;
 }
 
-/* The save bar sticks to the bottom of the screen on long forms. */
+/* The save bar sticks to the bottom of the screen on long forms, as frosted glass over the
+   fields scrolling under it. */
 .bar {
   position: sticky;
-  bottom: 0;
+  bottom: 12px;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-  padding: 14px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0 0 16px 16px;
-  background: rgba(8, 30, 52, 0.96);
+  margin: 0 12px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  background: rgba(10, 34, 60, 0.82);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow:
+    0 18px 40px -20px rgba(0, 10, 25, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
 .barStatus {
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 140px;
+  min-width: 0;
+  padding-inline: 6px;
 }
 
 @media (max-width: 640px) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
-    padding: 16px 16px 0;
+    padding: 18px 16px 0;
   }
 
   .bar {
-    padding: 12px 16px;
+    margin: 0 8px 8px;
+    border-radius: 20px;
   }
 }

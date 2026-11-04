@@ -20,9 +20,9 @@
   aspect-ratio: 1;
   margin-top: 21px;
   overflow: hidden;
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
-  background: rgba(0, 10, 24, 0.3);
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  background: var(--surface-sunk);
   text-align: center;
 }
 

@@ -121,7 +121,7 @@ function Editor({ resource, item, rsvps }: Loaded) {
   }
 
   return (
-    <div className={admin.page}>
+    <div className={`${admin.page} ${admin.narrow}`}>
       <PageHeader
         title={title}
         tabTitle={row ? `${title} · ${spec.label}` : `New ${spec.singular.toLowerCase()}`}

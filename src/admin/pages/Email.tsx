@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactN
 import { useSearchParams } from 'react-router'
 import { EMAIL_VARIABLES, type AdminEvent, type AudienceCount, type EmailAudience, type EmailCampaign, type FundStatus, type Track } from '../../../shared/api'
 import { FUND_STATUSES, TRACKS } from '../../../shared/constants'
-import ui from '../../components/ui.module.css'
+import ui from '../admin.module.css'
 import { api } from '../../lib/api'
 import { daysUntil, formatDay } from '../../lib/dates'
 import { ConfirmDialog } from './people/ConfirmDialog'
@@ -210,7 +210,7 @@ export function Component() {
   const audienceText = audience ? describeAudience(audience, titles) : 'Pick an event'
 
   return (
-    <div className={shared.page}>
+    <div className={`${shared.page} ${styles.root}`}>
       <title>Email · Admin · BU Proto</title>
 
       <header className={shared.head}>

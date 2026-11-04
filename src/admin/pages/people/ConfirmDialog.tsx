@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
-import ui from '../../../components/ui.module.css'
+import ui from '../../admin.module.css'
 import styles from './people.module.css'
 
 interface ConfirmDialogProps {

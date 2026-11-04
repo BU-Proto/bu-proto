@@ -1,6 +1,16 @@
+/* The page measures its own width, not the window's: the sidebar takes a different share of the
+   screen on every laptop, and the preview needs real room. */
+.root {
+  container-type: inline-size;
+  /* A little wider than other pages, so the preview fits beside the editor on more laptops. */
+  max-width: 1240px;
+}
+
+/* Stacked by default: compose, then the preview at the full column. Side by side only once the
+   preview column can hold the email's 600px card. */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 16px;
 }
@@ -15,7 +25,7 @@
 
 .audience {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   margin: 0;
 }
 
@@ -32,19 +42,23 @@
 
 .option {
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 14px;
+}
+
+.option:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .option[data-checked] {
   border-color: rgba(157, 240, 168, 0.35);
-  background: rgba(157, 240, 168, 0.06);
+  background: rgba(157, 240, 168, 0.07);
 }
 
 .optionLabel {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 11px 14px;
   cursor: pointer;
 }
 
@@ -72,7 +86,7 @@
 .optionControl {
   display: grid;
   gap: 6px;
-  padding: 0 12px 12px 38px;
+  padding: 0 14px 14px 42px;
 }
 
 .capitalize {
@@ -80,23 +94,28 @@
 }
 
 .recipients {
-  margin: 8px 0 0;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
   color: var(--ink-soft);
 }
 
 .recipientCount {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 18px;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 /* ---- Compose ---- */
 
 .message {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .message h2 {
@@ -104,14 +123,14 @@
 }
 
 .body {
-  min-height: 240px !important;
+  min-height: 260px !important;
   font-family: var(--font-mono);
   font-size: 13px;
 }
 
 .test {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .test h2 {
@@ -129,18 +148,25 @@
   flex: 1 1 220px;
 }
 
+/* The send button gets its own glass strip, so the page's one irreversible action stands apart. */
 .sendBar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
+  gap: 10px 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: rgba(6, 26, 46, 0.5);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 
 /* ---- Variables ---- */
 
 .variables {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 
 .variablesSummary {
@@ -150,7 +176,7 @@
   color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -171,9 +197,9 @@
 
 .variableList {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 6px;
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -182,9 +208,9 @@
   display: grid;
   gap: 2px;
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
   text-align: left;
   cursor: pointer;
@@ -204,11 +230,11 @@
   border-style: dashed;
   background: transparent;
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.6;
 }
 
 .variable[aria-disabled='true']:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: var(--line-strong);
 }
 
 .variableLabel {
@@ -237,10 +263,9 @@
 /* ---- Preview ---- */
 
 .preview {
-  position: sticky;
-  top: 16px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
+  min-width: 0;
 }
 
 .previewHead {
@@ -256,26 +281,68 @@
 }
 
 .modes {
-  display: inline-flex;
-  padding: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
   border-radius: 999px;
+  background: rgba(6, 26, 46, 0.5);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  list-style: none;
+}
+
+.mode:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .mode {
-  min-height: 28px;
-  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 5px 14px;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mode:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ink);
+}
+
+.mode[aria-current='page'],
+.mode[aria-current='true'],
+.mode[aria-pressed='true'] {
+  background: #fff;
+  color: var(--on-light);
+  font-weight: 500;
+  box-shadow: 0 4px 14px -6px rgba(0, 20, 45, 0.7);
+}
+
+.mode {
+  min-height: 28px;
+  padding: 3px 12px;
+  border: 0;
+  background: transparent;
   font-size: 12px;
   cursor: pointer;
 }
 
 .mode[aria-pressed='true'] {
-  background: rgba(157, 240, 168, 0.16);
-  color: var(--accent);
+  background: #fff;
+  color: var(--on-light);
+  font-weight: 500;
 }
 
 .mode:focus-visible {
@@ -289,17 +356,22 @@
   min-width: 0;
 }
 
+/* An inbox's envelope: who it's to, and the subject line, above the message itself. */
 .recipientBar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 6px 12px;
+  padding: 10px 14px;
+  border-radius: 14px 14px 0 0;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .to {
   margin: 0;
   min-width: 0;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 
@@ -307,21 +379,26 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: 12px;
 }
 
 .previewSubject {
-  margin: 0;
+  margin: -10px 0 0;
+  padding: 0 14px 12px;
+  border-radius: 0 0 14px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 15px;
   font-weight: 500;
   overflow-wrap: anywhere;
 }
 
 .unfilled {
   margin: 0;
-  padding: 8px 12px;
-  border: 1px solid rgba(255, 211, 138, 0.5);
-  border-radius: 10px;
-  background: rgba(255, 211, 138, 0.07);
-  color: #ffd38a;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 211, 138, 0.45);
+  border-radius: 12px;
+  background: rgba(255, 211, 138, 0.08);
+  color: var(--warn-ink);
   font-size: 13px;
 }
 
@@ -330,35 +407,31 @@
   opacity: 0.6;
 }
 
-/* The email is a light document; give it a white page so it reads as it will in an inbox. */
+/* The email paints its own page; the white is only what shows before it loads, as in an inbox. */
 .frame {
   display: block;
   width: 100%;
-  height: min(640px, 70vh);
+  height: 720px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
+  box-shadow: 0 18px 50px -30px rgba(0, 0, 0, 0.8);
 }
 
 .plain {
-  max-height: min(640px, 70vh);
+  max-height: 720px;
   margin: 0;
   overflow: auto;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: rgba(6, 30, 56, 0.6);
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-sunk);
   color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: 12.5px;
-  line-height: 1.55;
+  line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .stale {
-    transition: opacity 120ms;
-  }
 }
 
 /* ---- Result ---- */
@@ -368,8 +441,8 @@
   gap: 4px;
   padding: 14px 18px;
   border: 1px solid rgba(157, 240, 168, 0.45);
-  border-radius: 14px;
-  background: rgba(157, 240, 168, 0.08);
+  border-radius: 16px;
+  background: linear-gradient(rgba(157, 240, 168, 0.1), rgba(157, 240, 168, 0.1)), var(--surface);
 }
 
 .result p {
@@ -379,12 +452,12 @@
 .result[data-tone='logged'],
 .result[data-tone='partial'] {
   border-color: rgba(255, 211, 138, 0.5);
-  background: rgba(255, 211, 138, 0.07);
+  background: linear-gradient(rgba(255, 211, 138, 0.08), rgba(255, 211, 138, 0.08)), var(--surface);
 }
 
 .result[data-tone='failed'] {
   border-color: rgba(255, 160, 140, 0.5);
-  background: rgba(255, 120, 100, 0.08);
+  background: linear-gradient(rgba(255, 120, 100, 0.1), rgba(255, 120, 100, 0.1)), var(--surface);
 }
 
 .resultTitle {
@@ -400,26 +473,34 @@
 }
 
 .campaigns {
-  display: grid;
-  margin: 0;
+  position: relative;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
+  border-radius: 20px;
+  background: var(--surface, rgba(8, 28, 52, 0.62));
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
+  box-shadow:
+    var(--lift, 0 24px 60px -36px rgba(0, 10, 25, 0.9)),
+    var(--highlight, inset 0 1px 0 rgba(255, 255, 255, 0.1));
   padding: 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  display: grid;
+  margin: 0;
   list-style: none;
 }
 
 .campaigns > li + li {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--line);
 }
 
 .summary {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) auto auto minmax(0, 1.4fr);
   align-items: baseline;
-  gap: 6px 14px;
-  padding: 12px 16px;
+  gap: 6px 16px;
+  padding: 13px 18px;
   cursor: pointer;
   list-style: none;
 }
@@ -429,7 +510,7 @@
 }
 
 .summary:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--hover);
 }
 
 .summary:focus-visible {
@@ -453,6 +534,7 @@
 
 .campaign[open] .summarySubject::before {
   content: '▾';
+  color: var(--accent);
 }
 
 .summaryAudience {
@@ -464,7 +546,7 @@
 }
 
 .failed {
-  color: #ffb4a8;
+  color: var(--danger-ink);
 }
 
 .summaryWho {
@@ -474,31 +556,36 @@
 .campaignBody {
   display: grid;
   gap: 8px;
-  padding: 0 16px 16px 30px;
+  padding: 0 18px 18px 32px;
 }
 
 .bodyText {
   margin: 0;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: rgba(6, 30, 56, 0.6);
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-sunk);
   color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: 12.5px;
-  line-height: 1.55;
+  line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .stale {
+    transition: opacity 120ms;
+  }
+
+  .option {
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+  }
+}
+
 @media (max-width: 960px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .preview {
-    position: static;
-  }
-
   .summary {
     display: flex;
     flex-wrap: wrap;
@@ -521,5 +608,85 @@
     flex: 1 0 100%;
     padding-left: 14px;
     text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .frame {
+    height: 600px;
+  }
+
+  .sendBar {
+    border-radius: 20px;
+  }
+}
+
+/* Stacked, but with room: the audience and test beside the message, the preview below. */
+@container (min-width: 760px) and (max-width: 1059.98px) {
+  .compose {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    grid-template-areas:
+      'audience message'
+      'test message'
+      'send send';
+    align-items: start;
+  }
+
+  .audience {
+    grid-area: audience;
+  }
+
+  .message {
+    grid-area: message;
+  }
+
+  .test {
+    grid-area: test;
+  }
+
+  .sendBar {
+    grid-area: send;
+  }
+}
+
+/* Side by side: placed last so it wins over the stacked defaults above. */
+@container (min-width: 1060px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 648px);
+  }
+
+  .preview {
+    position: sticky;
+    top: 16px;
+  }
+
+  .frame {
+    height: max(560px, calc(100dvh - 210px));
+  }
+
+  .plain {
+    max-height: max(560px, calc(100dvh - 210px));
+  }
+}
+
+@media (max-width: 640px) {
+  .modes {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .mode {
+    flex: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mode {
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      color 0.15s ease;
   }
 }

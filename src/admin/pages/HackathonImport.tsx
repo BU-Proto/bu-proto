@@ -71,7 +71,10 @@ export function Component() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const status = isStatus(params.get('status')) ? (params.get('status') as CandidateStatus) : 'new'
-  const mode = isMode(params.get('mode')) ? (params.get('mode') as CandidateMode) : null
+  // In person by default: Proto goes to hackathons as a group, and Devpost's months-long online
+  // challenges would otherwise fill the top of the list. `?mode=any` shows every format.
+  const modeParam = params.get('mode')
+  const mode = modeParam === 'any' ? null : isMode(modeParam) ? (modeParam as CandidateMode) : 'in-person'
   const near = params.get('near') === '1'
 
   const [list, setList] = useState<CandidateList | null>(null)
@@ -111,7 +114,9 @@ export function Component() {
 
   const setFilter = (key: 'status' | 'mode' | 'near', value: string | null) => {
     const next = new URLSearchParams(params)
-    if (value === null || (key === 'status' && value === 'new')) next.delete(key)
+    if ((key === 'status' && value === 'new') || (key === 'mode' && value === 'in-person')) next.delete(key)
+    else if (key === 'mode' && value === null) next.set('mode', 'any')
+    else if (value === null) next.delete(key)
     else next.set(key, value)
     setParams(next, { replace: true })
   }

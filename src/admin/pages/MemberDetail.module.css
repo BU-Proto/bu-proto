@@ -1,7 +1,14 @@
 .back {
   justify-self: start;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.back:hover {
+  color: var(--accent);
 }
 
 .meta {
@@ -57,7 +64,7 @@
 }
 
 .list > li + li {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--line);
 }
 
 .item {
@@ -98,7 +105,8 @@
   display: grid;
   justify-items: start;
   gap: 10px;
-  border-color: rgba(255, 140, 120, 0.2);
+  border-color: rgba(255, 150, 130, 0.3);
+  background: linear-gradient(rgba(255, 110, 95, 0.05), rgba(255, 110, 95, 0.05)), var(--surface);
 }
 
 .dangerZone > h2 {

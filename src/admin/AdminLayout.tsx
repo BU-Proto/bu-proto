@@ -18,17 +18,40 @@ import { isUnauthorized, messageFor, SessionContext } from './lib/session'
 import type { layoutLoader } from './loaders'
 import { SignIn } from './SignIn'
 
-const NAV = [
-  { to: '/admin', label: 'Dashboard', end: true },
-  { to: '/admin/events', label: 'Events' },
-  { to: '/admin/hackathons', label: 'Hackathons' },
-  { to: '/admin/wins', label: 'Wins' },
-  { to: '/admin/board', label: 'Board' },
-  { to: '/admin/members', label: 'Members' },
-  { to: '/admin/fund', label: 'Fund' },
-  { to: '/admin/email', label: 'Email' },
-  { to: '/admin/admins', label: 'Admins' },
-] as const
+// Grouped the way people think about the portal: what's on the site, who's signed up, who runs it.
+const NAV: readonly NavGroup[] = [
+  { items: [{ to: '/admin', label: 'Dashboard', end: true }] },
+  {
+    label: 'Site',
+    items: [
+      { to: '/admin/events', label: 'Events' },
+      { to: '/admin/hackathons', label: 'Hackathons', sub: [{ to: '/admin/hackathons/import', label: 'Import' }] },
+      { to: '/admin/wins', label: 'Wins' },
+      { to: '/admin/board', label: 'Board' },
+    ],
+  },
+  {
+    label: 'People',
+    items: [
+      { to: '/admin/members', label: 'Members' },
+      { to: '/admin/fund', label: 'Fund' },
+      { to: '/admin/email', label: 'Email' },
+    ],
+  },
+  { label: 'Portal', items: [{ to: '/admin/admins', label: 'Admins' }] },
+]
+
+interface NavItem {
+  to: string
+  label: string
+  end?: boolean
+  sub?: readonly NavItem[]
+}
+
+interface NavGroup {
+  label?: string
+  items: readonly NavItem[]
+}
 
 export function Component() {
   const { me } = useLoaderData<typeof layoutLoader>()
@@ -75,6 +98,7 @@ function Shell({ me }: { me: Me }) {
 
   return (
     <div className={styles.shell}>
+      <div className={styles.backdrop} aria-hidden="true" />
       <a className={styles.skip} href="#admin-main">
         Skip to content
       </a>
@@ -83,9 +107,10 @@ function Shell({ me }: { me: Me }) {
       <aside className={styles.sidebar}>
         <div className={styles.brandRow}>
           <Link className={styles.brand} to="/admin" onClick={() => setMenuOpen(false)}>
-            <img src="/proto-seal.svg" alt="" width={26} height={26} />
-            <span>
-              Proto <span className={styles.brandSub}>admin</span>
+            {/* The field's gradient in miniature, so the mark doesn't depend on an image loading. */}
+            <span className={styles.mark} aria-hidden="true" />
+            <span className={styles.brandText}>
+              Proto <span className={styles.brandSub}>~/admin</span>
             </span>
           </Link>
           <button
@@ -101,16 +126,36 @@ function Shell({ me }: { me: Me }) {
         </div>
 
         <div id="admin-menu" className={styles.menu} data-open={menuOpen || undefined}>
-          <nav aria-label="Portal">
-            <ul className={styles.nav}>
-              {NAV.map((item) => (
-                <li key={item.to}>
-                  <NavLink to={item.to} end={'end' in item} className={styles.navLink} onClick={() => setMenuOpen(false)}>
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
+          <nav aria-label="Portal" className={styles.navGroups}>
+            {NAV.map((group, index) => (
+              <div key={group.label ?? index} className={styles.navGroup}>
+                {group.label && (
+                  <p className={styles.navLabel} id={`nav-${group.label.toLowerCase()}`}>
+                    {group.label}
+                  </p>
+                )}
+                <ul className={styles.nav} aria-labelledby={group.label ? `nav-${group.label.toLowerCase()}` : undefined}>
+                  {group.items.map((item) => (
+                    <li key={item.to}>
+                      <NavLink to={item.to} end={item.end} className={styles.navLink} onClick={() => setMenuOpen(false)}>
+                        {item.label}
+                      </NavLink>
+                      {item.sub && (
+                        <ul className={styles.subNav}>
+                          {item.sub.map((sub) => (
+                            <li key={sub.to}>
+                              <NavLink to={sub.to} className={styles.subLink} onClick={() => setMenuOpen(false)}>
+                                {sub.label}
+                              </NavLink>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </nav>
 
           <div className={styles.account}>
@@ -159,6 +204,7 @@ export function ErrorBoundary() {
 
   return (
     <main className={styles.fatal}>
+      <div className={styles.backdrop} aria-hidden="true" />
       <title>{pageTitle('Error')}</title>
       <div className={admin.callout} role="alert">
         <h2>The portal couldn’t start.</h2>

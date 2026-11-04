@@ -69,7 +69,7 @@ export function Component() {
 
   return (
     <div className={admin.page}>
-      <PageHeader title="Admins" lede="Everyone here can sign in to the portal with GitHub and change anything in it." />
+      <PageHeader title="Admins" eyebrow="Portal" lede="Everyone here can sign in to the portal with GitHub and change anything in it." />
 
       <section className={admin.panel} aria-labelledby="add-admin-title">
         <div className={admin.panelHead}>

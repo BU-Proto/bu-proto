@@ -35,7 +35,7 @@
 .totalValue {
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: 26px;
   letter-spacing: -0.01em;
 }
 
@@ -66,10 +66,10 @@
 .bar {
   display: block;
   min-inline-size: 2px;
-  block-size: 10px;
+  block-size: 8px;
   border-radius: 999px;
-  background: var(--accent);
-  opacity: 0.75;
+  background: linear-gradient(90deg, rgba(157, 240, 168, 0.55), var(--accent));
+  box-shadow: 0 0 12px rgba(157, 240, 168, 0.35);
 }
 
 /* ---- Entries ---- */
@@ -109,8 +109,9 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .email {
@@ -155,7 +156,7 @@
   align-items: end;
   gap: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--line);
 }
 
 .statusField select {

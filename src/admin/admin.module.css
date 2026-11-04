@@ -1,16 +1,26 @@
 /* Shared pieces for the portal: page header, panels, buttons, fields, tables, badges, dialogs.
-   The portal is a work tool, so everything here is flatter and denser than the public site. */
+   The site's glass and type, tuned for a work tool: denser, darker glass so long tables stay
+   easy to read. The tokens (--surface, --line, ...) are set on the shell in AdminLayout. */
 
 .page {
   display: grid;
-  gap: 20px;
+  /* minmax(0, ...) so a wide child (a tab strip that scrolls) can't widen the page on phones. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
   width: 100%;
-  max-width: 1080px;
+  max-width: var(--column, 1120px);
   min-width: 0;
+  margin-inline: auto;
+}
+
+/* Editors and single forms read better at a line length than at full width. */
+.narrow {
+  max-width: 880px;
 }
 
 .mono {
   font-family: var(--font-mono);
+  font-size: 0.93em;
 }
 
 .dim {
@@ -28,13 +38,19 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 12px 24px;
+  gap: 16px 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid;
+  border-image: linear-gradient(90deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.04) 70%) 1;
 }
 
+/* The header sits straight on the gradient, so it gets the site's on-field shadow. */
 .headerText {
   display: grid;
-  gap: 6px;
+  flex: 1 1 320px;
+  gap: 8px;
   min-width: 0;
+  text-shadow: var(--on-field-shadow);
 }
 
 .eyebrow {
@@ -42,27 +58,38 @@
   color: var(--ink-dim);
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
+.eyebrow a {
+  border-radius: 4px;
+}
+
 .eyebrow a:hover {
-  color: var(--ink);
+  color: var(--accent);
+}
+
+.eyebrow a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .title {
   margin: 0;
-  font-size: clamp(22px, 3vw, 28px);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-size: clamp(30px, 3.4vw, 40px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .lede {
-  max-width: 62ch;
+  max-width: 64ch;
   margin: 0;
   color: var(--ink-soft);
+  font-size: 14.5px;
 }
 
 .actions {
@@ -74,12 +101,19 @@
 
 /* ---- Panels ------------------------------------------------------------------------------ */
 
+/* The main container: deep glass with a lit top edge. */
 .panel {
+  position: relative;
   min-width: 0;
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 20px 22px;
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
+  border-radius: 20px;
+  background: var(--surface, rgba(8, 28, 52, 0.62));
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
+  box-shadow:
+    var(--lift, 0 24px 60px -36px rgba(0, 10, 25, 0.9)),
+    var(--highlight, inset 0 1px 0 rgba(255, 255, 255, 0.1));
 }
 
 .panelFlush {
@@ -91,21 +125,23 @@
 .panelHead {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 8px 16px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .panelTitle {
   margin: 0;
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 /* ---- Buttons ----------------------------------------------------------------------------- */
 
 .button,
+.secondary,
 .primary,
 .danger,
 .ghost {
@@ -113,65 +149,78 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 7px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-height: 38px;
+  padding: 8px 16px;
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .button:hover,
-.ghost:hover {
-  border-color: rgba(255, 255, 255, 0.32);
-  background: rgba(255, 255, 255, 0.11);
+.secondary:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.15);
 }
 
+/* The site's white pill. */
 .primary {
   border-color: #fff;
   background: #fff;
   color: var(--on-light);
+  box-shadow: 0 10px 28px -14px rgba(0, 25, 55, 0.8);
 }
 
 .primary:hover {
-  background: #e8f5ff;
+  background: #eefbf0;
 }
 
 .danger {
-  border-color: rgba(255, 138, 138, 0.45);
-  background: rgba(255, 110, 110, 0.12);
-  color: #ffd0d0;
+  border-color: rgba(255, 150, 130, 0.5);
+  background: rgba(255, 110, 95, 0.14);
+  color: #ffd4cc;
+  box-shadow: none;
 }
 
 .danger:hover {
-  background: rgba(255, 110, 110, 0.22);
+  border-color: rgba(255, 150, 130, 0.75);
+  background: rgba(255, 110, 95, 0.24);
 }
 
 .ghost {
   border-color: transparent;
   background: transparent;
   color: var(--ink-soft);
+  box-shadow: none;
+}
+
+.ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
 }
 
 .small {
-  min-height: 28px;
-  padding: 4px 10px;
+  min-height: 30px;
+  padding: 5px 12px;
   font-size: 12px;
 }
 
 .button:disabled,
+.secondary:disabled,
 .primary:disabled,
 .danger:disabled,
 .ghost:disabled {
   cursor: default;
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .button:focus-visible,
+.secondary:focus-visible,
 .primary:focus-visible,
 .danger:focus-visible,
 .ghost:focus-visible,
@@ -200,7 +249,7 @@
 
 .field {
   display: grid;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -208,39 +257,41 @@
 }
 
 .label {
+  padding: 0;
   color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.06em;
-  padding: 0;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .hint {
   margin: 0;
   color: var(--ink-dim);
-  font-size: 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 
 .error {
   margin: 0;
-  color: #ffb4b4;
-  font-size: 12px;
+  color: var(--danger-ink, #ffbcb0);
+  font-size: 12.5px;
 }
 
 .input {
   width: 100%;
-  min-height: 38px;
-  padding: 8px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 10px;
-  background: rgba(0, 10, 24, 0.35);
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: var(--surface-sunk, rgba(2, 14, 28, 0.5));
   color: var(--ink);
   font: inherit;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
 .input::placeholder {
-  color: rgba(246, 251, 255, 0.35);
+  color: rgba(246, 251, 255, 0.42);
 }
 
 .input:hover {
@@ -249,28 +300,29 @@
 
 .input:focus-visible {
   border-color: var(--accent);
-  outline: 2px solid rgba(157, 240, 168, 0.35);
-  outline-offset: 0;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(157, 240, 168, 0.22);
 }
 
 .input[aria-invalid='true'] {
-  border-color: rgba(255, 150, 150, 0.7);
+  border-color: rgba(255, 160, 140, 0.8);
 }
 
 textarea.input {
   min-height: 96px;
   resize: vertical;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 select.input {
   appearance: none;
-  padding-right: 32px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%),
-    linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+  padding-right: 34px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
   background-position:
-    right 16px center,
-    right 11px center;
+    right 17px center,
+    right 12px center;
   background-size: 5px 5px;
   background-repeat: no-repeat;
 }
@@ -290,15 +342,23 @@ input[type='date'].input {
   grid-template-columns: auto 1fr;
   align-items: start;
   gap: 4px 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
   cursor: pointer;
+}
+
+.switchRow:hover {
+  border-color: var(--line-strong, rgba(255, 255, 255, 0.18));
 }
 
 .switch {
   position: relative;
-  width: 36px;
-  height: 20px;
-  margin: 1px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
   appearance: none;
   background: rgba(255, 255, 255, 0.1);
@@ -310,20 +370,21 @@ input[type='date'].input {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: var(--ink-soft);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .switch:checked {
   border-color: var(--accent);
-  background: rgba(157, 240, 168, 0.3);
+  background: var(--accent);
 }
 
 .switch:checked::after {
   left: 18px;
-  background: var(--accent);
+  background: var(--on-light);
 }
 
 .switch:focus-visible {
@@ -345,24 +406,26 @@ input[type='date'].input {
 .table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13.5px;
 }
 
 .table th {
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line-strong, rgba(255, 255, 255, 0.18));
+  background: rgba(255, 255, 255, 0.035);
   color: var(--ink-dim);
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.06em;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-align: left;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .table td {
-  padding: 11px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.09));
   vertical-align: top;
 }
 
@@ -371,7 +434,7 @@ input[type='date'].input {
 }
 
 .table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--hover, rgba(255, 255, 255, 0.05));
 }
 
 .num {
@@ -408,8 +471,8 @@ input[type='date'].input {
   }
 
   .table tr {
-    padding: 12px 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.09));
   }
 
   .table tbody tr:last-child {
@@ -421,11 +484,16 @@ input[type='date'].input {
     border: 0;
   }
 
+  .table td:first-child {
+    padding-bottom: 6px;
+  }
+
   .table td[data-label]::before {
-    content: attr(data-label) ' ';
+    content: attr(data-label) '  ';
     color: var(--ink-dim);
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
   }
 
@@ -447,10 +515,11 @@ input[type='date'].input {
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 1px 7px 2px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 6px;
+  gap: 5px;
+  padding: 1px 8px 2px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
   color: var(--ink-soft);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -465,7 +534,8 @@ input[type='date'].input {
 .badgeSample {
   composes: badge;
   border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.5);
+  background: transparent;
 }
 
 .badgeSample::before {
@@ -479,50 +549,82 @@ input[type='date'].input {
 .badgeDraft {
   composes: badge;
   border-color: rgba(255, 211, 138, 0.45);
-  color: #ffe2b0;
+  background: rgba(255, 211, 138, 0.1);
+  color: var(--warn-ink, #ffd894);
 }
 
 .badgeAccent {
   composes: badge;
   border-color: rgba(157, 240, 168, 0.5);
+  background: rgba(157, 240, 168, 0.1);
   color: var(--accent);
 }
 
+/* A segmented control: a glass track with the current option as a white pill. */
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  gap: 2px;
   width: fit-content;
   max-width: 100%;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
+  border-radius: 999px;
+  background: rgba(6, 26, 46, 0.5);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  list-style: none;
 }
 
+/* Links or buttons, so it resets a button's own chrome. */
 .tab {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
+  gap: 7px;
+  min-height: 32px;
+  padding: 5px 14px;
+  border: 0;
   border-radius: 999px;
+  background: transparent;
   color: var(--ink-soft);
+  font: inherit;
   font-size: 13px;
+  cursor: pointer;
 }
 
 .tab:hover {
+  background: rgba(255, 255, 255, 0.07);
   color: var(--ink);
 }
 
-.tab[aria-current='page'] {
-  background: rgba(157, 240, 168, 0.16);
-  color: var(--accent);
+.tab[aria-current='page'],
+.tab[aria-current='true'],
+.tab[aria-pressed='true'] {
+  background: #fff;
+  color: var(--on-light);
+  font-weight: 500;
+  box-shadow: 0 4px 14px -6px rgba(0, 20, 45, 0.7);
+}
+
+/* On a phone the options scroll sideways rather than wrapping the pill into a blob. */
+@media (max-width: 640px) {
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab {
+    flex: none;
+  }
 }
 
 .count {
   font-family: var(--font-mono);
   font-size: 11px;
-  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.72;
 }
 
 /* ---- Status line, empty state, error ------------------------------------------------------ */
@@ -534,27 +636,57 @@ input[type='date'].input {
   font-size: 13px;
 }
 
+.statusOk,
+.statusError {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .statusOk {
   color: var(--accent);
 }
 
 .statusError {
-  color: #ffb4b4;
+  color: var(--danger-ink, #ffbcb0);
 }
 
+.statusOk:not(:empty)::before,
+.statusError:not(:empty)::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* Nothing here yet: the field's fog glyphs stand in for an illustration. */
 .empty {
   display: grid;
-  justify-items: start;
+  justify-items: center;
   gap: 8px;
-  padding: 28px 20px;
+  padding: 44px 24px;
   color: var(--ink-soft);
+  text-align: center;
+}
+
+.empty::before {
+  content: '○  >  _';
+  margin-bottom: 4px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
 }
 
 .empty h2,
 .empty h3 {
   margin: 0;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -565,10 +697,12 @@ input[type='date'].input {
 .callout {
   display: grid;
   gap: 8px;
-  padding: 16px 18px;
-  border: 1px solid rgba(255, 150, 150, 0.35);
-  border-radius: 14px;
-  background: rgba(255, 110, 110, 0.08);
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 150, 130, 0.4);
+  border-radius: 18px;
+  background: linear-gradient(rgba(255, 110, 95, 0.1), rgba(255, 110, 95, 0.1)), var(--surface, rgba(8, 28, 52, 0.62));
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 
 .callout h2 {
@@ -584,35 +718,48 @@ input[type='date'].input {
 
 /* ---- Confirm dialog ---------------------------------------------------------------------- */
 
+/* The sign-in card's glass, deep enough to read over whatever is behind it. */
 .dialog {
-  width: min(420px, calc(100vw - 32px));
+  width: min(440px, calc(100vw - 32px));
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 16px;
-  background: #0b2440;
+  border: 1px solid var(--glass-edge);
+  border-radius: 24px;
+  background: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)), rgba(8, 30, 54, 0.9);
   color: var(--ink);
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  backdrop-filter: blur(22px) saturate(140%);
+  box-shadow:
+    0 40px 90px -30px rgba(0, 10, 25, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .dialog::backdrop {
-  background: rgba(2, 10, 20, 0.6);
+  background: rgba(2, 12, 26, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
 
 .dialogBody {
   display: grid;
-  gap: 10px;
-  padding: 20px;
+  gap: 12px;
+  padding: 24px 24px 20px;
 }
 
 .dialogTitle {
   margin: 0;
-  font-size: 17px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .dialogText {
   margin: 0;
   color: var(--ink-soft);
+}
+
+.dialogText p {
+  margin: 0;
 }
 
 .dialogActions {
@@ -625,29 +772,35 @@ input[type='date'].input {
 
 @media (prefers-reduced-motion: no-preference) {
   .button,
+  .secondary,
   .primary,
   .danger,
   .ghost,
   .tab,
-  .input {
+  .input,
+  .switch,
+  .switchRow {
     transition:
       background-color 0.15s ease,
       border-color 0.15s ease,
+      box-shadow 0.15s ease,
       color 0.15s ease;
   }
 
   .switch::after {
-    transition: left 0.15s ease;
+    transition:
+      left 0.18s cubic-bezier(0.3, 0.7, 0.3, 1),
+      background-color 0.15s ease;
   }
 
   .dialog[open] {
-    animation: rise 0.18s ease-out;
+    animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px) scale(0.98);
   }
 }
