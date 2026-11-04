@@ -1,0 +1,118 @@
+.back {
+  justify-self: start;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.live {
+  min-height: 20px;
+}
+
+.side {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list > li + li {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 8px 0;
+}
+
+.fundItem {
+  padding-bottom: 10px;
+}
+
+.fundItem .item {
+  padding-bottom: 2px;
+}
+
+.fundItem p {
+  margin: 0;
+}
+
+.spend {
+  margin-top: 6px !important;
+  color: var(--ink-soft);
+  font-size: 13px;
+  white-space: pre-line;
+}
+
+.more {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.dangerZone {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  border-color: rgba(255, 140, 120, 0.2);
+}
+
+.dangerZone > h2 {
+  margin: 0;
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}

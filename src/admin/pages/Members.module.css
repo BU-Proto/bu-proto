@@ -1,0 +1,24 @@
+.search {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+
+.email {
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.unsub {
+  margin-left: 8px;
+}
+
+/* The previous results stay up while the next search loads; dim them so it's clear they're old. */
+.stale {
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stale {
+    transition: opacity 120ms;
+  }
+}
