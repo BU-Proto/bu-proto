@@ -29,7 +29,8 @@ async function sendInvite(c: Context<AppEnv>, email: string): Promise<InviteEmai
   const adder = c.var.admin.name ?? c.var.admin.email
   const origin = new URL(c.req.url).origin
   const body = [
-    'You’re a BU Proto admin',
+    'You’re a BU Proto admin!',
+    'BU Proto is a home base for BU students who make things: weekly hack nights, group trips to hackathons, and demo nights, across three tracks (Start, Build and Launch) for first-timers through student founders.',
     `${adder} added you as an admin of the BU Proto portal, where the team updates the site and looks after members, the fund list and email.`,
     `${origin}/admin`,
     `Sign in with Google using this exact address: ${email}. Any other Google account won’t get in.`,
@@ -37,7 +38,7 @@ async function sendInvite(c: Context<AppEnv>, email: string): Promise<InviteEmai
   ].join('\n\n')
   try {
     const rendered = renderEmail({
-      subject: 'You’re now a BU Proto admin',
+      subject: 'You’re in! Welcome to the BU Proto portal',
       body,
       recipient: { email, name: '' },
       reason: { kind: 'admin' },
