@@ -1,0 +1,345 @@
+/* Contents on the field at the left, the guide at a reading measure beside it. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 820px);
+  gap: 32px clamp(28px, 4vw, 56px);
+  align-items: start;
+}
+
+.contents {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  gap: 12px;
+  padding-top: clamp(18px, 2.6vw, 28px);
+  text-shadow: var(--on-field-shadow);
+}
+
+.contentsTitle {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.contentsList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.contentsList a {
+  display: block;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.contentsList a:hover {
+  color: var(--accent);
+}
+
+.contentsList a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.doc {
+  display: grid;
+  gap: clamp(36px, 4.4vw, 52px);
+  padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 56px);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.section {
+  display: grid;
+  gap: 16px;
+  max-width: 68ch;
+  /* Lands a contents jump with a little air above the heading. */
+  scroll-margin-top: 24px;
+}
+
+.section p {
+  margin: 0;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.heading {
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.section strong {
+  font-weight: 600;
+}
+
+.list,
+.steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+.list li,
+.steps li {
+  padding-left: 6px;
+  text-wrap: pretty;
+}
+
+.list li::marker {
+  color: var(--accent);
+}
+
+.steps li::marker {
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A rule of thumb worth stopping on: set larger, in its own quiet box. */
+.callout {
+  padding: 16px 20px;
+  border: 1px solid rgba(157, 240, 168, 0.4);
+  border-radius: 18px;
+  background: rgba(157, 240, 168, 0.08);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.checklist {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.checklistTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.checks {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* An empty box to tick, drawn rather than typed so it lines up with the first line of text. */
+.checks li {
+  position: relative;
+  padding-left: 30px;
+  text-wrap: pretty;
+}
+
+.checks li::before {
+  content: '';
+  position: absolute;
+  top: 0.32em;
+  left: 0;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--accent);
+  border-radius: 4px;
+}
+
+.example {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  background: rgba(6, 30, 56, 0.35);
+}
+
+.exampleHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+}
+
+.exampleName {
+  border-bottom: 1px solid rgba(157, 240, 168, 0.5);
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.exampleName:hover {
+  border-bottom-color: var(--accent);
+}
+
+.exampleName:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.section .examplePrize {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.facts {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
+  gap: 4px 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.fact dt {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.fact dd {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.link {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.link:hover {
+  border-bottom-color: #fff;
+}
+
+.link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* ---- Previous and next, on the field ---- */
+
+.neighbours {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 16px clamp(16px, 4vw, 48px);
+  margin-top: clamp(16px, 4vh, 40px);
+  padding-top: clamp(28px, 5vh, 52px);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  text-shadow: var(--on-field-shadow);
+}
+
+.neighbour {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 10px 0;
+}
+
+.toNext {
+  justify-items: end;
+  text-align: right;
+}
+
+.neighbourLabel {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.neighbourName {
+  font-size: clamp(24px, 3.4vw, 42px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.neighbour:hover .neighbourName {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+.neighbour:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.all {
+  justify-self: center;
+}
+
+/* ---- Not found ---- */
+
+.missing {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  max-width: 760px;
+  padding-top: clamp(12px, 6vh, 80px);
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Above the text on narrow screens, so it doesn't stick over it. */
+  .contents {
+    position: static;
+    padding-top: 0;
+  }
+
+  .contentsList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px;
+  }
+
+  .neighbours {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .all {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .contentsList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc {
+    font-size: 15.5px;
+  }
+
+  .fact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .callout,
+  .checklist,
+  .example {
+    padding: 14px 16px;
+  }
+}

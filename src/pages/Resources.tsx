@@ -1,6 +1,7 @@
+import { Link } from 'react-router'
 import { PageIntro } from '../components/PageIntro'
 import ui from '../components/ui.module.css'
-import { CONTENTS_LABEL, GUIDES, RESOURCES_INTRO } from '../content/resources'
+import { CONTENTS_LABEL, GUIDES, guidePath, RESOURCES_INTRO } from '../content/resources'
 import styles from './Resources.module.css'
 
 /** The playbook as a book's table of contents, chapters joined to their status by dot leaders. */
@@ -16,6 +17,7 @@ export function Resources() {
         </h2>
         <ol className={styles.toc}>
           {GUIDES.map((guide, index) => {
+            const href = guidePath(guide)
             const body = (
               <>
                 <span className={styles.chapter} aria-hidden="true">
@@ -26,8 +28,8 @@ export function Resources() {
                     {guide.title}
                   </span>
                   <span className={styles.leader} aria-hidden="true" />
-                  <span className={styles.state} data-ready={Boolean(guide.href)} data-fog-clear>
-                    {guide.href ? 'Read' : 'Coming soon'}
+                  <span className={styles.state} data-ready={Boolean(href)} data-fog-clear>
+                    {href ? 'Read' : 'Coming soon'}
                   </span>
                 </span>
                 <span className={styles.line} data-fog-clear>
@@ -37,10 +39,10 @@ export function Resources() {
             )
             return (
               <li key={guide.title}>
-                {guide.href ? (
-                  <a className={styles.entry} href={guide.href}>
+                {href ? (
+                  <Link className={styles.entry} to={href}>
                     {body}
-                  </a>
+                  </Link>
                 ) : (
                   <div className={styles.entry}>{body}</div>
                 )}

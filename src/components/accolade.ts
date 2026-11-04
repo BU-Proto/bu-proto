@@ -76,7 +76,10 @@ export type TeamPart = { kind: 'name'; text: string; bu: boolean } | { kind: 'te
  * each name can carry its BU mark. Rows from before the flag existed have no `bu`: not BU.
  */
 export function teamParts(team: Win['team'], max = 4): TeamPart[] {
-  const people = (team ?? []).filter((person) => person.name.trim())
+  // BU teammates lead the line, as on the win page.
+  const people = (team ?? [])
+    .filter((person) => person.name.trim())
+    .sort((a, b) => Number(Boolean(b.bu)) - Number(Boolean(a.bu)))
   if (people.length === 0) return []
   const shown = people.length > max ? people.slice(0, max - 1) : people
   const more = people.length - shown.length

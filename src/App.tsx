@@ -54,6 +54,12 @@ const router = createBrowserRouter([
       },
       { path: 'track-record', Component: TrackRecord },
       { path: 'resources', Component: Resources },
+      {
+        path: 'resources/:slug',
+        // Lazy, so the guides' long text loads only when someone opens one.
+        lazy: { Component: async () => (await import('./pages/Guide')).Guide },
+        HydrateFallback: PageLoading,
+      },
       { path: 'events', Component: Events, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
       {
         path: 'events/:id',

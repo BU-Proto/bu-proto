@@ -38,8 +38,21 @@ export function Gallery({ images, label }: { images: readonly string[]; label: s
     observer.observe(node)
     // Photos change the strip's width as they load.
     node.querySelectorAll('img').forEach((img) => img.addEventListener('load', measure))
+
+    // A mouse wheel only scrolls up and down, so over the strip it scrolls sideways instead, until
+    // the strip runs out; then the page takes over again. Needs a non-passive listener to do that.
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+      const atStart = node.scrollLeft <= 0 && event.deltaY < 0
+      const atEnd = node.scrollLeft + node.clientWidth >= node.scrollWidth - 1 && event.deltaY > 0
+      if (atStart || atEnd) return
+      event.preventDefault()
+      node.scrollLeft += event.deltaY
+    }
+    node.addEventListener('wheel', onWheel, { passive: false })
     return () => {
       node.removeEventListener('scroll', measure)
+      node.removeEventListener('wheel', onWheel)
       observer.disconnect()
     }
   }, [images])
@@ -101,7 +114,15 @@ export function Gallery({ images, label }: { images: readonly string[]; label: s
                 onClick={() => openAt(index)}
                 aria-haspopup="dialog"
               >
-                <img src={src} alt={alt(index)} loading="lazy" decoding="async" />
+                <img
+                src={src}
+                alt={alt(index)}
+                loading="lazy"
+                decoding="async"
+                // Until a photo loads it has no width, so its button keeps a stand-in width; without
+                // it the strip never overflows and the photos past the edge never come near enough to load.
+                onLoad={(event) => event.currentTarget.parentElement?.setAttribute('data-loaded', '')}
+              />
               </button>
             </li>
           ))}

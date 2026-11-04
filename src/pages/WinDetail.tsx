@@ -25,7 +25,8 @@ export function WinDetail() {
   const { win, wins } = useLoaderData<WinPageData>()
   const { previous, next } = neighboursOf(wins, win.id)
 
-  const team = win.team ?? []
+  // BU teammates first, then everyone else in the team's own order (the sort is stable).
+  const team = [...(win.team ?? [])].sort((a, b) => Number(Boolean(b.bu)) - Number(Boolean(a.bu)))
   const stack = win.stack ?? []
   const hasAside = team.length > 0 || stack.length > 0 || filled(win.funding)
 

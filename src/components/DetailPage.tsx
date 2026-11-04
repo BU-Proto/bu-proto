@@ -81,15 +81,16 @@ export function Prose({ text }: { text: string }) {
 }
 
 /**
- * The deep glass write-up: the main column (`main`) and a side column (`aside`). Either may be
- * empty; with neither the sheet isn't drawn, and with one it takes the full width.
+ * The write-up: the main column (`main`) in deep glass, and the side column (`aside`) beside it on
+ * the field, pinned while the text scrolls, so the glass is only as tall as the words in it.
+ * Either may be empty; with only one, it takes the full width.
  */
 export function WriteUp({ main, aside }: { main?: ReactNode; aside?: ReactNode }) {
   if (!main && !aside) return null
   return (
-    <div className={`${ui.panelDeep} ${styles.sheet}`}>
-      {main && <div className={styles.main}>{main}</div>}
-      {aside && <div className={styles.aside}>{aside}</div>}
+    <div className={styles.sheet}>
+      {main && <div className={`${ui.panelDeep} ${styles.main}`}>{main}</div>}
+      {aside && <aside className={styles.aside}>{aside}</aside>}
     </div>
   )
 }

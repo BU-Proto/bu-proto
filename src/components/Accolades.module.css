@@ -26,7 +26,6 @@
   grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: center;
   width: 100vw;
-  min-height: clamp(500px, 76vh, 780px);
   margin-inline: calc(50% - 50vw);
 }
 
@@ -34,11 +33,15 @@
   position: relative;
   grid-row: 1;
   grid-column: 1 / 9;
-  align-self: stretch;
+  align-self: center;
+  /* Covers are mostly 16:9 screenshots and photos: 16:10 shows nearly all of one, instead of
+     stretching it to the section's height and showing a sliver. */
+  aspect-ratio: 16 / 10;
   overflow: hidden;
-  /* Fades out toward the text and at top and bottom, so the photo has no edge but the window's. */
-  --across: linear-gradient(to right, #000 42%, transparent 96%);
-  --down: linear-gradient(to bottom, transparent, #000 16%, #000 74%, transparent);
+  /* A soft fade toward the text and at top and bottom, so the photo has no hard edge, but most of
+     it stays clear. */
+  --across: linear-gradient(to right, #000 64%, transparent 100%);
+  --down: linear-gradient(to bottom, transparent, #000 9%, #000 88%, transparent);
   -webkit-mask-image: var(--across), var(--down);
   -webkit-mask-composite: source-in;
   mask-image: var(--across), var(--down);
@@ -47,7 +50,7 @@
 
 .feature[data-side='right'] .featurePhoto {
   grid-column: 5 / -1;
-  --across: linear-gradient(to left, #000 42%, transparent 96%);
+  --across: linear-gradient(to left, #000 64%, transparent 100%);
 }
 
 .featurePhoto img {
@@ -62,12 +65,12 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right, transparent 35%, rgba(4, 18, 34, 0.55));
+  background: linear-gradient(to right, transparent 62%, rgba(4, 18, 34, 0.45));
   pointer-events: none;
 }
 
 .feature[data-side='right'] .featurePhoto::after {
-  background: linear-gradient(to left, transparent 35%, rgba(4, 18, 34, 0.55));
+  background: linear-gradient(to left, transparent 62%, rgba(4, 18, 34, 0.45));
 }
 
 .featureText {

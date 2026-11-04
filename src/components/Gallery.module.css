@@ -3,6 +3,11 @@
 /* A filmstrip: every photo at its own aspect ratio and one shared height, scrolling sideways. */
 .strip {
   position: relative;
+  /* Its width comes from the page, never from the photos inside, or the strip would grow to fit
+     them all and have nothing to scroll. */
+  width: 100%;
+  min-width: 0;
+  contain: inline-size;
 }
 
 .grid {
@@ -43,6 +48,11 @@
   max-width: min(86vw, 900px);
   height: 100%;
   object-fit: contain;
+}
+
+/* The stand-in width for a photo that hasn't loaded yet, about a screenshot's shape. */
+.thumb:not([data-loaded]) {
+  width: calc(var(--height) * 1.6);
 }
 
 .thumb:focus-visible {
