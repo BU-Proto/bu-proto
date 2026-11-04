@@ -35,7 +35,7 @@ const NAV: readonly NavGroup[] = [
     items: [
       { to: '/admin/members', label: 'Members' },
       { to: '/admin/fund', label: 'Fund' },
-      { to: '/admin/email', label: 'Email' },
+      { to: '/admin/email', label: 'Email', sub: [{ to: '/admin/email/automatic', label: 'Automatic' }] },
     ],
   },
   { label: 'Portal', items: [{ to: '/admin/admins', label: 'Admins' }] },

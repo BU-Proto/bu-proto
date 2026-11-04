@@ -752,3 +752,26 @@ export interface EventImportPreview {
   /** An event with the same title on the same day, so it isn't added twice. */
   existingEventId: number | null
 }
+
+// ---- Portal: automatic emails -------------------------------------------------------------------
+
+/** The emails the public forms send on their own: a welcome, an RSVP and a fund confirmation. */
+export const AUTOMATIC_EMAIL_KEYS = ['welcome', 'rsvp', 'fund'] as const
+export type AutomaticEmailKey = (typeof AUTOMATIC_EMAIL_KEYS)[number]
+
+/**
+ * GET /api/admin/email/automatic → { items: AutomaticEmail[] }: each one rendered for the signed-in
+ * admin, with the real next event (or an example one when nothing's on the calendar).
+ * POST /api/admin/email/automatic/:key/test → { ok, logged }: sends that email to the admin.
+ */
+export interface AutomaticEmail {
+  key: AutomaticEmailKey
+  title: string
+  /** When it goes out, in a sentence. */
+  when: string
+  subject: string
+  html: string
+  text: string
+  /** True when no real event was upcoming, so the preview used an example one. */
+  sampleEvent: boolean
+}

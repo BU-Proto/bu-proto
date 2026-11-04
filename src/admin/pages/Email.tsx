@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { EMAIL_VARIABLES, type AdminEvent, type AudienceCount, type EmailAudience, type EmailCampaign, type FundStatus, type Track } from '../../../shared/api'
 import { FUND_STATUSES, TRACKS } from '../../../shared/constants'
 import ui from '../admin.module.css'
@@ -226,6 +226,9 @@ export function Component() {
           <h1 className={shared.title}>Email</h1>
           <p className={shared.lede}>Write once, send to a list. Every send is logged below.</p>
         </div>
+        <Link className={ui.button} to="/admin/email/automatic">
+          Automatic emails
+        </Link>
       </header>
 
       <div aria-live="polite">{sent && <SentResult campaign={sent} audienceText={describeAudience(sent.audience, titles)} />}</div>

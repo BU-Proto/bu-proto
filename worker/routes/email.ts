@@ -1,15 +1,19 @@
 import { Hono, type Context } from 'hono'
 import {
+  AUTOMATIC_EMAIL_KEYS,
   EMAIL_VARIABLES,
   emailAudience,
   previewEmailInput,
   sendEmailInput,
   testEmailInput,
   type AudienceCount,
+  type AutomaticEmail,
+  type AutomaticEmailKey,
   type EmailAudience,
   type EmailCampaign,
   type EmailPreview,
 } from '../../shared/api'
+import { fundDraft, nextEvent, renderDraft, rsvpDraft, sendDraft, welcomeDraft } from '../lib/confirmations'
 import { randomToken } from '../lib/crypto'
 import {
   escapeHtml,
@@ -230,6 +234,54 @@ app.post('/api/admin/email/preview', async (c) => {
     recipientCount: recipients.length,
     unfilled,
   } satisfies EmailPreview)
+})
+
+// ---- Automatic emails ---------------------------------------------------------------------------
+
+/** Stands in for the event when nothing is on the calendar, so the RSVP preview has something to show. */
+const EXAMPLE_EVENT = { title: 'Hack night', date: '2026-11-12', time: '6:00–9:00 PM', place: 'CDS 1750' }
+
+const AUTOMATIC_INFO: Record<AutomaticEmailKey, { title: string; when: string }> = {
+  welcome: { title: 'Welcome', when: 'Sent when someone joins the list for the first time. Re-joining to update details doesn’t send it again.' },
+  rsvp: { title: 'RSVP confirmation', when: 'Sent when someone RSVPs to an event. A repeat RSVP doesn’t send a second one.' },
+  fund: { title: 'Grants list confirmation', when: 'Sent when someone joins the grants interest list.' },
+}
+
+/** Each automatic email as the signed-in admin would get it. Unsubscribe links use the preview token. */
+async function automaticDrafts(c: Context<AppEnv>) {
+  const admin = c.var.admin
+  const person = { name: admin.name ?? admin.email.split('@')[0], email: admin.email }
+  const upcoming = await nextEvent(c.env)
+  const event = upcoming ?? EXAMPLE_EVENT
+  const origin = originOf(c)
+  return {
+    origin,
+    sampleEvent: !upcoming,
+    drafts: {
+      welcome: welcomeDraft(origin, { ...person, track: 'Build', unsubscribeToken: PREVIEW_TOKEN }, upcoming),
+      rsvp: rsvpDraft(person, event),
+      fund: fundDraft(person),
+    } satisfies Record<AutomaticEmailKey, unknown>,
+  }
+}
+
+app.get('/api/admin/email/automatic', async (c) => {
+  const { origin, sampleEvent, drafts } = await automaticDrafts(c)
+  const items = AUTOMATIC_EMAIL_KEYS.map((key): AutomaticEmail => {
+    const email = renderDraft(drafts[key], origin)
+    return { key, ...AUTOMATIC_INFO[key], subject: email.subject, html: email.html, text: email.text, sampleEvent: key === 'rsvp' && sampleEvent }
+  })
+  return c.json({ items })
+})
+
+app.post('/api/admin/email/automatic/:key/test', async (c) => {
+  const key = c.req.param('key') as AutomaticEmailKey
+  if (!AUTOMATIC_EMAIL_KEYS.includes(key)) throw new ApiError(404, 'No such email.')
+  const { origin, drafts } = await automaticDrafts(c)
+  const draft = drafts[key]
+  const result = await sendDraft(c.env, { ...draft, subject: `[Test] ${draft.subject}` }, origin, 'test')
+  if (!result.logged && result.sent === 0) throw new ApiError(502, "Resend didn't accept the email. Check the server logs.")
+  return c.json({ ok: true, logged: result.logged })
 })
 
 app.get('/api/admin/email/campaigns', async (c) => {
