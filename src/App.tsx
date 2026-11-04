@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
+import { adminRoutes } from './admin/routes'
 import { Layout } from './components/Layout'
 import { Board } from './pages/Board'
 import { Events } from './pages/Events'
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
       { path: '*', Component: NotFound },
     ],
   },
+  ...adminRoutes,
 ])
 
 export default function App() {

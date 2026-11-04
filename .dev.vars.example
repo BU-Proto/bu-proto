@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local development (it's gitignored).
+# GitHub OAuth app for local dev: callback URL http://localhost:5173/api/auth/callback
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+# Leave empty to log emails to the dev server console instead of sending them.
+RESEND_API_KEY=
