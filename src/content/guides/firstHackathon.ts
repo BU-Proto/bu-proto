@@ -2,9 +2,12 @@
 
 import { guideLink, SLUGS } from './links'
 import type { GuideDoc } from './types'
+import { FLOWCAST } from './wins'
 
 export const FIRST_HACKATHON: GuideDoc = {
   slug: SLUGS.first,
+  standfirst:
+    'A first hackathon is mostly about finishing something and getting through the night. Here’s what to bring, what happens over the weekend and what helps when it gets hard.',
   sections: [
     {
       id: 'before',
@@ -19,6 +22,12 @@ export const FIRST_HACKATHON: GuideDoc = {
             'Agree with your team on a shared repo and a way to deploy, so nobody spends the first hour on setup.',
           ],
           title: 'Do this the week before',
+        },
+        {
+          example: {
+            win: FLOWCAST,
+            text: 'Check the prize list for a beginner prize. Andres’s Flowcast team won Best First-Time Hacker at DS+X 2026, and many events have a prize like it.',
+          },
         },
       ],
     },
@@ -41,6 +50,7 @@ export const FIRST_HACKATHON: GuideDoc = {
       id: 'what-happens',
       title: 'What happens',
       body: [
+        { graphic: 'event-shape' },
         'Most hackathons follow the same shape: check-in, an opening ceremony where sponsors present their prizes, a long stretch of building with meals, workshops and mentors around, a submission deadline, then judging and a closing ceremony with the winners.',
         {
           list: [

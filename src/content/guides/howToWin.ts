@@ -2,17 +2,18 @@
 
 import { guideLink, SLUGS } from './links'
 import type { GuideDoc } from './types'
-import { ECOAPI, EYRIE, FLOWCAST, HEAR_ME_OUT, NEMO, NOOGIE, SPLIT_WORLD, SUPER_ARTIFICIAL_BROS } from './wins'
+import { ECOAPI, EYRIE, FLOWCAST, HEAR_ME_OUT, NEMO, NOOGIE, SPLIT_WORLD, SUPER_ARTIFICIAL_BROS, winCover, winImage } from './wins'
 
 export const HOW_TO_WIN: GuideDoc = {
   slug: SLUGS.win,
+  standfirst:
+    'Most teams lose before they write a line of code. They pick an idea in five minutes, split up, build for 30 hours and find out at 9 AM that nothing joins together and nobody knows what they’re showing. Winning teams do the same amount of work in a different order.',
   sections: [
     {
       id: 'short-version',
       title: 'The short version',
       body: [
-        'Most teams lose before they write a line of code. They pick an idea in five minutes, split up, build for 30 hours and find out at 9 AM that nothing joins together and nobody knows what they’re showing. Winning teams do the same amount of work in a different order.',
-        'This is the order we do it in. It’s how we’ve won prizes at HackHarvard, HackIllinois, PennApps, Cal Hacks, YHack and more.',
+        'This is the order we work in. Between the two of us, it’s how the Proto teams we were on won prizes at HackHarvard, HackIllinois, PennApps, Cal Hacks, YHack, Civic Hacks and DS+X.',
         {
           steps: [
             [{ strong: 'Plan your approach' }, ' before anyone opens an editor.'],
@@ -42,6 +43,11 @@ export const HOW_TO_WIN: GuideDoc = {
         },
         { callout: 'If it isn’t in the demo, it doesn’t exist. Plan backwards from the three minutes you’ll have in front of the judges.' },
         {
+          figure: winImage(HEAR_ME_OUT, '005/692/847/datas/original.png', 'A handwritten notebook page listing seven numbered ideas, with notes in red beside each'),
+          caption: 'The ideas page from Hear me Out’s Notability notebook: seven directions, each with a note on why it might not work.',
+          shape: 'tall',
+        },
+        {
           example: {
             win: HEAR_ME_OUT,
             text: 'The team kept their whole plan in a notebook. It starts with the track requirements and a look at past projects, then seven ideas written down with why each one might not work. They dropped a hardware idea and started again before settling on a party game. They kept all of it in Notability, the sponsor whose prize they went on to win.',
@@ -67,6 +73,7 @@ export const HOW_TO_WIN: GuideDoc = {
             text: 'The idea came from two real moments: someone at a hackathon getting their API key revoked for sending 200 requests at once, and a professor talking about a data center planned for Champaign. The team put them together into a developer tool that shows what your API calls cost and what they burn.',
           },
         },
+        { pull: 'A specific story beats a general category every time.' },
         ['The full method, with every angle we’ve seen work, is in ', guideLink(SLUGS.ideas, 'Finding an idea and an angle'), '.'],
       ],
     },
@@ -148,6 +155,10 @@ export const HOW_TO_WIN: GuideDoc = {
           title: 'Do this',
         },
         {
+          figure: winCover(NOOGIE, 'World news drawn as clusters of coloured nodes on a dark background'),
+          caption: 'noogie, which won Best Design at PennApps XXVI. The idea is something you can see before anyone explains it.',
+        },
+        {
           example: {
             win: NOOGIE,
             text: 'A news platform that shows world stories as clusters of connected nodes, drawn with d3.js, so you can see the different sides of a story at a glance. It won Best Design: the main idea was something you could see.',
@@ -197,6 +208,7 @@ export const HOW_TO_WIN: GuideDoc = {
       title: 'A weekend, in order',
       body: [
         'Every hackathon runs a little differently, but the shape is the same whether it’s 24 hours or 36.',
+        { graphic: 'weekend' },
         {
           steps: [
             [{ strong: 'Before the event:' }, ' read the tracks and prizes, form the team, set up a repo and a way to deploy.'],

@@ -7,12 +7,14 @@ import { NEMO } from './wins'
 
 export const JUDGING: GuideDoc = {
   slug: SLUGS.judging,
+  standfirst:
+    'Every hackathon runs judging its own way, and the rules page says how. Most follow one of a few shapes, and most score the same handful of things. Here’s what to expect, and how to plan the demo around it.',
   sections: [
     {
       id: 'formats',
       title: 'The usual formats',
       body: [
-        'Every hackathon runs judging its own way, and the rules page says how. Read it before the weekend. Most use one of two shapes, or both in rounds.',
+        'Read the rules page before the weekend. Most events use one of two shapes, or both in rounds.',
         {
           list: [
             [{ strong: 'Expo or science-fair style.' }, ' Every team stays at a table and judges walk round, spending a few minutes with each. The best teams in the first round are often asked to present again to a panel or on stage.'],
@@ -52,6 +54,7 @@ export const JUDGING: GuideDoc = {
           ],
           title: 'Do this',
         },
+        { graphic: 'scorecard' },
         {
           example: {
             win: NEMO,

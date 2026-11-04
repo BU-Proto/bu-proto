@@ -84,7 +84,7 @@ export function Hackathons() {
                   </td>
                   <td data-label="Travel">
                     <span className={styles.travel} data-covered={hackathon.travelCovered} data-fog-clear>
-                      {hackathon.travelCovered ? 'Covered' : 'Not covered'}
+                      {hackathon.travelCovered ? 'Covered' : 'Not confirmed'}
                     </span>
                   </td>
                   <td data-label="BU going">

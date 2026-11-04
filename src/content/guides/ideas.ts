@@ -13,17 +13,20 @@ import {
   SPLIT_WORLD,
   STALK_MARKET,
   SUPER_ARTIFICIAL_BROS,
-  winLink,
+  winCover,
+  winImage,
 } from './wins'
 
 export const IDEAS: GuideDoc = {
   slug: SLUGS.ideas,
+  standfirst:
+    '“What should we build?” is a hard question. “What would win this prize?” is an easier one, and the hackathon has already written the list of prizes for you. This is how we get from that list to an idea with an angle.',
   sections: [
     {
       id: 'start-from-tracks',
       title: 'Start from the tracks, not a blank page',
       body: [
-        '“What should we build?” is a hard question. “What would win this prize?” is an easier one, and the hackathon has already written the list of prizes for you. Start there.',
+        'Start from the prize page, not a blank whiteboard.',
         {
           steps: [
             'Open the event’s prize page and write down every track and sponsor prize, including the small ones.',
@@ -42,7 +45,7 @@ export const IDEAS: GuideDoc = {
         'An angle is the reason a judge remembers your project after seeing forty others. It’s the frame around the idea: something physical on the table, a real problem with real stakes, a tool the judges would use themselves, a sponsor’s product used better than anyone else used it.',
         'The same idea can be forgettable or a winner depending on the angle. “Track your API usage” is a dashboard. “Your vibe-coded app is ruining your keys and the environment” is a developer tool with a sustainability frame, and it won first place in its track.',
         { callout: 'A good angle usually comes from a track. Read the prize, then ask which angle a team would need to stand out in it.' },
-        'Here are the angles we’ve seen work, with the projects that used them.',
+        ['Here are the angles we’ve seen work on Proto teams, with the projects that used them. ', { label: 'The map at the end', href: '#our-wins' }, ' puts all ten wins on them at once.'],
       ],
     },
     {
@@ -56,6 +59,10 @@ export const IDEAS: GuideDoc = {
             'Check what the venue lends out before you plan around a part, and bring spares of anything cheap.',
             'Be clear about what the hardware proves and what it doesn’t. Judges respect honesty more than a big claim.',
           ],
+        },
+        {
+          figure: winImage(NEMO, '005/606/438/datas/original.jpg', 'Nemo’s live tracker: a camera view of the tank from above, with the green cap boxed and labelled'),
+          caption: 'Nemo’s live green-cap tracker. OpenCV finds the cap in the tank and turns its position into coordinates the physics can use.',
         },
         {
           example: {
@@ -104,6 +111,10 @@ export const IDEAS: GuideDoc = {
           ],
         },
         {
+          figure: winImage(ECOAPI, '004/386/262/datas/original.png', 'EcoApi’s dependency graph: green nodes for API endpoints on a dark background'),
+          caption: 'EcoApi’s dependency graph. A dev tool is invisible until you give it something to look at.',
+        },
+        {
           example: {
             win: ECOAPI,
             text: 'A REST API on Cloudflare Workers, a dashboard with a dependency graph and a VS Code extension that scans your code for costly API calls. The team used it on an open-source project, found a vulnerability and submitted a pull request with the fix. It won Best Web API.',
@@ -123,6 +134,11 @@ export const IDEAS: GuideDoc = {
             'Build the project so that it couldn’t exist without the sponsor’s product.',
             'Show it on screen and say its name.',
           ],
+        },
+        {
+          figure: winImage(SPLIT_WORLD, '004/511/424/datas/original.jpeg', 'A body-tracked stick figure on a phone screen in Snapchat, the Snapchat ghost on its head'),
+          caption: 'Split World, inside Snapchat. Without Lens Studio’s body tracking there is no game.',
+          shape: 'tall',
         },
         {
           example: {
@@ -149,6 +165,11 @@ export const IDEAS: GuideDoc = {
             'Pair the model with something structured, like a graph, a simulation or real data, so it isn’t just generating text.',
             'Show what the AI produces, not the prompt.',
           ],
+        },
+        { pull: 'Half the room will build a chatbot.' },
+        {
+          figure: winCover(SAPLING, 'Sapling’s dashboard, with a knowledge graph of concepts in the middle'),
+          caption: 'Sapling pairs its tutor with a structure: a live graph of what you’ve studied, at the centre of the dashboard.',
         },
         {
           example: {
@@ -196,6 +217,10 @@ export const IDEAS: GuideDoc = {
           },
         },
         {
+          figure: winCover(STALK_MARKET, 'The Stalk Market title screen in pixel art: “A Gamified Stock Simulation”, with plants growing below'),
+          caption: 'The Stalk Market: a farming game on top, a simulated stock market underneath.',
+        },
+        {
           example: {
             win: STALK_MARKET,
             text: 'Teaches investing through a farming game, where stocks grow and wilt as plants in a simulated market. It won Best Technical Execution.',
@@ -241,6 +266,11 @@ export const IDEAS: GuideDoc = {
       body: [
         'Do this as a team in the first hour, with the track list in front of you.',
         {
+          figure: winImage(HEAR_ME_OUT, '005/692/845/datas/original.png', 'A notebook page of coloured sticky notes, each with a handwritten idea'),
+          caption: 'A page of sticky-note ideas from Hear me Out’s brainstorm, kept in their Notability notebook.',
+          shape: 'tall',
+        },
+        {
           steps: [
             [{ strong: 'Five minutes, alone:' }, ' everyone writes three problems they or someone they know has actually had. Problems, not apps.'],
             [{ strong: 'Ten minutes, together:' }, ' read them out. For each problem, say which tracks it could win. Keep the ones that hit at least one.'],
@@ -277,19 +307,7 @@ export const IDEAS: GuideDoc = {
       id: 'our-wins',
       title: 'Our wins, by angle',
       body: [
-        {
-          facts: [
-            { term: 'Hardware', detail: [winLink(NEMO), ': a webcam, a tank and ocean physics.'] },
-            { term: 'Social good', detail: [winLink(EYRIE), ' and ', winLink(FLOWCAST), ': crowd safety and campus crowding.'] },
-            { term: 'Dev tools', detail: [winLink(ECOAPI), ': an API, a dashboard and a VS Code extension.'] },
-            { term: 'Sponsor tech', detail: [winLink(SPLIT_WORLD), ' on Snap Lens Studio, ', winLink(HEAR_ME_OUT), ' on Notability, ', winLink(EYRIE), ' with Cloudflare.'] },
-            { term: 'AI with a twist', detail: [winLink(SAPLING), ', ', winLink(HEAR_ME_OUT), ' and ', winLink(SUPER_ARTIFICIAL_BROS)] },
-            { term: 'Design', detail: [winLink(NOOGIE), ': news as a node graph.'] },
-            { term: 'Education', detail: [winLink(SAPLING), ' and ', winLink(STALK_MARKET), '.'] },
-            { term: 'Sustainability', detail: [winLink(NEMO), ' and ', winLink(ECOAPI), '.'] },
-            { term: 'Beginner prizes', detail: [winLink(FLOWCAST), '.'] },
-          ],
-        },
+        { graphic: 'angles' },
         ['Each one is broken down in ', guideLink(SLUGS.breakdowns, 'Winning projects, broken down'), '.'],
       ],
     },

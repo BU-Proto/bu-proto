@@ -164,10 +164,17 @@ app.patch('/api/admin/members/:id', async (c) => {
   return c.json({ item: toMember(row) })
 })
 
+// Deleting a member deletes everything we hold under their email: RSVPs and fund sign-ups too,
+// as the privacy policy promises. One batch, so it all goes or none of it does.
 app.delete('/api/admin/members/:id', async (c) => {
   const id = idParam(c)
-  const { meta } = await c.env.DB.prepare('DELETE FROM members WHERE id = ?').bind(id).run()
-  if (meta.changes === 0) throw new ApiError(404, 'No such member.')
+  const member = await c.env.DB.prepare('SELECT email FROM members WHERE id = ?').bind(id).first<{ email: string }>()
+  if (!member) throw new ApiError(404, 'No such member.')
+  await c.env.DB.batch([
+    c.env.DB.prepare('DELETE FROM rsvps WHERE email = ?').bind(member.email),
+    c.env.DB.prepare('DELETE FROM fund_interest WHERE email = ?').bind(member.email),
+    c.env.DB.prepare('DELETE FROM members WHERE id = ?').bind(id),
+  ])
   return c.body(null, 204)
 })
 

@@ -280,7 +280,7 @@ function Detail({ detail }: { detail: MemberDetail }) {
             <h2 id="delete-title" className={shared.panelTitle}>
               Remove
             </h2>
-            <p className={shared.hint}>Deletes the member record. RSVPs and fund interest are separate lists, so those rows stay.</p>
+            <p className={shared.hint}>Deletes the member and everything under their email: their RSVPs and fund sign-ups too.</p>
             <button type="button" className={shared.dangerSmall} onClick={() => setConfirming(true)}>
               Delete member
             </button>

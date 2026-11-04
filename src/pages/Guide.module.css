@@ -1,8 +1,78 @@
-/* Contents on the field at the left, the guide at a reading measure beside it. */
+/* A guide set like a magazine piece. The opener is the detail pages' (the photo under the
+   title); below it, the contents on the field and the text on deep glass. Inside the glass the
+   words keep a reading measure, while pictures, diagrams and pull quotes run wider. */
+
+/* ---- The opener ---- */
+
+.kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 0 0 clamp(14px, 2.4vh, 22px);
+  font-size: 16px;
+}
+
+.kicker a {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.kicker a:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+.kicker a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.kickerCount {
+  color: var(--ink-soft);
+}
+
+.title {
+  max-width: 13ch;
+  margin: 0;
+  font-size: clamp(44px, 7.4vw, 112px);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.lede {
+  max-width: 40ch;
+  margin: clamp(16px, 2.6vh, 26px) 0 0;
+  font-size: clamp(18px, 1.7vw, 23px);
+  font-weight: 300;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.byline {
+  margin-top: clamp(20px, 3.4vh, 32px);
+}
+
+.leadCredit {
+  margin: clamp(18px, 3vh, 28px) 0 0;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+}
+
+.leadCredit a {
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 3px;
+}
+
+/* ---- Contents on the field, the article on glass ---- */
+
 .layout {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 820px);
-  gap: 32px clamp(28px, 4vw, 56px);
+  grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+  gap: 32px clamp(24px, 3.4vw, 48px);
   align-items: start;
 }
 
@@ -11,7 +81,7 @@
   top: 24px;
   display: grid;
   gap: 12px;
-  padding-top: clamp(18px, 2.6vw, 28px);
+  padding-top: clamp(28px, 4vw, 52px);
   text-shadow: var(--on-field-shadow);
 }
 
@@ -49,33 +119,56 @@
 }
 
 .doc {
+  /* The text's side margin, and the measure it keeps inside them. */
+  --pad: clamp(20px, 4.6vw, 60px);
+  --measure: 64ch;
+
   display: grid;
-  gap: clamp(36px, 4.4vw, 52px);
-  padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 56px);
-  font-size: 16px;
+  gap: 0;
+  padding: clamp(28px, 4vw, 56px) 0 0;
+  overflow: hidden;
+  font-size: 17px;
   line-height: 1.7;
+}
+
+/* The opening paragraph, a size up from the body, like a magazine's stand-first. */
+.standfirst {
+  max-width: 34em;
+  margin: 0 var(--pad) clamp(36px, 5vw, 56px);
+  color: var(--ink);
+  font-size: clamp(20px, 2vw, 25px);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .section {
   display: grid;
-  gap: 16px;
-  max-width: 68ch;
+  gap: 18px;
+  padding: clamp(36px, 4.6vw, 56px) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
   /* Lands a contents jump with a little air above the heading. */
   scroll-margin-top: 24px;
 }
 
+/* Every block keeps to the text column unless it says otherwise below. */
+.section > * {
+  max-width: var(--measure);
+  margin: 0 var(--pad);
+}
+
 .section p {
-  margin: 0;
-  color: var(--ink);
+  margin-block: 0;
   text-wrap: pretty;
 }
 
 .heading {
-  margin: 0;
-  font-size: clamp(22px, 2.4vw, 28px);
+  margin-bottom: 4px !important;
+  font-size: clamp(26px, 3vw, 38px);
   font-weight: 400;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
   text-wrap: balance;
 }
 
@@ -83,16 +176,13 @@
   font-weight: 600;
 }
 
-.list,
-.steps {
+.list {
   display: grid;
   gap: 10px;
-  margin: 0;
-  padding-left: 1.4em;
+  padding-left: 1.3em !important;
 }
 
-.list li,
-.steps li {
+.list li {
   padding-left: 6px;
   text-wrap: pretty;
 }
@@ -101,70 +191,175 @@
   color: var(--accent);
 }
 
-.steps li::marker {
-  color: var(--accent);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+/* Numbered steps, the numbers set big in a column of their own. */
+.steps {
+  display: grid;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-/* A rule of thumb worth stopping on: set larger, in its own quiet box. */
+.steps li {
+  position: relative;
+  min-height: 64px;
+  padding: 16px 0 16px 72px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  counter-increment: step;
+  text-wrap: pretty;
+}
+
+.steps li::before {
+  content: counter(step);
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 52px;
+  color: var(--accent);
+  font-size: 44px;
+  font-weight: 200;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+/* A rule of thumb: a short mint rule, a label, the line set a size up. */
 .callout {
-  padding: 16px 20px;
-  border: 1px solid rgba(157, 240, 168, 0.4);
-  border-radius: 18px;
-  background: rgba(157, 240, 168, 0.08);
-  font-size: 17px;
-  line-height: 1.55;
+  display: grid;
+  gap: 6px;
+  padding-block: 8px;
+}
+
+.callout::before {
+  content: '';
+  width: 40px;
+  height: 3px;
+  margin-bottom: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.calloutLabel {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.section .calloutText {
+  font-size: clamp(19px, 1.8vw, 22px);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+/* A line from the text, set large and indented off the column so it reads as an aside. */
+.section > .pull {
+  max-width: 22em;
+  margin: 14px var(--pad) 14px calc(var(--pad) + clamp(0px, 8%, 80px));
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+.pull::before {
+  content: '“';
+  display: block;
+  height: 0.5em;
+  color: var(--accent);
+  font-size: 2.2em;
+  font-weight: 500;
+  line-height: 0.9;
 }
 
 .checklist {
   display: grid;
-  gap: 12px;
-  padding: 18px 20px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.05);
+  gap: 8px;
+  padding-top: 6px;
 }
 
+/* A tick before the title, so the list reads as one to work through. */
 .checklistTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
+  line-height: 1.3;
+}
+
+.checkMark {
+  flex: none;
+  color: var(--accent);
 }
 
 .checks {
   display: grid;
-  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-/* An empty box to tick, drawn rather than typed so it lines up with the first line of text. */
+/* An empty box to tick, drawn so it lines up with the first line of text. */
 .checks li {
   position: relative;
-  padding-left: 30px;
+  padding: 11px 0 11px 34px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
   text-wrap: pretty;
 }
 
 .checks li::before {
   content: '';
   position: absolute;
-  top: 0.32em;
-  left: 0;
+  top: calc(11px + 0.38em);
+  left: 3px;
   width: 15px;
   height: 15px;
   border: 1.5px solid var(--accent);
   border-radius: 4px;
 }
 
-.example {
+/* From our wins: the project's cover beside the point it makes, ruled above and below. */
+.section > .example {
   display: grid;
-  gap: 8px;
-  padding: 18px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 18px;
-  background: rgba(6, 30, 56, 0.35);
+  grid-template-columns: 148px minmax(0, 1fr);
+  gap: 20px;
+  max-width: calc(var(--measure) + 40px);
+  padding: 18px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Examples in a run share their rules. */
+.section > .example + .example {
+  margin-top: -19px;
+  border-top: 0;
+}
+
+.exampleThumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  border-radius: 10px;
+  object-fit: cover;
+  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.exampleBody {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+.section .exampleLabel {
+  color: var(--accent);
+  font-size: 13px;
+  line-height: 1.3;
 }
 
 .exampleHead {
@@ -172,17 +367,19 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 2px 12px;
+  line-height: 1.35;
 }
 
 .exampleName {
-  border-bottom: 1px solid rgba(157, 240, 168, 0.5);
-  color: var(--accent);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .exampleName:hover {
-  border-bottom-color: var(--accent);
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .exampleName:focus-visible {
@@ -195,15 +392,127 @@
   font-size: 14px;
 }
 
+.section .exampleTeam {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+
+.teamPhotos {
+  display: flex;
+}
+
+.teamPhotos > * {
+  width: 24px;
+  height: 24px;
+  font-size: 9px;
+}
+
+.teamPhotos > * + * {
+  margin-left: -7px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .example:hover .exampleThumb img {
+    transform: scale(1.03);
+  }
+}
+
+/* ---- Pictures ---- */
+
+.figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 20px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.figcaption > :first-child {
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
+.credit {
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+.credit a {
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.3);
+  text-underline-offset: 3px;
+}
+
+.credit a:hover {
+  color: var(--ink);
+}
+
+/* Wide: out of the column to the glass's edges, the caption back on the column. */
+.section > .wide {
+  display: grid;
+  gap: 12px;
+  max-width: none;
+  margin: 14px 0;
+}
+
+.wide img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 620px;
+  object-fit: cover;
+  object-position: top;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.wide .figcaption {
+  padding: 0 var(--pad);
+}
+
+/* Tall: a phone screen or a notebook page, beside its caption. */
+.section > .tall {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: end;
+  max-width: none;
+  margin-block: 14px;
+}
+
+.tall img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.6);
+}
+
+.tall .figcaption {
+  flex-direction: column;
+  max-width: 34ch;
+  padding-bottom: 8px;
+  font-size: 15px;
+}
+
+.section > .graphicSlot {
+  max-width: none;
+  margin-block: 14px;
+}
+
 .facts {
   display: grid;
-  margin: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .fact {
   display: grid;
-  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
+  grid-template-columns: minmax(110px, 150px) minmax(0, 1fr);
   gap: 4px 20px;
   padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.16);
@@ -226,7 +535,8 @@
 }
 
 .link:hover {
-  border-bottom-color: #fff;
+  border-bottom-color: var(--accent);
+  color: var(--accent);
 }
 
 .link:focus-visible {
@@ -234,58 +544,61 @@
   outline-offset: 2px;
 }
 
-/* ---- Previous and next, on the field ---- */
+/* ---- About the authors ---- */
 
-.neighbours {
+.authors {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: end;
-  gap: 16px clamp(16px, 4vw, 48px);
-  margin-top: clamp(16px, 4vh, 40px);
-  padding-top: clamp(28px, 5vh, 52px);
-  border-top: 1px solid rgba(255, 255, 255, 0.35);
-  text-shadow: var(--on-field-shadow);
+  gap: 20px;
+  padding: clamp(32px, 4vw, 48px) var(--pad) clamp(32px, 4vw, 52px);
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  scroll-margin-top: 24px;
 }
 
-.neighbour {
-  display: grid;
-  align-content: start;
-  gap: 6px;
-  padding: 10px 0;
-}
-
-.toNext {
-  justify-items: end;
-  text-align: right;
-}
-
-.neighbourLabel {
+.authorsTitle {
+  margin: 0;
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
-.neighbourName {
-  font-size: clamp(24px, 3.4vw, 42px);
-  font-weight: 300;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
-  text-wrap: balance;
+.authorList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px clamp(24px, 4vw, 48px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.neighbour:hover .neighbourName {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
+.author {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
-.neighbour:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 4px;
-  border-radius: 4px;
+.authorText {
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
-.all {
-  justify-self: center;
+.authorText p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.authorName {
+  font-size: 18px;
+}
+
+.authorWins {
+  color: var(--ink-soft);
+}
+
+.authorWins .link {
+  color: var(--ink);
 }
 
 /* ---- Not found ---- */
@@ -296,6 +609,12 @@
   gap: 18px;
   max-width: 760px;
   padding-top: clamp(12px, 6vh, 80px);
+}
+
+@media (max-width: 1020px) {
+  .authorList {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 860px) {
@@ -313,33 +632,44 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 20px;
   }
-
-  .neighbours {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .all {
-    grid-row: 2;
-    grid-column: 1 / -1;
-  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 560px) {
   .contentsList {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .doc {
-    font-size: 15.5px;
+    font-size: 16px;
+  }
+
+  .steps li {
+    padding-left: 52px;
+  }
+
+  .steps li::before {
+    font-size: 34px;
+  }
+
+  .section > .example {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .section > .tall {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+
+  .tall img {
+    max-width: min(280px, 80%);
   }
 
   .fact {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .callout,
-  .checklist,
-  .example {
-    padding: 14px 16px;
+  .section > .pull {
+    margin-left: var(--pad);
   }
 }

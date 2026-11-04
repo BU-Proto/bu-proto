@@ -2,10 +2,12 @@
 
 import { guideLink, SLUGS } from './links'
 import type { GuideDoc } from './types'
-import { EYRIE, FLOWCAST, HEAR_ME_OUT, NOOGIE, SPLIT_WORLD, winLink } from './wins'
+import { EYRIE, FLOWCAST, HEAR_ME_OUT, NOOGIE, SPLIT_WORLD, winCover, winImage, winLink } from './wins'
 
 export const DEMO: GuideDoc = {
   slug: SLUGS.demo,
+  standfirst:
+    'Judges meet your project for a few minutes, on a screen. Those minutes decide the weekend, so we plan them before we build: one demo moment, one sentence, three minutes in order and a backup for when something breaks.',
   sections: [
     {
       id: 'demo-moment',
@@ -18,6 +20,11 @@ export const DEMO: GuideDoc = {
             'It should be live, or at least look live. Click, and something happens.',
             'It should come early, inside the first minute, not after the architecture slide.',
           ],
+        },
+        {
+          figure: winImage(SPLIT_WORLD, '004/511/384/datas/original.png', 'A body-tracked stick figure acting out a word on a phone screen in Snapchat'),
+          caption: 'Split World’s demo moment: a player turned into a stick figure, mid-charade.',
+          shape: 'tall',
         },
         {
           example: {
@@ -39,6 +46,10 @@ export const DEMO: GuideDoc = {
             [winLink(HEAR_ME_OUT), ': “An AI party game that turns strangers into a plan and dead group chats into hangouts.”'],
           ],
         },
+        {
+          figure: winCover(EYRIE, 'Eyrie’s landing page, headed “Preventing Crowd Crush Before It Happens”'),
+          caption: 'Eyrie’s landing page leads with its one sentence, the same line as the tagline on its submission.',
+        },
         'Say it at the start of the pitch, put it at the top of your write-up and use it as the tagline on your submission.',
       ],
     },
@@ -47,15 +58,7 @@ export const DEMO: GuideDoc = {
       title: 'Three minutes, in order',
       body: [
         'Most judging slots are a few minutes long, often with questions after. Here’s a shape that fits in three, and stretches or shrinks as needed.',
-        {
-          steps: [
-            [{ strong: 'The problem (about 20 seconds).' }, ' One real story or one real number. Who has this problem, and why does it hurt?'],
-            [{ strong: 'The pitch (about 10 seconds).' }, ' Your one sentence.'],
-            [{ strong: 'The demo (about 90 seconds).' }, ' One user, one path, start to finish. Hit the demo moment early. Narrate what the judge is seeing, not what the code is doing.'],
-            [{ strong: 'How it works (about 30 seconds).' }, ' The one or two technical things you’re proudest of. Name the sponsor tech if you’re going for its prize.'],
-            [{ strong: 'What’s next (about 20 seconds).' }, ' One line on where it goes, then thank them and stop.'],
-          ],
-        },
+        { graphic: 'demo-clock' },
         { callout: 'Don’t open with your names and your stack. Open with the problem. Introductions can wait until the questions.' },
       ],
     },
@@ -100,6 +103,7 @@ export const DEMO: GuideDoc = {
             text: 'Found a sign-in bug on demo day itself, caused by a table that had never been migrated. They fixed it and replaced the silent failure with a clear error screen.',
           },
         },
+        { pull: 'If it breaks live, don’t debug in front of the judge.' },
       ],
     },
     {
@@ -131,6 +135,11 @@ export const DEMO: GuideDoc = {
             'Big text and high contrast for projectors and judges standing a few feet back.',
             'Hide the developer tools, the terminal and your notifications before you start.',
           ],
+        },
+        {
+          figure: winImage(HEAR_ME_OUT, '005/692/853/datas/original.png', 'Three hand-drawn layouts, A, B and C, with notes on what to keep and what to fix'),
+          caption: 'Hear me Out’s notebook compares three layouts and ends on what to keep and what to fix. Polish starts on paper.',
+          shape: 'tall',
         },
         {
           example: {

@@ -1,0 +1,80 @@
+.byline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* The photos overlap a little, like a pair, rather than sitting in a row of avatars. */
+.photos {
+  display: flex;
+  flex: none;
+}
+
+.photos > * + * {
+  margin-left: -10px;
+}
+
+.photo {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(6, 30, 56, 0.9);
+  border-radius: 50%;
+  background: rgba(6, 30, 56, 0.7);
+  object-fit: cover;
+}
+
+.large {
+  width: 64px;
+  height: 64px;
+  border-width: 0;
+}
+
+.initials {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.large.initials {
+  font-size: 20px;
+}
+
+.text {
+  display: grid;
+  gap: 2px;
+}
+
+.names {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+/* Name and mark stay together when the line wraps. */
+.person {
+  white-space: nowrap;
+}
+
+.name {
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.name:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+.name:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.date {
+  color: var(--ink-soft);
+  font-size: 14px;
+}

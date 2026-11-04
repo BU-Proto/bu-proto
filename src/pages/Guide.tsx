@@ -1,11 +1,14 @@
 import { Fragment, useEffect } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
-import { PageIntro } from '../components/PageIntro'
+import { AuthorName, AuthorPhoto, Byline } from '../components/Byline'
+import { DetailNav, DetailOpener, DetailPage } from '../components/DetailPage'
+import { Graphic } from '../components/guide/Graphics'
 import ui from '../components/ui.module.css'
 import { BRAND } from '../content/site'
 import { GUIDE_DOCS } from '../content/guides'
-import type { Block, GuideLink, Rich, WinExample } from '../content/guides/types'
-import { winHref } from '../content/guides/wins'
+import { type Author, authorsOn, nameList } from '../content/guides/authors'
+import type { Block, GuideDoc, GuideImage, GuideLink, Rich, WinExample } from '../content/guides/types'
+import { winHref, winThumb } from '../content/guides/wins'
 import { GUIDE_PAGE, GUIDES, guidePath, RESOURCES_INTRO, type Guide as GuideEntry } from '../content/resources'
 import styles from './Guide.module.css'
 
@@ -42,21 +45,79 @@ function Items({ items }: { items: readonly Rich[] }) {
   ))
 }
 
-function Example({ example }: { example: WinExample }) {
+/** Who took it, or whose write-up it's from. */
+function Credit({ image }: { image: GuideImage }) {
+  const { credit } = image
+  if ('win' in credit) {
+    return (
+      <>
+        {GUIDE_PAGE.photoFrom}{' '}
+        <Link to={winHref(credit.win)}>
+          {credit.win.project} {GUIDE_PAGE.writeUp}
+        </Link>
+      </>
+    )
+  }
+  return (
+    <>
+      {GUIDE_PAGE.photoBy} {credit.author},{' '}
+      <a href={credit.source} target="_blank" rel="noopener noreferrer">
+        {credit.license} {GUIDE_PAGE.viaCommons}
+      </a>
+    </>
+  )
+}
+
+function Figure({ image, caption, shape = 'wide' }: { image: GuideImage; caption: Rich; shape?: 'wide' | 'tall' }) {
+  return (
+    <figure className={shape === 'tall' ? styles.tall : styles.wide}>
+      <img src={image.src} alt={image.alt} loading="lazy" decoding="async" />
+      <figcaption className={styles.figcaption} data-fog-clear>
+        <span>
+          <RichText text={caption} />
+        </span>
+        <span className={styles.credit}>
+          <Credit image={image} />
+        </span>
+      </figcaption>
+    </figure>
+  )
+}
+
+/** A win told as an example: its cover, its prize, the point, and which of us was on the team. */
+function Example({ example, authors }: { example: WinExample; authors: readonly Author[] }) {
   const { win, text } = example
+  const on = authorsOn(win, authors)
   return (
     <aside className={styles.example} aria-label={`${GUIDE_PAGE.exampleLabel}: ${win.project}`}>
-      <p className={styles.exampleHead} data-fog-clear>
-        <Link className={styles.exampleName} to={winHref(win)}>
-          {win.project}
-        </Link>
-        <span className={styles.examplePrize}>
-          {win.prize}, {win.event}
-        </span>
-      </p>
-      <p data-fog-clear>
-        <RichText text={text} />
-      </p>
+      {/* The name links to the win too; the picture is a bigger target for the same place. */}
+      <Link className={styles.exampleThumb} to={winHref(win)} tabIndex={-1} aria-hidden="true">
+        <img src={winThumb(win.cover)} alt="" loading="lazy" width={333} height={222} />
+      </Link>
+      <div className={styles.exampleBody} data-fog-clear>
+        <p className={styles.exampleLabel}>{GUIDE_PAGE.exampleLabel}</p>
+        <p className={styles.exampleHead}>
+          <Link className={styles.exampleName} to={winHref(win)}>
+            {win.project}
+          </Link>
+          <span className={styles.examplePrize}>
+            {win.prize}, {win.event}
+          </span>
+        </p>
+        <p>
+          <RichText text={text} />
+        </p>
+        {on.length > 0 && (
+          <p className={styles.exampleTeam}>
+            <span className={styles.teamPhotos}>
+              {on.map((author) => (
+                <AuthorPhoto key={author.href} author={author} />
+              ))}
+            </span>
+            {GUIDE_PAGE.onTeam(nameList(on.map((author) => author.firstName)))}
+          </p>
+        )}
+      </div>
     </aside>
   )
 }
@@ -66,10 +127,10 @@ function isParagraph(block: Block): block is Rich {
   return typeof block === 'string' || Array.isArray(block)
 }
 
-function BlockView({ block }: { block: Block }) {
+function BlockView({ block, authors }: { block: Block; authors: readonly Author[] }) {
   if (isParagraph(block)) {
     return (
-      <p data-fog-clear>
+      <p className={styles.para} data-fog-clear>
         <RichText text={block} />
       </p>
     )
@@ -90,8 +151,19 @@ function BlockView({ block }: { block: Block }) {
   }
   if ('callout' in block) {
     return (
-      <p className={styles.callout} data-fog-clear>
-        <RichText text={block.callout} />
+      <div className={styles.callout} data-fog-clear>
+        <p className={styles.calloutLabel}>{GUIDE_PAGE.ruleOfThumb}</p>
+        <p className={styles.calloutText}>
+          <RichText text={block.callout} />
+        </p>
+      </div>
+    )
+  }
+  if ('pull' in block) {
+    // The line is already in the text around it, so it's read once, there.
+    return (
+      <p className={styles.pull} aria-hidden="true" data-fog-clear>
+        {block.pull}
       </p>
     )
   }
@@ -99,6 +171,10 @@ function BlockView({ block }: { block: Block }) {
     return (
       <div className={styles.checklist}>
         <h3 className={styles.checklistTitle} data-fog-clear>
+          <svg className={styles.checkMark} width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+            <circle cx="11" cy="11" r="11" fill="currentColor" />
+            <path d="M6.5 11.5l3 3 6-6.5" fill="none" stroke="#0b2a46" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           {block.title}
         </h3>
         <ul className={styles.checks}>
@@ -107,7 +183,15 @@ function BlockView({ block }: { block: Block }) {
       </div>
     )
   }
-  if ('example' in block) return <Example example={block.example} />
+  if ('example' in block) return <Example example={block.example} authors={authors} />
+  if ('figure' in block) return <Figure image={block.figure} caption={block.caption} shape={block.shape} />
+  if ('graphic' in block) {
+    return (
+      <div className={styles.graphicSlot}>
+        <Graphic name={block.graphic} />
+      </div>
+    )
+  }
   return (
     <dl className={styles.facts}>
       {block.facts.map((fact) => (
@@ -122,37 +206,75 @@ function BlockView({ block }: { block: Block }) {
   )
 }
 
-type Written = GuideEntry & { slug: string }
-
-/** The written guides in playbook order, so previous and next follow the contents page. */
-const WRITTEN = GUIDES.filter((guide): guide is Written => Boolean(guide.slug && GUIDE_DOCS.has(guide.slug)))
-
-function Neighbour({ guide, direction }: { guide: Written; direction: 'previous' | 'next' }) {
+/** Two lines on each author: who they are, then the wins they were on, each linked. */
+function AuthorNote({ authors }: { authors: readonly Author[] }) {
   return (
-    <Link className={`${styles.neighbour} ${direction === 'next' ? styles.toNext : ''}`} to={guidePath(guide) ?? '/resources'} data-fog-clear>
-      <span className={styles.neighbourLabel}>
-        {direction === 'previous' && <span aria-hidden="true">← </span>}
-        {direction === 'previous' ? GUIDE_PAGE.previous : GUIDE_PAGE.next}
-        {direction === 'next' && <span aria-hidden="true"> →</span>}
-      </span>
-      <span className={styles.neighbourName}>{guide.title}</span>
-    </Link>
+    <section id="authors" className={styles.authors} aria-labelledby="authors-title">
+      <h2 id="authors-title" className={styles.authorsTitle} data-fog-clear>
+        {GUIDE_PAGE.authorsTitle}
+      </h2>
+      <ul className={styles.authorList}>
+        {authors.map((author) => (
+          <li key={author.href} className={styles.author}>
+            <AuthorPhoto author={author} size="large" />
+            <div className={styles.authorText} data-fog-clear>
+              <p className={styles.authorName}>
+                <AuthorName author={author} />
+              </p>
+              <p>{author.role}</p>
+              <p className={styles.authorWins}>
+                {GUIDE_PAGE.winsWith}{' '}
+                {author.wins.map((win, index) => (
+                  <Fragment key={win.id}>
+                    {index > 0 && '; '}
+                    <Link className={styles.link} to={winHref(win)}>
+                      {win.project}
+                    </Link>
+                    , {win.prize} at {win.event}
+                  </Fragment>
+                ))}
+                .
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
-function GuideNav({ slug }: { slug: string }) {
-  const index = WRITTEN.findIndex((guide) => guide.slug === slug)
-  const previous = index > 0 ? WRITTEN[index - 1] : undefined
-  const next = index >= 0 && index < WRITTEN.length - 1 ? WRITTEN[index + 1] : undefined
-  return (
-    <nav className={styles.neighbours} aria-label={GUIDE_PAGE.navLabel}>
-      {previous ? <Neighbour guide={previous} direction="previous" /> : <span />}
-      <Link className={`${ui.textLink} ${styles.all}`} to="/resources" data-fog-clear>
-        {GUIDE_PAGE.all}
-      </Link>
-      {next ? <Neighbour guide={next} direction="next" /> : <span />}
-    </nav>
-  )
+type Written = GuideEntry & { slug: string; lead: NonNullable<GuideEntry['lead']> }
+
+/** The written guides in playbook order, so previous and next follow the contents page. */
+const WRITTEN = GUIDES.filter((guide): guide is Written => Boolean(guide.slug && guide.lead && GUIDE_DOCS.has(guide.slug)))
+
+function words(text: Rich): number {
+  const plain = typeof text === 'string' ? text : text.map((part) => (typeof part === 'string' ? part : 'strong' in part ? part.strong : part.label)).join('')
+  return plain.split(/\s+/).filter(Boolean).length
+}
+
+function blockWords(block: Block): number {
+  if (isParagraph(block)) return words(block)
+  if ('list' in block) return block.list.reduce((sum, item) => sum + words(item), 0)
+  if ('steps' in block) return block.steps.reduce((sum, item) => sum + words(item), 0)
+  if ('checklist' in block) return block.checklist.reduce((sum, item) => sum + words(item), 0)
+  if ('callout' in block) return words(block.callout)
+  if ('example' in block) return words(block.example.text)
+  if ('facts' in block) return block.facts.reduce((sum, fact) => sum + words(fact.detail), 0)
+  if ('figure' in block) return words(block.caption)
+  return 0
+}
+
+/** At about 230 words a minute, counting every block but the pictures. */
+function readingMinutes(doc: GuideDoc): number {
+  const total = doc.sections.reduce((sum, section) => sum + section.body.reduce((s, block) => s + blockWords(block), 0), words(doc.standfirst))
+  return Math.max(1, Math.round(total / 230))
+}
+
+function neighbour(guide: Written | undefined) {
+  if (!guide) return undefined
+  const doc = GUIDE_DOCS.get(guide.slug)
+  return { to: guidePath(guide) ?? '/resources', name: guide.title, meta: doc ? GUIDE_PAGE.readTime(readingMinutes(doc)) : '' }
 }
 
 function GuideMissing() {
@@ -178,7 +300,11 @@ function GuideMissing() {
   )
 }
 
-/** One playbook guide: the contents on the field beside the text on deep glass, then the next guide. */
+/**
+ * One playbook guide, set like a magazine piece: the lead photo under the title and byline, then
+ * the contents on the field beside the text on deep glass, with pictures and diagrams running
+ * wider than the text, the authors' note, and the next guide.
+ */
 export function Guide() {
   const { slug = '' } = useParams()
   const { hash } = useLocation()
@@ -190,12 +316,34 @@ export function Guide() {
     if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView()
   }, [slug, hash])
 
-  const entry = GUIDES.find((guide) => guide.slug === slug)
+  const index = WRITTEN.findIndex((guide) => guide.slug === slug)
+  const entry = WRITTEN[index]
   if (!doc || !entry) return <GuideMissing />
+  const { image, authors, updated } = entry.lead
 
   return (
-    <div className={ui.page}>
-      <PageIntro intro={{ path: `${GUIDE_PAGE.pathRoot}/${slug}`, title: entry.title, lede: entry.line }} />
+    <DetailPage>
+      <title>{`${entry.title} · ${BRAND.full}`}</title>
+      <DetailOpener photo={image.src} alt={image.alt}>
+        <p className={styles.kicker} data-fog-clear>
+          <Link to="/resources">{RESOURCES_INTRO.title}</Link>
+          <span className={styles.kickerCount}>
+            {GUIDE_PAGE.guideOf(index + 1, WRITTEN.length)}
+          </span>
+        </p>
+        <h1 id="guide-title" className={styles.title} data-fog-clear>
+          {entry.title}
+        </h1>
+        <p className={styles.lede} data-fog-clear>
+          {entry.line}
+        </p>
+        <div className={styles.byline}>
+          <Byline authors={authors} updated={updated} copy={GUIDE_PAGE} />
+        </div>
+        <p className={styles.leadCredit} data-fog-clear>
+          <Credit image={image} />
+        </p>
+      </DetailOpener>
 
       <div className={styles.layout}>
         <nav className={styles.contents} aria-labelledby="contents">
@@ -210,24 +358,40 @@ export function Guide() {
                 </a>
               </li>
             ))}
+            <li>
+              <a href="#authors" data-fog-clear>
+                {GUIDE_PAGE.authorsTitle}
+              </a>
+            </li>
           </ol>
         </nav>
 
-        <article className={`${ui.panelDeep} ${styles.doc}`}>
+        <article className={`${ui.panelDeep} ${styles.doc}`} aria-labelledby="guide-title">
+          <p className={styles.standfirst} data-fog-clear>
+            <RichText text={doc.standfirst} />
+          </p>
           {doc.sections.map((section) => (
             <section key={section.id} id={section.id} className={styles.section} aria-labelledby={`${section.id}-title`}>
               <h2 id={`${section.id}-title`} className={styles.heading} data-fog-clear>
                 {section.title}
               </h2>
-              {section.body.map((block, index) => (
-                <BlockView key={index} block={block} />
+              {section.body.map((block, i) => (
+                <BlockView key={i} block={block} authors={authors} />
               ))}
             </section>
           ))}
+          <AuthorNote authors={authors} />
         </article>
       </div>
 
-      <GuideNav slug={slug} />
-    </div>
+      <DetailNav
+        label={GUIDE_PAGE.navLabel}
+        previous={neighbour(WRITTEN[index - 1])}
+        next={neighbour(WRITTEN[index + 1])}
+        previousLabel={GUIDE_PAGE.previous}
+        nextLabel={GUIDE_PAGE.next}
+        all={{ to: '/resources', label: GUIDE_PAGE.all }}
+      />
+    </DetailPage>
   )
 }

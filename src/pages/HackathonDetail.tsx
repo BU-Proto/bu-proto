@@ -17,6 +17,7 @@ import detail from '../components/DetailPage.module.css'
 import { Status } from '../components/Status'
 import ui from '../components/ui.module.css'
 import { HACKATHON_DETAIL, HACKATHON_NOT_FOUND } from '../content/hackathons'
+import { HACKATHON_COVER } from '../content/covers'
 import { BRAND } from '../content/site'
 import type { HackathonPageData } from '../lib/content'
 import { dateParts, formatDay, formatRange } from '../lib/dates'
@@ -48,7 +49,12 @@ export function HackathonDetail() {
     <DetailPage>
       <title>{`${hackathon.name} · ${BRAND.full}`}</title>
 
-      <DetailOpener photo={hackathon.photo} alt={hackathon.name}>
+      {/* No cover of its own yet: the BU Bridge, where every trip out of Boston starts, credited. */}
+      <DetailOpener
+        photo={hackathon.photo || HACKATHON_COVER.src}
+        alt={hackathon.photo ? hackathon.name : HACKATHON_COVER.alt}
+        credit={hackathon.photo ? undefined : HACKATHON_COVER}
+      >
         <p className={detail.kicker} data-fog-clear>
           {formatRange(hackathon.starts, hackathon.ends)}, {hackathon.ends.slice(0, 4)}
           <span className={detail.kickerNote} data-fog-clear>

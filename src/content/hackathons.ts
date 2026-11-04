@@ -12,7 +12,7 @@ export const HACKATHONS_INTRO: PageIntro = {
 export const BOARD_LABELS = { left: 'Departures', right: 'From Boston' } as const
 
 export const TRAVEL_NOTE =
-  '“Covered” means the hackathon itself pays for or reimburses travel. Check each event’s site for the details.'
+  'Listings come from MLH. “Covered” means the hackathon itself pays for or reimburses travel; “Not confirmed” means we haven’t checked yet. Apply-by dates are the start date until we confirm the real deadline, so always check the hackathon’s own site before you apply or travel.'
 
 export const HACKATHONS_EMPTY = 'Nothing on the board right now. New trips go up here as soon as they’re planned.'
 
@@ -26,7 +26,7 @@ export const HACKATHON_DETAIL = {
   applyBy: (day: string) => `Apply by ${day}`,
   applyClosed: (day: string) => `Applications closed ${day}`,
   travelCovered: 'Travel is covered by the hackathon',
-  travelNotCovered: 'Travel isn’t covered',
+  travelNotCovered: 'Travel support not confirmed: check the hackathon’s site',
   going: (count: number) => (count === 0 ? 'Nobody from BU signed up yet' : `${count} from BU going`),
   wins: 'What we’ve won here',
   gallery: 'Photos',
