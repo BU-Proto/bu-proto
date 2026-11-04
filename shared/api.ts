@@ -430,6 +430,58 @@ export const testEmailInput = z.object({
 export type SendEmailInput = z.input<typeof sendEmailInput>
 export type TestEmailInput = z.input<typeof testEmailInput>
 
+/**
+ * Placeholders the composer can insert into the subject or body; the Worker fills them in for
+ * each recipient. A variable whose audience doesn't supply it (e.g. {{event}} in a members email)
+ * renders empty, and the preview flags it. Anything else in braces is left as typed.
+ */
+export interface EmailVariable {
+  token: string
+  label: string
+  /** Shown in the composer next to the token. */
+  example: string
+  /** Audience types that supply a value; absent means every audience. */
+  audiences?: readonly EmailAudience['type'][]
+}
+
+export const EMAIL_VARIABLES: readonly EmailVariable[] = [
+  { token: '{{name}}', label: 'First name', example: 'Ada' },
+  { token: '{{fullName}}', label: 'Full name', example: 'Ada Lovelace' },
+  { token: '{{email}}', label: 'Email', example: 'ada@bu.edu' },
+  { token: '{{track}}', label: 'Track', example: 'Build', audiences: ['members', 'track'] },
+  { token: '{{event}}', label: 'Event title', example: 'Why hackathons?', audiences: ['event'] },
+  { token: '{{eventDate}}', label: 'Event date', example: 'Thu, Nov 12', audiences: ['event'] },
+  { token: '{{eventTime}}', label: 'Event time', example: '6:30–8:30 PM', audiences: ['event'] },
+  { token: '{{eventPlace}}', label: 'Event place', example: 'CDS, 665 Commonwealth Ave', audiences: ['event'] },
+]
+
+/**
+ * POST /api/admin/email/preview → EmailPreview: the exact email one recipient would get,
+ * rendered by the same template the send uses. `index` picks which recipient of the audience
+ * (wrapping around), so the composer can step through real people. With nobody in the audience,
+ * it renders for a sample recipient (`recipient.sample` true). Subject and body may be empty.
+ */
+export const previewEmailInput = z.object({
+  audience: emailAudience,
+  subject: optionalText(150),
+  body: optionalText(20000),
+  index: z.number().int().min(0).default(0),
+})
+export type PreviewEmailInput = z.input<typeof previewEmailInput>
+
+export interface EmailPreview {
+  subject: string
+  /** The full HTML document; render it in a sandboxed iframe (srcdoc). */
+  html: string
+  text: string
+  recipient: { name: string; email: string; sample: boolean }
+  /** Which recipient this is, after wrapping, and how many there are. */
+  index: number
+  recipientCount: number
+  /** Tokens used in the subject or body that this audience doesn't fill (they render empty). */
+  unfilled: string[]
+}
+
 /** GET /api/admin/email/campaigns → { items: EmailCampaign[] } (newest first) */
 export interface EmailCampaign {
   id: number
