@@ -1,7 +1,10 @@
 import { useLocation, useSearchParams } from 'react-router'
+import { AsciiField, DEFAULT_FIELD_SETTINGS } from '../ascii-field'
 import styles from './SignIn.module.css'
-import admin from './admin.module.css'
 import { pageTitle } from './lib/format'
+
+/** What the portal covers, shown as chips so people know they're in the right place. */
+const AREAS = ['Events', 'Hackathons', 'Wins', 'Board', 'Members', 'Fund', 'Email'] as const
 
 function errorMessage(error: string | null, login: string | null) {
   switch (error) {
@@ -20,7 +23,10 @@ function errorMessage(error: string | null, login: string | null) {
   }
 }
 
-/** Shown at /admin/* whenever nobody is signed in, including after a session runs out. */
+/**
+ * Shown at /admin/* whenever nobody is signed in, including after a session runs out. It's the
+ * one portal screen with the site's ASCII field behind it: the door still looks like Proto.
+ */
 export function SignIn({ expired = false }: { expired?: boolean }) {
   const location = useLocation()
   const [params] = useSearchParams()
@@ -35,33 +41,67 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
   const href = `/api/auth/github?next=${encodeURIComponent(location.pathname + (query ? `?${query}` : ''))}`
 
   return (
-    <main className={styles.screen}>
+    <>
       <title>{pageTitle('Sign in')}</title>
-      <div className={styles.card}>
-        <img className={styles.seal} src="/proto-seal.svg" alt="" width={56} height={56} />
-        <div className={styles.text}>
-          <p className={admin.eyebrow}>BU Proto · Admin</p>
-          <h1 className={styles.title}>{expired ? 'Your session ended' : 'Sign in to the portal'}</h1>
-          <p className={styles.lede}>
+      <AsciiField settings={DEFAULT_FIELD_SETTINGS} className={styles.field} />
+
+      <main className={styles.screen}>
+        <a className={styles.brand} href="/" data-fog-clear>
+          <img src="/proto-seal.svg" alt="" width={22} height={22} />
+          Proto
+        </a>
+
+        <div className={styles.card}>
+          <div className={styles.handle} aria-hidden="true" />
+
+          <p className={styles.path} data-fog-clear>
+            ~/proto/admin
+            <span className={styles.caret} aria-hidden="true">
+              _
+            </span>
+          </p>
+
+          <h1 className={styles.title} data-fog-clear>
+            {expired ? 'Your session ended' : 'Sign in to the portal'}
+          </h1>
+          <p className={styles.lede} data-fog-clear>
             {expired
               ? 'You were signed out. Sign in again to pick up where you left off; unsaved changes on this page are lost.'
-              : 'Events, hackathons, wins, the board, members and email. For Proto admins only.'}
+              : 'Where the team runs Proto. For admins only.'}
+          </p>
+
+          {!expired && (
+            <ul className={styles.areas} aria-label="In the portal">
+              {AREAS.map((area) => (
+                <li key={area} data-fog-clear>
+                  {area}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <div className={styles.message} role="alert">
+            {message && <p className={styles.error}>{message}</p>}
+          </div>
+
+          <a className={styles.github} href={href} data-fog-clear="box">
+            <GitHubMark />
+            Sign in with GitHub
+            <span className={styles.arrow} aria-hidden="true">
+              ↗
+            </span>
+          </a>
+
+          <p className={styles.fine} data-fog-clear>
+            Only GitHub accounts on the admin list get in. We read your public profile and nothing else.
           </p>
         </div>
 
-        <div className={styles.message} role="alert">
-          {message && <p className={styles.error}>{message}</p>}
-        </div>
-
-        <a className={styles.github} href={href}>
-          <GitHubMark />
-          Sign in with GitHub
-        </a>
-        <a className={styles.back} href="/">
+        <a className={styles.back} href="/" data-fog-clear>
           ← Back to the site
         </a>
-      </div>
-    </main>
+      </main>
+    </>
   )
 }
 
