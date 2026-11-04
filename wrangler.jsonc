@@ -6,6 +6,9 @@
   "main": "./worker/index.ts",
   "compatibility_date": "2026-11-01",
   "upload_source_maps": true,
+
+  // The site lives at buproto.com (its DNS is on Cloudflare). Kept here so a deploy never drops it.
+  "routes": [{ "pattern": "buproto.com", "custom_domain": true }],
   "observability": { "enabled": true },
 
   // The site is the Vite build. Every unknown path serves index.html for the client router;
@@ -41,8 +44,8 @@
   "vars": {
     // GitHub logins that are always admins and can't be removed in the portal. Comma-separated.
     "ADMIN_GITHUB_LOGINS": "AndresL230",
-    // Sender for every email. Its domain has to be verified in Resend.
-    "EMAIL_FROM": "BU Proto <hello@buproto.example>",
+    // Sender for every email. buproto.com has to be verified in Resend before this sends.
+    "EMAIL_FROM": "BU Proto <hello@buproto.com>",
     // Optional reply-to address for every email.
     "EMAIL_REPLY_TO": ""
   }

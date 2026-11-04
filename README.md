@@ -59,14 +59,14 @@ The portal lives at `/admin`; see [Admin portal](#admin-portal).
 GitHub OAuth apps allow one callback URL each, so make two: one for local dev, one for production. Create them under the GitHub organization's settings if Proto has one, otherwise under a personal account (Settings → Developer settings → OAuth Apps → New OAuth App).
 
 1. **Local:** homepage `http://localhost:5173`, callback `http://localhost:5173/api/auth/callback`. Generate a client secret and put both values in `.dev.vars` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, then restart `npm run dev`. Sign-in only works on the port the callback names.
-2. **Production:** homepage `https://<your domain>`, callback `https://<your domain>/api/auth/callback` (the `*.workers.dev` URL works until there's a custom domain). Then `npx wrangler secret put GITHUB_CLIENT_ID` and `npx wrangler secret put GITHUB_CLIENT_SECRET`.
+2. **Production:** homepage `https://buproto.com`, callback `https://buproto.com/api/auth/callback`. Then `npx wrangler secret put GITHUB_CLIENT_ID` and `npx wrangler secret put GITHUB_CLIENT_SECRET`.
 
 The app only asks for `read:user`, uses GitHub's token once to read the profile, and never stores it.
 
 ### Setting up Resend
 
 1. In Resend, add the sending domain and the DNS records it shows (SPF and DKIM, usually on a `send.` subdomain), and wait for *Verified*. Add a DMARC record (`_dmarc` TXT, e.g. `v=DMARC1; p=none;`) too; Gmail and Yahoo expect it from bulk senders.
-2. Set `EMAIL_FROM` in `wrangler.jsonc` to an address on that domain, e.g. `BU Proto <hello@yourdomain>`. The placeholder `hello@buproto.example` will be rejected. `EMAIL_REPLY_TO` is optional.
+2. `EMAIL_FROM` in `wrangler.jsonc` is `BU Proto <hello@buproto.com>`, so the domain to verify is `buproto.com`. `EMAIL_REPLY_TO` is optional.
 3. Create an API key with sending access and `npx wrangler secret put RESEND_API_KEY`. Leave it empty in `.dev.vars`.
 
 Sends go out in batches of 100 inside the request, which is fine for a few thousand recipients; a much bigger list would want a Queue.
