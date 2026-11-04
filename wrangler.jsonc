@@ -1,6 +1,8 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "bu-proto",
+  // Andres's Cloudflare account: the login sees several, so Wrangler needs to be told which.
+  "account_id": "0bda3a2560ca48711ef7336cc421abed",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-11-01",
   "upload_source_maps": true,
@@ -13,12 +15,12 @@
     "run_worker_first": ["/api/*"]
   },
 
-  // Before the first deploy, run `npx wrangler d1 create bu-proto` and paste its database_id
-  // here. Local dev doesn't need it.
+  // The production database. Local dev uses its own copy in .wrangler/state.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "bu-proto",
+      "database_id": "2280c64d-5b92-48a2-a5ad-47a1fbaf14cd",
       "migrations_dir": "./migrations"
     }
   ],
