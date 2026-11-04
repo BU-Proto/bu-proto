@@ -104,26 +104,33 @@
   line-height: 1.5;
 }
 
-.github {
-  display: flex;
+/* Google's light sign-in button: white, a #747775 hairline, #1f1f1f text, the four-colour G. */
+.google {
+  justify-self: center;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 10px;
-  min-height: 48px;
+  min-height: 44px;
   margin-top: 4px;
-  padding: 12px 20px;
-  border: 1px solid #fff;
+  padding: 10px 20px 10px 14px;
+  border: 1px solid #747775;
   border-radius: 999px;
   background: #fff;
-  color: var(--on-light);
+  color: #1f1f1f;
+  font-family: Roboto, var(--font-ui);
   font-size: 14px;
   font-weight: 500;
+  line-height: 20px;
   text-shadow: none;
   box-shadow: 0 14px 34px -16px rgba(0, 25, 55, 0.7);
 }
 
-.github:hover {
-  background: #eefbf0;
+.google svg {
+  flex: none;
+}
+
+.google:hover {
+  background: #f2f2f2;
 }
 
 .fine {
@@ -133,6 +140,16 @@
   font-size: 12.5px;
   line-height: 1.55;
   text-align: center;
+}
+
+.fine a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.fine a:hover {
+  color: #fff;
 }
 
 .back {
@@ -146,7 +163,7 @@
 }
 
 .brand:focus-visible,
-.github:focus-visible,
+.google:focus-visible,
 .back:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;
@@ -157,13 +174,13 @@
     animation: rise 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
-  .github {
+  .google {
     transition:
       background 150ms,
       transform 150ms;
   }
 
-  .github:hover {
+  .google:hover {
     transform: translateY(-1px);
   }
 }

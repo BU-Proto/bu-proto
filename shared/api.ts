@@ -349,29 +349,39 @@ export interface RsvpResult {
 
 /** GET /api/admin/me → 200 Me, or 401 when not signed in. */
 export interface Me {
-  login: string
+  /** The Google account's verified email, lowercased: what admins are known by. */
+  email: string
+  /** The Google profile's name and photo, when it has them. */
   name: string | null
   avatarUrl: string | null
-  /** Listed in ADMIN_GITHUB_LOGINS: can't be removed in the portal. */
+  /** Listed in the ADMIN_EMAILS secret: can't be removed in the portal. */
   isOwner: boolean
 }
 
 /** GET /api/admin/admins → { items: Admin[] }  (owners first, then added admins) */
 export interface Admin {
-  login: string
+  email: string
   isOwner: boolean
-  /** null for owners. */
+  /** Email of the admin who added them; null for owners. */
   addedBy: string | null
   createdAt: string | null
   lastSeenAt: string | null
 }
 
-/** POST /api/admin/admins { login } → 201 { item: Admin }. DELETE /api/admin/admins/:login → 204. */
+/**
+ * How the "you're an admin" email went: sent through Resend, logged to the console (no
+ * RESEND_API_KEY, i.e. local dev), or failed. A failed email never fails the add.
+ */
+export type InviteEmail = 'sent' | 'logged' | 'failed'
+
+/**
+ * POST /api/admin/admins { email } → 201 { item: Admin, emailed: InviteEmail }, and emails them.
+ * POST /api/admin/admins/:email/invite → 200 { emailed: InviteEmail }: sends that email again,
+ * at most once every 10 minutes per admin (429 sooner). Not for owners.
+ * DELETE /api/admin/admins/:email → 204.
+ */
 export const addAdminInput = z.object({
-  login: z
-    .string()
-    .trim()
-    .regex(/^[a-z\d](?:[a-z\d-]{0,38})$/i, 'Not a GitHub username'),
+  email: z.string().trim().toLowerCase().pipe(z.email('Not an email address').max(254)),
 })
 
 // ---- Portal: members, RSVPs, fund interest --------------------------------------------------

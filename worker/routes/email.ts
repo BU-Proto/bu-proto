@@ -144,7 +144,7 @@ app.post('/api/admin/email/send', async (c) => {
     `INSERT INTO email_campaigns (subject, body, audience, recipient_count, status, sent_by)
      VALUES (?, ?, ?, ?, 'failed', ?) RETURNING id`,
   )
-    .bind(input.subject, input.body, JSON.stringify(input.audience), recipients.length, c.var.admin.login)
+    .bind(input.subject, input.body, JSON.stringify(input.audience), recipients.length, c.var.admin.email)
     .first<{ id: number }>()
   if (!campaign) throw new ApiError(500, 'Could not save the campaign.')
 
@@ -182,7 +182,7 @@ app.post('/api/admin/email/test', async (c) => {
   const email = renderEmail({
     subject: `[Test] ${input.subject}`,
     body: input.body,
-    recipient: { email: input.to, name: admin.name ?? admin.login },
+    recipient: { email: input.to, name: admin.name ?? admin.email },
     reason: { kind: 'test' },
     origin: originOf(c),
     values: exampleValues(),

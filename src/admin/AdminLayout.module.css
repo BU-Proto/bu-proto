@@ -359,7 +359,7 @@
 }
 
 .userName,
-.userLogin {
+.userEmail {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -370,10 +370,9 @@
   font-weight: 500;
 }
 
-.userLogin {
+.userEmail {
   color: var(--ink-dim);
-  font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 

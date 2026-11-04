@@ -14,8 +14,10 @@
   // The site is the Vite build. Every unknown path serves index.html for the client router;
   // only /api/* reaches the Worker.
   "assets": {
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    // /privacy and /terms also reach the Worker, which renders their text into the HTML for crawlers.
+    "run_worker_first": ["/api/*", "/privacy", "/terms"]
   },
 
   // The production database. Local dev uses its own copy in .wrangler/state.
@@ -42,8 +44,6 @@
   "triggers": { "crons": ["17 9 * * *"] },
 
   "vars": {
-    // GitHub logins that are always admins and can't be removed in the portal. Comma-separated.
-    "ADMIN_GITHUB_LOGINS": "AndresL230",
     // Sender for every email. buproto.com has to be verified in Resend before this sends.
     "EMAIL_FROM": "BU Proto <hello@buproto.com>",
     // Optional reply-to address for every email.
@@ -51,6 +51,9 @@
   }
 
   // Secrets: `wrangler secret put <NAME>` in production, .dev.vars locally (see .dev.vars.example).
-  //   GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET   the GitHub OAuth app
+  //   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET   the Google OAuth client (Web application)
+  //   ADMIN_EMAILS                             owners: always admins, can't be removed in the
+  //                                            portal. Comma-separated; a secret so personal
+  //                                            emails stay out of this public repo
   //   RESEND_API_KEY                           leave unset locally to log emails instead of sending
 }

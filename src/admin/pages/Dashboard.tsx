@@ -26,7 +26,7 @@ export function Component() {
 
   return (
     <div className={admin.page}>
-      <PageHeader title={`Hi, ${(me.name ?? me.login).split(' ')[0]}`} tabTitle="Dashboard" lede="What’s happening at BU Proto." />
+      <PageHeader title={`Hi, ${(me.name ?? me.email.split('@')[0]).split(' ')[0]}`} tabTitle="Dashboard" lede="What’s happening at BU Proto." />
 
       <section aria-labelledby="stats-title">
         <h2 id="stats-title" className={styles.srOnly}>

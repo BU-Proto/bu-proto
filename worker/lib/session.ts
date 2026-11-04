@@ -10,39 +10,58 @@ import { ApiError } from './http'
 export const SESSION_COOKIE = '__Host-proto_session'
 const SESSION_DAYS = 14
 
-/** Logins in ADMIN_GITHUB_LOGINS, lowercased. */
+/** Emails in ADMIN_EMAILS, trimmed and lowercased, in the order written. */
 export function owners(env: Env): Set<string> {
   return new Set(
-    String(env.ADMIN_GITHUB_LOGINS)
+    String(env.ADMIN_EMAILS ?? '')
       .split(',')
-      .map((login) => login.trim().toLowerCase())
+      .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
   )
 }
 
-/** Whether a GitHub login may use the portal: an owner, or in the admins table. */
-export async function isAllowed(env: Env, login: string): Promise<boolean> {
-  if (owners(env).has(login.toLowerCase())) return true
-  const row = await env.DB.prepare('SELECT 1 FROM admins WHERE login = ?').bind(login).first()
+/**
+ * Local sign-in's stand-in when ADMIN_EMAILS is empty. Only ever accepted under `vite dev` on
+ * localhost (see isAllowed), so a real Google account can't claim it.
+ */
+export const LOCAL_EMAIL = 'you@localhost'
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
+
+/**
+ * Whether this request may use local sign-in. import.meta.env.DEV is replaced with `false` when
+ * Vite builds for production, so every branch behind it is stripped from the deployed Worker; no
+ * variable or secret can switch it back on. The localhost check is a second lock.
+ */
+export function isLocalDev(url: string): boolean {
+  return import.meta.env.DEV && LOCAL_HOSTS.has(new URL(url).hostname)
+}
+
+/** Whether an email may use the portal: an owner, or in the admins table. `url` is the request's. */
+export async function isAllowed(env: Env, email: string, url: string): Promise<boolean> {
+  const lower = email.toLowerCase()
+  if (import.meta.env.DEV && lower === LOCAL_EMAIL && isLocalDev(url)) return true
+  if (owners(env).has(lower)) return true
+  const row = await env.DB.prepare('SELECT 1 FROM admins WHERE email = ?').bind(lower).first()
   return row !== null
 }
 
-interface GitHubProfile {
-  id: number
-  login: string
+interface Profile {
+  /** Google's stable account id (`sub`). */
+  sub: string
+  email: string
   name: string | null
   avatarUrl: string | null
 }
 
 /** Start a session for an allowed admin and set the cookie. Call only after isAllowed. */
-export async function createSession(c: Context<AppEnv>, profile: GitHubProfile): Promise<void> {
+export async function createSession(c: Context<AppEnv>, profile: Profile): Promise<void> {
   const token = randomToken()
   const expires = new Date(Date.now() + SESSION_DAYS * 86_400_000)
   await c.env.DB.prepare(
-    `INSERT INTO admin_sessions (token_hash, login, github_id, name, avatar_url, expires_at)
+    `INSERT INTO admin_sessions (token_hash, email, google_sub, name, avatar_url, expires_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
   )
-    .bind(await sha256(token), profile.login, profile.id, profile.name, profile.avatarUrl, sqliteTime(expires))
+    .bind(await sha256(token), profile.email.toLowerCase(), profile.sub, profile.name, profile.avatarUrl, sqliteTime(expires))
     .run()
   setCookie(c, SESSION_COOKIE, token, {
     path: '/',
@@ -61,7 +80,7 @@ export async function destroySession(c: Context<AppEnv>): Promise<void> {
 }
 
 /**
- * Every /api/admin route: 401 without a live session, and 401 (session dropped) if the login
+ * Every /api/admin route: 401 without a live session, and 401 (session dropped) if the email
  * has since been removed from the admins. Sets `c.var.admin`.
  */
 export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
@@ -69,25 +88,25 @@ export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (!token) throw new ApiError(401, 'Sign in to continue.')
   const hash = await sha256(token)
   const session = await c.env.DB.prepare(
-    `SELECT login, github_id, name, avatar_url FROM admin_sessions
+    `SELECT email, google_sub, name, avatar_url FROM admin_sessions
      WHERE token_hash = ? AND expires_at > datetime('now')`,
   )
     .bind(hash)
-    .first<{ login: string; github_id: number; name: string | null; avatar_url: string | null }>()
+    .first<{ email: string; google_sub: string; name: string | null; avatar_url: string | null }>()
   if (!session) throw new ApiError(401, 'Sign in to continue.')
 
-  if (!(await isAllowed(c.env, session.login))) {
-    await c.env.DB.prepare('DELETE FROM admin_sessions WHERE login = ?').bind(session.login).run()
+  if (!(await isAllowed(c.env, session.email, c.req.url))) {
+    await c.env.DB.prepare('DELETE FROM admin_sessions WHERE email = ?').bind(session.email).run()
     deleteCookie(c, SESSION_COOKIE, { path: '/', secure: true })
     throw new ApiError(401, 'You no longer have access.')
   }
 
   c.set('admin', {
-    login: session.login,
-    githubId: session.github_id,
+    email: session.email,
+    googleSub: session.google_sub,
     name: session.name,
     avatarUrl: session.avatar_url,
-    isOwner: owners(c.env).has(session.login.toLowerCase()),
+    isOwner: owners(c.env).has(session.email.toLowerCase()),
   })
   c.executionCtx.waitUntil(
     c.env.DB.prepare("UPDATE admin_sessions SET last_seen_at = datetime('now') WHERE token_hash = ?").bind(hash).run(),

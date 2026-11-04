@@ -44,3 +44,15 @@
     margin-top: 0;
   }
 }
+
+/* Plain text, not rowTitle: an email has no profile page to link to, so no hover colour. */
+.email {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rowButtons {
+  display: inline-flex;
+  gap: 8px;
+  white-space: nowrap;
+}

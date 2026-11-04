@@ -7,12 +7,13 @@ import auth from './routes/auth'
 import content from './routes/content'
 import email from './routes/email'
 import imports from './routes/imports'
+import pages from './routes/pages'
 import people from './routes/people'
 import publicForms from './routes/public'
 import type { AppEnv } from './types'
 
 // The API behind the site. Static assets and the client router are served by Workers Assets;
-// only /api/* reaches this Worker (see run_worker_first in wrangler.jsonc).
+// only /api/*, /privacy and /terms reach this Worker (see run_worker_first in wrangler.jsonc).
 //
 // Every router below defines full paths under /api. Two rules hold for all of them:
 // - state-changing requests must come from this origin (sameOrigin)
@@ -30,6 +31,7 @@ app.route('/', publicForms) //  /api/join, /api/fund-interest, /api/events/:id/r
 app.route('/', people) //       /api/admin/members, /api/admin/fund, /api/admin/stats
 app.route('/', email) //        /api/admin/email/*, /api/unsubscribe
 app.route('/', imports) //      /api/admin/hackathon-imports/*
+app.route('/', pages) //        /privacy, /terms rendered for crawlers
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404))
 app.onError((error, c) => {

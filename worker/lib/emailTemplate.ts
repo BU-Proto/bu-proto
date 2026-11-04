@@ -27,6 +27,8 @@ export type EmailReason =
   | { kind: 'event'; event: EventDetails }
   | { kind: 'fund' }
   | { kind: 'test' }
+  /** Transactional: someone was added as a portal admin. No list, so no unsubscribe. */
+  | { kind: 'admin' }
 
 export interface RenderedEmail {
   subject: string
@@ -268,6 +270,8 @@ function reasonText(reason: EmailReason): string {
       return "You're getting this because you joined the BU Proto fund interest list."
     case 'test':
       return 'This is a test copy sent from the BU Proto portal.'
+    case 'admin':
+      return "You're getting this because you were added as an admin of the BU Proto portal."
   }
 }
 
@@ -282,6 +286,8 @@ function kindLabel(reason: EmailReason): string {
       return 'the fund'
     case 'test':
       return 'test copy'
+    case 'admin':
+      return 'the portal'
   }
 }
 

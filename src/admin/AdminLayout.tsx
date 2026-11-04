@@ -165,12 +165,14 @@ function Shell({ me }: { me: Me }) {
                 <img className={styles.avatar} src={me.avatarUrl} alt="" width={32} height={32} />
               ) : (
                 <span className={styles.avatar} aria-hidden="true">
-                  {(me.name ?? me.login).slice(0, 1).toUpperCase()}
+                  {(me.name ?? me.email).slice(0, 1).toUpperCase()}
                 </span>
               )}
               <span className={styles.userText}>
-                <span className={styles.userName}>{me.name ?? me.login}</span>
-                <span className={styles.userLogin}>@{me.login}</span>
+                {me.name && <span className={styles.userName}>{me.name}</span>}
+                <span className={me.name ? styles.userEmail : styles.userName} title={me.email}>
+                  {me.email}
+                </span>
               </span>
             </div>
             <div className={styles.accountActions}>

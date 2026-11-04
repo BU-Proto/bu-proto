@@ -50,18 +50,35 @@ The portal lives at `/admin`; see [Admin portal](#admin-portal).
 
 `/admin` is where the team edits events, hackathons, wins and the board; looks after members and the fund interest list; reads an event's RSVPs; emails people; and decides who else gets in. It's a separate, lazy-loaded part of the app with its own layout (no ASCII field), so none of it ships to public visitors.
 
-**Who gets in.** Sign-in is GitHub only. Logins in `ADMIN_GITHUB_LOGINS` (`wrangler.jsonc`, comma-separated) are owners: always allowed, never removable in the portal. Owners and admins add everyone else on the Admins page, by GitHub username. Removing someone ends their sessions right away. Sessions are an HttpOnly cookie holding a random token (only its SHA-256 is stored) and last 14 days. Every state-changing API request must come from the site's own origin.
+**Who gets in.** Sign-in is Google only (any Google account: Gmail, or BU's Google Workspace). Emails in the `ADMIN_EMAILS` secret (comma-separated) are owners: always allowed, never removable in the portal. Owners and admins add everyone else on the Admins page, by email; the new admin gets an email with the sign-in link (a *Resend email* button sends it again, at most every 10 minutes). They must sign in with a Google account whose verified address is exactly that email. Removing someone ends their sessions right away. Sessions are an HttpOnly cookie holding a random token (only its SHA-256 is stored) and last 14 days. Every state-changing API request must come from the site's own origin.
+
+**Local sign-in.** Under `npm run dev`, on localhost, the Google button skips Google and signs you straight in as the first email in `ADMIN_EMAILS` (or `you@localhost` when that's empty). It's behind `import.meta.env.DEV`, which Vite compiles to `false` for production, so none of it ships.
 
 **Email.** The Email page sends through [Resend](https://resend.com) to all members, one track, an event's RSVPs, or the fund list by status. Subject and body take variables (`{{name}}`, `{{fullName}}`, `{{email}}`, `{{track}}`, and `{{event}}`, `{{eventDate}}`, `{{eventTime}}`, `{{eventPlace}}` for event emails), and the live preview renders exactly what each real recipient will get. Member emails carry a one-click unsubscribe link. Every send is logged with its counts. Without `RESEND_API_KEY` nothing leaves: emails are printed to the dev server console and the campaign is marked *logged*.
 
-### Setting up GitHub sign-in
+### Setting up Google sign-in
 
-GitHub OAuth apps allow one callback URL each, so make two: one for local dev, one for production. Create them under the GitHub organization's settings if Proto has one, otherwise under a personal account (Settings → Developer settings → OAuth Apps → New OAuth App).
+In the [Google Cloud Console](https://console.cloud.google.com/):
 
-1. **Local:** homepage `http://localhost:5173`, callback `http://localhost:5173/api/auth/callback`. Generate a client secret and put both values in `.dev.vars` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, then restart `npm run dev`. Sign-in only works on the port the callback names.
-2. **Production:** homepage `https://buproto.com`, callback `https://buproto.com/api/auth/callback`. Then `npx wrangler secret put GITHUB_CLIENT_ID` and `npx wrangler secret put GITHUB_CLIENT_SECRET`.
+1. **Project:** create one (e.g. "BU Proto"), or pick an existing one.
+2. **OAuth consent screen** (Google Auth Platform → Branding / Audience / Data access):
+   - User type **External**.
+   - App name **BU Proto**, a user support email, and a developer contact email.
+   - Authorized domain `buproto.com`; homepage `https://buproto.com`; privacy policy `https://buproto.com/privacy`; terms of service `https://buproto.com/terms`.
+   - Scopes: `openid`, `.../auth/userinfo.email` and `.../auth/userinfo.profile` (`openid email profile`). These are non-sensitive, so no Google review is needed.
+   - While the app is in **Testing**, only the test users you list can sign in. Either add every admin as a test user, or **Publish app** (Audience → In production) so any Google account can reach the sign-in; the admin list still decides who gets in.
+3. **Credentials** (Clients → Create client): type **Web application**, with authorized redirect URIs
+   - `https://buproto.com/api/auth/callback`
+   - `http://localhost:5173/api/auth/callback`
+4. **Secrets:** copy the client id and secret, then
+   ```sh
+   npx wrangler secret put GOOGLE_CLIENT_ID
+   npx wrangler secret put GOOGLE_CLIENT_SECRET
+   npx wrangler secret put ADMIN_EMAILS     # e.g. you@gmail.com,cofounder@bu.edu
+   ```
+   For local dev the same keys go in `.dev.vars`. `npm run dev` never calls Google (see *Local sign-in*); to try the real flow locally, put the client id and secret in `.dev.vars` and run a production build on the port the redirect URI names: `npx vite build && npx vite preview --port 5173`.
 
-The app only asks for `read:user`, uses GitHub's token once to read the profile, and never stores it.
+The flow is OpenID Connect's authorization code flow with PKCE, `state` and `nonce`. The Worker reads the verified email from Google's ID token once and never stores Google's tokens.
 
 ### Setting up Resend
 
@@ -176,7 +193,7 @@ The defaults behind the panel's controls are `DEFAULT_FIELD_SETTINGS` in the sam
 It's one Cloudflare Worker: Workers Static Assets serve the built site, and only `/api/*` runs the Worker.
 
 1. `npx wrangler login`.
-2. Set `ADMIN_GITHUB_LOGINS` and `EMAIL_FROM` in `wrangler.jsonc`, and the three secrets (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `RESEND_API_KEY`) with `npx wrangler secret put`.
+2. Set `EMAIL_FROM` in `wrangler.jsonc`, and the four secrets (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAILS`, `RESEND_API_KEY`) with `npx wrangler secret put`. See [Setting up Google sign-in](#setting-up-google-sign-in).
 3. Once, create the production database: `npx wrangler d1 create bu-proto`, and paste the `database_id` it prints into the `d1_databases` entry in `wrangler.jsonc`.
 4. `npm run deploy`.
 

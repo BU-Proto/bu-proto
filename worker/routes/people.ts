@@ -205,7 +205,7 @@ app.delete('/api/admin/fund/:id', async (c) => {
 app.get('/api/admin/stats', async (c) => {
   const today = bostonToday()
   const db = c.env.DB
-  const [counts, adminRows] = await db.batch<Record<string, number> | { login: string }>([
+  const [counts, adminRows] = await db.batch<Record<string, number> | { email: string }>([
     db
       .prepare(
         `SELECT
@@ -220,11 +220,11 @@ app.get('/api/admin/stats', async (c) => {
            (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 1) AS sampleWins`,
       )
       .bind(today),
-    db.prepare('SELECT login FROM admins'),
+    db.prepare('SELECT email FROM admins'),
   ])
-  // Owners may also have a row in admins; logins are case-insensitive.
-  const logins = owners(c.env)
-  for (const { login } of adminRows.results as { login: string }[]) logins.add(login.toLowerCase())
+  // Owners may also have a row in admins; emails are case-insensitive.
+  const emails = owners(c.env)
+  for (const { email } of adminRows.results as { email: string }[]) emails.add(email.toLowerCase())
   const row = counts.results[0] as Record<string, number>
   const stats: Stats = {
     members: row.members,
@@ -233,7 +233,7 @@ app.get('/api/admin/stats', async (c) => {
     upcomingRsvps: row.upcomingRsvps,
     fundNew: row.fundNew,
     fundTotal: row.fundTotal,
-    admins: logins.size,
+    admins: emails.size,
     wins: row.wins,
     sampleWins: row.sampleWins,
   }
