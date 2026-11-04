@@ -17,6 +17,7 @@ import {
 import detail from '../components/DetailPage.module.css'
 import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import ui from '../components/ui.module.css'
+import { EVENT_COVERS } from '../content/covers'
 import { EVENT_DETAIL, EVENT_NOT_FOUND } from '../content/events'
 import { BRAND } from '../content/site'
 import { eventToIcs, icsFileName } from '../lib/calendar'
@@ -105,6 +106,8 @@ export function EventDetail() {
 }
 
 function Opener({ event, past }: { event: ProtoEvent; past: boolean }) {
+  // No photo of its own yet: a BU building matched to the kind of event, credited on the page.
+  const cover = EVENT_COVERS[event.kind] ?? EVENT_COVERS['Hack night']
   const rsvp = useRsvp(event)
   const { day, monthLong, weekdayLong } = dateParts(event.date)
 
@@ -112,7 +115,12 @@ function Opener({ event, past }: { event: ProtoEvent; past: boolean }) {
   const ics = `data:text/calendar;charset=utf-8,${encodeURIComponent(eventToIcs(event, pageUrl))}`
 
   return (
-    <DetailOpener photo={event.photo} alt={event.title} hugeName={false}>
+    <DetailOpener
+      photo={event.photo || cover.src}
+      alt={event.photo ? event.title : cover.alt}
+      credit={event.photo ? undefined : cover}
+      hugeName={false}
+    >
       {/* The date set the way the home page sets the next event's: the day huge, the rest beside it. */}
       <p className={styles.date} data-fog-clear>
         <span className={styles.day}>{day}</span>

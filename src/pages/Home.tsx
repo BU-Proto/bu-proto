@@ -1,4 +1,6 @@
 import { Link, useLoaderData } from 'react-router'
+import { showcaseOrder } from '../components/accolade'
+import { AccoladeFeature, AccoladePlates } from '../components/Accolades'
 import { Hero } from '../components/Hero'
 import { WinTally } from '../components/WinTally'
 import { LogoBand } from '../components/LogoBand'
@@ -26,7 +28,6 @@ import { WINS_EMPTY } from '../content/wins'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
-import { WinCard } from './Wins'
 import styles from './Home.module.css'
 
 const SEPARATORS = ['○', '>', '_']
@@ -42,6 +43,8 @@ export function Home() {
     .slice(0, 3)
   const fundNote = NOTES.find((note) => note.link)
   const nextDate = nextEvent && dateParts(nextEvent.date)
+  const { featured, rest } = showcaseOrder(wins)
+  const topWins = [...featured, ...rest].slice(0, 3)
 
   return (
     <>
@@ -241,7 +244,7 @@ export function Home() {
           </div>
         </section>
 
-        {/* Wins, hung unevenly like photos on a wall. */}
+        {/* Wins as accolades: the biggest placement across the window, then the next two. */}
         <section className={styles.wins} aria-labelledby="latest-wins">
           <header className={styles.winsHead}>
             <h2 id="latest-wins" className={styles.title} data-fog-clear>
@@ -251,16 +254,15 @@ export function Home() {
               All wins
             </Link>
           </header>
-          {wins.length === 0 ? (
+          {topWins.length === 0 ? (
             <p className={styles.lede} data-fog-clear>
               {WINS_EMPTY}
             </p>
           ) : (
-            <ul className={styles.winGrid}>
-              {wins.slice(0, 3).map((win, index) => (
-                <WinCard key={win.id} win={win} rank={index} />
-              ))}
-            </ul>
+            <>
+              <AccoladeFeature win={topWins[0]} level={3} />
+              {topWins.length > 1 && <AccoladePlates wins={topWins.slice(1)} />}
+            </>
           )}
         </section>
 

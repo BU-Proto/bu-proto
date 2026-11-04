@@ -7,6 +7,7 @@ import { isRouteErrorResponse, Link, useRouteError } from 'react-router'
 import { BRAND } from '../content/site'
 import { ApiError } from '../lib/api'
 import { paragraphs } from '../lib/detail'
+import { BuMark } from './BuMark'
 import { Gallery } from './Gallery'
 import { LoadError } from './RouteStates'
 import { SampleTag } from './SampleTag'
@@ -26,11 +27,14 @@ export function DetailOpener({
   photo,
   alt,
   hugeName = true,
+  credit,
   children,
 }: {
   photo: string | null | undefined
   alt: string
   hugeName?: boolean
+  /** For a stock or default cover: who took it, under what licence, and where it's from. */
+  credit?: { author: string; license: string; source: string }
   children: ReactNode
 }) {
   const kind = photo ? styles.withPhoto : `${styles.typeOnly} ${hugeName ? styles.hugeName : ''}`
@@ -40,6 +44,14 @@ export function DetailOpener({
         <div className={styles.cover}>
           <img src={photo} alt={alt} fetchPriority="high" />
         </div>
+      )}
+      {photo && credit && (
+        <p className={styles.credit} data-fog-clear>
+          Photo by {credit.author},{' '}
+          <a href={credit.source} target="_blank" rel="noopener noreferrer">
+            {credit.license} via Wikimedia Commons
+          </a>
+        </p>
       )}
       <div className={styles.openerText}>{children}</div>
     </header>
@@ -109,6 +121,8 @@ export function AsideSection({ id, title, children }: { id: string; title: strin
 export interface Person {
   name: string
   href: string | null
+  /** From BU: gets the BU mark after the name. Older rows don't have it. */
+  bu?: boolean
 }
 
 /** A ruled list of names, each linking out when there's somewhere to go. */
@@ -118,6 +132,7 @@ export function PeopleList({ people }: { people: readonly Person[] }) {
       {people.map((person, i) => (
         <li key={`${person.name}-${i}`}>
           {person.href ? <OutLink href={person.href}>{person.name}</OutLink> : <span data-fog-clear>{person.name}</span>}
+          {person.bu && <BuMark />}
         </li>
       ))}
     </ul>
@@ -178,7 +193,7 @@ interface DetailNavProps {
 /** The bar at the foot of the page: the one before, the way back to the list, the one after. */
 export function DetailNav({ label, previous, next, previousLabel, nextLabel, all }: DetailNavProps) {
   return (
-    <nav className={`${ui.panelDeep} ${styles.neighbours}`} aria-label={label}>
+    <nav className={styles.neighbours} aria-label={label}>
       {previous ? <NeighbourLink item={previous} label={previousLabel} direction="previous" /> : <span />}
       <Link className={`${ui.textLink} ${styles.all}`} to={all.to} data-fog-clear>
         {all.label}

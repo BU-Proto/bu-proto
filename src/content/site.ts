@@ -66,4 +66,6 @@ export const LIGHTBOX = {
   close: 'Close',
   previous: 'Previous photo',
   next: 'Next photo',
+  scrollBack: 'Scroll back through the photos',
+  scrollOn: 'Scroll on through the photos',
 } as const

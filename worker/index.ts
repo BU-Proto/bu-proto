@@ -5,6 +5,7 @@ import { requireAdmin, sameOrigin } from './lib/session'
 import admins from './routes/admins'
 import auth from './routes/auth'
 import content from './routes/content'
+import devpost from './routes/devpost'
 import email from './routes/email'
 import imports from './routes/imports'
 import pages from './routes/pages'
@@ -31,6 +32,7 @@ app.route('/', publicForms) //  /api/join, /api/fund-interest, /api/events/:id/r
 app.route('/', people) //       /api/admin/members, /api/admin/fund, /api/admin/stats
 app.route('/', email) //        /api/admin/email/*, /api/unsubscribe
 app.route('/', imports) //      /api/admin/hackathon-imports/*
+app.route('/', devpost) //      /api/admin/devpost/* (projects → win drafts)
 app.route('/', pages) //        /privacy, /terms rendered for crawlers
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404))

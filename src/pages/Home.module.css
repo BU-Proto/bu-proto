@@ -530,7 +530,7 @@
 
 .wins {
   display: grid;
-  gap: clamp(32px, 5vh, 56px);
+  gap: clamp(40px, 8vh, 96px);
 }
 
 .winsHead {
@@ -539,24 +539,6 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px 24px;
-}
-
-/* Hung unevenly: the middle card drops, the last one rises. */
-.winGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
-  margin: 0;
-  padding: 0 0 80px;
-  list-style: none;
-}
-
-.winGrid > :nth-child(2) {
-  translate: 0 80px;
-}
-
-.winGrid > :nth-child(3) {
-  translate: 0 24px;
 }
 
 /* ---- Join ------------------------------------------------------------------------------- */
@@ -626,15 +608,6 @@
   .schedule {
     max-width: 340px;
     margin-top: 0;
-  }
-
-  .winGrid {
-    grid-template-columns: minmax(0, 1fr);
-    padding-bottom: 0;
-  }
-
-  .winGrid > :nth-child(n) {
-    translate: none;
   }
 }
 

@@ -38,7 +38,12 @@ const optionalImage = z
 const flags = { placeholder: z.boolean(), published: z.boolean() }
 
 /** One teammate: their name, and optionally where to find them (LinkedIn, a personal site, GitHub). */
-export const personInput = z.object({ name: text(80), href: optionalUrl })
+export const personInput = z.object({
+  name: text(80),
+  href: optionalUrl,
+  /** A BU student or alum, marked next to their name on the site. */
+  bu: z.boolean().default(false),
+})
 
 /** A gallery photo: a full URL or a path under public/. */
 const galleryImage = z.union([z.url(), z.string().regex(/^\/[^\s]*$/)], {
@@ -658,4 +663,53 @@ export const IMPORT_COOLDOWN_MINUTES = 5
 export interface AddedCandidate {
   item: Hackathon
   candidate: HackathonCandidate
+}
+
+// ---- Portal: Devpost project import -----------------------------------------------------------
+
+/** At most this many pasted URLs per request, and this many projects once profiles are expanded. */
+export const DEVPOST_MAX_INPUTS = 10
+export const DEVPOST_MAX_PROJECTS = 30
+
+/**
+ * POST /api/admin/devpost/lookup { urls } → { items: DevpostLookupItem[] }
+ * POST /api/admin/devpost/import { urls } → DevpostImportResult
+ * `urls` are devpost.com profile URLs (https://devpost.com/<user>) or project URLs
+ * (https://devpost.com/software/<slug>); profiles expand to their projects. Import re-reads each
+ * project from Devpost, so the lookup's output is only for showing.
+ */
+export const devpostUrlsInput = z.object({
+  urls: z
+    .array(z.string().trim().max(300))
+    .min(1, 'Paste at least one Devpost link.')
+    .max(DEVPOST_MAX_INPUTS, `Up to ${DEVPOST_MAX_INPUTS} links at a time.`),
+})
+export type DevpostUrlsInput = z.input<typeof devpostUrlsInput>
+
+/** One project as the import would make it. Only `url` and `error` are set when it couldn't be read. */
+export interface DevpostLookupItem {
+  /** The canonical project URL, https://devpost.com/software/<slug>. */
+  url: string
+  project: string
+  tagline: string
+  /** The hackathon of the first submission that won, else of the first submission; '' if none. */
+  event: string
+  /** The first prize there, "Submitted" if it won nothing, "Not submitted" without a hackathon. */
+  placement: string
+  /** Any further prizes, comma-separated. */
+  track: string
+  won: boolean
+  team: string[]
+  imageCount: number
+  /** A small cover for the list, from Devpost's servers. */
+  thumbnail: string | null
+  /** A win already pointing at this project, so a re-import doesn't duplicate it. */
+  existingWinId: number | null
+  error?: string
+}
+
+export interface DevpostImportResult {
+  created: { url: string; id: number; project: string }[]
+  skipped: { url: string; id: number; reason: string }[]
+  failed: { url: string; error: string }[]
 }

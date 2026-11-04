@@ -25,7 +25,8 @@
 
 body {
   margin: 0;
-  overflow-x: hidden;
+  /* clip, not hidden: a full-bleed band can never be scrolled into view sideways. */
+  overflow-x: clip;
   background: var(--base);
   color: var(--ink);
   font-family: var(--font-ui);

@@ -44,6 +44,11 @@ export function Component() {
                 Import from MLH &amp; Devpost
               </Link>
             )}
+            {resource === 'wins' && (
+              <Link className={admin.button} to="/admin/wins/import">
+                Import from Devpost
+              </Link>
+            )}
             <Link className={admin.primary} to={`/admin/${resource}/new`}>
               <PlusIcon /> New {spec.singular.toLowerCase()}
             </Link>

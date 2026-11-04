@@ -74,8 +74,8 @@
 
 .personInputs {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) auto;
-  grid-template-areas: 'name link controls';
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) auto auto;
+  grid-template-areas: 'name link bu controls';
   align-items: center;
   gap: 8px;
 }
@@ -176,10 +176,10 @@
 
   .personInputs {
     gap: 6px 8px;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
-      'name controls'
-      'link link';
+      'name bu controls'
+      'link link link';
   }
 
   .imageRow {
@@ -212,4 +212,20 @@
   .linkInputs input[type='url'] {
     grid-row: 2;
   }
+}
+
+/* The per-person BU flag: a plain checkbox and its label, kept on one line. */
+.personBu {
+  grid-area: bu;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.personBu input {
+  accent-color: var(--accent);
 }

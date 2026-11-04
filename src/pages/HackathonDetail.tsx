@@ -12,6 +12,7 @@ import {
   WriteUp,
   WriteUpSection,
 } from '../components/DetailPage'
+import { AccoladePlates } from '../components/Accolades'
 import detail from '../components/DetailPage.module.css'
 import { Status } from '../components/Status'
 import ui from '../components/ui.module.css'
@@ -21,7 +22,6 @@ import type { HackathonPageData } from '../lib/content'
 import { dateParts, formatDay, formatRange } from '../lib/dates'
 import { filled, neighboursOf } from '../lib/detail'
 import { statusOf, winIsFrom } from '../lib/hackathons'
-import { WinGrid } from './Wins'
 import styles from './HackathonDetail.module.css'
 
 const COPY = HACKATHON_DETAIL
@@ -118,7 +118,7 @@ export function HackathonDetail() {
           <h2 id="wins" className={ui.sectionTitle} data-fog-clear>
             {COPY.wins}
           </h2>
-          <WinGrid wins={pastWins} />
+          <AccoladePlates wins={pastWins} />
         </section>
       )}
 

@@ -37,3 +37,12 @@ export const WIN_TALLY = {
   note: 'Counted from every win on this site, and it goes up as we add them.',
   link: 'See every win',
 } as const
+
+/** Copy for the showcase on /wins, the home page and each hackathon's page. */
+export const WIN_SHOWCASE = {
+  at: 'at',
+  builtBy: 'Built by',
+  open: 'See the project',
+  /** Over the prizes that follow the big placements on /wins. */
+  moreTitle: 'Prizes from the tracks',
+} as const

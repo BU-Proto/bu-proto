@@ -18,5 +18,5 @@
 
 .wins {
   display: grid;
-  gap: 18px;
+  gap: clamp(24px, 4vh, 40px);
 }

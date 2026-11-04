@@ -32,6 +32,7 @@ export interface LinkValue {
 export interface PersonValue {
   name: string
   href: string
+  bu: boolean
 }
 
 /** Arrays of strings are image lists; list fields stay one textarea, so they're plain strings. */
@@ -93,8 +94,12 @@ export function toForm(spec: ResourceSpec, row: ContentRow | null): FormValues {
         values[field.key] = Array.isArray(value)
           ? value.map((person: unknown) =>
               typeof person === 'string'
-                ? { name: person, href: '' }
-                : { name: String((person as PersonValue).name ?? ''), href: String((person as PersonValue).href ?? '') },
+                ? { name: person, href: '', bu: false }
+                : {
+                    name: String((person as PersonValue).name ?? ''),
+                    href: String((person as PersonValue).href ?? ''),
+                    bu: (person as PersonValue).bu === true,
+                  },
             )
           : []
         break
@@ -131,7 +136,11 @@ export function toPayload(spec: ResourceSpec, values: FormValues): Record<string
         break
       case 'people':
         // Same for people: an empty link goes as '', which the API stores as no link.
-        payload[field.key] = (value as PersonValue[]).map((person) => ({ name: person.name.trim(), href: person.href.trim() }))
+        payload[field.key] = (value as PersonValue[]).map((person) => ({
+          name: person.name.trim(),
+          href: person.href.trim(),
+          bu: person.bu,
+        }))
         break
       case 'images':
         payload[field.key] = (value as string[]).map((src) => src.trim())

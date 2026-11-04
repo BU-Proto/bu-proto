@@ -243,12 +243,17 @@
 
 /* ---- Previous / next ---- */
 
+/* The end of the page sits on the field, not in another box: a hairline, then the neighbours set
+   large, like a book's next chapter. */
 .neighbours {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
+  align-items: end;
   gap: 16px clamp(16px, 4vw, 48px);
-  padding-block: clamp(14px, 2vw, 22px);
+  margin-top: clamp(24px, 6vh, 64px);
+  padding-top: clamp(28px, 5vh, 52px);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  text-shadow: var(--on-field-shadow);
 }
 
 .neighbour {
@@ -269,7 +274,7 @@
 }
 
 .neighbourName {
-  font-size: clamp(22px, 3.2vw, 38px);
+  font-size: clamp(28px, 4.6vw, 60px);
   font-weight: 300;
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -392,4 +397,33 @@
     opacity: 0;
     transform: translateY(14px);
   }
+}
+
+@media (max-width: 640px) {
+  .neighbours {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .neighbours .all {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* The credit for a default cover, small and out of the way at the photo's top corner. */
+.credit {
+  position: absolute;
+  top: calc(var(--under-bar, 0px) + 14px);
+  right: max(16px, env(safe-area-inset-right, 0px));
+  z-index: 1;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  text-shadow: var(--on-field-shadow);
+}
+
+.credit a {
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 2px;
 }

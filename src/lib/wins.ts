@@ -9,7 +9,8 @@ export interface WinTally {
   sample: boolean
 }
 
-const FIRST = /\b(1st|first|grand prize|winner)\b/i
+// "1st Place", "First place overall", "Grand prize": not "Best First-Time Hacker".
+const FIRST = /\b(1st|first)[ -]place\b|\bgrand prize\b/i
 
 /**
  * Proto's record so far, from the published wins. Real wins only: sample rows count just while

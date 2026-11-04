@@ -398,6 +398,14 @@ function PeopleField({
                     aria-describedby={hrefError ? errorId : undefined}
                     onChange={(event) => update(index, { href: event.target.value })}
                   />
+                  <label className={styles.personBu} title="A BU student or alum: shown with a BU mark on the site">
+                    <input
+                      type="checkbox"
+                      checked={person.bu}
+                      onChange={(event) => update(index, { bu: event.target.checked })}
+                    />
+                    BU
+                  </label>
                   <RowControls
                     index={index}
                     count={people.length}
@@ -430,7 +438,7 @@ function PeopleField({
           disabled={people.length >= MAX_PEOPLE}
           onClick={() => {
             setFocusRow(people.length)
-            onChange([...people, { name: '', href: '' }])
+            onChange([...people, { name: '', href: '', bu: false }])
           }}
         >
           <PlusIcon width={14} height={14} /> Add person

@@ -6,7 +6,6 @@ import {
   DetailNav,
   DetailOpener,
   DetailPage,
-  DetailPanel,
   DetailTitle,
   PeopleList,
   Prose,
@@ -70,10 +69,20 @@ export function WinDetail() {
 
       <WriteUp
         main={
-          filled(win.description) && (
-            <WriteUpSection id="built" title={WIN_DETAIL.built}>
-              <Prose text={win.description} />
-            </WriteUpSection>
+          (filled(win.description) || filled(win.nextSteps)) && (
+            <>
+              {filled(win.description) && (
+                <WriteUpSection id="built" title={WIN_DETAIL.built}>
+                  <Prose text={win.description} />
+                </WriteUpSection>
+              )}
+              {/* The story's last chapter, inside the same sheet rather than a box of its own. */}
+              {filled(win.nextSteps) && (
+                <WriteUpSection id="next-steps" title={WIN_DETAIL.nextSteps}>
+                  <Prose text={win.nextSteps} />
+                </WriteUpSection>
+              )}
+            </>
           )
         }
         aside={
@@ -110,12 +119,6 @@ export function WinDetail() {
       />
 
       <DetailGallery title={WIN_DETAIL.gallery} images={win.gallery ?? []} label={win.project} />
-
-      {filled(win.nextSteps) && (
-        <DetailPanel id="next-steps" title={WIN_DETAIL.nextSteps}>
-          <Prose text={win.nextSteps} />
-        </DetailPanel>
-      )}
 
       <DetailNav
         label="More wins"
