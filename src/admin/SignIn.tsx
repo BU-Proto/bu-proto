@@ -93,7 +93,9 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
           </a>
 
           <p className={styles.fine} data-fog-clear>
-            Only GitHub accounts on the admin list get in. We read your public profile and nothing else.
+            {import.meta.env.DEV
+              ? 'Local dev: this signs you straight in as the first owner. Production always uses GitHub.'
+              : 'Only GitHub accounts on the admin list get in. We read your public profile and nothing else.'}
           </p>
         </div>
 

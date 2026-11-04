@@ -17,16 +17,33 @@ const USER_AGENT = 'bu-proto-admin'
 /** Only paths inside the portal, so `next` can't send anyone off-site (no `//host`, no `\`). */
 const NEXT_PATH = /^\/admin(?:[/?#][^\s\\]*)?$/
 
+/**
+ * Local sign-in: under `npm run dev`, the button signs you in as the first owner without GitHub.
+ * import.meta.env.DEV is replaced with `false` when Vite builds for production, so this code is
+ * stripped from every deployed Worker; no variable or secret can switch it back on. It also only
+ * answers requests to localhost, as a second lock.
+ */
+const LOCAL_SIGN_IN = import.meta.env.DEV
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
+
 function safeNext(next: string | undefined): string | null {
   if (next === undefined || next === '') return '/admin'
   return NEXT_PATH.test(next) && !next.includes('//') ? next : null
 }
 
-app.get('/api/auth/github', (c) => {
-  if (!c.env.GITHUB_CLIENT_ID || !c.env.GITHUB_CLIENT_SECRET) return c.redirect('/admin?error=not-configured')
-
+app.get('/api/auth/github', async (c) => {
   const next = safeNext(c.req.query('next'))
   if (!next) throw new ApiError(400, 'next must be a path under /admin.')
+
+  if (LOCAL_SIGN_IN && LOCAL_HOSTS.has(new URL(c.req.url).hostname)) {
+    const login = String(c.env.ADMIN_GITHUB_LOGINS).split(',')[0]?.trim()
+    if (login) {
+      await createSession(c, { id: 0, login, name: login, avatarUrl: null })
+      return c.redirect(next)
+    }
+  }
+
+  if (!c.env.GITHUB_CLIENT_ID || !c.env.GITHUB_CLIENT_SECRET) return c.redirect('/admin?error=not-configured')
 
   const state = randomToken(16)
   // state is base64url, so the first '.' is the separator.
