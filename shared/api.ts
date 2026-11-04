@@ -1,5 +1,6 @@
 // The contract between the site (src/), the portal (src/admin/) and the Worker (worker/).
-// Every request and response body the API speaks is typed here; input bodies also have a zod
+// Every request and response body the API speaks is typed here (plain constants live in
+// ./constants and are re-exported); input bodies also have a zod
 // schema the Worker validates with. Keep this file free of DOM and Workers APIs: both sides
 // import it.
 //
@@ -10,14 +11,19 @@
 // - Lists come back as { items: T[] }, single records as { item: T }.
 
 import { z } from 'zod'
+import {
+  EVENT_KINDS,
+  FUND_AMOUNTS,
+  FUND_STATUSES,
+  TRACKS,
+  YEARS,
+  type ContentResource,
+  type FundStatus,
+} from './constants'
+
+export * from './constants'
 
 // ---- Content the portal edits ---------------------------------------------------------------
-
-export const CONTENT_RESOURCES = ['events', 'hackathons', 'wins', 'board'] as const
-export type ContentResource = (typeof CONTENT_RESOURCES)[number]
-
-export const EVENT_KINDS = ['Hack night', 'Why hackathons', 'Prep night', 'Panel', 'Workshop', 'Demo night'] as const
-export type EventKind = (typeof EVENT_KINDS)[number]
 
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use yyyy-mm-dd')
 const text = (max: number) => z.string().trim().min(1, 'Required').max(max)
@@ -234,11 +240,6 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
 
 // ---- Public forms -----------------------------------------------------------------------------
 
-export const YEARS = ['First year', 'Second year', 'Third year', 'Fourth year', 'Grad student', 'Other'] as const
-export const TRACKS = ['Start', 'Build', 'Launch', 'Not sure yet'] as const
-export const FUND_AMOUNTS = ['$50–$100', '$100–$250', '$250–$500', 'Not sure yet'] as const
-export type Track = (typeof TRACKS)[number]
-
 const buEmail = z
   .string()
   .trim()
@@ -353,9 +354,6 @@ export const memberPatch = z
     unsubscribed: z.boolean(),
   })
   .partial()
-
-export const FUND_STATUSES = ['new', 'reviewing', 'approved', 'declined'] as const
-export type FundStatus = (typeof FUND_STATUSES)[number]
 
 /** GET /api/admin/fund?status= → { items: FundInterest[] } (newest first) */
 export interface FundInterest {
