@@ -75,7 +75,6 @@ export function Component() {
 
       <header className={shared.head}>
         <div className={shared.headText}>
-          <p className={shared.eyebrow}>People</p>
           <h1 className={shared.title}>
             Members
             {data && (
@@ -155,18 +154,15 @@ export function Component() {
                     <Link to={`/admin/members/${member.id}`} className={shared.rowLink}>
                       {member.name}
                     </Link>
-                    {member.unsubscribed && (
-                      <span className={`${shared.badge} ${styles.unsub}`} data-tone="warn">
-                        unsubscribed
-                      </span>
-                    )}
+                    {member.unsubscribed && <span className={`${shared.flag} ${styles.unsub}`}>Unsubscribed</span>}
                   </td>
                   <td data-wide className={`${shared.mono} ${styles.email}`}>
                     {member.email}
                   </td>
                   <td data-label="Year">{member.year}</td>
                   <td data-label="Track">{member.track}</td>
-                  <td data-label="Joined" className={shared.mono}>
+                  <td data-label="Joined" className={`${shared.figure} ${styles.joined}`}>
+
                     <time dateTime={stampToIso(member.createdAt)}>{formatStampDate(member.createdAt)}</time>
                   </td>
                 </tr>

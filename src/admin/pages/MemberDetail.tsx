@@ -36,7 +36,7 @@ export function Component() {
 
 function BackLink() {
   return (
-    <Link to="/admin/members" className={`${shared.link} ${styles.back}`}>
+    <Link to="/admin/members" className={styles.back}>
       ← All members
     </Link>
   )
@@ -125,15 +125,7 @@ function Detail({ detail }: { detail: MemberDetail }) {
 
       <header className={shared.head}>
         <div className={shared.headText}>
-          <p className={shared.eyebrow}>Member #{member.id}</p>
-          <h1 className={shared.title}>
-            {member.name}
-            {member.unsubscribed && (
-              <span className={shared.badge} data-tone="warn">
-                unsubscribed
-              </span>
-            )}
-          </h1>
+          <h1 className={shared.title}>{member.name}</h1>
           <p className={styles.meta}>
             <a href={`mailto:${member.email}`} className={`${shared.link} ${shared.mono}`}>
               {member.email}
@@ -141,6 +133,7 @@ function Detail({ detail }: { detail: MemberDetail }) {
             <span className={shared.dim}>
               Joined <time dateTime={stampToIso(member.createdAt)}>{formatStamp(member.createdAt)}</time>
             </span>
+            {member.unsubscribed && <span className={shared.flag}>Unsubscribed from email</span>}
           </p>
         </div>
         <div className={shared.headActions}>
@@ -239,9 +232,10 @@ function Detail({ detail }: { detail: MemberDetail }) {
                   .map((rsvp) => (
                     <li key={rsvp.id} className={styles.item}>
                       <span>{rsvp.eventTitle}</span>
-                      <span className={`${shared.mono} ${shared.dim}`}>
-                        <time dateTime={rsvp.eventDate}>{formatIsoDay(rsvp.eventDate)}</time>
-                      </span>
+                      <time className={`${shared.figure} ${shared.dim}`} dateTime={rsvp.eventDate}>
+                        {formatIsoDay(rsvp.eventDate)}
+                      </time>
+
                     </li>
                   ))}
               </ul>
@@ -260,12 +254,15 @@ function Detail({ detail }: { detail: MemberDetail }) {
                   <li key={entry.id} className={styles.fundItem}>
                     <div className={styles.item}>
                       <span>{entry.target}</span>
-                      <span className={shared.badge} data-tone={entry.status}>
-                        {entry.status}
+                      <span className={shared.state} data-tone={entry.status}>
+                        {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
                       </span>
                     </div>
-                    <p className={`${shared.mono} ${shared.dim}`}>
-                      {entry.amount} · <time dateTime={stampToIso(entry.createdAt)}>{formatStampDate(entry.createdAt)}</time>
+                    <p className={styles.fundMeta}>
+                      <span className={styles.fundAmount}>{entry.amount}</span>
+                      <time className={shared.dim} dateTime={stampToIso(entry.createdAt)}>
+                        {formatStampDate(entry.createdAt)}
+                      </time>
                     </p>
                     <p className={styles.spend}>{entry.spend}</p>
                   </li>
@@ -274,7 +271,7 @@ function Detail({ detail }: { detail: MemberDetail }) {
             )}
             {detail.fundInterest.length > 0 && (
               <Link to="/admin/fund" className={`${shared.link} ${styles.more}`}>
-                Review on the fund page →
+                Review on the fund page
               </Link>
             )}
           </section>

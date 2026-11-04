@@ -12,6 +12,8 @@ import styles from './Fund.module.css'
 
 const isStatus = (value: string | null): value is FundStatus => (FUND_STATUSES as readonly string[]).includes(value ?? '')
 
+const STATUS_LABELS: Record<FundStatus, string> = { new: 'New', reviewing: 'Reviewing', approved: 'Approved', declined: 'Declined' }
+
 /** "$100–$250" → [100, 250]; "Not sure yet" → null. */
 function bandRange(amount: string): [number, number] | null {
   const match = /\$(\d+)\D+\$(\d+)/.exec(amount)
@@ -63,24 +65,21 @@ export function Component() {
 
       <header className={shared.head}>
         <div className={shared.headText}>
-          <p className={shared.eyebrow}>People</p>
           <h1 className={shared.title}>
             Fund interest
             {data && <span className={shared.count}>{plural(all.length, 'person', 'people')}</span>}
           </h1>
+          <p className={shared.lede}>
+            The fund isn’t open yet, so no one can apply. This is who’d use a $50–$500 microgrant and for what: it’s how we
+            show sponsors there’s demand. Statuses are our own triage; nothing is promised.
+          </p>
         </div>
         <div className={shared.headActions}>
           <Link to={emailHref} className={ui.primary}>
-            {status ? `Email the ${status} list` : 'Email this list'}
+            {status ? `Email everyone ${STATUS_LABELS[status].toLowerCase()}` : 'Email this list'}
           </Link>
         </div>
       </header>
-
-      <p className={shared.note}>
-        <strong>The fund isn’t open yet.</strong> No one can apply for money. This is the interest list: people telling us
-        what they’d use a $50–$500 microgrant for. It’s how we show sponsors there’s demand, so keep it tidy. Statuses are
-        for our own triage; nothing is promised.
-      </p>
 
       <p className={shared.error} role="alert" hidden={!error}>
         {error?.message}
@@ -98,7 +97,7 @@ export function Component() {
           {FUND_STATUSES.map((value) => (
             <li key={value}>
               <Link to={{ search: `?status=${value}` }} className={shared.tab} aria-current={status === value ? 'page' : undefined}>
-                {value} <span className={shared.tabCount}>{all.filter((entry) => entry.status === value).length}</span>
+                {STATUS_LABELS[value]} <span className={shared.tabCount}>{all.filter((entry) => entry.status === value).length}</span>
               </Link>
             </li>
           ))}
@@ -111,7 +110,9 @@ export function Component() {
       {!data && loading ? (
         <p className={shared.empty}>Loading the interest list…</p>
       ) : data && shown.length === 0 ? (
-        <p className={`${shared.panel} ${shared.empty}`}>{status ? `Nothing marked ${status}.` : 'No one has signed up yet.'}</p>
+        <p className={`${shared.panel} ${shared.empty}`}>
+          {status ? `Nothing marked ${STATUS_LABELS[status].toLowerCase()}.` : 'No one has signed up yet.'}
+        </p>
       ) : (
         <ul className={styles.entries}>
           {shown.map((entry) => (
@@ -163,7 +164,7 @@ function Demand({ entries }: { entries: FundInterest[] }) {
           Demand by amount
         </h2>
         <p className={styles.total}>
-          <span className={styles.totalValue}>{counted.length === 0 ? '$0' : `${dollars(low)}–${dollars(high)}`}</span>
+          <span className={styles.totalValue}>{counted.length === 0 ? '$0' : `${dollars(low)} to ${dollars(high)}`}</span>
           <span className={shared.dim}>
             {' '}
             from {plural(counted.length, 'person', 'people')}
@@ -175,10 +176,10 @@ function Demand({ entries }: { entries: FundInterest[] }) {
       <dl className={styles.bands}>
         {bands.map((band) => (
           <div key={band.amount} className={styles.band}>
-            <dt className={shared.mono}>{band.amount}</dt>
+            <dt className={shared.figure}>{band.amount}</dt>
             <dd>
               <span className={styles.bar} style={{ inlineSize: `${(band.count / peak) * 100}%` }} aria-hidden="true" />
-              <span className={shared.mono}>{band.count}</span>
+              <span className={`${shared.figure} ${styles.bandCount}`}>{band.count}</span>
             </dd>
           </div>
         ))}
@@ -210,7 +211,7 @@ function Entry({ entry, onSaved, onAnnounce, onDelete }: EntryProps) {
       const { item } = await api<{ item: FundInterest }>(`/admin/fund/${entry.id}`, { method: 'PATCH', body })
       if (kind === 'notes') setNotes(item.notes)
       // A status change can move the entry off the current tab, so announce it at page level.
-      if (kind === 'status') onAnnounce(`${entry.name} marked ${item.status}.`)
+      if (kind === 'status') onAnnounce(`${entry.name} marked ${STATUS_LABELS[item.status].toLowerCase()}.`)
       else setMessage('Notes saved.')
       onSaved(item)
     } catch (failure) {
@@ -225,12 +226,7 @@ function Entry({ entry, onSaved, onAnnounce, onDelete }: EntryProps) {
     <li className={`${shared.panel} ${styles.entry}`}>
       <div className={styles.entryHead}>
         <div className={styles.who}>
-          <h2 className={styles.name}>
-            {entry.name}
-            <span className={shared.badge} data-tone={entry.status}>
-              {entry.status}
-            </span>
-          </h2>
+          <h2 className={styles.name}>{entry.name}</h2>
           <a href={`mailto:${entry.email}`} className={`${shared.link} ${shared.mono} ${styles.email}`}>
             {entry.email}
           </a>
@@ -238,7 +234,7 @@ function Entry({ entry, onSaved, onAnnounce, onDelete }: EntryProps) {
         </div>
         <div className={styles.facts}>
           <span className={styles.amount}>{entry.amount}</span>
-          <time className={`${shared.mono} ${shared.dim}`} dateTime={stampToIso(entry.createdAt)}>
+          <time className={`${shared.figure} ${shared.dim}`} dateTime={stampToIso(entry.createdAt)}>
             {formatStampDate(entry.createdAt)}
           </time>
         </div>
@@ -258,19 +254,23 @@ function Entry({ entry, onSaved, onAnnounce, onDelete }: EntryProps) {
       <div className={styles.controls}>
         <label className={`${shared.field} ${styles.statusField}`}>
           <span className={shared.label}>Status</span>
-          <select
-            className={shared.input}
-            value={entry.status}
-            disabled={saving !== null}
-            onChange={(event) => patch('status', { status: event.target.value as FundStatus })}
-          >
-            {FUND_STATUSES.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </select>
+          {/* The dot is the status colour, as on the other lists; the select stays a plain select. */}
+          <span className={styles.statusControl} data-tone={entry.status}>
+            <select
+              className={shared.input}
+              value={entry.status}
+              disabled={saving !== null}
+              onChange={(event) => patch('status', { status: event.target.value as FundStatus })}
+            >
+              {FUND_STATUSES.map((value) => (
+                <option key={value} value={value}>
+                  {STATUS_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </span>
         </label>
+
         <div className={`${shared.field} ${styles.notesField}`}>
           <label className={shared.label} htmlFor={`${id}-notes`}>
             Notes
@@ -297,13 +297,14 @@ function Entry({ entry, onSaved, onAnnounce, onDelete }: EntryProps) {
           >
             {saving === 'notes' ? 'Saving…' : 'Save notes'}
           </button>
-          <button type="button" className={shared.dangerSmall} onClick={onDelete}>
-            Delete
-          </button>
           <span aria-live="polite">
             {message && <span className={shared.status}>{message}</span>}
             {error && <span className={shared.error}>{error}</span>}
           </span>
+          <button type="button" className={`${shared.dangerSmall} ${styles.delete}`} onClick={onDelete}>
+            Delete
+          </button>
+
         </div>
       </div>
     </li>

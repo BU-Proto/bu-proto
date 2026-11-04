@@ -9,8 +9,13 @@
 }
 
 .unsub {
-  margin-left: 8px;
+  margin-left: 10px;
 }
+
+.joined {
+  color: var(--ink-soft);
+}
+
 
 /* The previous results stay up while the next search loads; dim them so it's clear they're old. */
 .stale {

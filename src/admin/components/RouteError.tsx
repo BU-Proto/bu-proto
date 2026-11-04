@@ -46,9 +46,10 @@ export function RouteError() {
         <h2>This page couldn’t load.</h2>
         <p>{message}</p>
         <p className={styles.dim}>
-          {statusOf(error) ? <span className={styles.mono}>HTTP {statusOf(error)} · </span> : null}
           Try again, or go back to the dashboard.
+          {statusOf(error) ? <span className={styles.mono}> (HTTP {statusOf(error)})</span> : null}
         </p>
+
         <div className={styles.actions}>
           <button type="button" className={styles.button} onClick={() => window.location.reload()}>
             Try again

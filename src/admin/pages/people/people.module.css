@@ -33,28 +33,6 @@
   text-shadow: var(--on-field-shadow);
 }
 
-.eyebrow {
-  margin: 0;
-  color: var(--ink-dim);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.eyebrow a {
-  border-radius: 4px;
-}
-
-.eyebrow a:hover {
-  color: var(--accent);
-}
-
-.eyebrow a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .title {
   margin: 0;
   font-size: clamp(30px, 3.4vw, 40px);
@@ -69,13 +47,19 @@
   gap: 4px 14px;
 }
 
+/* A figure after a heading ("6 people"): the heading's own type, lighter and smaller. */
 .count {
   color: var(--ink-dim);
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
+  white-space: nowrap;
+}
+
+/* Beside a panel title the figure stays at the title's size. */
+.panelTitle .count {
+  font-size: inherit;
 }
 
 .lede {
@@ -114,25 +98,24 @@
   margin-bottom: 14px;
 }
 
-/* A soft mint-tinted glass note for context that matters on this page. */
-.note {
-  margin: 0;
-  padding: 14px 18px;
-  border: 1px solid rgba(157, 240, 168, 0.3);
-  border-radius: 16px;
-  background: linear-gradient(rgba(157, 240, 168, 0.07), rgba(157, 240, 168, 0.07)), var(--surface);
-  color: var(--ink-soft);
-  line-height: 1.55;
-}
-
-.note strong {
-  color: var(--ink);
-  font-weight: 500;
-}
-
 .mono {
   font-family: var(--font-mono);
   font-size: 12.5px;
+}
+
+/* Dates and amounts in Inter, with figures that line up and never wrap. */
+.figure {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .dim {
@@ -161,10 +144,9 @@
 .label {
   padding: 0;
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
 }
 
 .hint {
@@ -237,9 +219,9 @@ select.input option {
 }
 
 input[type='date'].input {
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
+
 
 .fieldError {
   margin: 0;
@@ -435,16 +417,6 @@ input[type='date'].input {
   text-align: center;
 }
 
-.empty::before {
-  content: '○  >  _';
-  margin-bottom: 4px;
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  opacity: 0.8;
-}
-
 .empty h2,
 .empty h3 {
   margin: 0;
@@ -461,54 +433,56 @@ input[type='date'].input {
   margin: 0;
 }
 
-/* ---- Badges ---- */
+/* ---- State ---- */
 
-.badge {
+/* A status as a small coloured dot and the word, in the row's own type. */
+.state {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 1px 8px 2px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
+  gap: 7px;
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  line-height: 1.5;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
-.badge[data-tone='accent'],
-.badge[data-tone='approved'],
-.badge[data-tone='sent'] {
-  border-color: rgba(157, 240, 168, 0.5);
-  background: rgba(157, 240, 168, 0.1);
-  color: var(--accent);
+.state::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tone, var(--ink-dim));
 }
 
-.badge[data-tone='new'] {
-  border-color: rgba(160, 205, 255, 0.5);
-  background: rgba(160, 205, 255, 0.1);
-  color: #cfe4ff;
+.state[data-tone='approved'],
+.state[data-tone='sent'] {
+  --tone: var(--accent);
 }
 
-.badge[data-tone='reviewing'],
-.badge[data-tone='logged'],
-.badge[data-tone='partial'] {
-  border-color: rgba(255, 211, 138, 0.5);
-  background: rgba(255, 211, 138, 0.1);
+.state[data-tone='new'] {
+  --tone: #a8cfff;
+}
+
+.state[data-tone='reviewing'],
+.state[data-tone='logged'],
+.state[data-tone='partial'] {
+  --tone: var(--warn-ink);
+}
+
+.state[data-tone='declined'],
+.state[data-tone='failed'] {
+  --tone: var(--danger-ink);
+}
+
+/* A plain warm word after a name ("Unsubscribed"). */
+.flag {
   color: var(--warn-ink);
-}
-
-.badge[data-tone='declined'],
-.badge[data-tone='failed'],
-.badge[data-tone='warn'] {
-  border-color: rgba(255, 160, 140, 0.5);
-  background: rgba(255, 120, 100, 0.1);
-  color: var(--danger-ink);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 /* ---- Tabs (status filters) ---- */
@@ -563,15 +537,10 @@ input[type='date'].input {
   box-shadow: 0 4px 14px -6px rgba(0, 20, 45, 0.7);
 }
 
-.tab {
-  text-transform: capitalize;
-}
-
 .tabCount {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
-  opacity: 0.72;
+  opacity: 0.6;
 }
 
 /* ---- Tables that become stacked rows on a phone ---- */
@@ -604,19 +573,17 @@ input[type='date'].input {
   border-bottom: 1px solid var(--line-strong, rgba(255, 255, 255, 0.18));
   background: rgba(255, 255, 255, 0.035);
   color: var(--ink-dim);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 12.5px;
   font-weight: 500;
-  letter-spacing: 0.1em;
   text-align: left;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .table td {
   padding: 13px 18px;
   border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.09));
-  vertical-align: top;
+  /* Baseline, so a mono email or a smaller note lines up with the name beside it. */
+  vertical-align: baseline;
 }
 
 .table tbody tr:last-child td {
@@ -648,7 +615,7 @@ input[type='date'].input {
 }
 
 @media (max-width: 720px) {
-  /* Doubled so it wins over admin.module.css hiding the head outright: screen readers keep it. */
+  /* Hidden from sight only, so screen readers still hear the column names. */
   .table.table thead {
     position: absolute;
     display: block;
@@ -667,8 +634,7 @@ input[type='date'].input {
 
   .table tbody tr {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 12px;
+    gap: 3px;
     padding: 14px 16px;
     border-bottom: 1px solid var(--line);
   }
@@ -682,19 +648,20 @@ input[type='date'].input {
     border: 0;
   }
 
+  /* The same stacked row as the content tables: each value with its column name to its left. */
   .table td[data-label]::before {
     content: attr(data-label);
-    display: block;
-    margin-bottom: 1px;
+    display: inline-block;
+    min-width: 76px;
+    margin-right: 10px;
     color: var(--ink-dim);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    /* Set outright: the value's cell may be in mono (an email), the name never is. */
+    font-family: var(--font-ui);
+    font-size: 12.5px;
   }
 
-  .table td[data-wide] {
-    grid-column: 1 / -1;
+  .table td:first-child {
+    padding-bottom: 3px;
   }
 }
 
@@ -786,44 +753,6 @@ input[type='date'].input {
 
   .tab {
     flex: none;
-  }
-
-  .table thead {
-    display: none;
-  }
-
-  .table,
-  .table tbody,
-  .table tr,
-  .table td {
-    display: block;
-  }
-
-  .table tr {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.09));
-  }
-
-  .table tbody tr:last-child {
-    border-bottom: 0;
-  }
-
-  .table td {
-    padding: 2px 0;
-    border: 0;
-  }
-
-  .table td:first-child {
-    padding-bottom: 6px;
-  }
-
-  .table td[data-label]::before {
-    content: attr(data-label) '  ';
-    color: var(--ink-dim);
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
   }
 }
 

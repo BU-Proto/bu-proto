@@ -1,14 +1,19 @@
+/* Sits right above the title, like the content editors' way back. */
 .back {
   justify-self: start;
+  margin-bottom: -16px;
+  border-radius: 4px;
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 13px;
 }
 
 .back:hover {
   color: var(--accent);
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .meta {
@@ -87,6 +92,19 @@
 .fundItem p {
   margin: 0;
 }
+
+.fundMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fundAmount {
+  color: var(--accent);
+}
+
 
 .spend {
   margin-top: 6px !important;

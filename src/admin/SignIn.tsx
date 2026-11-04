@@ -3,8 +3,6 @@ import { AsciiField, DEFAULT_FIELD_SETTINGS } from '../ascii-field'
 import styles from './SignIn.module.css'
 import { pageTitle } from './lib/format'
 
-/** What the portal covers, shown as chips so people know they're in the right place. */
-const AREAS = ['Events', 'Hackathons', 'Wins', 'Board', 'Members', 'Fund', 'Email'] as const
 
 function errorMessage(error: string | null, login: string | null) {
   switch (error) {
@@ -47,19 +45,15 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
 
       <main className={styles.screen}>
         <a className={styles.brand} href="/" data-fog-clear>
-          <img src="/proto-seal.svg" alt="" width={22} height={22} />
+          {/* Drawn in CSS, like the sidebar's mark, so the door never shows a broken image. */}
+          <span className={styles.mark} aria-hidden="true" />
+
           Proto
         </a>
 
         <div className={styles.card}>
           <div className={styles.handle} aria-hidden="true" />
 
-          <p className={styles.path} data-fog-clear>
-            ~/proto/admin
-            <span className={styles.caret} aria-hidden="true">
-              _
-            </span>
-          </p>
 
           <h1 className={styles.title} data-fog-clear>
             {expired ? 'Your session ended' : 'Sign in to the portal'}
@@ -67,18 +61,8 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
           <p className={styles.lede} data-fog-clear>
             {expired
               ? 'You were signed out. Sign in again to pick up where you left off; unsaved changes on this page are lost.'
-              : 'Where the team runs Proto. For admins only.'}
+              : 'Where the team updates the site and looks after members, the fund list and email. For admins only.'}
           </p>
-
-          {!expired && (
-            <ul className={styles.areas} aria-label="In the portal">
-              {AREAS.map((area) => (
-                <li key={area} data-fog-clear>
-                  {area}
-                </li>
-              ))}
-            </ul>
-          )}
 
           <div className={styles.message} role="alert">
             {message && <p className={styles.error}>{message}</p>}
@@ -87,10 +71,8 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
           <a className={styles.github} href={href} data-fog-clear="box">
             <GitHubMark />
             Sign in with GitHub
-            <span className={styles.arrow} aria-hidden="true">
-              ↗
-            </span>
           </a>
+
 
           <p className={styles.fine} data-fog-clear>
             {import.meta.env.DEV

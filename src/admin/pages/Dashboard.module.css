@@ -36,22 +36,9 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.tile::after {
-  content: '↗';
-  position: absolute;
-  top: 16px;
-  right: 18px;
-  color: var(--ink-dim);
-  font-size: 13px;
-}
-
 .tile:hover {
   border-color: rgba(255, 255, 255, 0.55);
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.07) 60%), rgba(8, 30, 54, 0.4);
-}
-
-.tile:hover::after {
-  color: var(--ink);
 }
 
 .tile:focus-visible {
@@ -67,12 +54,19 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
+.label {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+/* The site's light display weight, so the figures read like its hero numbers. */
 .value {
   align-self: end;
-  font-family: var(--font-mono);
   font-size: 40px;
+  font-weight: 300;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   line-height: 1;
 }
 
@@ -103,69 +97,59 @@
 .split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
-  align-items: start;
+  /* Equal heights, so the two panels end on one line. */
+  align-items: stretch;
+
   gap: 14px;
 }
 
 .quick {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
-.quick > a {
-  justify-content: flex-start;
-  min-height: 42px;
-  padding-inline: 18px;
+/* How many fund entries are waiting, in the button's own line of text. */
+.fresh {
+  color: var(--accent);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
 .contentLinks {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0 24px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* A plain list on hairlines; the whole row is the link's hit area. */
 .contentLinks li {
   position: relative;
   display: grid;
-  gap: 3px;
-  padding: 13px 40px 13px 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.contentLinks li::after {
-  content: '→';
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  color: var(--ink-dim);
-  transform: translateY(-50%);
-}
-
-.contentLinks li:hover {
-  border-color: var(--line-strong);
-  background: rgba(255, 255, 255, 0.07);
-}
-
-.contentLinks li:hover::after {
-  color: var(--accent);
+  gap: 2px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
 }
 
 .contentLinks a {
+  justify-self: start;
   font-weight: 500;
 }
 
-/* The whole card is the link's hit area. */
+.contentLinks li:hover a {
+  color: var(--accent);
+}
+
 .contentLinks a::after {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
-  border-radius: 14px;
+  border-radius: 8px;
 }
 
 .contentLinks a:focus-visible {
@@ -209,11 +193,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .tile,
-  .contentLinks li {
-    transition:
-      background 0.15s ease,
-      border-color 0.15s ease;
+  .contentLinks a {
+    transition: color 0.15s ease;
   }
 
   .tile:hover {

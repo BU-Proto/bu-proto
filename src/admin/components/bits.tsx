@@ -1,15 +1,18 @@
 import type { ReactNode } from 'react'
 import styles from '../admin.module.css'
 
-/** The flags every content row carries, as small badges after its title. */
-export function RowBadges({ placeholder, published }: { placeholder?: boolean; published?: boolean }) {
+/**
+ * A content row's state, as plain words after its title: "Draft" in a quieter italic, "Sample"
+ * in the site's amber. Nothing for a published, real row, which is most of them.
+ */
+export function RowFlags({ placeholder, published }: { placeholder?: boolean; published?: boolean }) {
   if (!placeholder && published !== false) return null
   return (
-    <span className={styles.badges}>
-      {published === false && <span className={styles.badgeDraft}>draft</span>}
+    <span className={styles.flags}>
+      {published === false && <span className={styles.flagDraft}>Draft</span>}
       {placeholder && (
-        <span className={styles.badgeSample} title="Made-up sample content">
-          sample
+        <span className={styles.flagSample} title="Made-up sample content">
+          Sample
         </span>
       )}
     </span>

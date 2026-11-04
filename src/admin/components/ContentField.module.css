@@ -18,7 +18,7 @@
   display: grid;
   place-items: center;
   aspect-ratio: 1;
-  margin-top: 21px;
+  margin-top: 25px;
   overflow: hidden;
   border: 1px dashed rgba(255, 255, 255, 0.22);
   border-radius: 14px;

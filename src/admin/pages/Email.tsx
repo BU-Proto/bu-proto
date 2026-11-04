@@ -16,6 +16,14 @@ type Kind = EmailAudience['type']
 
 const TEST_ADDRESS_KEY = 'proto-admin:test-email'
 
+const CAMPAIGN_STATUS_LABELS: Record<EmailCampaign['status'], string> = {
+  sent: 'Sent',
+  partial: 'Partly sent',
+  failed: 'Failed',
+  logged: 'Logged only',
+}
+
+
 const isTrack = (value: string | null): value is Track => (TRACKS as readonly string[]).includes(value ?? '')
 const isStatus = (value: string | null): value is FundStatus => (FUND_STATUSES as readonly string[]).includes(value ?? '')
 
@@ -215,7 +223,6 @@ export function Component() {
 
       <header className={shared.head}>
         <div className={shared.headText}>
-          <p className={shared.eyebrow}>People</p>
           <h1 className={shared.title}>Email</h1>
           <p className={shared.lede}>Write once, send to a list. Every send is logged below.</p>
         </div>
@@ -553,7 +560,8 @@ function EventOption({ event, withYear }: { event: AdminEvent; withYear?: boolea
   const day = withYear ? formatIsoDay(event.date) : formatDay(event.date)
   return (
     <option value={event.id}>
-      {`${day} · ${event.title} (${plural(event.rsvpCount, 'RSVP')})`}
+      {`${event.title} (${day}, ${plural(event.rsvpCount, 'RSVP')})`}
+
     </option>
   )
 }
@@ -625,17 +633,26 @@ function History({ campaigns, titles }: { campaigns: ReturnType<typeof useApi<{ 
             <li key={campaign.id}>
               <details className={styles.campaign}>
                 <summary className={styles.summary}>
-                  <span className={styles.summarySubject}>{campaign.subject}</span>
-                  <span className={styles.summaryAudience}>{describeAudience(campaign.audience, titles)}</span>
-                  <span className={`${shared.mono} ${styles.summaryCounts}`}>
-                    {campaign.sentCount}/{campaign.recipientCount} sent
-                    {campaign.failedCount > 0 && <span className={styles.failed}> · {campaign.failedCount} failed</span>}
+                  <span className={styles.summaryWhat}>
+                    <span className={styles.summarySubject}>{campaign.subject}</span>
+                    <span className={styles.summaryAudience}>{describeAudience(campaign.audience, titles)}</span>
                   </span>
-                  <span className={shared.badge} data-tone={campaign.status}>
-                    {campaign.status}
+                  <span className={styles.summaryResult}>
+                    <span className={shared.state} data-tone={campaign.status}>
+                      {CAMPAIGN_STATUS_LABELS[campaign.status]}
+                    </span>
+                    <span className={`${shared.figure} ${shared.dim}`}>
+                      {campaign.sentCount} of {campaign.recipientCount} sent
+                      {campaign.failedCount > 0 && <span className={styles.failed}>, {campaign.failedCount} failed</span>}
+                    </span>
                   </span>
-                  <span className={`${shared.mono} ${shared.dim} ${styles.summaryWho}`}>
-                    {campaign.sentBy} · <time dateTime={stampToIso(campaign.createdAt)}>{formatStamp(campaign.createdAt)}</time>
+                  <span className={styles.summaryWho}>
+                    <time className={shared.figure} dateTime={stampToIso(campaign.createdAt)}>
+                      {formatStamp(campaign.createdAt)}
+                    </time>
+                    <span className={shared.dim}>
+                      by <span className={shared.mono}>{campaign.sentBy}</span>
+                    </span>
                   </span>
                 </summary>
                 <div className={styles.campaignBody}>

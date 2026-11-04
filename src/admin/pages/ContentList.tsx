@@ -1,10 +1,20 @@
 import { Link, useLoaderData, useSearchParams } from 'react-router'
 import admin from '../admin.module.css'
-import { EmptyState, RowBadges } from '../components/bits'
+import { EmptyState, RowFlags } from '../components/bits'
 import { PlusIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { displayValue, specFor, type ContentRow } from '../lib/content'
 import type { contentListLoader } from '../loaders'
+import styles from './ContentList.module.css'
+
+const dayFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+
+/** "2026-11-12" → "Nov 12, 2026". Anything else shows as it is. */
+function formatDay(value: unknown): string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return displayValue(undefined, value)
+  return dayFormat.format(new Date(`${value}T00:00:00Z`))
+}
+
 
 const FILTERS = [
   { value: 'all', label: 'All', test: () => true },
@@ -26,8 +36,7 @@ export function Component() {
     <div className={admin.page}>
       <PageHeader
         title={spec.label}
-        eyebrow="Site content"
-        lede={`${items.length} in all. Unpublished rows only show here; sample rows carry the “sample” tag on the site.`}
+        lede="Drafts only show here. Sample rows are made-up content, and the site marks them as samples."
         actions={
           <>
             {resource === 'hackathons' && (
@@ -80,7 +89,7 @@ export function Component() {
               <tr>
                 <th scope="col">{spec.fields.find((field) => field.key === spec.titleKey)?.label ?? 'Title'}</th>
                 {summaryFields.map(({ key, field }) => (
-                  <th key={key} scope="col">
+                  <th key={key} scope="col" className={field?.type === 'date' ? styles.dateCol : undefined}>
                     {field?.label ?? key}
                   </th>
                 ))}
@@ -95,18 +104,21 @@ export function Component() {
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    <Link className={admin.rowTitle} to={`/admin/${resource}/${row.id}`}>
+                    <Link
+                      className={row.published ? admin.rowTitle : `${admin.rowTitle} ${admin.isDraft}`}
+                      to={`/admin/${resource}/${row.id}`}
+                    >
                       {displayValue(undefined, row[spec.titleKey])}
                     </Link>
-                    <RowBadges placeholder={row.placeholder} published={row.published} />
+                    <RowFlags placeholder={row.placeholder} published={row.published} />
                   </td>
                   {summaryFields.map(({ key, field }) => (
                     <td
                       key={key}
                       data-label={field?.label ?? key}
-                      className={field?.type === 'date' || field?.type === 'number' ? admin.mono : admin.soft}
+                      className={field?.type === 'date' || field?.type === 'number' ? `${admin.soft} ${admin.figure}` : admin.soft}
                     >
-                      {displayValue(field, row[key])}
+                      {field?.type === 'date' ? formatDay(row[key]) : displayValue(field, row[key])}
                     </td>
                   ))}
                   {isEvents && (

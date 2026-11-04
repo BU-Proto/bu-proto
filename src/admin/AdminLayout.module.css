@@ -174,10 +174,7 @@
 
 .brandSub {
   color: var(--ink-dim);
-  font-family: var(--font-mono);
-  font-size: 11.5px;
   font-weight: 400;
-  letter-spacing: 0;
 }
 
 .menuButton {
@@ -224,14 +221,13 @@
   gap: 4px;
 }
 
+/* Quiet, sentence case: it groups the links without competing with them. */
 .navLabel {
   margin: 0;
-  padding: 0 10px;
+  padding: 0 12px 2px;
   color: var(--ink-dim);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .nav,
@@ -290,9 +286,11 @@
   display: none;
 }
 
+/* Indented under its parent, so it reads as part of it. */
 .subNav {
   margin: 1px 0 2px 14px;
 }
+
 
 .subLink {
   display: flex;
@@ -305,13 +303,6 @@
   font-size: 12.5px;
 }
 
-.subLink::before {
-  content: '+';
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  opacity: 0.8;
-}
 
 .subLink[aria-current='page'] {
   background: rgba(255, 255, 255, 0.14);
@@ -382,8 +373,9 @@
 .userLogin {
   color: var(--ink-dim);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
 }
+
 
 .accountActions {
   display: flex;

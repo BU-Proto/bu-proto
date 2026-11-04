@@ -69,7 +69,7 @@ export function Component() {
 
   return (
     <div className={admin.page}>
-      <PageHeader title="Admins" eyebrow="Portal" lede="Everyone here can sign in to the portal with GitHub and change anything in it." />
+      <PageHeader title="Admins" lede="Everyone here can sign in to the portal with GitHub and change anything in it." />
 
       <section className={admin.panel} aria-labelledby="add-admin-title">
         <div className={admin.panelHead}>
@@ -77,26 +77,32 @@ export function Component() {
             Add an admin
           </h2>
         </div>
-        <form className={styles.addForm} onSubmit={add} noValidate>
-          <Field label="GitHub username" hint="Their login, e.g. octocat. They sign in with that account." error={loginError}>
-            {(control) => (
-              <input
-                {...control}
-                className={`${admin.input} ${admin.mono}`}
-                type="text"
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                placeholder="octocat"
-                value={login}
-                onChange={(event) => setLogin(event.target.value)}
-              />
-            )}
-          </Field>
-          <button type="submit" className={admin.primary} disabled={adding || !login.trim()}>
-            {adding ? 'Adding…' : 'Add admin'}
-          </button>
-        </form>
+        <div className={styles.addLayout}>
+          <form className={styles.addForm} onSubmit={add} noValidate>
+            <Field label="GitHub username" hint="Their login, e.g. octocat. They sign in with that account." error={loginError}>
+              {(control) => (
+                <input
+                  {...control}
+                  className={`${admin.input} ${admin.mono}`}
+                  type="text"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder="octocat"
+                  value={login}
+                  onChange={(event) => setLogin(event.target.value)}
+                />
+              )}
+            </Field>
+            <button type="submit" className={admin.primary} disabled={adding || !login.trim()}>
+              {adding ? 'Adding…' : 'Add admin'}
+            </button>
+          </form>
+          <p className={`${admin.hint} ${styles.owners}`}>
+            Owners are listed in <span className={admin.mono}>ADMIN_GITHUB_LOGINS</span> in the Worker’s settings, so nobody
+            can lock them out from here.
+          </p>
+        </div>
         <StatusLine tone={status.tone}>{status.text}</StatusLine>
       </section>
 
@@ -107,8 +113,8 @@ export function Component() {
               <th scope="col">Admin</th>
               <th scope="col">Added</th>
               <th scope="col">Last seen</th>
-              <th scope="col">
-                <span className={admin.dim}>Actions</span>
+              <th scope="col" className={admin.rowActions}>
+                <span className={admin.srOnly}>Actions</span>
               </th>
             </tr>
           </thead>
@@ -119,30 +125,37 @@ export function Component() {
                   <a className={`${admin.rowTitle} ${admin.mono}`} href={`https://github.com/${row.login}`} target="_blank" rel="noreferrer">
                     @{row.login}
                   </a>
-                  <span className={admin.badges}>
-                    {row.isOwner && <span className={admin.badgeAccent}>owner</span>}
-                    {isSelf(row) && <span className={admin.badge}>you</span>}
-                  </span>
+                  {(row.isOwner || isSelf(row)) && (
+                    <span className={`${admin.flags} ${admin.flagMuted}`}>
+                      {row.isOwner && isSelf(row) ? 'Owner, you' : row.isOwner ? 'Owner' : 'You'}
+                    </span>
+                  )}
                 </td>
                 <td data-label="Added" className={admin.soft}>
                   {row.isOwner ? (
-                    <span className={admin.dim}>Set in the Worker’s config</span>
+                    <span className={admin.dim}>In the Worker’s config</span>
                   ) : (
                     <>
-                      {row.addedBy ? <>by @{row.addedBy}</> : 'Added'}
-                      {row.createdAt && <span className={`${admin.mono} ${admin.dim}`}> · {formatTimestamp(row.createdAt)}</span>}
+                      {row.createdAt && <span className={admin.figure}>{formatTimestamp(row.createdAt)}</span>}
+                      {row.addedBy && (
+                        <span className={admin.dim}>
+                          {row.createdAt ? ' by ' : 'By '}
+                          <span className={admin.mono}>@{row.addedBy}</span>
+                        </span>
+                      )}
                     </>
                   )}
                 </td>
                 <td data-label="Last seen" className={admin.soft}>
                   {row.lastSeenAt ? <time dateTime={row.lastSeenAt} title={formatTimestamp(row.lastSeenAt)}>{formatRelative(row.lastSeenAt)}</time> : 'Never signed in'}
                 </td>
-                <td>
+                <td className={admin.rowActions}>
                   {row.isOwner ? (
-                    <span className={admin.hint}>Owners can’t be removed here.</span>
+                    <span className={admin.dim}>Can’t be removed here</span>
                   ) : isSelf(row) ? (
-                    <span className={admin.hint}>Ask another admin to remove you.</span>
+                    <span className={admin.dim}>Another admin can remove you</span>
                   ) : (
+
                     <button
                       type="button"
                       className={`${admin.ghost} ${admin.small}`}
@@ -161,9 +174,6 @@ export function Component() {
           </tbody>
         </table>
       </div>
-      <p className={admin.hint}>
-        Owners are listed in <span className={admin.mono}>ADMIN_GITHUB_LOGINS</span> in the Worker’s settings, so nobody can lock them out from here.
-      </p>
 
       <ConfirmDialog
         open={pending !== null}

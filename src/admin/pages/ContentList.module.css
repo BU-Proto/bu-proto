@@ -1,0 +1,4 @@
+/* Wide enough for "Sep 22, 2026" on one line, so the title column takes the rest. */
+.dateCol {
+  width: 140px;
+}

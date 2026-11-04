@@ -220,7 +220,8 @@ function LinksField({
                 </div>
                 {(labelError || hrefError) && (
                   <p id={`${id}-${index}-error`} className={admin.error}>
-                    {[labelError && `Label: ${labelError}`, hrefError && `URL: ${hrefError}`].filter(Boolean).join(' · ')}
+                    {[labelError && `Label: ${labelError}`, hrefError && `URL: ${hrefError}`].filter(Boolean).join('. ')}
+
                   </p>
                 )}
               </li>

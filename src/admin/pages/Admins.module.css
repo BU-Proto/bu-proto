@@ -1,3 +1,15 @@
+/* The form on the left; on a laptop, the note about owners fills the right of the panel. */
+.addLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+  align-items: start;
+  gap: 16px 40px;
+}
+
+.owners {
+  margin-top: 26px;
+}
+
 .addForm {
   display: grid;
   /* max-content and justify-content: start keep the button its own size instead of filling the row. */
@@ -9,7 +21,17 @@
 
 /* Line the button up with the input, not the label above it. */
 .addForm > button {
-  margin-top: 22px;
+  margin-top: 26px;
+}
+
+@media (max-width: 860px) {
+  .addLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .owners {
+    margin-top: 0;
+  }
 }
 
 @media (max-width: 560px) {

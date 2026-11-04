@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useBlocker, useLoaderData, useLocation, useNavigate } from 'react-router'
 import { api, ApiError } from '../../lib/api'
 import admin from '../admin.module.css'
-import { RowBadges, StatusLine, type StatusTone } from '../components/bits'
+import { StatusLine, type StatusTone } from '../components/bits'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ContentField } from '../components/ContentField'
 import { PageHeader } from '../components/PageHeader'
@@ -128,11 +128,13 @@ function Editor({ resource, item, rsvps }: Loaded) {
         back={{ to: `/admin/${resource}`, label: spec.label }}
         lede={
           row ? (
-            <>
-              <span className={admin.mono}>#{row.id}</span> · updated {formatTimestamp(row.updatedAt)}
-              <RowBadges placeholder={row.placeholder} published={row.published} />
-            </>
+            <p>
+              {row.published ? 'On the site.' : <span className={admin.flagDraft}>Draft, so only admins see it.</span>}
+              {row.placeholder && <span className={admin.flagSample}> Sample content.</span>} Last saved{' '}
+              <span className={admin.figure}>{formatTimestamp(row.updatedAt)}</span>.
+            </p>
           ) : (
+
             `Fill this in and save. It goes on the site once it’s published.`
           )
         }

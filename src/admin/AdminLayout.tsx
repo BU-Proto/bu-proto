@@ -110,7 +110,8 @@ function Shell({ me }: { me: Me }) {
             {/* The field's gradient in miniature, so the mark doesn't depend on an image loading. */}
             <span className={styles.mark} aria-hidden="true" />
             <span className={styles.brandText}>
-              Proto <span className={styles.brandSub}>~/admin</span>
+              Proto <span className={styles.brandSub}>Admin</span>
+
             </span>
           </Link>
           <button

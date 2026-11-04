@@ -46,11 +46,14 @@ export function RsvpPanel({ eventId, initial }: { eventId: number; initial: Rsvp
   }
 
   return (
-    <section className={admin.panel} aria-labelledby="rsvps-title">
-      <div className={admin.panelHead}>
+    <section className={admin.panelFlush} aria-labelledby="rsvps-title">
+      <div className={admin.flushHead}>
         <h2 id="rsvps-title" className={admin.panelTitle}>
-          RSVPs <span className={`${admin.count} ${admin.dim}`}>{rsvps.length}</span>
+          RSVPs <span className={admin.count}>{rsvps.length}</span>
         </h2>
+        <div className={admin.flushStatus}>
+          <StatusLine tone={status.tone}>{status.text}</StatusLine>
+        </div>
         {rsvps.length > 0 && (
           <div className={admin.actions}>
             <button type="button" className={`${admin.button} ${admin.small}`} onClick={copyEmails}>
@@ -63,7 +66,6 @@ export function RsvpPanel({ eventId, initial }: { eventId: number; initial: Rsvp
         )}
       </div>
 
-      <StatusLine tone={status.tone}>{status.text}</StatusLine>
 
       {rsvps.length === 0 ? (
         <EmptyState title="No RSVPs yet">
@@ -76,8 +78,8 @@ export function RsvpPanel({ eventId, initial }: { eventId: number; initial: Rsvp
               <th scope="col">Name</th>
               <th scope="col">Email</th>
               <th scope="col">RSVP’d</th>
-              <th scope="col">
-                <span className={admin.dim}>Actions</span>
+              <th scope="col" className={admin.rowActions}>
+                <span className={admin.srOnly}>Actions</span>
               </th>
             </tr>
           </thead>
@@ -88,10 +90,11 @@ export function RsvpPanel({ eventId, initial }: { eventId: number; initial: Rsvp
                 <td data-label="Email" className={admin.mono}>
                   {rsvp.email}
                 </td>
-                <td data-label="RSVP’d" className={`${admin.mono} ${admin.dim}`}>
+                <td data-label="RSVP’d" className={`${admin.soft} ${admin.figure}`}>
                   {formatTimestamp(rsvp.createdAt)}
                 </td>
-                <td>
+                <td className={admin.rowActions}>
+
                   <button
                     type="button"
                     className={`${admin.ghost} ${admin.small}`}

@@ -2,8 +2,6 @@
    screen on every laptop, and the preview needs real room. */
 .root {
   container-type: inline-size;
-  /* A little wider than other pages, so the preview fits beside the editor on more laptops. */
-  max-width: 1240px;
 }
 
 /* Stacked by default: compose, then the preview at the full column. Side by side only once the
@@ -105,8 +103,8 @@
 
 .recipientCount {
   color: var(--accent);
-  font-family: var(--font-mono);
   font-size: 22px;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -124,8 +122,8 @@
 
 .body {
   min-height: 260px !important;
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .test {
@@ -148,18 +146,18 @@
   flex: 1 1 220px;
 }
 
-/* The send button gets its own glass strip, so the page's one irreversible action stands apart. */
+/* The page's one irreversible action, last in the column, with what happens next beside it. */
 .sendBar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 16px;
-  padding: 14px 16px;
-  border: 1px solid var(--edge);
-  border-radius: 999px;
-  background: rgba(6, 26, 46, 0.5);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  gap: 8px 16px;
+  padding: 2px 4px 0;
+}
+
+.sendBar p {
+  flex: 1 1 200px;
+  text-shadow: var(--on-field-shadow);
 }
 
 /* ---- Variables ---- */
@@ -173,17 +171,34 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  border-radius: 4px;
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+}
+
+/* The same disclosure mark as the history rows. */
+.variablesSummary::-webkit-details-marker {
+  display: none;
+}
+
+.variablesSummary::before {
+  content: '▸';
+  display: inline-block;
+  width: 10px;
+  color: var(--ink-dim);
+}
+
+.variables[open] .variablesSummary::before {
+  content: '▾';
+  color: var(--accent);
 }
 
 .variablesSummary:hover {
   color: var(--ink);
 }
+
 
 .variablesSummary:focus-visible {
   outline: 2px solid var(--accent);
@@ -497,12 +512,20 @@
 
 .summary {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) auto auto minmax(0, 1.4fr);
-  align-items: baseline;
-  gap: 6px 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, auto) minmax(150px, auto);
+  align-items: start;
+  gap: 6px 28px;
   padding: 13px 18px;
   cursor: pointer;
   list-style: none;
+}
+
+.summaryWhat,
+.summaryResult,
+.summaryWho {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
 }
 
 .summary::-webkit-details-marker {
@@ -538,11 +561,14 @@
 }
 
 .summaryAudience {
-  color: var(--ink-soft);
+  padding-left: 14px;
+  color: var(--ink-dim);
+  font-size: 13px;
 }
 
-.summaryCounts {
-  white-space: nowrap;
+.summaryResult,
+.summaryWho {
+  font-size: 13px;
 }
 
 .failed {
@@ -550,6 +576,7 @@
 }
 
 .summaryWho {
+  justify-items: end;
   text-align: right;
 }
 
@@ -566,14 +593,15 @@
   border-radius: 12px;
   background: var(--surface-sunk);
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-family: inherit;
+  font-size: 13.5px;
   line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (prefers-reduced-motion
+: no-preference) {
   .stale {
     transition: opacity 120ms;
   }
@@ -585,29 +613,18 @@
   }
 }
 
-@media (max-width: 960px) {
+/* Narrower: what was sent on its own line, then the result and when, side by side. */
+@container (max-width: 720px) {
   .summary {
-    display: flex;
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .summarySubject {
-    flex: 1 0 100%;
+  .summaryWhat {
+    grid-column: 1 / -1;
   }
 
-  .summaryAudience {
-    flex: 1 0 100%;
+  .summaryResult {
     padding-left: 14px;
-  }
-
-  .summaryCounts {
-    padding-left: 14px;
-  }
-
-  .summaryWho {
-    flex: 1 0 100%;
-    padding-left: 14px;
-    text-align: left;
   }
 }
 

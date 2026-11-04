@@ -20,7 +20,7 @@ export function Component() {
 
   return (
     <div className={admin.page}>
-      <PageHeader eyebrow="Dashboard" title={`Hi, ${(me.name ?? me.login).split(' ')[0]}`} tabTitle="Dashboard" lede="What’s happening at BU Proto." />
+      <PageHeader title={`Hi, ${(me.name ?? me.login).split(' ')[0]}`} tabTitle="Dashboard" lede="What’s happening at BU Proto." />
 
       <section aria-labelledby="stats-title">
         <h2 id="stats-title" className={styles.srOnly}>
@@ -30,7 +30,7 @@ export function Component() {
           {tiles.map((tile) => (
             <li key={tile.label}>
               <Link className={styles.tile} to={tile.to} data-highlight={tile.highlight || undefined}>
-                <span className={admin.eyebrow}>{tile.label}</span>
+                <span className={styles.label}>{tile.label}</span>
                 <span className={styles.value}>{tile.value.toLocaleString()}</span>
                 <span className={styles.note}>{tile.note}</span>
               </Link>
@@ -54,11 +54,17 @@ export function Component() {
               Email members
             </Link>
             <Link className={admin.button} to="/admin/fund?status=new">
-              Review fund
-              {stats.fundNew > 0 && <span className={admin.badgeAccent}>{stats.fundNew} new</span>}
+              {stats.fundNew > 0 ? (
+                <>
+                  Review fund <span className={styles.fresh}>{stats.fundNew} new</span>
+                </>
+              ) : (
+                'Review fund'
+              )}
             </Link>
           </div>
         </section>
+
 
         <section className={admin.panel} aria-labelledby="content-title">
           <div className={admin.panelHead}>

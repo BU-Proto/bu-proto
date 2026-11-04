@@ -44,26 +44,47 @@ function formatRange(starts: string, ends: string): string {
   return `${dayFormat.format(start)} – ${sameMonth ? end.getUTCDate() : dayFormat.format(end)}, ${starts.slice(0, 4)}`
 }
 
-const message = (error: unknown) => (error instanceof Error ? error.message : 'Something went wrong.')
+/** The icon stays on the line with the name's last word, never wrapping onto a line by itself. */
+function NameWithIcon({ name }: { name: string }) {
+  const cut = name.trimEnd().lastIndexOf(' ')
+  return (
+    <>
+      {cut > 0 ? name.slice(0, cut + 1) : ''}
+      <span className={admin.nowrap}>
+        {cut > 0 ? name.slice(cut + 1) : name}
+        <ArrowOutIcon aria-hidden="true" />
+      </span>
+    </>
+  )
+}
 
+/** The location, or the format
+ when that's all there is to say ("Online"). */
+function whereText(candidate: HackathonCandidate): string {
+  const location = candidate.location.trim()
+  if (candidate.mode === 'online' && (!location || /^online$/i.test(location))) return 'Online'
+  return location || '—'
+}
+
+const message = (error: unknown) =>
+ (error instanceof Error ? error.message : 'Something went wrong.')
+
+/** "MLH checked 5 minutes ago: 67 upcoming, 3 new." One sentence per source. */
 function RunSummary({ source, run }: { source: ImportSource; run: ImportRun | undefined }) {
   const label = SOURCE_LABELS[source]
-  if (!run) return <span>{label}: not checked yet</span>
-  if (!run.finishedAt) return <span>{label}: checking now…</span>
+  if (!run) return <p>{label} hasn’t been checked yet.</p>
+  if (!run.finishedAt) return <p>Checking {label} now…</p>
   return (
-    <span>
-      <span title={formatTimestamp(run.finishedAt)}>
-        {label}: checked {formatRelative(run.finishedAt)}
-      </span>
+    <p>
+      {label} checked <span title={formatTimestamp(run.finishedAt)}>{formatRelative(run.finishedAt)}</span>
       {run.error ? (
-        <span className={admin.statusError}> · failed: {run.error}</span>
+        <span className={styles.failed}> and failed: {run.error}</span>
       ) : (
         <span className={admin.dim}>
-          {' '}
-          · {run.found} upcoming, {run.new} new
+          : {run.found} upcoming, {run.new} new.
         </span>
       )}
-    </span>
+    </p>
   )
 }
 
@@ -173,21 +194,21 @@ export function Component() {
       <PageHeader
         title="Import hackathons"
         back={{ to: '/admin/hackathons', label: 'Hackathons' }}
-        lede={
-          <span className={styles.runs}>
-            {IMPORT_SOURCES.map((source) => (
-              <RunSummary key={source} source={source} run={lastRun(source)} />
-            ))}
-          </span>
-        }
+        lede={IMPORT_SOURCES.map((source) => (
+          <RunSummary key={source} source={source} run={lastRun(source)} />
+        ))}
         actions={
-          <button type="button" className={admin.button} onClick={checkNow} disabled={busy === 'run'}>
-            {busy === 'run' ? 'Checking…' : 'Check now'}
-          </button>
+          <>
+            {/* Beside the button that usually caused it, and out of the way when there's nothing to say. */}
+            <div className={styles.notice}>
+              <StatusLine tone={notice?.tone}>{notice?.text}</StatusLine>
+            </div>
+            <button type="button" className={admin.button} onClick={checkNow} disabled={busy === 'run'}>
+              {busy === 'run' ? 'Checking…' : 'Check now'}
+            </button>
+          </>
         }
       />
-
-      <StatusLine tone={notice?.tone}>{notice?.text}</StatusLine>
 
       <div className={styles.bar}>
         <nav className={admin.tabs} aria-label="Import status">
@@ -206,31 +227,33 @@ export function Component() {
         </nav>
 
         <div className={styles.filters}>
-          <div className={admin.tabs} role="group" aria-label="Format">
-            {MODE_FILTERS.map((value) => (
-              <button
-                key={value ?? 'all'}
-                type="button"
-                className={admin.tab}
-                aria-pressed={value === mode}
-                aria-current={value === mode ? 'true' : undefined}
-                onClick={() => setFilter('mode', value)}
-              >
-                {value ? MODE_LABELS[value] : 'Any format'}
-              </button>
-            ))}
-          </div>
-          <label className={admin.switchRow}>
+          <label className={styles.filter}>
+            <span>Format</span>
+            <select
+              className={`${admin.input} ${styles.select}`}
+              value={mode ?? 'any'}
+              onChange={(event) => setFilter('mode', event.target.value === 'any' ? null : event.target.value)}
+            >
+              {MODE_FILTERS.map((value) => (
+                <option key={value ?? 'any'} value={value ?? 'any'}>
+                  {value ? MODE_LABELS[value] : 'Any format'}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.filter}>
             <input
               type="checkbox"
+              role="switch"
               className={admin.switch}
               checked={near}
               onChange={(event) => setFilter('near', event.target.checked ? '1' : null)}
             />
-            <span className={admin.switchLabel}>Near Boston</span>
+            <span>Near Boston only</span>
           </label>
         </div>
       </div>
+
 
       {loadError && (
         <div className={admin.callout} role="alert">
@@ -274,43 +297,47 @@ export function Component() {
             <thead>
               <tr>
                 <th scope="col">Hackathon</th>
+                <th scope="col">Source</th>
                 <th scope="col">Dates</th>
-                <th scope="col">Location</th>
-                <th scope="col">Format</th>
-                <th scope="col">
-                  <span className={styles.hidden}>Actions</span>
+                <th scope="col">Where</th>
+                <th scope="col" className={admin.rowActions}>
+                  <span className={admin.srOnly}>Actions</span>
                 </th>
               </tr>
             </thead>
             <tbody>
               {items.map((candidate) => (
                 <tr key={candidate.id}>
-                  <td>
-                    <span className={styles.name}>
-                      {candidate.url ? (
-                        <a className={admin.rowTitle} href={candidate.url} target="_blank" rel="noreferrer">
-                          {candidate.name} <ArrowOutIcon aria-hidden="true" />
-                          <span className={styles.hidden}> (opens the event site)</span>
-                        </a>
-                      ) : (
-                        <span className={admin.rowTitle}>{candidate.name}</span>
-                      )}
-                      <span className={admin.badges}>
-                        <span className={admin.badge}>{SOURCE_LABELS[candidate.source]}</span>
-                        {candidate.nearBoston && <span className={admin.badgeAccent}>near Boston</span>}
-                      </span>
-                    </span>
+                  <td className={styles.name}>
+                    {candidate.url ? (
+                      <a className={admin.rowTitle} href={candidate.url} target="_blank" rel="noreferrer">
+                        <NameWithIcon name={candidate.name} />
+                        <span className={admin.srOnly}> (opens the event site)</span>
+                      </a>
+                    ) : (
+                      <span className={admin.rowTitle}>{candidate.name}</span>
+                    )}
                   </td>
-                  <td className={admin.mono} data-label="Dates">
+                  <td className={admin.soft} data-label="Source">
+                    {SOURCE_LABELS[candidate.source]}
+                  </td>
+                  <td className={`${admin.soft} ${admin.figure}`} data-label="Dates">
                     {formatRange(candidate.starts, candidate.ends)}
                   </td>
-                  <td className={admin.soft} data-label="Location">
-                    {candidate.location || '—'}
+                  <td data-label="Where">
+                    <span className={styles.location}>
+                      <span className={admin.soft}>{whereText(candidate)}</span>
+                      {(candidate.mode !== 'online' || candidate.nearBoston) && (
+                        <span className={styles.detail}>
+                          {candidate.mode !== 'online' && <span>{MODE_LABELS[candidate.mode]}</span>}
+                          {candidate.nearBoston && <span className={styles.near}>Near Boston</span>}
+                        </span>
+                      )}
+
+                    </span>
                   </td>
-                  <td className={admin.soft} data-label="Format">
-                    {MODE_LABELS[candidate.mode]}
-                  </td>
-                  <td className={styles.rowActions}>
+                  <td className={admin.rowActions}>
+
                     {candidate.status === 'new' && (
                       <>
                         <button
