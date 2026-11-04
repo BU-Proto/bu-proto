@@ -124,6 +124,12 @@ app.post('/api/admin/hackathon-imports/:id/add', async (c) => {
     travelCovered: false,
     buGoing: 0,
     href: asUrl.safeParse(candidate.url).success ? candidate.url : '',
+    // The source's logo or banner makes a better start than no cover at all.
+    photo: candidate.image && asUrl.safeParse(candidate.image).success ? candidate.image : '',
+    description: '',
+    trip: '',
+    tripSignup: '',
+    gallery: [],
     placeholder: false,
     published: false,
   })

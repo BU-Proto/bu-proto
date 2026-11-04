@@ -37,13 +37,31 @@ const optionalImage = z
 /** Flags every content row has. `placeholder` renders the "sample" tag; unpublished rows stay out of the site. */
 const flags = { placeholder: z.boolean(), published: z.boolean() }
 
+/** One teammate: their name, and optionally where to find them (LinkedIn, a personal site, GitHub). */
+export const personInput = z.object({ name: text(80), href: optionalUrl })
+
+/** A gallery photo: a full URL or a path under public/. */
+const galleryImage = z.union([z.url(), z.string().regex(/^\/[^\s]*$/)], {
+  error: 'Use a full URL (https://…) or a /path under public/.',
+})
+
 export const eventInput = z.object({
   kind: z.enum(EVENT_KINDS),
   title: text(120),
   date: isoDay,
   time: text(40),
   place: text(120),
+  /** One or two lines for lists and cards. */
   text: optionalText(600),
+  photo: optionalImage,
+  /** The full write-up on the event's own page: plain text, blank lines between paragraphs. */
+  description: optionalText(8000),
+  /** The run of show, one line each, e.g. "7:00 Food". */
+  agenda: z.array(text(120)).max(30),
+  /** Hosts, speakers and co-hosting orgs, each optionally linked. */
+  hosts: z.array(personInput).max(16),
+  /** Photos from the night, for a recap once it's happened. */
+  gallery: z.array(galleryImage).max(24),
   ...flags,
 })
 
@@ -56,15 +74,15 @@ export const hackathonInput = z.object({
   travelCovered: z.boolean(),
   buGoing: z.number().int().min(0).max(999),
   href: z.union([z.literal(''), z.url('Must be a full URL')]),
+  photo: optionalImage,
+  /** What the hackathon is and why it's worth going. */
+  description: optionalText(8000),
+  /** How the group trip works: bus, where we stay, who to ask. */
+  trip: optionalText(4000),
+  /** Where to sign up for the trip (a form or a Discord post). */
+  tripSignup: optionalUrl,
+  gallery: z.array(galleryImage).max(24),
   ...flags,
-})
-
-/** One teammate: their name, and optionally where to find them (LinkedIn, a personal site, GitHub). */
-export const personInput = z.object({ name: text(80), href: optionalUrl })
-
-/** A gallery photo: a full URL or a path under public/. */
-const galleryImage = z.union([z.url(), z.string().regex(/^\/[^\s]*$/)], {
-  error: 'Use a full URL (https://…) or a /path under public/.',
 })
 
 export const winInput = z.object({
@@ -200,7 +218,12 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       { key: 'date', column: 'date', label: 'Date', type: 'date' },
       { key: 'time', column: 'time', label: 'Time', type: 'text', hint: 'e.g. 7:00–10:00 PM' },
       { key: 'place', column: 'place', label: 'Place', type: 'text' },
-      { key: 'text', column: 'text', label: 'Description', type: 'textarea' },
+      { key: 'text', column: 'text', label: 'Short description', type: 'textarea', hint: 'One or two lines for the events list and the home page.' },
+      { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'A full URL or a path under public/.' },
+      { key: 'description', column: 'description', label: 'Full description', type: 'textarea', hint: 'For the event’s own page. Blank lines make paragraphs.' },
+      { key: 'agenda', column: 'agenda', label: 'Schedule', type: 'list', hint: 'One line each, e.g. 7:00 Food, then 7:30 Kickoff.' },
+      { key: 'hosts', column: 'hosts', label: 'Hosts and speakers', type: 'people', hint: 'People or orgs running it; each can link out.' },
+      { key: 'gallery', column: 'gallery', label: 'Photos', type: 'images', hint: 'For a recap after the event.' },
       ...FLAG_FIELDS,
     ],
   },
@@ -221,6 +244,11 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       { key: 'travelCovered', column: 'travel_covered', label: 'Travel covered', type: 'boolean', hint: 'The hackathon pays for or reimburses travel.' },
       { key: 'buGoing', column: 'bu_going', label: 'BU people going', type: 'number' },
       { key: 'href', column: 'href', label: 'Website', type: 'url' },
+      { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'A full URL or a path under public/.' },
+      { key: 'description', column: 'description', label: 'About the hackathon', type: 'textarea', hint: 'What it is and why it’s worth going. Blank lines make paragraphs.' },
+      { key: 'trip', column: 'trip', label: 'How we’re going', type: 'textarea', hint: 'The group trip: getting there, where we stay, who to ask.' },
+      { key: 'tripSignup', column: 'trip_signup', label: 'Trip sign-up link', type: 'url', hint: 'A form or post where people join the trip.' },
+      { key: 'gallery', column: 'gallery', label: 'Photos', type: 'images' },
       ...FLAG_FIELDS,
     ],
   },

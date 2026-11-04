@@ -195,6 +195,19 @@ export interface FieldSection {
 }
 
 const SECTIONS: Partial<Record<ContentResource, SectionPlan[]>> = {
+  events: [
+    { title: 'Basics', keys: ['title', 'kind', 'date', 'time', 'place', 'text'] },
+    { title: 'Event page', hint: 'The write-up on the event’s own page.', keys: ['description', 'agenda', 'hosts'] },
+    { title: 'Photos', keys: ['photo', 'gallery'] },
+    { title: 'Publishing', keys: ['placeholder', 'published'] },
+  ],
+  hackathons: [
+    { title: 'Basics', keys: ['name', 'starts', 'ends', 'location', 'applyBy', 'href'] },
+    { title: 'The trip', keys: ['travelCovered', 'buGoing', 'trip', 'tripSignup'] },
+    { title: 'Hackathon page', hint: 'The write-up on the hackathon’s own page.', keys: ['description'] },
+    { title: 'Photos', keys: ['photo', 'gallery'] },
+    { title: 'Publishing', keys: ['placeholder', 'published'] },
+  ],
   wins: [
     { title: 'Basics', keys: ['project', 'blurb', 'event', 'placement', 'track'] },
     { title: 'People', keys: ['team'] },
@@ -206,6 +219,17 @@ const SECTIONS: Partial<Record<ContentResource, SectionPlan[]>> = {
 }
 
 const LAYOUT: Partial<Record<ContentResource, Record<string, FieldLayout>>> = {
+  events: {
+    place: { wide: true },
+    description: { rows: 8 },
+    agenda: { rows: 6 },
+  },
+  hackathons: {
+    href: { wide: true },
+    description: { rows: 8 },
+    trip: { rows: 5 },
+    tripSignup: { wide: true },
+  },
   wins: {
     event: { wide: true },
     funding: { wide: true },
@@ -242,5 +266,5 @@ export function layoutFor(resource: ContentResource, key: string): FieldLayout {
 /** Where a saved row lives on the public site, for resources that have their own page. */
 export function sitePathFor(resource: ContentResource, row: ContentRow | null): string | null {
   if (!row?.published) return null
-  return resource === 'wins' ? `/wins/${row.id}` : null
+  return resource === 'board' ? null : `/${resource}/${row.id}`
 }
