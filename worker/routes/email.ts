@@ -1,14 +1,25 @@
 import { Hono, type Context } from 'hono'
 import {
+  EMAIL_VARIABLES,
   emailAudience,
+  previewEmailInput,
   sendEmailInput,
   testEmailInput,
   type AudienceCount,
   type EmailAudience,
   type EmailCampaign,
+  type EmailPreview,
 } from '../../shared/api'
 import { randomToken } from '../lib/crypto'
-import { escapeHtml, renderEmail, type EmailReason, type Recipient } from '../lib/emailTemplate'
+import {
+  escapeHtml,
+  renderEmail,
+  usedVariables,
+  type EmailReason,
+  type EventDetails,
+  type Recipient,
+  type VariableValues,
+} from '../lib/emailTemplate'
 import { ApiError, readBody } from '../lib/http'
 import { sendEmails, type SendResult } from '../lib/resend'
 import type { AppEnv } from '../types'
@@ -21,7 +32,7 @@ const app = new Hono<AppEnv>()
 
 /** Everyone an audience reaches, deduped by email, plus why they're getting it. 404 for an unknown event. */
 async function resolveAudience(db: D1Database, audience: EmailAudience): Promise<{ recipients: Recipient[]; reason: EmailReason }> {
-  type Row = { email: string; name: string; unsubscribe_token?: string }
+  type Row = { email: string; name: string; unsubscribe_token?: string; track?: string }
   let rows: Row[]
   let reason: EmailReason
   switch (audience.type) {
@@ -29,18 +40,21 @@ async function resolveAudience(db: D1Database, audience: EmailAudience): Promise
     case 'track': {
       const byTrack = audience.type === 'track'
       const query = db.prepare(
-        `SELECT email, name, unsubscribe_token FROM members WHERE unsubscribed = 0${byTrack ? ' AND track = ?' : ''} ORDER BY id`,
+        `SELECT email, name, unsubscribe_token, track FROM members WHERE unsubscribed = 0${byTrack ? ' AND track = ?' : ''} ORDER BY id`,
       )
       rows = (await (byTrack ? query.bind(audience.track) : query).all<Row>()).results
       reason = { kind: 'member' }
       break
     }
     case 'event': {
-      const event = await db.prepare('SELECT title FROM events WHERE id = ?').bind(audience.eventId).first<{ title: string }>()
+      const event = await db
+        .prepare('SELECT title, date, time, place FROM events WHERE id = ?')
+        .bind(audience.eventId)
+        .first<EventDetails>()
       if (!event) throw new ApiError(404, 'That event no longer exists.')
       rows = (await db.prepare('SELECT email, name FROM rsvps WHERE event_id = ? ORDER BY id').bind(audience.eventId).all<Row>())
         .results
-      reason = { kind: 'event', title: event.title }
+      reason = { kind: 'event', event }
       break
     }
     case 'fund': {
@@ -57,7 +71,12 @@ async function resolveAudience(db: D1Database, audience: EmailAudience): Promise
   for (const row of rows) {
     const key = row.email.trim().toLowerCase()
     if (!byEmail.has(key)) {
-      byEmail.set(key, { email: row.email.trim(), name: row.name, ...(row.unsubscribe_token && { unsubscribeToken: row.unsubscribe_token }) })
+      byEmail.set(key, {
+        email: row.email.trim(),
+        name: row.name,
+        ...(row.unsubscribe_token && { unsubscribeToken: row.unsubscribe_token }),
+        ...(row.track && { track: row.track }),
+      })
     }
   }
   return { recipients: [...byEmail.values()], reason }
@@ -145,19 +164,72 @@ app.post('/api/admin/email/send', async (c) => {
   return c.json({ item: toCampaign(row) }, 201)
 })
 
+const example = (token: string) => EMAIL_VARIABLES.find((variable) => variable.token === token)?.example ?? ''
+
+/** Example values for every variable a person doesn't supply (track and the event ones). */
+function exampleValues(): VariableValues {
+  const values: VariableValues = {}
+  for (const { token, example } of EMAIL_VARIABLES) {
+    if (!['{{name}}', '{{fullName}}', '{{email}}'].includes(token)) values[token] = example
+  }
+  return values
+}
+
 app.post('/api/admin/email/test', async (c) => {
   const input = await readBody(c, testEmailInput)
   const admin = c.var.admin
+  // The admin stands in for the person; there's no audience, so the rest are examples.
   const email = renderEmail({
     subject: `[Test] ${input.subject}`,
     body: input.body,
     recipient: { email: input.to, name: admin.name ?? admin.login },
     reason: { kind: 'test' },
     origin: originOf(c),
+    values: exampleValues(),
   })
   const result = await sendEmails(c.env, [{ to: input.to, ...email }], `test-${randomToken(12)}`)
   if (!result.logged && result.sent === 0) throw new ApiError(502, "Resend didn't accept the email. Check the server logs.")
   return c.json({ ok: true, logged: result.logged })
+})
+
+// ---- Preview ------------------------------------------------------------------------------------
+
+/** Unsubscribe links in previews use this instead of the member's real token, which must not leave the Worker. */
+const PREVIEW_TOKEN = 'preview'
+
+/** Stands in when the audience is empty. It gets an unsubscribe link only where a real send would. */
+function sampleRecipient(audience: EmailAudience): Recipient {
+  const member = audience.type === 'members' || audience.type === 'track'
+  return {
+    name: example('{{fullName}}'),
+    email: example('{{email}}'),
+    ...(member && { unsubscribeToken: PREVIEW_TOKEN, track: audience.type === 'track' ? audience.track : example('{{track}}') }),
+  }
+}
+
+// Renders exactly what the send would for one recipient, and neither sends nor writes anything.
+app.post('/api/admin/email/preview', async (c) => {
+  const input = await readBody(c, previewEmailInput)
+  const { recipients, reason } = await resolveAudience(c.env.DB, input.audience)
+  const index = recipients.length ? input.index % recipients.length : 0
+  const real = recipients.at(index)
+  const recipient: Recipient = real
+    ? { ...real, ...(real.unsubscribeToken && { unsubscribeToken: PREVIEW_TOKEN }) }
+    : sampleRecipient(input.audience)
+  const email = renderEmail({ subject: input.subject, body: input.body, recipient, reason, origin: originOf(c) })
+  const used = new Set(usedVariables(input.subject, input.body))
+  const unfilled = EMAIL_VARIABLES.filter(
+    ({ token, audiences }) => used.has(token) && audiences && !audiences.includes(input.audience.type),
+  ).map(({ token }) => token)
+  return c.json({
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+    recipient: { name: recipient.name, email: recipient.email, sample: !real },
+    index,
+    recipientCount: recipients.length,
+    unfilled,
+  } satisfies EmailPreview)
 })
 
 app.get('/api/admin/email/campaigns', async (c) => {

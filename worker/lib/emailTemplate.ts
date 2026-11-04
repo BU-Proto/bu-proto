@@ -2,15 +2,30 @@
 // gets. The layout is tables and inline styles on a light background: the only thing that
 // renders the same in Gmail, Outlook and Apple Mail.
 
-/** One person an email goes to. Members have an unsubscribe token; RSVPs and fund sign-ups don't. */
+import { EMAIL_VARIABLES } from '../../shared/api'
+
+/** One person an email goes to. Members have an unsubscribe token and a track; RSVPs and fund sign-ups don't. */
 export interface Recipient {
   email: string
   name: string
   unsubscribeToken?: string
+  track?: string
 }
 
-/** Why someone is getting the email; it's said in the footer. */
-export type EmailReason = { kind: 'member' } | { kind: 'event'; title: string } | { kind: 'fund' } | { kind: 'test' }
+export interface EventDetails {
+  title: string
+  /** ISO day, yyyy-mm-dd. */
+  date: string
+  time: string
+  place: string
+}
+
+/** Why someone is getting the email; it's said in the footer. Event emails also fill the event variables. */
+export type EmailReason =
+  | { kind: 'member' }
+  | { kind: 'event'; event: EventDetails }
+  | { kind: 'fund' }
+  | { kind: 'test' }
 
 export interface RenderedEmail {
   subject: string
@@ -37,8 +52,54 @@ export function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] || 'there'
 }
 
-function fillName(value: string, name: string): string {
-  return value.replace(/\{\{\s*name\s*\}\}/gi, firstName(name))
+/** "Thu, Nov 12" from an ISO day. UTC, so the day never shifts with the Worker's clock. */
+export function formatEventDate(day: string): string {
+  const date = new Date(`${day}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return day
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+}
+
+// ---- Variables ----------------------------------------------------------------------------------
+
+/** Variable name (lowercased, so {{fullname}} works too) → its token as listed in EMAIL_VARIABLES. */
+const KNOWN_VARIABLES = new Map(EMAIL_VARIABLES.map((variable) => [variable.token.slice(2, -2).toLowerCase(), variable.token]))
+const VARIABLE_PATTERN = /\{\{\s*([a-z]\w*)\s*\}\}/gi
+
+/** Values keyed by token, e.g. { '{{name}}': 'Ada' }. */
+export type VariableValues = Partial<Record<string, string>>
+
+/** The EMAIL_VARIABLES tokens a subject or body uses, each once. */
+export function usedVariables(...values: string[]): string[] {
+  const used = new Set<string>()
+  for (const value of values) {
+    for (const match of value.matchAll(VARIABLE_PATTERN)) {
+      const token = KNOWN_VARIABLES.get(match[1].toLowerCase())
+      if (token) used.add(token)
+    }
+  }
+  return [...used]
+}
+
+function variableValues(recipient: Recipient, reason: EmailReason): VariableValues {
+  const event = reason.kind === 'event' ? reason.event : null
+  return {
+    '{{name}}': firstName(recipient.name),
+    '{{fullName}}': recipient.name.trim(),
+    '{{email}}': recipient.email,
+    '{{track}}': recipient.track,
+    '{{event}}': event?.title,
+    '{{eventDate}}': event ? formatEventDate(event.date) : undefined,
+    '{{eventTime}}': event?.time,
+    '{{eventPlace}}': event?.place,
+  }
+}
+
+/** Known variables become their value (empty when there's none); anything else in braces stays as typed. */
+function fillVariables(value: string, values: VariableValues): string {
+  return value.replace(VARIABLE_PATTERN, (match, name: string) => {
+    const token = KNOWN_VARIABLES.get(name.toLowerCase())
+    return token ? (values[token] ?? '') : match
+  })
 }
 
 export function unsubscribeUrl(origin: string, token: string): string {
@@ -83,7 +144,7 @@ function reasonText(reason: EmailReason): string {
     case 'member':
       return "You're getting this because you're a BU Proto member."
     case 'event':
-      return `You're getting this because you RSVP'd to ${reason.title}.`
+      return `You're getting this because you RSVP'd to ${reason.event.title}.`
     case 'fund':
       return "You're getting this because you joined the BU Proto fund interest list."
     case 'test':
@@ -91,22 +152,31 @@ function reasonText(reason: EmailReason): string {
   }
 }
 
-/** The email one recipient gets: `{{name}}` filled in, the footer for `reason`, and for members an unsubscribe link. */
+const EMPTY_BODY = 'Your message goes here'
+
+/**
+ * The email one recipient gets: variables filled in, the footer for `reason`, and for members an
+ * unsubscribe link. `values` overrides variables (test sends fill the rest with examples). An empty
+ * subject or body, which only the preview allows, renders as a placeholder.
+ */
 export function renderEmail(input: {
   subject: string
   body: string
   recipient: Recipient
   reason: EmailReason
   origin: string
+  values?: VariableValues
 }): RenderedEmail {
   const { recipient, reason, origin } = input
-  const subject = fillName(input.subject, recipient.name)
-  const body = fillName(input.body, recipient.name)
+  const values = { ...variableValues(recipient, reason), ...input.values }
+  const subject = fillVariables(input.subject, values).trim() || '(No subject)'
+  const body = fillVariables(input.body, values).replace(/\r\n?/g, '\n').trim()
   const unsubscribe = recipient.unsubscribeToken ? unsubscribeUrl(origin, recipient.unsubscribeToken) : null
   const why = reasonText(reason)
+  const contentHtml = body ? bodyHtml(body) : `<p style="margin:0 0 16px 0;color:#8a97a5;font-style:italic">${EMPTY_BODY}</p>`
 
   const text = [
-    body.replace(/\r\n?/g, '\n').trim(),
+    body || EMPTY_BODY,
     '',
     '--',
     why,
@@ -132,7 +202,7 @@ export function renderEmail(input: {
 <tr><td style="padding:28px 32px 0 32px;font-family:${MONO};font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${NAVY}">BU Proto</td></tr>
 <tr><td style="padding:14px 32px 0 32px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="3" style="height:3px;line-height:3px;font-size:0;background-color:${MINT}">&nbsp;</td></tr></table></td></tr>
 <tr><td style="padding:24px 32px 8px 32px;font-family:${FONT};font-size:16px;line-height:1.6;color:#1b2733">
-${bodyHtml(body)}
+${contentHtml}
 </td></tr>
 <tr><td style="padding:16px 32px 28px 32px;border-top:1px solid #e3e8ee;font-family:${FONT};font-size:12px;line-height:1.6;color:#5b6b7b">
 ${escapeHtml(why)}${footerLink}
