@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link, useLoaderData } from 'react-router'
 import type { Win } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
+import { WinTally } from '../components/WinTally'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { WINS_EMPTY, WINS_INTRO } from '../content/wins'
@@ -94,6 +95,7 @@ export function Wins() {
   return (
     <div className={ui.page}>
       <PageIntro intro={WINS_INTRO} />
+      <WinTally wins={wins} />
       {wins.length === 0 ? (
         <p className={ui.panel} data-fog-clear>
           {WINS_EMPTY}

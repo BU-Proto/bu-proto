@@ -664,3 +664,8 @@
     font-size: 30px;
   }
 }
+
+/* The win tally sits between the hero and the first section, with the page's breathing room. */
+.tallyBand {
+  padding: clamp(72px, 12vh, 140px) 0 0;
+}

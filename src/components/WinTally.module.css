@@ -1,0 +1,42 @@
+/* The record as a sentence: words at reading size, the counts set huge and light between them. */
+.tally {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  text-shadow: var(--on-field-shadow);
+}
+
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.4em;
+  margin: 0;
+  font-size: clamp(22px, 2.6vw, 34px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.figure {
+  white-space: nowrap;
+}
+
+.line b {
+  font-size: clamp(64px, 9vw, 132px);
+  font-weight: 200;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+}

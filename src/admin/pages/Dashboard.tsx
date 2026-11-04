@@ -15,6 +15,12 @@ export function Component() {
     { label: 'Members', value: stats.members, note: `${stats.membersThisWeek} new this week`, to: '/admin/members' },
     { label: 'Upcoming events', value: stats.upcomingEvents, note: `${plural(stats.upcomingRsvps, 'RSVP')} so far`, to: '/admin/events' },
     { label: 'Fund interest', value: stats.fundTotal, note: `${stats.fundNew} new to review`, to: '/admin/fund?status=new', highlight: stats.fundNew > 0 },
+    {
+      label: 'Wins',
+      value: stats.wins,
+      note: stats.wins > 0 ? 'Counted on the site' : `None real yet, ${stats.sampleWins} samples showing`,
+      to: '/admin/wins',
+    },
     { label: 'Admins', value: stats.admins, note: 'Can sign in here', to: '/admin/admins' },
   ]
 

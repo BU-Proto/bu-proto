@@ -449,6 +449,9 @@ export interface Stats {
   fundNew: number
   fundTotal: number
   admins: number
+  /** Published wins that aren't samples: the number the site's record shows. */
+  wins: number
+  sampleWins: number
 }
 
 // ---- Portal: email ----------------------------------------------------------------------------

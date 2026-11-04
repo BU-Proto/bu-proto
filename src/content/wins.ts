@@ -30,3 +30,10 @@ export const WIN_NOT_FOUND = {
   text: 'It may have been taken down, or the link is off by a digit. Every win we’ve posted is on the wins page.',
   back: 'See all wins',
 } as const
+
+/** The running record at the top of the home and wins pages. */
+export const WIN_TALLY = {
+  label: 'Our record so far',
+  note: 'Counted from every win on this site, and it goes up as we add them.',
+  link: 'See every win',
+} as const

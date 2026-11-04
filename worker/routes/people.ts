@@ -215,7 +215,9 @@ app.get('/api/admin/stats', async (c) => {
            (SELECT COUNT(*) FROM rsvps r JOIN events e ON e.id = r.event_id
               WHERE e.published = 1 AND e.date >= ?1) AS upcomingRsvps,
            (SELECT COUNT(*) FROM fund_interest WHERE status = 'new') AS fundNew,
-           (SELECT COUNT(*) FROM fund_interest) AS fundTotal`,
+           (SELECT COUNT(*) FROM fund_interest) AS fundTotal,
+           (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 0) AS wins,
+           (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 1) AS sampleWins`,
       )
       .bind(today),
     db.prepare('SELECT login FROM admins'),
@@ -232,6 +234,8 @@ app.get('/api/admin/stats', async (c) => {
     fundNew: row.fundNew,
     fundTotal: row.fundTotal,
     admins: logins.size,
+    wins: row.wins,
+    sampleWins: row.sampleWins,
   }
   return c.json(stats)
 })

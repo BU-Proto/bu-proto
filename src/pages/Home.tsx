@@ -1,5 +1,6 @@
 import { Link, useLoaderData } from 'react-router'
 import { Hero } from '../components/Hero'
+import { WinTally } from '../components/WinTally'
 import { LogoBand } from '../components/LogoBand'
 import { Decrypt } from '../components/motion/Decrypt'
 import { Marquee } from '../components/motion/Marquee'
@@ -46,6 +47,11 @@ export function Home() {
     <>
       <title>{`${BRAND.full} · Your home base for making things`}</title>
       <Hero />
+
+      {/* The record, right after the hero: the first thing below the fold. */}
+      <div className={styles.tallyBand}>
+        <WinTally wins={wins} showLink />
+      </div>
 
       <div className={styles.flow}>
         {/* Three ways in: editorial rows, each led by one of the trail's own glyphs. */}
