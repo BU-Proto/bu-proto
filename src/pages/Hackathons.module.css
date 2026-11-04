@@ -201,3 +201,9 @@
     text-transform: uppercase;
   }
 }
+
+.empty {
+  margin: 0;
+  padding: 22px clamp(16px, 2.4vw, 24px);
+  color: var(--ink-soft);
+}

@@ -113,6 +113,25 @@
   color: var(--ink-soft);
 }
 
+/* The RSVP form opens under its own event, across the whole row. */
+.rsvp {
+  grid-column: 1 / -1;
+  padding: 16px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rsvp {
+    animation: open 200ms ease-out;
+  }
+}
+
+@keyframes open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
 @media (max-width: 760px) {
   .month {
     grid-template-columns: minmax(0, 1fr);

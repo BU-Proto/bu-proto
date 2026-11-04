@@ -50,3 +50,13 @@ export const SCHEDULE: { location: string; slots: readonly ScheduleSlot[] } & Sa
 export const FOOTER = {
   note: 'BU Proto is a working name. Nothing here is official with Spark! or Innovate@BU yet.',
 } as const
+
+/** What a page shows while its content loads, or when it couldn't. */
+export const ROUTE_STATES = {
+  loading: 'Loading…',
+  error: {
+    title: 'Couldn’t load this right now',
+    text: 'Something went wrong on our end or the connection dropped. Give it another try in a moment.',
+    retry: 'Try again',
+  },
+} as const

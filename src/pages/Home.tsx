@@ -1,21 +1,24 @@
-import { Link } from 'react-router'
+import { Link, useLoaderData } from 'react-router'
 import { Hero } from '../components/Hero'
+import { NoteIcon } from '../components/icons'
 import { SampleTag } from '../components/SampleTag'
+import { ScheduleCard } from '../components/ScheduleCard'
 import ui from '../components/ui.module.css'
-import { EVENTS } from '../content/events'
-import { HACKATHONS } from '../content/hackathons'
-import { JOIN_CTA, RHYTHM, RHYTHM_INTRO, TRACKS, TRACKS_INTRO } from '../content/home'
-import { BRAND } from '../content/site'
-import { WINS } from '../content/wins'
+import { HOME_EMPTY, JOIN_CTA, NOTES, RHYTHM, RHYTHM_INTRO, TRACKS, TRACKS_INTRO } from '../content/home'
+import { BRAND, SCHEDULE } from '../content/site'
+import { WINS_EMPTY } from '../content/wins'
+import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
 import { WinCard } from './Wins'
 import styles from './Home.module.css'
 
 export function Home() {
-  const nextEvent = EVENTS.filter((event) => daysUntil(event.date) >= 0).sort((a, b) =>
-    a.date.localeCompare(b.date),
-  )[0]
-  const deadlines = HACKATHONS.filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
+  const { events, hackathons, wins } = useLoaderData<HomeData>()
+  const nextEvent = events
+    .filter((event) => daysUntil(event.date) >= 0)
+    .sort((a, b) => a.date.localeCompare(b.date))[0]
+  const deadlines = hackathons
+    .filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
     .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
     .slice(0, 3)
 
@@ -88,6 +91,20 @@ export function Home() {
           </ol>
         </section>
 
+        <ul className={`${ui.panel} ${styles.notes}`}>
+          {NOTES.map((note) => (
+            <li key={note.text} className={styles.note}>
+              <NoteIcon name={note.icon} className={styles.noteIcon} />
+              <span data-fog-clear>{note.text}</span>
+              {note.link && (
+                <Link className={ui.textLink} to={note.link.href} data-fog-clear>
+                  {note.link.label} <span aria-hidden="true">→</span>
+                </Link>
+              )}
+            </li>
+          ))}
+        </ul>
+
         <div className={styles.split}>
           <section className={`${ui.panel} ${styles.next}`} aria-labelledby="next-event">
             <h2 id="next-event" className={ui.eyebrow} data-fog-clear>
@@ -110,38 +127,60 @@ export function Home() {
                   <p className={styles.nextMeta} data-fog-clear>
                     {nextEvent.time} · {nextEvent.place}
                   </p>
-                  <p className={styles.nextText} data-fog-clear>
-                    {nextEvent.text}
-                  </p>
+                  {nextEvent.text && (
+                    <p className={styles.nextText} data-fog-clear>
+                      {nextEvent.text}
+                    </p>
+                  )}
                   <Link className={ui.textLink} to="/events" data-fog-clear>
                     All events <span aria-hidden="true">→</span>
                   </Link>
                 </div>
               </div>
             ) : (
-              <p data-fog-clear>Nothing on the calendar yet. Check back soon.</p>
+              <div className={styles.nextCopy}>
+                <p className={styles.nextMeta} data-fog-clear>
+                  {HOME_EMPTY.next}
+                </p>
+                <Link className={ui.textLink} to="/events" data-fog-clear>
+                  All events <span aria-hidden="true">→</span>
+                </Link>
+              </div>
             )}
           </section>
+
+          <ScheduleCard
+            className={styles.schedule}
+            location={SCHEDULE.location}
+            slots={SCHEDULE.slots}
+            placeholder={SCHEDULE.placeholder}
+          />
 
           <section className={`${ui.panelDeep} ${styles.deadlines}`} aria-labelledby="deadlines">
             <h2 id="deadlines" className={ui.eyebrow} data-fog-clear>
               Apply by
             </h2>
-            <ol className={styles.deadlineList}>
-              {deadlines.map((hackathon) => (
-                <li key={hackathon.name} className={styles.deadline}>
-                  <span className={styles.countdown} data-fog-clear>
-                    T-{daysUntil(hackathon.applyBy)}d
-                  </span>
-                  <span className={styles.deadlineName} data-fog-clear>
-                    {hackathon.name} <SampleTag show={hackathon.placeholder} />
-                  </span>
-                  <span className={styles.deadlineDate} data-fog-clear>
-                    {formatDay(hackathon.applyBy)}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            {deadlines.length === 0 ? (
+              <p className={styles.nextMeta} data-fog-clear>
+                {HOME_EMPTY.deadlines}
+              </p>
+            ) : (
+              <ol className={styles.deadlineList}>
+                {deadlines.map((hackathon) => (
+                  <li key={hackathon.id} className={styles.deadline}>
+                    <span className={styles.countdown} data-fog-clear>
+                      T-{daysUntil(hackathon.applyBy)}d
+                    </span>
+                    <span className={styles.deadlineName} data-fog-clear>
+                      {hackathon.name} <SampleTag show={hackathon.placeholder} />
+                    </span>
+                    <span className={styles.deadlineDate} data-fog-clear>
+                      {formatDay(hackathon.applyBy)}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
             <Link className={ui.textLink} to="/hackathons" data-fog-clear>
               Every hackathon <span aria-hidden="true">→</span>
             </Link>
@@ -157,11 +196,17 @@ export function Home() {
               All wins <span aria-hidden="true">→</span>
             </Link>
           </div>
-          <ul className={styles.wins}>
-            {WINS.slice(0, 3).map((win, index) => (
-              <WinCard key={win.project} win={win} rank={index} />
-            ))}
-          </ul>
+          {wins.length === 0 ? (
+            <p className={ui.panel} data-fog-clear>
+              {WINS_EMPTY}
+            </p>
+          ) : (
+            <ul className={styles.wins}>
+              {wins.slice(0, 3).map((win, index) => (
+                <WinCard key={win.id} win={win} rank={index} />
+              ))}
+            </ul>
+          )}
         </section>
 
         <section className={`${ui.panel} ${styles.join}`} aria-labelledby="join-cta">

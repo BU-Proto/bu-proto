@@ -1,28 +1,21 @@
-// Copy for the home page. The next event, deadlines and wins come from their own pages' files.
+// Copy for the home page. The next event, deadlines and wins are content in D1 (edited in the
+// portal at /admin); the copy around them lives here.
 
 import type { Link, TrackName } from './types'
 
 export const HERO_COPY = {
   headline: ['Your Home Base', 'for Making Things'],
-  lede:
-    'Weekly hack nights, group trips to hackathons and a demo night every semester, for BU students who make things. Three ways in: Start, Build, Launch. Microgrants are coming soon.',
+  lede: 'Hack nights, hackathon trips and demo nights for BU students who make things.',
   primaryCta: { label: 'Join Proto', href: '/join' },
   secondaryCta: { label: 'See hack nights', href: '/events' },
 } as const
 
-export type FeatureIconName = 'hackNight' | 'trips' | 'grants' | 'demo' | 'handoff'
+export type NoteIconName = 'grants' | 'handoff'
 
-export interface Feature {
-  icon: FeatureIconName
-  text: string
-}
-
-export const FEATURES: readonly Feature[] = [
-  { icon: 'hackNight', text: 'Weekly hack night, open to everyone, with food' },
-  { icon: 'trips', text: 'Group trips to HackMIT, PennApps and more' },
-  { icon: 'grants', text: 'Microgrants of $50–$500, coming soon' },
-  { icon: 'demo', text: 'One demo night each semester, anyone can show' },
-  { icon: 'handoff', text: "Built to feed BU's startup programs" },
+/** The two things the tracks and the rhythm don't already say, in a slim strip under the rhythm. */
+export const NOTES: readonly { icon: NoteIconName; text: string; link?: Link }[] = [
+  { icon: 'grants', text: 'Microgrants of $50–$500, coming soon', link: { label: 'About the fund', href: '/grants' } },
+  { icon: 'handoff', text: 'Built to feed BU’s startup programs (Spark!, Innovate@BU)' },
 ]
 
 export interface Track {
@@ -82,6 +75,11 @@ export const RHYTHM: readonly Beat[] = [
   { when: 'Each semester', what: 'Demo night', detail: 'Anyone can show anything.' },
   { when: 'Year two', what: 'Our own hackathon', detail: 'A BU hackathon, run by us.', later: true },
 ]
+
+export const HOME_EMPTY = {
+  next: 'Nothing on the calendar yet. Check back soon.',
+  deadlines: 'No open deadlines right now.',
+} as const
 
 export const JOIN_CTA: { title: string; lede: string; cta: Link } = {
   title: 'Come build with us',

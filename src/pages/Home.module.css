@@ -118,10 +118,50 @@
   color: var(--ink-soft);
 }
 
+/* The two things the tracks and the rhythm don't cover, as one slim strip. */
+.notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 40px;
+  margin: 0;
+  padding-block: 14px;
+  list-style: none;
+}
+
+.note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  font-size: 14px;
+}
+
+.noteIcon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+/* Next up, hack night's time and place, and the deadlines. */
 .split {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(240px, 280px) minmax(0, 1fr);
   gap: 16px;
+}
+
+.schedule {
+  align-self: start;
+}
+
+@media (max-width: 1100px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
+  }
+
+  .deadlines {
+    grid-column: 1 / -1;
+  }
 }
 
 .next,
@@ -276,6 +316,10 @@
 
   .split {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedule {
+    max-width: 320px;
   }
 
   .rhythm {

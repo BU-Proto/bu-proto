@@ -1,15 +1,59 @@
-import { useState } from 'react'
+import { useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useLoaderData } from 'react-router'
+import type { ProtoEvent, RsvpResult } from '../../shared/api'
+import { Field, Form } from '../components/Form'
+import { inputClass } from '../components/formFields'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { EVENTS, EVENTS_INTRO, RSVP, type ProtoEvent } from '../content/events'
+import { EVENTS_INTRO, RSVP } from '../content/events'
+import { api } from '../lib/api'
 import { dateParts, daysUntil, formatMonth } from '../lib/dates'
 import styles from './Events.module.css'
 
+const rsvpKey = (id: number) => `proto:rsvp:${id}`
+
+// localStorage throws in some private modes; an RSVP that isn't remembered is still an RSVP.
+function rememberedGoing(id: number): boolean {
+  try {
+    return localStorage.getItem(rsvpKey(id)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function rememberGoing(id: number) {
+  try {
+    localStorage.setItem(rsvpKey(id), '1')
+  } catch {
+    // Nothing to do: the button still shows the RSVP until the page is left.
+  }
+}
+
 function EventRow({ event }: { event: ProtoEvent }) {
-  // RSVPs aren't stored anywhere yet: the button only remembers the click until you leave.
-  const [going, setGoing] = useState(false)
+  const [going, setGoing] = useState(() => rememberedGoing(event.id))
+  const [open, setOpen] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const formId = useId()
   const { month, day, weekday } = dateParts(event.date)
+
+  const close = () => {
+    setOpen(false)
+    requestAnimationFrame(() => buttonRef.current?.focus())
+  }
+
+  const onKeyDown = (keyEvent: KeyboardEvent) => {
+    if (keyEvent.key !== 'Escape') return
+    keyEvent.stopPropagation()
+    close()
+  }
+
+  const rsvp = async (values: Record<string, string>) => {
+    await api<RsvpResult>(`/events/${event.id}/rsvp`, { body: values })
+    rememberGoing(event.id)
+    setGoing(true)
+    close()
+  }
 
   return (
     <li className={styles.event}>
@@ -29,30 +73,71 @@ function EventRow({ event }: { event: ProtoEvent }) {
         <p className={styles.meta} data-fog-clear>
           {event.time} · {event.place}
         </p>
-        <p className={styles.text} data-fog-clear>
-          {event.text}
-        </p>
+        {event.text && (
+          <p className={styles.text} data-fog-clear>
+            {event.text}
+          </p>
+        )}
       </div>
 
-      <button
-        type="button"
-        className={going ? ui.primary : ui.secondary}
-        aria-pressed={going}
-        onClick={() => setGoing((value) => !value)}
-        data-fog-clear="box"
-        data-fog-ignore
-      >
-        {going ? RSVP.going : RSVP.label}
-      </button>
+      {going ? (
+        // Already in: nothing left to do here, but it stays focusable so the change is announced.
+        <button ref={buttonRef} type="button" className={ui.primary} aria-disabled="true" data-fog-clear="box" data-fog-ignore>
+          {RSVP.going}
+        </button>
+      ) : (
+        <button
+          ref={buttonRef}
+          type="button"
+          className={ui.secondary}
+          aria-expanded={open}
+          aria-controls={open ? formId : undefined}
+          onClick={() => (open ? close() : setOpen(true))}
+          data-fog-clear="box"
+          data-fog-ignore
+        >
+          {RSVP.label}
+        </button>
+      )}
+
+      {open && !going && (
+        <div
+          id={formId}
+          className={`${ui.inset} ${styles.rsvp}`}
+          role="group"
+          aria-label={RSVP.formLabel(event.title)}
+          onKeyDown={onKeyDown}
+        >
+          <Form
+            submitLabel={RSVP.submit}
+            pendingLabel={RSVP.pending}
+            onSubmit={rsvp}
+            actions={
+              <button type="button" className={ui.secondary} onClick={close} data-fog-clear="box">
+                {RSVP.cancel}
+              </button>
+            }
+          >
+            <Field label="Name">
+              {/* The person just asked for this form, so going straight to its first field is expected. */}
+              <input className={inputClass} name="name" autoComplete="name" required autoFocus />
+            </Field>
+            <Field label="Email" hint={RSVP.hint}>
+              <input className={inputClass} name="email" type="email" autoComplete="email" required />
+            </Field>
+          </Form>
+        </div>
+      )}
     </li>
   )
 }
 
 /** Upcoming events, grouped under month headings. */
 export function Events() {
-  const upcoming = EVENTS.filter((event) => daysUntil(event.date) >= 0).sort((a, b) =>
-    a.date.localeCompare(b.date),
-  )
+  const events = useLoaderData<ProtoEvent[]>()
+  const upcoming = events
+    .filter((event) => daysUntil(event.date) >= 0)
+    .sort((a, b) => a.date.localeCompare(b.date))
   const months = new Map<string, ProtoEvent[]>()
   for (const event of upcoming) {
     const month = formatMonth(event.date)
@@ -69,13 +154,13 @@ export function Events() {
         </p>
       )}
 
-      {[...months].map(([month, events]) => (
+      {[...months].map(([month, monthEvents]) => (
         <section key={month} className={styles.month} aria-label={month}>
           <h2 className={styles.monthName} data-fog-clear>
             {month}
           </h2>
           <ol className={`${ui.panel} ${styles.list}`}>
-            {events.map((event) => (
+            {monthEvents.map((event) => (
               <EventRow key={event.id} event={event} />
             ))}
           </ol>

@@ -1,7 +1,9 @@
+import { useLoaderData } from 'react-router'
+import type { Hackathon } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { BOARD_LABELS, HACKATHONS, HACKATHONS_INTRO, TRAVEL_NOTE, type Hackathon } from '../content/hackathons'
+import { BOARD_LABELS, HACKATHONS_EMPTY, HACKATHONS_INTRO, TRAVEL_NOTE } from '../content/hackathons'
 import { daysUntil, formatDay, formatRange } from '../lib/dates'
 import styles from './Hackathons.module.css'
 
@@ -31,7 +33,8 @@ function Seats({ count }: { count: number }) {
 
 /** Upcoming hackathons, as a departures board. */
 export function Hackathons() {
-  const upcoming = HACKATHONS.filter((hackathon) => daysUntil(hackathon.ends) >= 0).sort((a, b) =>
+  const hackathons = useLoaderData<Hackathon[]>()
+  const upcoming = hackathons.filter((hackathon) => daysUntil(hackathon.ends) >= 0).sort((a, b) =>
     a.starts.localeCompare(b.starts),
   )
 
@@ -45,6 +48,13 @@ export function Hackathons() {
           <span data-fog-clear>{BOARD_LABELS.right}</span>
         </div>
 
+        {upcoming.length === 0 && (
+          <p className={styles.empty} data-fog-clear>
+            {HACKATHONS_EMPTY}
+          </p>
+        )}
+
+        {upcoming.length > 0 && (
         <table className={styles.table}>
           <thead>
             <tr>
@@ -60,14 +70,18 @@ export function Hackathons() {
             {upcoming.map((hackathon) => {
               const status = statusOf(hackathon)
               return (
-                <tr key={hackathon.name}>
+                <tr key={hackathon.id}>
                   <td className={styles.dates} data-label="Dates">
                     <span data-fog-clear>{formatRange(hackathon.starts, hackathon.ends)}</span>
                   </td>
                   <th scope="row" className={styles.name}>
-                    <a href={hackathon.href} target="_blank" rel="noreferrer" data-fog-clear>
-                      {hackathon.name}
-                    </a>
+                    {hackathon.href ? (
+                      <a href={hackathon.href} target="_blank" rel="noreferrer" data-fog-clear>
+                        {hackathon.name}
+                      </a>
+                    ) : (
+                      <span data-fog-clear>{hackathon.name}</span>
+                    )}
                     <SampleTag show={hackathon.placeholder} />
                   </th>
                   <td data-label="Where">
@@ -94,6 +108,7 @@ export function Hackathons() {
             })}
           </tbody>
         </table>
+        )}
       </section>
 
       <p className={styles.footnote} data-fog-clear>

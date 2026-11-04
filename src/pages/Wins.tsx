@@ -1,8 +1,10 @@
 import type { CSSProperties } from 'react'
+import { useLoaderData } from 'react-router'
+import type { Win } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { WINS, WINS_INTRO, type Win } from '../content/wins'
+import { WINS_EMPTY, WINS_INTRO } from '../content/wins'
 import styles from './Wins.module.css'
 
 const TILTS = [-1.2, 0.8, -0.4, 1.1, -0.9, 0.5]
@@ -35,12 +37,16 @@ export function WinCard({ win, rank }: { win: Win; rank: number }) {
         <h3 className={styles.project} data-fog-clear>
           {win.project}
         </h3>
-        <p className={styles.blurb} data-fog-clear>
-          {win.blurb}
-        </p>
-        <p className={styles.team} data-fog-clear>
-          <span className={styles.teamLabel}>team</span> {win.team.join(', ')}
-        </p>
+        {win.blurb && (
+          <p className={styles.blurb} data-fog-clear>
+            {win.blurb}
+          </p>
+        )}
+        {win.team.length > 0 && (
+          <p className={styles.team} data-fog-clear>
+            <span className={styles.teamLabel}>team</span> {win.team.join(', ')}
+          </p>
+        )}
         {win.devpost ? (
           <a className={ui.textLink} href={win.devpost} target="_blank" rel="noreferrer" data-fog-clear>
             Devpost <span aria-hidden="true">↗</span>
@@ -56,14 +62,22 @@ export function WinCard({ win, rank }: { win: Win; rank: number }) {
 }
 
 export function Wins() {
+  const wins = useLoaderData<Win[]>()
+
   return (
     <div className={ui.page}>
       <PageIntro intro={WINS_INTRO} />
-      <ul className={styles.grid}>
-        {WINS.map((win, index) => (
-          <WinCard key={win.project} win={win} rank={index} />
-        ))}
-      </ul>
+      {wins.length === 0 ? (
+        <p className={ui.panel} data-fog-clear>
+          {WINS_EMPTY}
+        </p>
+      ) : (
+        <ul className={styles.grid}>
+          {wins.map((win, index) => (
+            <WinCard key={win.id} win={win} rank={index} />
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

@@ -1,7 +1,9 @@
+import { useLoaderData } from 'react-router'
+import type { BoardMember } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { BOARD, BOARD_INTRO, type BoardMember } from '../content/board'
+import { BOARD_EMPTY, BOARD_INTRO } from '../content/board'
 import { BRAND } from '../content/site'
 import styles from './Board.module.css'
 
@@ -43,7 +45,7 @@ function Badge({ member, index }: { member: BoardMember; index: number }) {
       {member.links.length > 0 && (
         <ul className={styles.links}>
           {member.links.map((link) => (
-            <li key={link.href}>
+            <li key={`${link.label}-${link.href}`}>
               <a className={ui.textLink} href={link.href} target="_blank" rel="noreferrer" data-fog-clear>
                 {link.label}
               </a>
@@ -56,14 +58,22 @@ function Badge({ member, index }: { member: BoardMember; index: number }) {
 }
 
 export function Board() {
+  const board = useLoaderData<BoardMember[]>()
+
   return (
     <div className={ui.page}>
       <PageIntro intro={BOARD_INTRO} />
-      <ul className={styles.grid}>
-        {BOARD.map((member, index) => (
-          <Badge key={`${member.role}-${index}`} member={member} index={index} />
-        ))}
-      </ul>
+      {board.length === 0 ? (
+        <p className={ui.panel} data-fog-clear>
+          {BOARD_EMPTY}
+        </p>
+      ) : (
+        <ul className={styles.grid}>
+          {board.map((member, index) => (
+            <Badge key={member.id} member={member} index={index} />
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

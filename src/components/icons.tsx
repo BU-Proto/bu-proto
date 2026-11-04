@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react'
 import type { CoverIconName } from '../content/grants'
-import type { FeatureIconName } from '../content/home'
+import type { NoteIconName } from '../content/home'
 
 type IconProps = SVGProps<SVGSVGElement>
 
@@ -56,33 +56,13 @@ export function PinIcon(props: IconProps) {
   )
 }
 
-export function FeatureIcon({ name, ...props }: IconProps & { name: FeatureIconName }) {
+export function NoteIcon({ name, ...props }: IconProps & { name: NoteIconName }) {
   switch (name) {
-    case 'hackNight':
-      return (
-        <Svg {...props}>
-          <rect x="4" y="5" width="16" height="14" rx="3" />
-          <path d="M8 11h8M8 15h5" />
-        </Svg>
-      )
-    case 'trips':
-      return (
-        <Svg {...props}>
-          <path d="M13 3 5 14h6l-1 7 8-11h-6z" />
-        </Svg>
-      )
     case 'grants':
       return (
         <Svg {...props}>
           <circle cx="12" cy="12" r="8.5" />
           <path d="M12 8v8M9 10.5h4.5a1.5 1.5 0 0 1 0 3H10.5a1.5 1.5 0 0 0 0 3H15" />
-        </Svg>
-      )
-    case 'demo':
-      return (
-        <Svg {...props}>
-          <path d="M4 18h16M6 18V9l6-4 6 4v9" />
-          <path d="M10 18v-5h4v5" />
         </Svg>
       )
     case 'handoff':

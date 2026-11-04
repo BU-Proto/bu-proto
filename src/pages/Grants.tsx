@@ -4,7 +4,6 @@ import { CoverIcon } from '../components/icons'
 import { PageIntro } from '../components/PageIntro'
 import ui from '../components/ui.module.css'
 import {
-  AMOUNT_OPTIONS,
   AMOUNTS,
   COMPARISON,
   COVERS,
@@ -15,7 +14,8 @@ import {
   STEPS,
   THE_ASK,
 } from '../content/grants'
-import { YEAR_OPTIONS } from '../content/join'
+import { api } from '../lib/api'
+import { FUND_AMOUNTS, YEARS } from '../../shared/constants'
 import styles from './Grants.module.css'
 
 /** The fund's coming-soon page: the plan, then an interest list. Not an application. */
@@ -156,8 +156,12 @@ export function Grants() {
           </p>
         </div>
 
-        {/* Interest list only. It doesn't submit anywhere yet: see the note in Form. */}
-        <Form submitLabel={INTEREST.submit} thanks={INTEREST.thanks}>
+        {/* Interest list only, never an application. */}
+        <Form
+          submitLabel={INTEREST.submit}
+          thanks={INTEREST.thanks}
+          onSubmit={(values) => api<{ ok: true }>('/fund-interest', { body: values })}
+        >
           <Field label="Name">
             <input className={inputClass} name="name" autoComplete="name" required />
           </Field>
@@ -178,7 +182,7 @@ export function Grants() {
               <option value="" disabled>
                 Pick one
               </option>
-              {YEAR_OPTIONS.map((year) => (
+              {YEARS.map((year) => (
                 <option key={year}>{year}</option>
               ))}
             </select>
@@ -188,7 +192,7 @@ export function Grants() {
               <option value="" disabled>
                 Pick one
               </option>
-              {AMOUNT_OPTIONS.map((amount) => (
+              {FUND_AMOUNTS.map((amount) => (
                 <option key={amount}>{amount}</option>
               ))}
             </select>

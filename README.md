@@ -25,7 +25,7 @@ npm run dev
 
 | Route | Page |
 | --- | --- |
-| `/` | Home: hero, the three tracks, the rhythm, next event, upcoming deadlines, latest wins, join |
+| `/` | Home: hero, the three tracks, the rhythm, next event and hack night, upcoming deadlines, latest wins, join |
 | `/hackathons` | Upcoming hackathons as a departures board |
 | `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
 | `/wins` | Win cards: photo, project, placement, team, Devpost |
@@ -39,9 +39,11 @@ Anything else renders the 404 page. Every route is a client-side route, so the h
 
 ## Content
 
-All copy lives in `src/content/`, one typed file per page plus `site.ts` for the brand, the nav and hack night's time and place. Anything made up carries `placeholder: true` and renders with a small **sample** tag, so fake hackathons, wins, people or times can't ship unnoticed. Remove the flag only once the item is real and checked. `trackRecord.ts` takes real, verified logos only and has no samples on purpose.
+Events, hackathons, wins and the board live in D1 and are edited in the portal at `/admin`. The pages load them from `GET /api/content/<resource>` (published rows only) through route loaders in `src/App.tsx`. Every row has a **Sample content** box: while it's ticked the item renders with a small **sample** tag, so fake hackathons, wins or people can't ship unnoticed. Untick it only once the item is real and checked.
 
-The two forms (`/grants` interest list and `/join`) validate in the browser and then show a thank-you state. They don't send anything anywhere yet; see the TODO in `src/components/Form.tsx`. RSVPs on `/events` are the same.
+All other copy lives in `src/content/`, one typed file per page plus `site.ts` for the brand, the nav and hack night's time and place. Copy that's made up there carries `placeholder: true` and gets the same tag. `trackRecord.ts` takes real, verified logos only and has no samples on purpose.
+
+The forms post to the Worker: `/join` to `POST /api/join`, the `/grants` interest list to `POST /api/fund-interest`, and RSVPs on `/events` to `POST /api/events/:id/rsvp` (remembered in the browser, so the button stays "going"). The browser validates first; the server's per-field messages show under the matching field. Each form carries a hidden `website` honeypot.
 
 ## Using the field
 
@@ -70,9 +72,10 @@ src/
     settings.ts          settings type, defaults and every tuning constant
   components/
     Layout.tsx           mounts the field once, the top bar, the page and the footer
-    TopBar, MenuSheet, Footer, Hero, ScheduleCard, FeatureStrip, PageIntro, SampleTag, Form, IconButton, icons
+    TopBar, MenuSheet, Footer, Hero, ScheduleCard, PageIntro, SampleTag, Form, RouteStates, IconButton, icons
     ui.module.css        shared glass panels, buttons, the sample tag and the page intro
   content/               all copy, one typed file per page (see Content)
+  lib/content.ts         fetches the D1 content for the route loaders
   lib/dates.ts           formatting and countdowns for the ISO dates in content
   pages/                 one component and CSS module per route
 ```

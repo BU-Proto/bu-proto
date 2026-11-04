@@ -1,0 +1,28 @@
+.loading {
+  margin: 0;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-shadow: var(--on-field-shadow);
+}
+
+.error {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  max-width: 620px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.text {
+  max-width: 52ch;
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+}

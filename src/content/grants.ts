@@ -83,5 +83,3 @@ export const INTEREST = {
     text: 'We’ll let you know when the fund opens.',
   },
 } as const
-
-export const AMOUNT_OPTIONS = ['$50–$100', '$100–$250', '$250–$500', 'Not sure yet'] as const

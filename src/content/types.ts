@@ -1,9 +1,9 @@
 // Shared shapes for the page content in this folder.
 
 /**
- * Anything made up (sample hackathons, wins, people, times and places) carries
+ * Copy in this folder that's made up (hack night's times and place, the Discord) carries
  * `placeholder: true` and renders with a small "sample" tag, so fake content can't ship
- * unnoticed. Delete the flag only once the item is real and checked.
+ * unnoticed. Delete the flag only once it's real and checked. Content in D1 has its own flag.
  */
 export interface Sampleable {
   placeholder?: true

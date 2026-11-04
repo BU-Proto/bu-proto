@@ -1,6 +1,6 @@
-// The join page.
+// The join page. The year and track options are shared with the API (shared/constants.ts).
 
-import type { PageIntro, Sampleable, TrackName } from './types'
+import type { PageIntro, Sampleable } from './types'
 
 export const JOIN_INTRO: PageIntro = {
   path: '~/proto/join',
@@ -15,10 +15,6 @@ export const PERKS: readonly { title: string; text: string }[] = [
   { title: 'A stage', text: 'Demo night every semester. Show anything, finished or not.' },
   { title: 'First word on the fund', text: 'Members hear first when microgrants open.' },
 ]
-
-export const YEAR_OPTIONS = ['First year', 'Second year', 'Third year', 'Fourth year', 'Grad student', 'Other'] as const
-
-export const TRACK_OPTIONS: readonly (TrackName | 'Not sure yet')[] = ['Start', 'Build', 'Launch', 'Not sure yet']
 
 /** The Discord server doesn't exist yet; set `href` and drop the flag when it does. */
 export const DISCORD: { label: string; text: string; href: string | null } & Sampleable = {

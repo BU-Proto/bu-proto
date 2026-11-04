@@ -3,7 +3,9 @@ import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { DISCORD, JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS, TRACK_OPTIONS, YEAR_OPTIONS } from '../content/join'
+import { DISCORD, JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS } from '../content/join'
+import { api } from '../lib/api'
+import { TRACKS, YEARS } from '../../shared/constants'
 import styles from './Join.module.css'
 
 export function Join() {
@@ -35,8 +37,11 @@ export function Join() {
             <h2 id="join-form" className={`${ui.sectionTitle} ${styles.formTitle}`} data-fog-clear>
               {JOIN_FORM.title}
             </h2>
-            {/* Doesn't submit anywhere yet: see the note in Form. */}
-            <Form submitLabel={JOIN_FORM.submit} thanks={JOIN_THANKS}>
+            <Form
+              submitLabel={JOIN_FORM.submit}
+              thanks={JOIN_THANKS}
+              onSubmit={(values) => api<{ ok: true }>('/join', { body: values })}
+            >
               <Field label="Name" wide>
                 <input className={inputClass} name="name" autoComplete="name" required />
               </Field>
@@ -57,7 +62,7 @@ export function Join() {
                   <option value="" disabled>
                     Pick one
                   </option>
-                  {YEAR_OPTIONS.map((year) => (
+                  {YEARS.map((year) => (
                     <option key={year}>{year}</option>
                   ))}
                 </select>
@@ -67,7 +72,7 @@ export function Join() {
                   <option value="" disabled>
                     Pick one
                   </option>
-                  {TRACK_OPTIONS.map((track) => (
+                  {TRACKS.map((track) => (
                     <option key={track}>{track}</option>
                   ))}
                 </select>

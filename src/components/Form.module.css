@@ -82,8 +82,49 @@ select.input option {
 .actions {
   grid-column: 1 / -1;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-start;
+  gap: 12px;
   padding-top: 4px;
+}
+
+/* The server's word on one field, and on the form as a whole. */
+.issue,
+.error {
+  color: #ffd0c8;
+  font-size: 12px;
+}
+
+.input[aria-invalid='true'] {
+  border-color: #ffb4a8;
+}
+
+.error {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 180, 168, 0.5);
+  border-radius: 14px;
+  background: rgba(6, 30, 56, 0.4);
+  font-size: 13px;
+}
+
+.error:focus {
+  outline: none;
+}
+
+/* The honeypot: off-screen rather than display: none, which some bots skip. */
+.trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.thanks:focus {
+  outline: none;
 }
 
 .thanks {
