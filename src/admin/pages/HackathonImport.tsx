@@ -1,0 +1,364 @@
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router'
+import {
+  CANDIDATE_STATUSES,
+  IMPORT_SOURCES,
+  type AddedCandidate,
+  type CandidateList,
+  type CandidateMode,
+  type CandidateStatus,
+  type HackathonCandidate,
+  type ImportRun,
+  type ImportSource,
+} from '../../../shared/api'
+import { api, ApiError } from '../../lib/api'
+import admin from '../admin.module.css'
+import { EmptyState, StatusLine, type StatusTone } from '../components/bits'
+import { ArrowOutIcon } from '../components/icons'
+import { PageHeader } from '../components/PageHeader'
+import { formatRelative, formatTimestamp } from '../lib/format'
+import styles from './HackathonImport.module.css'
+
+// The review queue for hackathons the daily import found on MLH and Devpost. Adding one makes an
+// unpublished draft and opens its editor, since neither source says when applications close,
+// whether travel is covered, or who from BU is going.
+
+const SOURCE_LABELS: Record<ImportSource, string> = { mlh: 'MLH', devpost: 'Devpost' }
+const STATUS_LABELS: Record<CandidateStatus, string> = { new: 'New', added: 'Added', dismissed: 'Dismissed' }
+const MODE_LABELS: Record<CandidateMode, string> = { 'in-person': 'In person', hybrid: 'Hybrid', online: 'Online' }
+const MODE_FILTERS = [null, 'in-person', 'hybrid', 'online'] as const
+
+const isStatus = (value: string | null): value is CandidateStatus => (CANDIDATE_STATUSES as readonly string[]).includes(value ?? '')
+const isMode = (value: string | null): value is CandidateMode => value !== null && value in MODE_LABELS
+
+const dayFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+const yearFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+
+/** "Nov 7 – 8, 2026", "Dec 28, 2026 – Jan 3, 2027". */
+function formatRange(starts: string, ends: string): string {
+  const start = new Date(`${starts}T00:00:00Z`)
+  const end = new Date(`${ends}T00:00:00Z`)
+  if (starts === ends) return yearFormat.format(start)
+  if (starts.slice(0, 4) !== ends.slice(0, 4)) return `${yearFormat.format(start)} – ${yearFormat.format(end)}`
+  const sameMonth = starts.slice(0, 7) === ends.slice(0, 7)
+  return `${dayFormat.format(start)} – ${sameMonth ? end.getUTCDate() : dayFormat.format(end)}, ${starts.slice(0, 4)}`
+}
+
+const message = (error: unknown) => (error instanceof Error ? error.message : 'Something went wrong.')
+
+function RunSummary({ source, run }: { source: ImportSource; run: ImportRun | undefined }) {
+  const label = SOURCE_LABELS[source]
+  if (!run) return <span>{label}: not checked yet</span>
+  if (!run.finishedAt) return <span>{label}: checking now…</span>
+  return (
+    <span>
+      <span title={formatTimestamp(run.finishedAt)}>
+        {label}: checked {formatRelative(run.finishedAt)}
+      </span>
+      {run.error ? (
+        <span className={admin.statusError}> · failed: {run.error}</span>
+      ) : (
+        <span className={admin.dim}>
+          {' '}
+          · {run.found} upcoming, {run.new} new
+        </span>
+      )}
+    </span>
+  )
+}
+
+export function Component() {
+  const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
+  const status = isStatus(params.get('status')) ? (params.get('status') as CandidateStatus) : 'new'
+  const mode = isMode(params.get('mode')) ? (params.get('mode') as CandidateMode) : null
+  const near = params.get('near') === '1'
+
+  const [list, setList] = useState<CandidateList | null>(null)
+  const [runs, setRuns] = useState<ImportRun[] | null>(null)
+  const [loadError, setLoadError] = useState('')
+  const [notice, setNotice] = useState<{ tone: StatusTone; text: string } | null>(null)
+  const [busy, setBusy] = useState<number | 'run' | null>(null)
+  const [nonce, setNonce] = useState(0)
+
+  const query = new URLSearchParams({ status, ...(mode && { mode }), ...(near && { near: '1' }) }).toString()
+
+  useEffect(() => {
+    const controller = new AbortController()
+    api<CandidateList>(`/admin/hackathon-imports?${query}`, { signal: controller.signal })
+      .then((data) => {
+        setList(data)
+        setLoadError('')
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) setLoadError(message(error))
+      })
+    return () => controller.abort()
+  }, [query, nonce])
+
+  // Runs reload with the list, so "Check now" and every action refresh the header too.
+  useEffect(() => {
+    const controller = new AbortController()
+    api<{ items: ImportRun[] }>('/admin/hackathon-imports/runs', { signal: controller.signal })
+      .then((data) => setRuns(data.items))
+      .catch(() => {
+        if (!controller.signal.aborted) setRuns([])
+      })
+    return () => controller.abort()
+  }, [nonce])
+
+  const lastRun = (source: ImportSource) => runs?.find((run) => run.source === source)
+
+  const setFilter = (key: 'status' | 'mode' | 'near', value: string | null) => {
+    const next = new URLSearchParams(params)
+    if (value === null || (key === 'status' && value === 'new')) next.delete(key)
+    else next.set(key, value)
+    setParams(next, { replace: true })
+  }
+
+  const checkNow = async () => {
+    setBusy('run')
+    setNotice({ tone: 'info', text: 'Checking MLH and Devpost…' })
+    try {
+      const { items } = await api<{ items: ImportRun[] }>('/admin/hackathon-imports/run', { method: 'POST' })
+      const failed = items.filter((run) => run.error)
+      const fresh = items.reduce((sum, run) => sum + run.new, 0)
+      setNotice(
+        failed.length
+          ? { tone: 'error', text: `${failed.map((run) => SOURCE_LABELS[run.source]).join(' and ')} failed. ${fresh} new from the rest.` }
+          : { tone: 'ok', text: fresh ? `Found ${fresh} new.` : 'Up to date: nothing new.' },
+      )
+    } catch (error) {
+      setNotice({ tone: 'error', text: error instanceof ApiError && error.status === 429 ? error.message : message(error) })
+    } finally {
+      setBusy(null)
+      setNonce((n) => n + 1)
+    }
+  }
+
+  const act = async (candidate: HackathonCandidate, action: 'dismiss' | 'restore') => {
+    setBusy(candidate.id)
+    try {
+      await api(`/admin/hackathon-imports/${candidate.id}/${action}`, { method: 'POST' })
+      setNotice({ tone: 'ok', text: `${action === 'dismiss' ? 'Dismissed' : 'Restored'} ${candidate.name}.` })
+      setNonce((n) => n + 1)
+    } catch (error) {
+      setNotice({ tone: 'error', text: message(error) })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const add = async (candidate: HackathonCandidate) => {
+    setBusy(candidate.id)
+    try {
+      const { item } = await api<AddedCandidate>(`/admin/hackathon-imports/${candidate.id}/add`, { method: 'POST' })
+      navigate(`/admin/hackathons/${item.id}`)
+    } catch (error) {
+      setNotice({ tone: 'error', text: message(error) })
+      setBusy(null)
+    }
+  }
+
+  const items = list?.items ?? []
+  const filtered = mode !== null || near
+
+  return (
+    <div className={admin.page}>
+      <PageHeader
+        title="Import hackathons"
+        back={{ to: '/admin/hackathons', label: 'Hackathons' }}
+        lede={
+          <span className={styles.runs}>
+            {IMPORT_SOURCES.map((source) => (
+              <RunSummary key={source} source={source} run={lastRun(source)} />
+            ))}
+          </span>
+        }
+        actions={
+          <button type="button" className={admin.button} onClick={checkNow} disabled={busy === 'run'}>
+            {busy === 'run' ? 'Checking…' : 'Check now'}
+          </button>
+        }
+      />
+
+      <StatusLine tone={notice?.tone}>{notice?.text}</StatusLine>
+
+      <div className={styles.bar}>
+        <nav className={admin.tabs} aria-label="Import status">
+          {CANDIDATE_STATUSES.map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={admin.tab}
+              aria-current={value === status ? 'page' : undefined}
+              onClick={() => setFilter('status', value)}
+            >
+              {STATUS_LABELS[value]}
+              <span className={admin.count}>{list?.counts[value] ?? '–'}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className={styles.filters}>
+          <div className={admin.tabs} role="group" aria-label="Format">
+            {MODE_FILTERS.map((value) => (
+              <button
+                key={value ?? 'all'}
+                type="button"
+                className={admin.tab}
+                aria-pressed={value === mode}
+                aria-current={value === mode ? 'true' : undefined}
+                onClick={() => setFilter('mode', value)}
+              >
+                {value ? MODE_LABELS[value] : 'Any format'}
+              </button>
+            ))}
+          </div>
+          <label className={admin.switchRow}>
+            <input
+              type="checkbox"
+              className={admin.switch}
+              checked={near}
+              onChange={(event) => setFilter('near', event.target.checked ? '1' : null)}
+            />
+            <span className={admin.switchLabel}>Near Boston</span>
+          </label>
+        </div>
+      </div>
+
+      {loadError && (
+        <div className={admin.callout} role="alert">
+          <h2>Couldn’t load imports</h2>
+          <p>{loadError}</p>
+        </div>
+      )}
+
+      <div className={admin.panelFlush}>
+        {!list ? (
+          !loadError && (
+            <p role="status" className={`${admin.empty} ${admin.dim}`}>
+              Loading imports…
+            </p>
+          )
+        ) : items.length === 0 ? (
+          <EmptyState title={filtered ? 'Nothing matches these filters' : `No ${STATUS_LABELS[status].toLowerCase()} imports`}>
+            {filtered ? (
+              <p>
+                <button type="button" className={admin.link} onClick={() => setParams({ ...(status !== 'new' && { status }) }, { replace: true })}>
+                  Clear the filters
+                </button>
+              </p>
+            ) : (
+              <p>
+                Every morning around 5 AM Boston time, the portal checks the{' '}
+                <a className={admin.link} href="https://www.mlh.com/seasons" target="_blank" rel="noreferrer">
+                  MLH season list
+                </a>{' '}
+                and{' '}
+                <a className={admin.link} href="https://devpost.com/hackathons" target="_blank" rel="noreferrer">
+                  Devpost
+                </a>{' '}
+                for hackathons that haven’t happened yet. New ones land here for review; nothing goes on the site until
+                you add it and publish the draft. Use “Check now” to look again.
+              </p>
+            )}
+          </EmptyState>
+        ) : (
+          <table className={admin.table}>
+            <thead>
+              <tr>
+                <th scope="col">Hackathon</th>
+                <th scope="col">Dates</th>
+                <th scope="col">Location</th>
+                <th scope="col">Format</th>
+                <th scope="col">
+                  <span className={styles.hidden}>Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((candidate) => (
+                <tr key={candidate.id}>
+                  <td>
+                    <span className={styles.name}>
+                      {candidate.url ? (
+                        <a className={admin.rowTitle} href={candidate.url} target="_blank" rel="noreferrer">
+                          {candidate.name} <ArrowOutIcon aria-hidden="true" />
+                          <span className={styles.hidden}> (opens the event site)</span>
+                        </a>
+                      ) : (
+                        <span className={admin.rowTitle}>{candidate.name}</span>
+                      )}
+                      <span className={admin.badges}>
+                        <span className={admin.badge}>{SOURCE_LABELS[candidate.source]}</span>
+                        {candidate.nearBoston && <span className={admin.badgeAccent}>near Boston</span>}
+                      </span>
+                    </span>
+                  </td>
+                  <td className={admin.mono} data-label="Dates">
+                    {formatRange(candidate.starts, candidate.ends)}
+                  </td>
+                  <td className={admin.soft} data-label="Location">
+                    {candidate.location || '—'}
+                  </td>
+                  <td className={admin.soft} data-label="Format">
+                    {MODE_LABELS[candidate.mode]}
+                  </td>
+                  <td className={styles.rowActions}>
+                    {candidate.status === 'new' && (
+                      <>
+                        <button
+                          type="button"
+                          className={`${admin.primary} ${admin.small}`}
+                          disabled={busy !== null}
+                          onClick={() => add(candidate)}
+                        >
+                          Add as draft
+                        </button>
+                        <button
+                          type="button"
+                          className={`${admin.ghost} ${admin.small}`}
+                          disabled={busy !== null}
+                          onClick={() => act(candidate, 'dismiss')}
+                        >
+                          Dismiss
+                        </button>
+                      </>
+                    )}
+                    {candidate.status === 'added' &&
+                      (candidate.hackathonId !== null ? (
+                        <Link className={`${admin.button} ${admin.small}`} to={`/admin/hackathons/${candidate.hackathonId}`}>
+                          Open draft
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          className={`${admin.ghost} ${admin.small}`}
+                          disabled={busy !== null}
+                          onClick={() => act(candidate, 'restore')}
+                          title="Its hackathon was deleted"
+                        >
+                          Restore
+                        </button>
+                      ))}
+                    {candidate.status === 'dismissed' && (
+                      <button
+                        type="button"
+                        className={`${admin.ghost} ${admin.small}`}
+                        disabled={busy !== null}
+                        onClick={() => act(candidate, 'restore')}
+                      >
+                        Restore
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}

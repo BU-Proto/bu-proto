@@ -32,6 +32,10 @@
     }
   ],
 
+  // Daily at 09:17 UTC (4–5 AM in Boston): import upcoming hackathons from MLH and Devpost into
+  // the portal's review queue.
+  "triggers": { "crons": ["17 9 * * *"] },
+
   "vars": {
     // GitHub logins that are always admins and can't be removed in the portal. Comma-separated.
     "ADMIN_GITHUB_LOGINS": "AndresL230",

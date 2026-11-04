@@ -1,10 +1,12 @@
 import { Hono } from 'hono'
 import { errorBody } from './lib/http'
+import { runImports } from './lib/importers'
 import { requireAdmin, sameOrigin } from './lib/session'
 import admins from './routes/admins'
 import auth from './routes/auth'
 import content from './routes/content'
 import email from './routes/email'
+import imports from './routes/imports'
 import people from './routes/people'
 import publicForms from './routes/public'
 import type { AppEnv } from './types'
@@ -27,6 +29,7 @@ app.route('/', content) //      /api/content/*, /api/admin/content/*, RSVP admin
 app.route('/', publicForms) //  /api/join, /api/fund-interest, /api/events/:id/rsvp
 app.route('/', people) //       /api/admin/members, /api/admin/fund, /api/admin/stats
 app.route('/', email) //        /api/admin/email/*, /api/unsubscribe
+app.route('/', imports) //      /api/admin/hackathon-imports/*
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404))
 app.onError((error, c) => {
@@ -34,4 +37,10 @@ app.onError((error, c) => {
   return c.json(body, status as 400)
 })
 
-export default app
+// The daily Cron Trigger (wrangler.jsonc) imports upcoming hackathons from MLH and Devpost.
+export default {
+  fetch: app.fetch,
+  scheduled(_controller, env, ctx) {
+    ctx.waitUntil(runImports(env))
+  },
+} satisfies ExportedHandler<Env>

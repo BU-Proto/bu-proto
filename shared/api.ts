@@ -504,3 +504,85 @@ export interface ApiErrorBody {
   /** Field → message, for validation failures (400). */
   issues?: Record<string, string>
 }
+
+// ---- Portal: hackathon imports ----------------------------------------------------------------
+
+/** Where imported hackathons come from. Both are fetched once a day by a Cron Trigger. */
+export const IMPORT_SOURCES = ['mlh', 'devpost'] as const
+export type ImportSource = (typeof IMPORT_SOURCES)[number]
+
+export const CANDIDATE_STATUSES = ['new', 'added', 'dismissed'] as const
+export type CandidateStatus = (typeof CANDIDATE_STATUSES)[number]
+
+export const CANDIDATE_MODES = ['in-person', 'online', 'hybrid'] as const
+export type CandidateMode = (typeof CANDIDATE_MODES)[number]
+
+/** An upcoming hackathon an import found, waiting for review. */
+export interface HackathonCandidate {
+  id: number
+  source: ImportSource
+  sourceId: string
+  name: string
+  /** ISO days. */
+  starts: string
+  ends: string
+  /** "Boston, MA", a venue name, or "Online". */
+  location: string
+  mode: CandidateMode
+  url: string
+  image: string | null
+  status: CandidateStatus
+  /** The draft it became, once added (null again if that hackathon is deleted). */
+  hackathonId: number | null
+  /** In New England, NY, NJ or PA by the location text. Devpost often only gives a venue, so it can miss. */
+  nearBoston: boolean
+  firstSeenAt: string
+  lastSeenAt: string
+}
+
+/**
+ * GET /api/admin/hackathon-imports?status=&mode=&near=1 → CandidateList
+ * Hackathons that haven't ended, soonest first. `counts` are per status under the same filters.
+ */
+export const candidateQuery = z.object({
+  status: z.enum(CANDIDATE_STATUSES).default('new'),
+  mode: z.enum(CANDIDATE_MODES).optional(),
+  near: z.enum(['1', 'true']).optional(),
+})
+export type CandidateQuery = z.input<typeof candidateQuery>
+
+export interface CandidateList {
+  items: HackathonCandidate[]
+  counts: Record<CandidateStatus, number>
+}
+
+/** One source's import, scheduled or manual. `error` is null when it worked. */
+export interface ImportRun {
+  id: number
+  source: ImportSource
+  startedAt: string
+  /** null while it's running. */
+  finishedAt: string | null
+  /** Upcoming events the source listed. */
+  found: number
+  /** Of those, how many weren't seen before. */
+  new: number
+  error: string | null
+}
+
+/**
+ * GET /api/admin/hackathon-imports/runs → { items: ImportRun[] }: the last few runs per source, newest first.
+ * POST /api/admin/hackathon-imports/run → 201 { items: ImportRun[] } (one per source), or 429 if a
+ * run finished in the last 5 minutes.
+ */
+export const IMPORT_COOLDOWN_MINUTES = 5
+
+/**
+ * POST /api/admin/hackathon-imports/:id/add → 201 AddedCandidate. Creates an unpublished hackathon
+ * with apply-by set to the start date; the admin fills in the rest in its editor.
+ * POST .../:id/dismiss and .../:id/restore → { item: HackathonCandidate }.
+ */
+export interface AddedCandidate {
+  item: Hackathon
+  candidate: HackathonCandidate
+}
