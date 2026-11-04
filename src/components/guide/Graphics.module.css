@@ -659,3 +659,189 @@
     min-width: 34px;
   }
 }
+
+/* ---- Team: who does what, when ---- */
+
+.roles th,
+.roles td {
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.roles thead th {
+  min-width: 112px;
+  vertical-align: bottom;
+}
+
+.roles td {
+  color: var(--ink-soft);
+}
+
+/* The last phase is everyone's: a faint mint wash down the column, the words at full ink. */
+.roles [data-shared='true'] {
+  background: rgba(157, 240, 168, 0.08);
+  color: var(--ink);
+}
+
+.roles thead [data-shared='true'] {
+  color: var(--accent);
+}
+
+/* ---- Shipping: the demo path ---- */
+
+.path {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pathStep {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding-top: 30px;
+}
+
+/* The path itself: a line through every mark, solid where it's real. */
+.pathStep::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: -18px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.pathStep:last-child::before {
+  right: 0;
+}
+
+.pathStep[data-status='real']::before {
+  background: var(--accent);
+}
+
+.pathMark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0b2a46;
+}
+
+.pathStep[data-status='real'] .pathMark {
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(157, 240, 168, 0.55);
+}
+
+.pathStep[data-status='faked'] .pathMark {
+  border: 2px dashed rgba(255, 255, 255, 0.8);
+}
+
+.pathStep[data-status='cut'] .pathMark {
+  border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.pathName {
+  font-weight: 600;
+}
+
+.pathStatus {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.pathStep[data-status='real'] .pathStatus {
+  color: var(--accent);
+}
+
+.pathStep[data-status='cut'] .pathName {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.45);
+}
+
+.pathNote {
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* Down the page on narrow screens: the line runs vertically beside the steps. */
+@media (max-width: 640px) {
+  .path {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .pathStep {
+    padding: 0 0 18px 34px;
+  }
+
+  .pathStep::before {
+    top: 0;
+    bottom: 0;
+    left: 8px;
+    right: auto;
+    width: 2px;
+    height: auto;
+  }
+
+  .pathStep:last-child::before {
+    bottom: auto;
+    height: 18px;
+  }
+}
+
+/* On a phone the table turns into one block per role, each cell led by its phase, so nothing
+   hides off the side. */
+@media (max-width: 640px) {
+  .roles,
+  .roles tbody,
+  .roles tr,
+  .roles th,
+  .roles td {
+    display: block;
+  }
+
+  .roles thead {
+    display: none;
+  }
+
+  .roles tr {
+    padding: 12px 0 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .roles tbody th {
+    padding: 0 0 6px;
+    border: 0;
+    font-size: 15px;
+  }
+
+  .roles td {
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 12px;
+    padding: 5px 8px;
+    border: 0;
+  }
+
+  .roles td::before {
+    content: attr(data-phase);
+    color: var(--ink-dim);
+  }
+
+  .roles td[data-shared='true']::before {
+    color: var(--accent);
+  }
+}

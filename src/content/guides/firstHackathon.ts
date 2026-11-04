@@ -2,7 +2,7 @@
 
 import { guideLink, SLUGS } from './links'
 import type { GuideDoc } from './types'
-import { FLOWCAST } from './wins'
+import { FLOWCAST, winImage } from './wins'
 
 export const FIRST_HACKATHON: GuideDoc = {
   slug: SLUGS.first,
@@ -13,10 +13,11 @@ export const FIRST_HACKATHON: GuideDoc = {
       id: 'before',
       title: 'Before you go',
       body: [
+        'Most of what goes wrong at a first hackathon happens before the first line of code: no team, no laptop setup, no idea what the prizes are. A couple of evenings the week before fixes all three.',
         {
           checklist: [
             'Apply early. Popular events fill up, and some accept in waves.',
-            'Find a team of three or four if you can. If you can’t, most events run team-forming at the start, and plenty of teams form there.',
+            ['Find a team of three or four if you can. If you can’t, most events run team-forming at the start, and plenty of teams form there. More in ', guideLink(SLUGS.team, 'Forming a team'), '.'],
             'Read the schedule, the rules and the prize list. Note when submissions close and how judging works.',
             'Set up your laptop the night before: your editor, Git, Node or Python, and an account on Devpost or whatever the event uses for submissions.',
             'Agree with your team on a shared repo and a way to deploy, so nobody spends the first hour on setup.',
@@ -44,6 +45,7 @@ export const FIRST_HACKATHON: GuideDoc = {
             'Any hardware you plan to use, with spare cables.',
           ],
         },
+        { callout: 'Pack the charger first. A dead laptop at 2 AM ends more first hackathons than bad ideas do.' },
       ],
     },
     {
@@ -62,6 +64,25 @@ export const FIRST_HACKATHON: GuideDoc = {
       ],
     },
     {
+      id: 'first-project',
+      title: 'Pick something you can finish',
+      body: [
+        'Your first project should be small enough to finish and specific enough to explain in one sentence. Finishing is the skill a first hackathon teaches, and a working small thing is also what judges reward.',
+        {
+          list: [
+            'One user, one path, one thing that happens on screen. Everything else is for next time.',
+            'Build on a language or framework someone on the team already knows.',
+            'Pick one prize to aim at, ideally one with a beginner category, and read what it asks for.',
+            'Ask a mentor to look at your plan in the first two hours. They’ve seen which ideas fit in a weekend.',
+          ],
+        },
+        {
+          figure: winImage(FLOWCAST, '005/691/300/datas/original.png', 'Flowcast’s 3D campus at night, each building outlined by how crowded it is'),
+          caption: 'Flowcast won Best First-Time Hacker at DS+X 2026. A first hackathon doesn’t have to mean a small idea, as long as the team can finish the demo path.',
+        },
+      ],
+    },
+    {
       id: 'the-wall',
       title: 'Getting through the night',
       body: [
@@ -73,6 +94,7 @@ export const FIRST_HACKATHON: GuideDoc = {
             'When you’re stuck, cut scope instead of pushing harder. A smaller thing that works beats a bigger thing that doesn’t.',
           ],
         },
+        { pull: 'A smaller thing that works beats a bigger thing that doesn’t.' },
       ],
     },
     {
@@ -81,13 +103,13 @@ export const FIRST_HACKATHON: GuideDoc = {
       body: [
         {
           list: [
-            'Submit a draft well before the deadline, then edit it. Late submissions usually can’t be judged.',
+            ['Submit a draft well before the deadline, then edit it. Late submissions usually can’t be judged. How to write it is in ', guideLink(SLUGS.writeUp, 'The write-up and the submission'), '.'],
             'Select every prize you qualify for when you submit.',
             'Push your code and make the repo public if the rules ask for it.',
             'Afterwards, write down what you’d do differently. Your second hackathon will be much better than your first.',
           ],
         },
-        ['When you’re ready to go for prizes, read ', guideLink(SLUGS.win, 'How to win a hackathon'), '.'],
+        ['When you’re ready to go for prizes, read ', guideLink(SLUGS.win, 'How to win a hackathon'), '. For what to do once it’s over, read ', guideLink(SLUGS.after, 'After the weekend'), '.'],
       ],
     },
   ],

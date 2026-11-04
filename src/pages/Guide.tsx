@@ -1,13 +1,13 @@
-import { Fragment, useEffect } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { AuthorName, AuthorPhoto, Byline } from '../components/Byline'
-import { DetailNav, DetailOpener, DetailPage } from '../components/DetailPage'
+import { DetailOpener, DetailPage } from '../components/DetailPage'
 import { Graphic } from '../components/guide/Graphics'
 import ui from '../components/ui.module.css'
 import { BRAND } from '../content/site'
 import { GUIDE_DOCS } from '../content/guides'
 import { type Author, authorsOn, nameList } from '../content/guides/authors'
-import type { Block, GuideDoc, GuideImage, GuideLink, Rich, WinExample } from '../content/guides/types'
+import type { Block, GuideDoc, GuideImage, GuideLink, GuideSection, Rich, WinExample } from '../content/guides/types'
 import { winHref, winThumb } from '../content/guides/wins'
 import { GUIDE_PAGE, GUIDES, guidePath, RESOURCES_INTRO, type Guide as GuideEntry } from '../content/resources'
 import styles from './Guide.module.css'
@@ -85,11 +85,11 @@ function Figure({ image, caption, shape = 'wide' }: { image: GuideImage; caption
 }
 
 /** A win told as an example: its cover, its prize, the point, and which of us was on the team. */
-function Example({ example, authors }: { example: WinExample; authors: readonly Author[] }) {
+function Example({ example, authors, card = false }: { example: WinExample; authors: readonly Author[]; card?: boolean }) {
   const { win, text } = example
   const on = authorsOn(win, authors)
   return (
-    <aside className={styles.example} aria-label={`${GUIDE_PAGE.exampleLabel}: ${win.project}`}>
+    <aside className={card ? styles.exampleCard : styles.example} aria-label={`${GUIDE_PAGE.exampleLabel}: ${win.project}`}>
       {/* The name links to the win too; the picture is a bigger target for the same place. */}
       <Link className={styles.exampleThumb} to={winHref(win)} tabIndex={-1} aria-hidden="true">
         <img src={winThumb(win.cover)} alt="" loading="lazy" width={333} height={222} />
@@ -152,7 +152,7 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
   if ('callout' in block) {
     return (
       <div className={styles.callout} data-fog-clear>
-        <p className={styles.calloutLabel}>{GUIDE_PAGE.ruleOfThumb}</p>
+        <p className={styles.calloutLabel}>{block.label ?? GUIDE_PAGE.ruleOfThumb}</p>
         <p className={styles.calloutText}>
           <RichText text={block.callout} />
         </p>
@@ -204,6 +204,38 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
       ))}
     </dl>
   )
+}
+
+type Run = { block: Block } | { examples: WinExample[] }
+
+/** Examples in a row are set side by side as one spread, so the same block never stacks on
+ * itself; every other block stands alone. */
+function runs(body: readonly Block[]): Run[] {
+  const out: Run[] = []
+  for (const block of body) {
+    const last = out[out.length - 1]
+    if (!isParagraph(block) && 'example' in block) {
+      if (last && 'examples' in last) last.examples.push(block.example)
+      else out.push({ examples: [block.example] })
+    } else {
+      out.push({ block })
+    }
+  }
+  return out
+}
+
+function SectionBody({ section, authors }: { section: GuideSection; authors: readonly Author[] }) {
+  return runs(section.body).map((run, i) => {
+    if ('block' in run) return <BlockView key={i} block={run.block} authors={authors} />
+    if (run.examples.length === 1) return <Example key={i} example={run.examples[0]} authors={authors} />
+    return (
+      <div key={i} className={styles.examplePair}>
+        {run.examples.map((example) => (
+          <Example key={example.win.id} example={example} authors={authors} card />
+        ))}
+      </div>
+    )
+  })
 }
 
 /** Two lines on each author: who they are, then the wins they were on, each linked. */
@@ -271,10 +303,107 @@ function readingMinutes(doc: GuideDoc): number {
   return Math.max(1, Math.round(total / 230))
 }
 
-function neighbour(guide: Written | undefined) {
-  if (!guide) return undefined
+function readTime(guide: Written): string {
   const doc = GUIDE_DOCS.get(guide.slug)
-  return { to: guidePath(guide) ?? '/resources', name: guide.title, meta: doc ? GUIDE_PAGE.readTime(readingMinutes(doc)) : '' }
+  return doc ? GUIDE_PAGE.readTime(readingMinutes(doc)) : ''
+}
+
+/**
+ * The end of a guide leads on instead of stopping: the next guide large, with its photo, then the
+ * way back. The last guide leads back to the first.
+ */
+function UpNext({ index }: { index: number }) {
+  const last = index === WRITTEN.length - 1
+  const next = WRITTEN[last ? 0 : index + 1]
+  const previous = WRITTEN[index - 1]
+  if (!next || next.slug === WRITTEN[index]?.slug) return null
+  const href = guidePath(next) ?? '/resources'
+  const { image } = next.lead
+  return (
+    <section className={styles.upNext} aria-labelledby="up-next">
+      <Link className={`${ui.panelDeep} ${styles.nextCard}`} to={href}>
+        <span className={styles.nextImage}>
+          <img src={image.src} alt="" loading="lazy" decoding="async" />
+        </span>
+        <span className={styles.nextText} data-fog-clear>
+          <span id="up-next" className={styles.nextLabel}>
+            {last ? GUIDE_PAGE.backToStart : GUIDE_PAGE.upNext}
+          </span>
+          <span className={styles.nextTitle}>{next.title}</span>
+          <span className={styles.nextLine}>{next.line}</span>
+          <span className={styles.nextMeta}>{readTime(next)}</span>
+          <span className={`${ui.primary} ${styles.nextButton}`}>{GUIDE_PAGE.readNext}</span>
+        </span>
+      </Link>
+      <nav className={styles.moreGuides} aria-label={GUIDE_PAGE.navLabel}>
+        {previous ? (
+          <Link className={styles.moreLink} to={guidePath(previous) ?? '/resources'} data-fog-clear>
+            <span aria-hidden="true">← </span>
+            {GUIDE_PAGE.previous}: {previous.title}
+          </Link>
+        ) : (
+          <span />
+        )}
+        <Link className={styles.moreLink} to="/resources" data-fog-clear>
+          {GUIDE_PAGE.all}
+        </Link>
+      </nav>
+    </section>
+  )
+}
+
+// Where the contents sits beside the text. Narrower, it sits above it, folded, so the first
+// screen is the guide and not a list of headings. Matches the breakpoint in Guide.module.css.
+const WIDE = '(min-width: 861px)'
+
+function useContentsOpen(): [boolean, (open: boolean) => void] {
+  const [open, setOpen] = useState(() => typeof window === 'undefined' || window.matchMedia(WIDE).matches)
+  useEffect(() => {
+    const query = window.matchMedia(WIDE)
+    const onChange = () => {
+      if (query.matches) setOpen(true)
+    }
+    query.addEventListener('change', onChange)
+    return () => query.removeEventListener('change', onChange)
+  }, [])
+  return [open, setOpen]
+}
+
+/** The section in view, for the contents. Picks the last heading above a line a third of the
+ * way down the screen, which is where the eye is while reading. */
+function useActiveSection(ids: readonly string[]): string | undefined {
+  const [active, setActive] = useState<string | undefined>(undefined)
+  const key = ids.join(' ')
+  useEffect(() => {
+    const targets = key
+      .split(' ')
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null)
+    if (targets.length === 0) return
+    // One measure per frame however fast the scroll events come.
+    const pending = { frame: 0 }
+    const update = () => {
+      pending.frame = 0
+      const line = window.innerHeight / 3
+      let current: string | undefined
+      for (const el of targets) {
+        if (el.getBoundingClientRect().top <= line) current = el.id
+      }
+      setActive(current)
+    }
+    const onScroll = () => {
+      if (!pending.frame) pending.frame = requestAnimationFrame(update)
+    }
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      if (pending.frame) cancelAnimationFrame(pending.frame)
+    }
+  }, [key])
+  return active
 }
 
 function GuideMissing() {
@@ -316,6 +445,10 @@ export function Guide() {
     if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView()
   }, [slug, hash])
 
+  const ids = doc ? [...doc.sections.map((section) => section.id), 'authors'] : []
+  const active = useActiveSection(ids)
+  const [contentsOpen, setContentsOpen] = useContentsOpen()
+
   const index = WRITTEN.findIndex((guide) => guide.slug === slug)
   const entry = WRITTEN[index]
   if (!doc || !entry) return <GuideMissing />
@@ -347,23 +480,28 @@ export function Guide() {
 
       <div className={styles.layout}>
         <nav className={styles.contents} aria-labelledby="contents">
-          <h2 id="contents" className={styles.contentsTitle} data-fog-clear>
-            {GUIDE_PAGE.contentsLabel}
-          </h2>
-          <ol className={styles.contentsList}>
-            {doc.sections.map((section) => (
-              <li key={section.id}>
-                <a href={`#${section.id}`} data-fog-clear>
-                  {section.title}
+          <details className={styles.contentsFold} open={contentsOpen} onToggle={(event) => setContentsOpen(event.currentTarget.open)}>
+            <summary className={styles.contentsSummary} data-fog-clear>
+              <h2 id="contents" className={styles.contentsTitle}>
+                {GUIDE_PAGE.contentsLabel}
+              </h2>
+              <span className={styles.contentsCount}>{GUIDE_PAGE.sections(doc.sections.length)}</span>
+            </summary>
+            <ol className={styles.contentsList}>
+              {doc.sections.map((section) => (
+                <li key={section.id}>
+                  <a href={`#${section.id}`} aria-current={active === section.id ? 'true' : undefined} data-fog-clear>
+                    {section.title}
+                  </a>
+                </li>
+              ))}
+              <li>
+                <a href="#authors" aria-current={active === 'authors' ? 'true' : undefined} data-fog-clear>
+                  {GUIDE_PAGE.authorsTitle}
                 </a>
               </li>
-            ))}
-            <li>
-              <a href="#authors" data-fog-clear>
-                {GUIDE_PAGE.authorsTitle}
-              </a>
-            </li>
-          </ol>
+            </ol>
+          </details>
         </nav>
 
         <article className={`${ui.panelDeep} ${styles.doc}`} aria-labelledby="guide-title">
@@ -375,23 +513,14 @@ export function Guide() {
               <h2 id={`${section.id}-title`} className={styles.heading} data-fog-clear>
                 {section.title}
               </h2>
-              {section.body.map((block, i) => (
-                <BlockView key={i} block={block} authors={authors} />
-              ))}
+              <SectionBody section={section} authors={authors} />
             </section>
           ))}
           <AuthorNote authors={authors} />
         </article>
-      </div>
 
-      <DetailNav
-        label={GUIDE_PAGE.navLabel}
-        previous={neighbour(WRITTEN[index - 1])}
-        next={neighbour(WRITTEN[index + 1])}
-        previousLabel={GUIDE_PAGE.previous}
-        nextLabel={GUIDE_PAGE.next}
-        all={{ to: '/resources', label: GUIDE_PAGE.all }}
-      />
+        <UpNext index={index} />
+      </div>
     </DetailPage>
   )
 }

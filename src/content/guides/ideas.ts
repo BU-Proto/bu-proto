@@ -252,6 +252,7 @@ export const IDEAS: GuideDoc = {
       title: 'Beginner-friendly prizes',
       body: [
         'Many events have a prize for first-time hackers or beginner teams. If anyone on your team qualifies, read the eligibility rules closely, because they decide who can enter, and aim at it. The bar is still high, but the pool is smaller.',
+        'Being new isn’t a reason to aim low. Aim at a beginner prize with an idea that would hold up in the main judging too.',
         {
           example: {
             win: FLOWCAST,
@@ -291,6 +292,7 @@ export const IDEAS: GuideDoc = {
       id: 'red-flags',
       title: 'Red flags',
       body: [
+        'Before you commit, run the survivors past these. One red flag is a warning. Two means pick another idea.',
         {
           list: [
             [{ strong: 'It’s just a wrapper.' }, ' A text box, a prompt and a model. Judges have seen it twenty times today.'],
@@ -301,6 +303,7 @@ export const IDEAS: GuideDoc = {
             [{ strong: 'Nobody on the team has the problem.' }, ' You’ll struggle to explain why it matters.'],
           ],
         },
+        { callout: 'If you can’t say what the judge sees happen in one sentence, you don’t have an idea yet. You have a topic.' },
       ],
     },
     {

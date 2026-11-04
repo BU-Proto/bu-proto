@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react'
 import { useId } from 'react'
 import { Link } from 'react-router'
-import { ANGLES, DEMO_CLOCK, EVENT_SHAPE, SCORECARD, WEEKEND, WIN_INDEX } from '../../content/guides/graphics'
+import { ANGLES, DEMO_CLOCK, DEMO_PATH, EVENT_SHAPE, ROLES, SCORECARD, WEEKEND, WIN_INDEX } from '../../content/guides/graphics'
 import type { GraphicName } from '../../content/guides/types'
 import { winHref, winThumb } from '../../content/guides/wins'
 import styles from './Graphics.module.css'
@@ -295,6 +295,59 @@ function WinIndex() {
   )
 }
 
+/** Team: the four roles down the side, the weekend across, the last column shared by everyone. */
+function Roles() {
+  const last = ROLES.phases.length - 1
+  return (
+    <Frame title={ROLES.title} caption={ROLES.caption}>
+      <div className={styles.scroll}>
+        <table className={`${styles.matrix} ${styles.roles}`}>
+          <thead>
+            <tr>
+              <td />
+              {ROLES.phases.map((phase, index) => (
+                <th key={phase} scope="col" data-shared={index === last}>
+                  {phase}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {ROLES.rows.map((row) => (
+              <tr key={row.role}>
+                <th scope="row">{row.role}</th>
+                {row.cells.map((cell, index) => (
+                  <td key={ROLES.phases[index]} data-shared={index === last} data-phase={ROLES.phases[index]}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Frame>
+  )
+}
+
+/** Shipping: the demo path as a line of steps, each drawn by whether it's real, faked or cut. */
+function DemoPath() {
+  return (
+    <Frame title={DEMO_PATH.title} caption={DEMO_PATH.caption}>
+      <ol className={styles.path}>
+        {DEMO_PATH.steps.map((step) => (
+          <li key={step.label} className={styles.pathStep} data-status={step.status}>
+            <span className={styles.pathMark} aria-hidden="true" />
+            <span className={styles.pathName}>{step.label}</span>
+            <span className={styles.pathStatus}>{DEMO_PATH.status[step.status]}</span>
+            <span className={styles.pathNote}>{step.note}</span>
+          </li>
+        ))}
+      </ol>
+    </Frame>
+  )
+}
+
 const GRAPHICS: Record<GraphicName, () => ReactNode> = {
   weekend: Weekend,
   angles: AngleMap,
@@ -302,6 +355,8 @@ const GRAPHICS: Record<GraphicName, () => ReactNode> = {
   'win-index': WinIndex,
   'event-shape': EventShape,
   scorecard: Scorecard,
+  roles: Roles,
+  'demo-path': DemoPath,
 }
 
 export function Graphic({ name }: { name: GraphicName }) {

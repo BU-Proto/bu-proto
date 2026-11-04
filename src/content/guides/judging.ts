@@ -3,7 +3,7 @@
 
 import { guideLink, SLUGS } from './links'
 import type { GuideDoc } from './types'
-import { NEMO } from './wins'
+import { HEAR_ME_OUT, NEMO, winImage } from './wins'
 
 export const JUDGING: GuideDoc = {
   slug: SLUGS.judging,
@@ -22,6 +22,12 @@ export const JUDGING: GuideDoc = {
           ],
         },
         'Sponsor prizes are usually judged separately, by the sponsor’s own people, against their own brief. They may visit your table, read your submission or both.',
+        {
+          example: {
+            win: HEAR_ME_OUT,
+            text: 'The team talked with judges during the weekend and wrote down when they did, along with the tracks they switched to afterwards. Sponsor judges are often around before judging starts, and they’ll tell you what they’re looking for.',
+          },
+        },
       ],
     },
     {
@@ -44,6 +50,7 @@ export const JUDGING: GuideDoc = {
       id: 'aim',
       title: 'How to aim for it',
       body: [
+        'You can’t change the rubric, but you can make every line of it easy to score. Plan the three minutes so each criterion has a moment that answers it.',
         {
           checklist: [
             'Read the rubric and the prize descriptions, and plan the demo so each criterion gets a clear answer.',
@@ -61,7 +68,28 @@ export const JUDGING: GuideDoc = {
             text: 'Placed third overall and won the ASUS Sustainability track with the same project. Where the rules allow it, one strong project can be judged for several prizes at once.',
           },
         },
-        ['For the demo itself, read ', guideLink(SLUGS.demo, 'Demo and pitch tips'), '.'],
+      ],
+    },
+    {
+      id: 'questions',
+      title: 'The questions judges ask',
+      body: [
+        'Most judging slots end with questions, and the same few come up again and again. Have a short, true answer ready for each, and decide who on the team answers which.',
+        {
+          list: [
+            [{ strong: '“What did you build this weekend?”' }, ' Say exactly what’s new and what came from a library, a template or before the event.'],
+            [{ strong: '“What was the hardest part?”' }, ' One specific problem and how you got past it. This is where technical difficulty gets scored.'],
+            [{ strong: '“Who would use this?”' }, ' A real group of people, as specific as you can make it.'],
+            [{ strong: '“What’s faked?”' }, ' Tell them straight away. A judge who finds it themselves stops trusting the rest.'],
+            [{ strong: '“What would you do next?”' }, ' One or two concrete steps, not a roadmap.'],
+          ],
+        },
+        { pull: 'A judge who finds it themselves stops trusting the rest.' },
+        {
+          figure: winImage(NEMO, '005/606/749/datas/original.png', 'A diagram of Nemo: the tank camera and NOAA current data feed a comparison that ranks the likely sources'),
+          caption: 'A diagram like Nemo’s answers “how does it work?” in one picture. Keep one open in a tab for the questions.',
+        },
+        ['For the demo itself, read ', guideLink(SLUGS.demo, 'Demo and pitch tips'), ', and for the page judges read, ', guideLink(SLUGS.writeUp, 'The write-up and the submission'), '.'],
       ],
     },
   ],

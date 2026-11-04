@@ -41,6 +41,7 @@ export const HOW_TO_WIN: GuideDoc = {
           ],
           title: 'Do this in the first hour',
         },
+        ['How we split roles, including with teammates we just met, is in ', guideLink(SLUGS.team, 'Forming a team and splitting roles'), '.'],
         { callout: 'If it isn’t in the demo, it doesn’t exist. Plan backwards from the three minutes you’ll have in front of the judges.' },
         {
           figure: winImage(HEAR_ME_OUT, '005/692/847/datas/original.png', 'A handwritten notebook page listing seven numbered ideas, with notes in red beside each'),
@@ -136,6 +137,7 @@ export const HOW_TO_WIN: GuideDoc = {
             text: 'The team found that vague requests got generic answers. Things got better once they gave the AI specific code, error messages and the gap between what they saw and what they expected.',
           },
         },
+        ['The stack, the deploy and what to fake are in ', guideLink(SLUGS.shipping, 'Shipping fast'), '.'],
       ],
     },
     {

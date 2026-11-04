@@ -128,3 +128,33 @@ export const WIN_INDEX = {
   caption: 'Each one links to its breakdown below.',
   wins: BREAKDOWN_ANCHORS,
 }
+
+/** Team: the four roles from "Split by layer", across the phases of the weekend in How to win. */
+export const ROLES = {
+  title: 'Who does what, and when',
+  caption:
+    'The jobs change through the weekend. By the last column, everyone is working on the same three minutes.',
+  phases: ['Plan', 'Skeleton', 'The hard part', 'Polish', 'Practise'],
+  rows: [
+    { role: 'Front end', cells: ['Sketch the demo screens', 'Screens on example data', 'Screens on real data', 'Loading and empty states', 'Drives the laptop'] },
+    { role: 'Back end and data', cells: ['Agree the data shapes', 'One endpoint, deployed', 'Real data, seeded', 'Fix what breaks', 'Keeps the deploy frozen'] },
+    { role: 'The hard part', cells: ['Prove it can work', 'The smallest working version', 'Make it real', 'Make it reliable', 'Takes the technical questions'] },
+    { role: 'Design and pitch', cells: ['Prize list, one sentence', 'Font, colour, spacing', 'Write-up draft', 'Screenshots and video', 'Tells the story'] },
+  ],
+}
+
+export type PathStatus = 'real' | 'faked' | 'cut'
+
+/** Shipping: one demo path, step by step, marked by what's built for real. */
+export const DEMO_PATH = {
+  title: 'One demo path: what’s real, what’s faked',
+  caption: 'Fake the steps around the core, never the core itself. If a judge asks, say which is which.',
+  status: { real: 'Real', faked: 'Faked', cut: 'Cut' } satisfies Record<PathStatus, string>,
+  steps: [
+    { label: 'Sign in', status: 'faked', note: 'A hard-coded account, already signed in.' },
+    { label: 'Add your data', status: 'faked', note: 'Seed data that looks real, loaded before judging.' },
+    { label: 'The core', status: 'real', note: 'The model, the sponsor API, the hardware. Never fake this.' },
+    { label: 'The result', status: 'real', note: 'Live on screen, from the real output.' },
+    { label: 'Share it', status: 'cut', note: 'Mentioned in the pitch, under what’s next.' },
+  ] satisfies { label: string; status: PathStatus; note: string }[],
+}

@@ -66,6 +66,7 @@ export const DEMO: GuideDoc = {
       id: 'practise',
       title: 'Practise it',
       body: [
+        'A demo that works the first time in front of judges has usually worked twenty times in front of the team. Rehearsal is part of the build, so put it in the plan.',
         {
           checklist: [
             'Freeze features early enough to rehearse. A rehearsed demo of fewer features beats a fresh demo of more.',
@@ -153,16 +154,8 @@ export const DEMO: GuideDoc = {
       id: 'write-up',
       title: 'The write-up counts too',
       body: [
-        'Sponsor judges often read the submission before or after they see you, and some prizes are judged mostly from it. Treat it like part of the demo.',
-        {
-          list: [
-            'Lead with the one sentence and a screenshot or a short video.',
-            'Explain the problem, what it does, how you built it and what was hard, in plain words.',
-            'If you’re going for a sponsor prize, say exactly how you used their product.',
-            'Submit a draft early and edit it before the deadline. A late submission usually can’t be judged.',
-          ],
-        },
-        ['Our ', winLink(HEAR_ME_OUT, 'Hear me Out write-up'), ' is a good model: it walks through a round of the game step by step, then shows the whole design process.'],
+        'Sponsor judges often read the submission before or after they see you, and some prizes are judged mostly from it. Treat it like part of the demo: lead with the same one sentence, the same demo moment and the same story.',
+        ['Our ', winLink(HEAR_ME_OUT, 'Hear me Out write-up'), ' is a good model: it walks through a round of the game step by step, then shows the whole design process. The full method is in ', guideLink(SLUGS.writeUp, 'The write-up and the submission'), '.'],
       ],
     },
   ],

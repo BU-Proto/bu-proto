@@ -5,9 +5,13 @@ import type { GuideLink } from './types'
 export const SLUGS = {
   win: 'how-to-win',
   first: 'your-first-hackathon',
+  team: 'team-and-roles',
+  shipping: 'shipping-fast',
   ideas: 'ideas-and-angles',
   demo: 'demo-and-pitch',
+  writeUp: 'the-write-up',
   judging: 'how-judging-works',
+  after: 'after-the-weekend',
   breakdowns: 'winning-projects',
 } as const
 

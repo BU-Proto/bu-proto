@@ -34,20 +34,21 @@ interface Breakdown {
   tall?: boolean
 }
 
-function section({ win, id, angle, track, demo, lesson, figure, caption, tall }: Breakdown): GuideSection {
-  const body: Block[] = [
-    [{ strong: win.prize }, `, ${win.event}.`],
-    { figure, caption, shape: tall ? 'tall' : 'wide' },
-    {
-      facts: [
-        { term: 'The angle', detail: angle },
-        { term: 'The track', detail: track },
-        { term: 'The demo', detail: demo },
-        { term: 'Take this', detail: lesson },
-      ],
-    },
-    [winLink(win, `Read the ${win.project} write-up`)],
-  ]
+/** Ten sections of the same shape would read as a table, so the order turns over each time: the
+ * picture then the facts, then the facts then the picture, with the lesson set apart below them. */
+function section({ win, id, angle, track, demo, lesson, figure, caption, tall }: Breakdown, index: number): GuideSection {
+  const picture: Block = { figure, caption, shape: tall ? 'tall' : 'wide' }
+  const facts: Block = {
+    facts: [
+      { term: 'The angle', detail: angle },
+      { term: 'The track', detail: track },
+      { term: 'The demo', detail: demo },
+    ],
+  }
+  const lead: Block = [{ strong: win.prize }, `, ${win.event}.`]
+  const take: Block = { callout: lesson, label: 'Take this' }
+  const link: Block = [winLink(win, `Read the ${win.project} write-up`)]
+  const body: Block[] = index % 2 === 0 ? [lead, picture, facts, take, link] : [lead, facts, take, picture, link]
   return { id, title: win.project, body }
 }
 
@@ -173,6 +174,6 @@ export const BREAKDOWN_GUIDE: GuideDoc = {
         ['The method behind them is in ', guideLink(SLUGS.win, 'How to win a hackathon'), ', and the angles are explained in ', guideLink(SLUGS.ideas, 'Finding an idea and an angle'), '.'],
       ],
     },
-    ...BREAKDOWNS.map(section),
+    ...BREAKDOWNS.map((breakdown, index) => section(breakdown, index)),
   ],
 }

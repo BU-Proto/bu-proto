@@ -4,7 +4,7 @@
 import { type Author, PLAYBOOK_AUTHORS } from './guides/authors'
 import { guideHref, SLUGS } from './guides/links'
 import type { GuideImage } from './guides/types'
-import { EYRIE, FLOWCAST, NEMO, winCover, winImage } from './guides/wins'
+import { EYRIE, FLOWCAST, HEAR_ME_OUT, NEMO, winCover, winImage } from './guides/wins'
 import { EVENT_COVERS, HACKATHON_COVER, type CoverPhoto } from './covers'
 import type { PageIntro } from './types'
 
@@ -54,10 +54,22 @@ export const GUIDES: readonly Guide[] = [
     lead: lead(commons(HACKATHON_COVER)),
   },
   {
+    title: 'Forming a team and splitting roles',
+    line: 'Three or four people, split by layer, with the seams agreed in the first hour.',
+    slug: SLUGS.team,
+    lead: lead(commons(EVENT_COVERS.Workshop)),
+  },
+  {
     title: 'Finding an idea and an angle',
     line: 'Start from the tracks and sponsor prizes, then pick an angle that gives you a step up on the room.',
     slug: SLUGS.ideas,
     lead: lead(winCover(NEMO, 'Nemo’s tank experiment from above: a clear tray of water, a pump and a mesh collector')),
+  },
+  {
+    title: 'Shipping fast',
+    line: 'A stack you know, deployed before dinner, with everything that isn’t the point faked or cut.',
+    slug: SLUGS.shipping,
+    lead: lead(commons(EVENT_COVERS['Prep night'])),
   },
   {
     title: 'Demo and pitch tips',
@@ -66,20 +78,34 @@ export const GUIDES: readonly Guide[] = [
     lead: lead(winImage(EYRIE, '003/818/149/datas/original.jpeg', 'Eyrie running on a laptop: a packed crowd on live video, with density readings underneath')),
   },
   {
+    title: 'The write-up and the submission',
+    line: 'The Devpost page, the video, the screenshots and every prize you honestly fit.',
+    slug: SLUGS.writeUp,
+    lead: lead(
+      winCover(HEAR_ME_OUT, 'A page of Hear me Out’s notebook: sponsor tracks tallied, sticky notes on each sponsor, and notes on past winners'),
+    ),
+  },
+  {
     title: 'How judging works',
     line: 'The criteria judges actually score, and how to aim for them.',
     slug: SLUGS.judging,
     lead: lead(commons(EVENT_COVERS.Panel)),
   },
-  { title: 'Starter templates', line: 'Repos that get you from zero to a deployed app in ten minutes.' },
-  { title: 'Free credits', line: 'Student credits for cloud, APIs and AI models, and how to claim them.' },
-  { title: 'Travel tips', line: 'Getting there cheap, sleeping somewhere and getting home in one piece.' },
+  {
+    title: 'After the weekend',
+    line: 'The week after, whether to keep going, and where Proto’s tracks come in.',
+    slug: SLUGS.after,
+    lead: lead(commons(EVENT_COVERS['Demo night'])),
+  },
   {
     title: 'Winning projects, broken down',
     line: 'Our ten wins: the angle, the track each one aimed at and what made the demo work.',
     slug: SLUGS.breakdowns,
     lead: lead(commons(EVENT_COVERS['Hack night'])),
   },
+  { title: 'Starter templates', line: 'Repos that get you from zero to a deployed app in ten minutes.' },
+  { title: 'Free credits', line: 'Student credits for cloud, APIs and AI models, and how to claim them.' },
+  { title: 'Travel tips', line: 'Getting there cheap, sleeping somewhere and getting home in one piece.' },
 ]
 
 export function guidePath(guide: Guide): string | undefined {
@@ -90,6 +116,7 @@ export function guidePath(guide: Guide): string | undefined {
 export const GUIDE_PAGE = {
   pathRoot: '~/proto/resources',
   contentsLabel: 'On this page',
+  sections: (n: number) => `${n} sections`,
   exampleLabel: 'From our wins',
   by: 'By',
   and: 'and',
@@ -110,7 +137,9 @@ export const GUIDE_PAGE = {
   viaCommons: 'via Wikimedia Commons',
   navLabel: 'More guides',
   previous: 'Previous',
-  next: 'Next',
+  upNext: 'Up next',
+  backToStart: 'Back to the start',
+  readNext: 'Read it',
   all: 'All guides',
   missing: {
     title: 'No guide here',

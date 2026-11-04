@@ -41,15 +41,23 @@ export interface WinExample {
 }
 
 /** The diagrams drawn in code. Each one is a component on the guide page. */
-export type GraphicName = 'weekend' | 'angles' | 'demo-clock' | 'win-index' | 'event-shape' | 'scorecard'
+export type GraphicName =
+  | 'weekend'
+  | 'angles'
+  | 'demo-clock'
+  | 'win-index'
+  | 'event-shape'
+  | 'scorecard'
+  | 'roles'
+  | 'demo-path'
 
 export type Block =
   | Rich
   | { list: readonly Rich[] }
   /** Numbered, for things that happen in order. Set big. */
   | { steps: readonly Rich[] }
-  /** A rule of thumb worth stopping on. */
-  | { callout: Rich }
+  /** A rule of thumb worth stopping on. `label` replaces "Rule of thumb" above it. */
+  | { callout: Rich; label?: string }
   /** A line lifted from the text around it and set large. Read once: screen readers skip it. */
   | { pull: string }
   /** "Do this": things to tick off before or during the weekend. */

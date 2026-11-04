@@ -12,6 +12,11 @@ const isWritten = (guide: Guide): guide is Written => Boolean(guide.slug && guid
 const WRITTEN = GUIDES.filter(isWritten)
 const SOON = GUIDES.filter((guide) => !isWritten(guide))
 const [FEATURED, ...REST] = WRITTEN
+// The next few guides get a picture each across the top; the rest pair up below in two columns,
+// so the tier above takes whatever would leave the list with an odd one out.
+const TIER = REST.length % 2 === 1 ? 3 : 2
+const NEXT = REST.slice(0, TIER)
+const LIST = REST.slice(TIER)
 
 function Featured({ guide }: { guide: Written }) {
   const href = guidePath(guide) ?? '/resources'
@@ -40,8 +45,8 @@ function Featured({ guide }: { guide: Written }) {
   )
 }
 
-/** The playbook as a magazine's contents: the lead guide large, the rest with a picture each, and
- * the ones still being written listed quietly after them. */
+/** The playbook as a magazine's contents: the lead guide large, the next few as a row of pictures,
+ * the rest as a two-column list, and the ones still being written listed quietly after them. */
 export function Resources() {
   return (
     <div className={ui.page}>
@@ -54,8 +59,28 @@ export function Resources() {
         <h2 id="contents" className={ui.srOnly}>
           {CONTENTS_LABEL}
         </h2>
+        <ol className={styles.tier}>
+          {NEXT.map((guide) => {
+            const href = guidePath(guide) ?? '/resources'
+            const image = guide.lead.image
+            return (
+              <li key={guide.title}>
+                <Link className={styles.card} to={href}>
+                  <span className={styles.cardImage}>
+                    <img src={image.thumb ?? image.src} alt="" loading="lazy" />
+                  </span>
+                  <span className={styles.entryText} data-fog-clear>
+                    <span className={styles.cardTitle}>{guide.title}</span>
+                    <span className={styles.line}>{guide.line}</span>
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ol>
+
         <ol className={styles.toc}>
-          {REST.map((guide) => {
+          {LIST.map((guide) => {
             const href = guidePath(guide) ?? '/resources'
             const image = guide.lead.image
             return (
