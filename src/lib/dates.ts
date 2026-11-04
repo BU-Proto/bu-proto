@@ -7,6 +7,8 @@ const monthDay = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeri
 const month = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'UTC' })
 const monthYear = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' })
+const monthLong = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' })
+const weekdayLong = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' })
 
 const parse = (iso: string) => new Date(`${iso}T00:00:00Z`)
 
@@ -28,10 +30,16 @@ export function formatRange(start: string, end: string): string {
   return sameMonth ? `${monthDay.format(a)}–${b.getUTCDate()}` : `${monthDay.format(a)}–${monthDay.format(b)}`
 }
 
-/** Parts for a calendar tile: { month: "Nov", day: 12, weekday: "Thu" }. */
+/** Parts for a calendar tile: { month: "Nov", day: 12, weekday: "Thu" }, plus the long names. */
 export function dateParts(iso: string) {
   const date = parse(iso)
-  return { month: month.format(date), day: date.getUTCDate(), weekday: weekday.format(date) }
+  return {
+    month: month.format(date),
+    day: date.getUTCDate(),
+    weekday: weekday.format(date),
+    monthLong: monthLong.format(date),
+    weekdayLong: weekdayLong.format(date),
+  }
 }
 
 /** "November 2026", for grouping a list by month. */

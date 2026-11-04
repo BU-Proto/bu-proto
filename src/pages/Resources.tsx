@@ -10,7 +10,8 @@ export function Resources() {
       <PageIntro intro={RESOURCES_INTRO} />
 
       <section className={`${ui.panelDeep} ${styles.book}`} aria-labelledby="contents">
-        <h2 id="contents" className={styles.contents} data-fog-clear>
+        {/* A book's contents page explains itself; the heading is for screen readers. */}
+        <h2 id="contents" className={ui.srOnly}>
           {CONTENTS_LABEL}
         </h2>
         <ol className={styles.toc}>
@@ -26,7 +27,7 @@ export function Resources() {
                   </span>
                   <span className={styles.leader} aria-hidden="true" />
                   <span className={styles.state} data-ready={Boolean(guide.href)} data-fog-clear>
-                    {guide.href ? 'read' : 'soon'}
+                    {guide.href ? 'Read' : 'Coming soon'}
                   </span>
                 </span>
                 <span className={styles.line} data-fog-clear>

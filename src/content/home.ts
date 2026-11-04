@@ -18,12 +18,14 @@ export const NOTES: readonly { icon: NoteIconName; text: string; link?: Link }[]
   { icon: 'handoff', text: 'Built to feed BU’s startup programs (Spark!, Innovate@BU)' },
 ]
 
-/** The full-bleed band between the rhythm and what's next. Glyphs between items come from the field. */
+/**
+ * The full-bleed band between the rhythm and what's next. Glyphs between items come from the field.
+ * The fund isn't in here: the line under the band says it, with the link.
+ */
 export const MARQUEE: readonly string[] = [
   'Weekly hack nights, with food',
   'Group trips to hackathons',
   'A demo night every semester',
-  'Microgrants of $50–$500, coming soon',
   'First hackathon? You get a veteran',
   'Built to feed Spark! and Innovate@BU',
 ]

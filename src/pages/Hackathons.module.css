@@ -1,4 +1,7 @@
-/* An airport departures board: mono, ruled rows, status lamps. */
+/*
+ * A departures board: ruled rows, status lamps, and mono only where a board would flip digits
+ * (dates and counts). Names, places and labels are set in Inter.
+ */
 .board {
   padding: 0;
   overflow: hidden;
@@ -8,21 +11,21 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px clamp(16px, 2.4vw, 24px);
+  padding: 18px clamp(16px, 2.4vw, 24px) 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.boardHead span:last-child {
+  color: var(--ink-soft);
+  font-weight: 400;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .table th,
@@ -37,13 +40,16 @@
   padding-left: clamp(16px, 2.4vw, 24px);
 }
 
+.table th:last-child,
+.table td:last-child {
+  padding-right: clamp(16px, 2.4vw, 24px);
+}
+
 .table thead th {
-  padding-block: 10px;
-  color: var(--ink-dim);
-  font-size: 10.5px;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding-block: 12px 10px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 500;
 }
 
 .table tbody tr {
@@ -54,25 +60,33 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.dates,
+.applyDate,
+.seats {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
 .dates {
   color: var(--ink);
   white-space: nowrap;
 }
 
 .name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-ui);
   font-size: 17px;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 
+.name a {
+  white-space: nowrap;
+}
+
 .name a:hover {
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
 
 .name a:focus-visible {
@@ -80,26 +94,38 @@
   outline-offset: 2px;
 }
 
+.external {
+  margin-left: 4px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.where {
+  color: var(--ink);
+}
+
 .apply {
   display: inline-flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
+  align-items: baseline;
+  gap: 2px 12px;
   white-space: nowrap;
 }
 
+/* Status is a coloured word with its lamp, nothing around it. */
 .status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--ink-dim);
-  font-size: 11px;
+  color: var(--ink-soft);
+  font-size: 13px;
 }
 
 .status::before {
   content: '';
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -116,12 +142,8 @@
   color: var(--accent);
 }
 
-.travel[data-covered='true']::before {
-  content: '✓ ';
-}
-
 .travel[data-covered='false'] {
-  color: var(--ink-dim);
+  color: var(--ink-soft);
 }
 
 .seats {
@@ -144,10 +166,18 @@
 }
 
 .footnote {
+  max-width: 75ch;
   margin: 0;
   color: var(--ink-soft);
-  font-size: 12.5px;
+  font-size: 13px;
   text-shadow: var(--on-field-shadow);
+}
+
+.empty {
+  margin: 0;
+  padding: 28px clamp(16px, 2.4vw, 24px) 30px;
+  color: var(--ink-soft);
+  font-size: 15px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -162,7 +192,7 @@
   }
 }
 
-/* On phones each row becomes a stacked ticket. */
+/* On phones each row becomes a stacked ticket: the name across the top, then pairs of facts. */
 @media (max-width: 760px) {
   .table thead {
     position: absolute;
@@ -174,15 +204,17 @@
 
   .table tbody tr {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px 16px;
-    padding: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px 16px;
+    padding: 18px 16px 20px;
   }
 
   .table th,
   .table td,
   .table th:first-child,
-  .table td:first-child {
+  .table td:first-child,
+  .table th:last-child,
+  .table td:last-child {
     padding: 0;
   }
 
@@ -191,19 +223,17 @@
     order: -1;
   }
 
+  .name a {
+    white-space: normal;
+  }
+
   .table td::before {
     content: attr(data-label);
     display: block;
-    margin-bottom: 3px;
-    color: var(--ink-dim);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    margin-bottom: 4px;
+    color: var(--ink-soft);
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 500;
   }
-}
-
-.empty {
-  margin: 0;
-  padding: 22px clamp(16px, 2.4vw, 24px);
-  color: var(--ink-soft);
 }

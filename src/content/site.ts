@@ -12,14 +12,13 @@ export const BRAND = {
 export interface NavItem {
   label: string
   to: string
-  badge?: string
   /** Shown in the centered pill; everything is always in the menu sheet. */
   inPill?: boolean
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', to: '/' },
-  { label: 'Hackathons', to: '/hackathons', badge: '✦', inPill: true },
+  { label: 'Hackathons', to: '/hackathons', inPill: true },
   { label: 'Grants', to: '/grants', inPill: true },
   { label: 'Wins', to: '/wins', inPill: true },
   { label: 'Resources', to: '/resources', inPill: true },

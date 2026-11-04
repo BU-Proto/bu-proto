@@ -24,6 +24,7 @@ import { BRAND, SCHEDULE } from '../content/site'
 import { WINS_EMPTY } from '../content/wins'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
+import { kindAddsInfo } from '../lib/events'
 import { WinCard } from './Wins'
 import styles from './Home.module.css'
 
@@ -39,6 +40,7 @@ export function Home() {
     .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
     .slice(0, 3)
   const fundNote = NOTES.find((note) => note.link)
+  const nextDate = nextEvent && dateParts(nextEvent.date)
 
   return (
     <>
@@ -144,23 +146,27 @@ export function Home() {
           </h2>
 
           <div className={styles.nextGrid}>
-            {nextEvent ? (
+            {nextEvent && nextDate ? (
               <article className={styles.event}>
                 <p className={styles.date} data-fog-clear>
-                  <span className={styles.dateDay}>{dateParts(nextEvent.date).day}</span>
+                  <span className={styles.dateDay}>{nextDate.day}</span>
                   <span className={styles.dateMonth}>
-                    {dateParts(nextEvent.date).month} · {dateParts(nextEvent.date).weekday}
+                    {nextDate.monthLong}
+                    <br />
+                    {nextDate.weekdayLong}
                   </span>
                 </p>
                 <div className={styles.eventCopy}>
-                  <p className={styles.kind} data-fog-clear>
-                    {nextEvent.kind} <SampleTag show={nextEvent.placeholder} />
-                  </p>
                   <h3 className={styles.eventTitle} data-fog-clear>
                     {nextEvent.title}
+                    <SampleTag show={nextEvent.placeholder} />
                   </h3>
                   <p className={styles.eventMeta} data-fog-clear>
-                    {nextEvent.time}, {nextEvent.place}
+                    {kindAddsInfo(nextEvent.kind, nextEvent.title) && (
+                      <span className={styles.kind}>{nextEvent.kind}</span>
+                    )}
+                    <span>{nextEvent.time}</span>
+                    <span className={styles.place}>{nextEvent.place}</span>
                   </p>
                   {nextEvent.text && (
                     <p className={styles.eventText} data-fog-clear>
@@ -173,8 +179,8 @@ export function Home() {
                 </div>
               </article>
             ) : (
-              <div className={styles.eventCopy}>
-                <p className={styles.eventMeta} data-fog-clear>
+              <div className={`${styles.eventCopy} ${styles.eventEmpty}`}>
+                <p className={styles.eventText} data-fog-clear>
                   {HOME_EMPTY.next}
                 </p>
                 <Link className={ui.textLink} to="/events" data-fog-clear>
@@ -195,7 +201,7 @@ export function Home() {
                 {NEXT_UP.applyBy}
               </h3>
               {deadlines.length === 0 ? (
-                <p className={styles.eventMeta} data-fog-clear>
+                <p className={styles.eventText} data-fog-clear>
                   {HOME_EMPTY.deadlines}
                 </p>
               ) : (
@@ -207,7 +213,8 @@ export function Home() {
                         <small>days</small>
                       </span>
                       <span className={styles.deadlineName} data-fog-clear>
-                        {hackathon.name} <SampleTag show={hackathon.placeholder} />
+                        {hackathon.name}
+                        <SampleTag show={hackathon.placeholder} />
                       </span>
                       <span className={styles.deadlineDate} data-fog-clear>
                         {formatDay(hackathon.applyBy)}
@@ -265,7 +272,7 @@ export function Home() {
             to={JOIN_CTA.cta.href}
             data-fog-clear="box"
           >
-            {JOIN_CTA.cta.label} <span aria-hidden="true">↗</span>
+            {JOIN_CTA.cta.label}
           </Link>
         </section>
       </div>

@@ -1,14 +1,18 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-  gap: 32px;
+  gap: 32px clamp(32px, 5vw, 72px);
   align-items: start;
 }
 
-/* Perks go straight on the field as a big numbered list, no panel. */
+/*
+ * Perks go straight on the field as a ruled list, no panel. The top padding matches the sign-up
+ * panel's, so "What you get" and "Sign up" share a baseline.
+ */
 .perks {
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  padding-top: clamp(18px, 2.6vw, 28px);
 }
 
 .perkList {
@@ -16,26 +20,15 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  counter-reset: perk;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .perk {
   display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 2px 0;
-  padding: 16px 0;
+  gap: 4px;
+  padding: 18px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.28);
-  counter-increment: perk;
   text-shadow: var(--on-field-shadow);
-}
-
-.perk::before {
-  content: '+' counter(perk);
-  grid-row: span 2;
-  padding-top: 5px;
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 12px;
 }
 
 .perkTitle {
@@ -43,49 +36,60 @@
   font-size: clamp(20px, 2.4vw, 26px);
   font-weight: 300;
   letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .perkText {
+  max-width: 52ch;
   margin: 0;
   color: var(--ink);
-  opacity: 0.85;
+  opacity: 0.88;
+  text-wrap: pretty;
 }
 
 .side {
   display: grid;
-  gap: 16px;
+  gap: 28px;
 }
 
 .formTitle {
   margin-bottom: 18px;
 }
 
+/* Lined up with the form's fields above it. */
 .discord {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px 20px;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding: 0 clamp(18px, 2.6vw, 28px);
+  text-shadow: var(--on-field-shadow);
 }
 
 .discordTitle {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
   margin: 0;
   font-size: 18px;
   font-weight: 500;
 }
 
 .discordText {
-  max-width: 40ch;
-  margin: 4px 0 0;
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.pending {
+  margin: 2px 0 0;
   color: var(--ink-soft);
+  font-style: italic;
 }
 
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perks {
+    padding-top: 0;
   }
 }

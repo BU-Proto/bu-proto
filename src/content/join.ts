@@ -33,5 +33,5 @@ export const JOIN_FORM = {
   perksTitle: 'What you get',
   title: 'Sign up',
   submit: 'Join Proto',
-  discordPending: 'Invite link coming',
+  discordPending: 'The invite link goes up here once the server exists.',
 } as const

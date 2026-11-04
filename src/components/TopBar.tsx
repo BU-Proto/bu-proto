@@ -19,11 +19,6 @@ export function TopBar() {
         {NAV_ITEMS.filter((item) => item.inPill).map((item) => (
           <NavLink key={item.to} to={item.to} data-fog-clear="box">
             {item.label}
-            {item.badge && (
-              <span className={styles.badge} aria-hidden="true">
-                {item.badge}
-              </span>
-            )}
           </NavLink>
         ))}
       </nav>

@@ -9,7 +9,7 @@ export const HACKATHONS_INTRO: PageIntro = {
   lede: 'Where we’re headed next, when applications close and how many of us are going.',
 }
 
-export const BOARD_LABELS = { left: 'Departures', right: 'BOS → everywhere' } as const
+export const BOARD_LABELS = { left: 'Departures', right: 'From Boston' } as const
 
 export const TRAVEL_NOTE =
   '“Covered” means the hackathon itself pays for or reimburses travel. Check each event’s site for the details.'

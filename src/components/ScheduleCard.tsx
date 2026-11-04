@@ -43,8 +43,8 @@ export function ScheduleCard({ location, slots, className, placeholder }: Schedu
               <small>Start</small>
               <b>{slot.start}</b>
             </div>
-            <span className={styles.duration} data-fog-clear="box">
-              <span aria-hidden="true">◷</span> {slot.duration}
+            <span className={styles.duration} data-fog-clear>
+              {slot.duration}
             </span>
             <div className={styles.end} data-fog-clear>
               <small>End</small>

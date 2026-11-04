@@ -34,6 +34,7 @@
   color: var(--ink);
   font-size: 17px;
   line-height: 1.55;
+  text-wrap: pretty;
   text-shadow: var(--on-field-shadow);
 }
 
@@ -227,8 +228,8 @@
 .when {
   margin: 0;
   color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .beatWhat {
@@ -372,10 +373,11 @@
 }
 
 .dateMonth {
-  margin-top: 14px;
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 14px;
+  margin-top: 16px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.35;
+  text-align: center;
 }
 
 .eventCopy {
@@ -386,33 +388,43 @@
   text-shadow: var(--on-field-shadow);
 }
 
-.kind {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-}
-
 .eventTitle {
   margin: 0;
   font-size: clamp(28px, 3.4vw, 42px);
   font-weight: 400;
   letter-spacing: -0.025em;
   line-height: 1.05;
+  text-wrap: balance;
 }
 
+/* Kind, time and place, set apart by space and tone rather than separators. */
 .eventMeta {
-  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 1.1em;
+  margin: 4px 0 0;
   font-size: 15px;
+}
+
+.kind {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.place {
+  color: var(--ink-soft);
 }
 
 .eventText {
   max-width: 44ch;
   margin: 0 0 6px;
   font-size: 16px;
+  text-wrap: pretty;
+}
+
+.eventEmpty {
+  grid-area: event;
+  padding-top: 0;
 }
 
 .schedule {
@@ -465,16 +477,11 @@
 
 .countdown small {
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 14px;
   letter-spacing: 0;
 }
 
 .deadlineName {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
   font-size: 18px;
   font-weight: 500;
 }
@@ -529,7 +536,8 @@
 }
 
 .joinTitle {
-  max-width: 12ch;
+  max-width: 14ch;
+  text-wrap: balance;
   margin: 0;
   font-size: clamp(56px, 11vw, 168px);
   font-weight: 300;
@@ -540,6 +548,7 @@
 
 .joinLede {
   max-width: 44ch;
+  text-wrap: balance;
   margin: 0;
   color: var(--ink);
   font-size: 17px;
@@ -601,15 +610,20 @@
   }
 
   .date {
-    justify-items: start;
+    grid-template-columns: auto auto;
+    justify-content: start;
+    align-items: end;
+    gap: 18px;
+  }
+
+  .dateMonth {
+    margin: 0 0 6px;
+    text-align: left;
   }
 
   .deadline {
-    grid-template-columns: 96px minmax(0, 1fr);
-  }
-
-  .deadlineDate {
-    grid-column: 2;
+    grid-template-columns: 84px minmax(0, 1fr) auto;
+    gap: 12px;
   }
 
   .countdown {

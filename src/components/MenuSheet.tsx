@@ -47,13 +47,10 @@ export function MenuSheet() {
 
           <nav aria-label="All pages">
             <ol className={styles.list}>
-              {NAV_ITEMS.map((item, index) => (
+              {NAV_ITEMS.map((item) => (
                 <li key={item.to}>
                   <NavLink to={item.to} end={item.to === '/'} className={styles.link}>
-                    <span className={styles.index} aria-hidden="true">
-                      {String(index).padStart(2, '0')}
-                    </span>
-                    {item.label}
+                    <span className={styles.label}>{item.label}</span>
                     <span className={styles.route} aria-hidden="true">
                       {item.to}
                     </span>

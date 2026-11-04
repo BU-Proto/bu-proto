@@ -9,6 +9,7 @@ import ui from '../components/ui.module.css'
 import { EVENTS_INTRO, RSVP } from '../content/events'
 import { api } from '../lib/api'
 import { dateParts, daysUntil, formatMonth } from '../lib/dates'
+import { kindAddsInfo } from '../lib/events'
 import styles from './Events.module.css'
 
 const rsvpKey = (id: number) => `proto:rsvp:${id}`
@@ -58,20 +59,21 @@ function EventRow({ event }: { event: ProtoEvent }) {
   return (
     <li className={styles.event}>
       <div className={styles.tile} data-fog-clear="box">
-        <span className={styles.tileMonth}>{month}</span>
+        <span>{month}</span>
         <b>{day}</b>
         <span>{weekday}</span>
       </div>
 
       <div className={styles.body}>
-        <p className={styles.kind} data-kind={event.kind} data-fog-clear>
-          {event.kind} <SampleTag show={event.placeholder} />
-        </p>
         <h3 className={styles.title} data-fog-clear>
           {event.title}
+          <SampleTag show={event.placeholder} />
         </h3>
+        {/* Kind, time and place, set apart by space and tone rather than separators. */}
         <p className={styles.meta} data-fog-clear>
-          {event.time} · {event.place}
+          {kindAddsInfo(event.kind, event.title) && <span className={styles.kind}>{event.kind}</span>}
+          <span>{event.time}</span>
+          <span className={styles.place}>{event.place}</span>
         </p>
         {event.text && (
           <p className={styles.text} data-fog-clear>
@@ -103,7 +105,7 @@ function EventRow({ event }: { event: ProtoEvent }) {
       {open && !going && (
         <div
           id={formId}
-          className={`${ui.inset} ${styles.rsvp}`}
+          className={styles.rsvp}
           role="group"
           aria-label={RSVP.formLabel(event.title)}
           onKeyDown={onKeyDown}

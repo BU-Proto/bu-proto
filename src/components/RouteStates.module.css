@@ -1,8 +1,7 @@
 .loading {
   margin: 0;
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   text-shadow: var(--on-field-shadow);
 }
 

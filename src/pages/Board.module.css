@@ -13,7 +13,7 @@
   display: grid;
   justify-items: center;
   gap: 4px;
-  padding: 26px 18px 20px;
+  padding: 34px 20px 24px;
   border: 1px solid var(--glass-edge);
   border-radius: 20px;
   background: linear-gradient(var(--glass), var(--glass)), rgba(6, 30, 56, 0.16);
@@ -41,7 +41,7 @@
 
 .hole {
   position: absolute;
-  top: 9px;
+  top: 12px;
   left: 50%;
   width: 34px;
   height: 7px;
@@ -51,36 +51,21 @@
   transform: translateX(-50%);
 }
 
-.org {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  margin: 6px 0 12px;
-  color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-}
-
-.no {
-  margin-left: auto;
-  color: var(--ink-dim);
-}
-
 .photo {
   display: grid;
   place-items: center;
   width: 112px;
   aspect-ratio: 1;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   overflow: hidden;
   border: 3px solid #fff;
   border-radius: 50%;
   background:
     radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.45), transparent 60%),
     rgba(6, 30, 56, 0.45);
-  font-family: var(--font-mono);
   font-size: 34px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
 }
 
 .photo img {
@@ -97,20 +82,18 @@
 }
 
 .role {
-  margin: 0 0 6px;
+  margin: 0;
   color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .links {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px 14px;
-  margin: 8px 0 0;
+  gap: 6px 16px;
+  margin: 12px 0 0;
   padding: 0;
   font-size: 12.5px;
   list-style: none;
@@ -122,9 +105,11 @@
   }
 }
 
+/* One column on phones, but a badge is still badge-sized rather than a full-width slab. */
 @media (max-width: 560px) {
   .grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 320px);
+    justify-content: center;
   }
 }
 

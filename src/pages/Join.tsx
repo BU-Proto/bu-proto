@@ -15,7 +15,7 @@ export function Join() {
 
       <div className={styles.layout}>
         <section className={styles.perks} aria-labelledby="perks">
-          <h2 id="perks" className={ui.eyebrow} data-fog-clear>
+          <h2 id="perks" className={ui.sectionTitle} data-fog-clear>
             {JOIN_FORM.perksTitle}
           </h2>
           <ul className={styles.perkList}>
@@ -80,23 +80,23 @@ export function Join() {
             </Form>
           </section>
 
-          <section className={`${ui.panelDeep} ${styles.discord}`} aria-labelledby="discord">
-            <div>
-              <h2 id="discord" className={styles.discordTitle} data-fog-clear>
-                {DISCORD.label} <SampleTag show={DISCORD.placeholder} />
-              </h2>
-              <p className={styles.discordText} data-fog-clear>
-                {DISCORD.text}
-              </p>
-            </div>
+          {/* Straight on the field under the form: a second, smaller way in, not another card. */}
+          <section className={styles.discord} aria-labelledby="discord">
+            <h2 id="discord" className={styles.discordTitle} data-fog-clear>
+              {DISCORD.label}
+              <SampleTag show={DISCORD.placeholder} />
+            </h2>
+            <p className={styles.discordText} data-fog-clear>
+              {DISCORD.text}
+            </p>
             {DISCORD.href ? (
-              <a className={ui.secondary} href={DISCORD.href} target="_blank" rel="noreferrer" data-fog-clear="box">
+              <a className={ui.textLink} href={DISCORD.href} target="_blank" rel="noreferrer" data-fog-clear>
                 Open Discord <span aria-hidden="true">↗</span>
               </a>
             ) : (
-              <span className={ui.secondary} aria-disabled="true" data-fog-clear="box">
+              <p className={styles.pending} data-fog-clear>
                 {JOIN_FORM.discordPending}
-              </span>
+              </p>
             )}
           </section>
         </div>

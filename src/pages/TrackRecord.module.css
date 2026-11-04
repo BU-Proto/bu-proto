@@ -1,102 +1,94 @@
+/* One ruled row per wall, straight on the field: what the wall is on the left, the logos on the right. */
 .walls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.wall {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr);
+  gap: 16px clamp(28px, 5vw, 72px);
+  align-items: center;
+  padding: clamp(24px, 4vh, 36px) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  text-shadow: var(--on-field-shadow);
 }
 
 .head {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 16px;
-  align-items: start;
-  margin-bottom: 18px;
-}
-
-.count {
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 1;
+  gap: 4px;
 }
 
 .title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .text {
-  margin: 4px 0 0;
+  max-width: 44ch;
+  margin: 0;
   color: var(--ink-soft);
+  text-wrap: pretty;
 }
 
-/* Logos sit in white wells so any brand color reads. */
+/* Logos turn white, as in the band, so every brand sits in the same voice over the gradient. */
 .logos {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px clamp(28px, 4vw, 56px);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.logo,
-.wordmark {
-  color: var(--on-light);
-  font-size: clamp(15px, 1.6vw, 19px);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  text-align: center;
-  text-shadow: none;
-}
-
-.ghost {
-  aspect-ratio: 5 / 3;
-  border-radius: 14px;
-}
-
 .logo {
-  display: grid;
-  place-items: center;
-  padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  height: 44px;
 }
 
 .logo a {
   display: contents;
 }
 
+.logo a:focus-visible > * {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 .logo img {
-  max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  width: auto;
+  filter: brightness(0) invert(1) drop-shadow(0 1px 8px rgba(0, 25, 55, 0.45));
 }
 
 .wordmark {
-  color: var(--on-light);
-  font-size: clamp(15px, 1.6vw, 19px);
+  font-size: clamp(22px, 2.6vw, 32px);
   font-weight: 600;
-  letter-spacing: -0.02em;
-  text-align: center;
-  text-shadow: none;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
-.ghost {
-  border: 1px dashed rgba(255, 255, 255, 0.35);
-  background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 0 6px, transparent 6px 12px);
+.logo a:hover .wordmark {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
 }
 
 .empty {
-  margin: 14px 0 0;
+  margin: 0;
   color: var(--ink-soft);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-style: italic;
 }
 
-@media (max-width: 900px) {
-  .walls {
+@media (max-width: 760px) {
+  .wall {
     grid-template-columns: minmax(0, 1fr);
+    align-items: start;
   }
 }

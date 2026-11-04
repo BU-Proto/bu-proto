@@ -78,18 +78,21 @@ export function Hackathons() {
                     {hackathon.href ? (
                       <a href={hackathon.href} target="_blank" rel="noreferrer" data-fog-clear>
                         {hackathon.name}
+                        <span className={styles.external} aria-hidden="true">
+                          ↗
+                        </span>
                       </a>
                     ) : (
                       <span data-fog-clear>{hackathon.name}</span>
                     )}
                     <SampleTag show={hackathon.placeholder} />
                   </th>
-                  <td data-label="Where">
+                  <td className={styles.where} data-label="Where">
                     <span data-fog-clear>{hackathon.location}</span>
                   </td>
                   <td data-label="Apply by">
                     <span className={styles.apply} data-fog-clear>
-                      {formatDay(hackathon.applyBy)}
+                      <span className={styles.applyDate}>{formatDay(hackathon.applyBy)}</span>
                       <span className={styles.status} data-status={status}>
                         {STATUS_LABEL[status]}
                       </span>

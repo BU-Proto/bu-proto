@@ -11,7 +11,7 @@ export const GRANTS_INTRO: PageIntro = {
 
 export const STATUS = {
   badge: 'Coming soon',
-  note: 'Not funded yet. No applications open.',
+  note: 'Not funded yet, and no applications are open.',
 } as const
 
 export const SECTION_TITLES = {

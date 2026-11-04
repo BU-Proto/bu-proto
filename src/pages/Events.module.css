@@ -9,12 +9,9 @@
 .monthName {
   position: sticky;
   top: 20px;
-  margin: 18px 0 0;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  margin: 26px 0 0;
+  font-size: 17px;
+  font-weight: 500;
   text-shadow: var(--on-field-shadow);
 }
 
@@ -28,43 +25,34 @@
 .event {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 20px;
+  gap: 16px 22px;
   align-items: center;
-  padding: 18px 0;
+  padding: 20px 0;
 }
 
 .event + .event {
   border-top: 1px dashed rgba(255, 255, 255, 0.24);
 }
 
-/* A tear-off calendar page with a torn edge on top. */
+/* A tear-off calendar page: the date is what you scan the list by. */
 .tile {
-  position: relative;
   display: grid;
   justify-items: center;
-  width: 76px;
-  padding: 10px 0 9px;
+  align-self: start;
+  width: 72px;
+  padding: 8px 0 9px;
   border-radius: 14px;
   background: #fff;
   color: var(--on-light);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
   text-shadow: none;
   box-shadow: 0 16px 40px -20px rgba(0, 25, 55, 0.7);
 }
 
-.tile::before {
-  content: '';
-  position: absolute;
-  top: 4px;
-  left: 12px;
-  right: 12px;
-  border-top: 2px dotted rgba(11, 42, 70, 0.3);
-}
-
-.tileMonth {
-  margin-top: 4px;
+.tile span:last-child {
+  opacity: 0.7;
 }
 
 .tile b {
@@ -77,22 +65,7 @@
 
 .body {
   display: grid;
-  gap: 3px;
-}
-
-.kind {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.kind[data-kind='Hack night']::before {
-  content: '>';
+  gap: 4px;
 }
 
 .title {
@@ -100,23 +73,39 @@
   font-size: 20px;
   font-weight: 500;
   letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.1em;
   margin: 0;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 14px;
 }
 
-.text {
-  margin: 0;
+.kind {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.place {
   color: var(--ink-soft);
 }
 
-/* The RSVP form opens under its own event, across the whole row. */
+.text {
+  max-width: 64ch;
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* The RSVP form opens under its own event, lined up with the event's text, not in a box of its own. */
 .rsvp {
-  grid-column: 1 / -1;
-  padding: 16px;
+  grid-column: 2 / -1;
+  padding: 18px 0 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -150,5 +139,9 @@
   .event > button {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .rsvp {
+    grid-column: 1 / -1;
   }
 }

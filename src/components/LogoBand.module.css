@@ -14,17 +14,16 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px 24px;
-  width: 100%;
-  max-width: 1180px;
+  /* The page column: 1180px, less the shell's side padding on narrow screens. */
+  width: min(1180px, 100% - 2 * max(16px, env(safe-area-inset-left, 0px)));
   margin: 0 auto;
-  padding: 0 max(16px, env(safe-area-inset-left, 0px));
   text-shadow: var(--on-field-shadow);
 }
 
 .title {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: 17px;
+  font-weight: 500;
 }
 
 .item {

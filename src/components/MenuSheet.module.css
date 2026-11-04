@@ -50,7 +50,7 @@
 
 .link {
   display: grid;
-  grid-template-columns: 34px 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
   padding: 13px 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -71,20 +71,27 @@
   border-radius: 6px;
 }
 
-.index,
+/* The current page gets the nav pill's accent dot. */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.link[aria-current='page'] .label::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* The route is a real path, so it keeps the mono. */
 .route {
   color: var(--ink-dim);
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0;
-}
-
-.link[aria-current='page'] .index {
-  color: var(--accent);
-}
-
-.link[aria-current='page'] .index::before {
-  content: '> ';
 }
 
 .route {

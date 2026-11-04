@@ -21,10 +21,10 @@ export function Hero() {
 
       <div className={styles.ctas}>
         <Link className={styles.primary} to={primaryCta.href} data-fog-clear="box">
-          {primaryCta.label} <span aria-hidden="true">↗</span>
+          {primaryCta.label} <span aria-hidden="true">→</span>
         </Link>
         <Link className={styles.secondary} to={secondaryCta.href} data-fog-clear>
-          {secondaryCta.label} <span aria-hidden="true">↗</span>
+          {secondaryCta.label}
         </Link>
       </div>
     </section>

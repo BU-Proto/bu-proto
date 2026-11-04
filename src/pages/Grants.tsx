@@ -23,8 +23,9 @@ export function Grants() {
   return (
     <div className={ui.page}>
       <PageIntro intro={GRANTS_INTRO}>
+        {/* Says it before anything else on the page: there is no money yet. */}
         <p className={styles.status}>
-          <span className={styles.badge} data-fog-clear="box">
+          <span className={styles.statusWord} data-fog-clear>
             {STATUS.badge}
           </span>
           <span className={styles.statusNote} data-fog-clear>
@@ -33,14 +34,14 @@ export function Grants() {
         </p>
       </PageIntro>
 
-      <div className={styles.top}>
-        <section className={ui.panel} aria-labelledby="covers">
-          <h2 id="covers" className={ui.eyebrow} data-fog-clear>
+      <div className={`${ui.panelDeep} ${styles.plan}`}>
+        <section aria-labelledby="covers">
+          <h2 id="covers" className={ui.sectionTitle} data-fog-clear>
             {SECTION_TITLES.covers}
           </h2>
           <ul className={styles.covers}>
             {COVERS.map((cover) => (
-              <li key={cover.title} className={ui.inset}>
+              <li key={cover.title} className={styles.cover}>
                 <CoverIcon name={cover.icon} className={styles.coverIcon} />
                 <h3 className={styles.coverTitle} data-fog-clear>
                   {cover.title}
@@ -53,34 +54,31 @@ export function Grants() {
           </ul>
         </section>
 
-        <section className={`${ui.panelDeep} ${styles.amounts}`} aria-labelledby="amounts">
-          <h2 id="amounts" className={ui.eyebrow} data-fog-clear>
+        <section className={styles.amounts} aria-labelledby="amounts">
+          <h2 id="amounts" className={ui.sectionTitle} data-fog-clear>
             {AMOUNTS.label}
           </h2>
           <p className={styles.range} data-fog-clear>
-            <span>${AMOUNTS.min}</span>
-            <span className={styles.rangeTo} aria-label="to">
-              →
-            </span>
-            <span>${AMOUNTS.max}</span>
+            ${AMOUNTS.min}
+            <span className={styles.rangeTo}>to</span>${AMOUNTS.max}
           </p>
           <div className={styles.scale} aria-hidden="true">
             <span className={styles.scaleFill} />
           </div>
           <p className={styles.planned} data-fog-clear>
-            <span className={styles.plannedTag}>planned</span> {AMOUNTS.note}
+            {AMOUNTS.note}
           </p>
         </section>
       </div>
 
-      <section className={ui.panel} aria-labelledby="how">
-        <h2 id="how" className={ui.eyebrow} data-fog-clear>
+      <section className={styles.how} aria-labelledby="how">
+        <h2 id="how" className={ui.sectionTitle} data-fog-clear>
           {SECTION_TITLES.how}
         </h2>
         <ol className={styles.steps}>
           {STEPS.map((step, index) => (
             <li key={step.title} className={styles.step}>
-              <span className={styles.stepNo} aria-hidden="true" data-fog-clear="box">
+              <span className={styles.stepNo} aria-hidden="true" data-fog-clear>
                 {index + 1}
               </span>
               <h3 className={styles.stepTitle} data-fog-clear>
@@ -95,7 +93,7 @@ export function Grants() {
       </section>
 
       <section className={styles.ask} aria-labelledby="ask">
-        <h2 id="ask" className={ui.eyebrow} data-fog-clear>
+        <h2 id="ask" className={styles.askTitle} data-fog-clear>
           {THE_ASK.title}
         </h2>
         <blockquote className={styles.quote} data-fog-clear>
@@ -126,7 +124,7 @@ export function Grants() {
                 {COMPARISON.columns.ignite}
               </th>
               <th scope="col" className={styles.us} data-fog-clear>
-                {COMPARISON.columns.proto} <span className={styles.plannedTag}>planned</span>
+                {COMPARISON.columns.proto} <em className={styles.plannedWord}>planned</em>
               </th>
             </tr>
           </thead>
@@ -136,8 +134,10 @@ export function Grants() {
                 <th scope="row" data-fog-clear>
                   {row.label}
                 </th>
-                <td data-fog-clear>{row.ignite}</td>
-                <td className={styles.us} data-fog-clear>
+                <td data-label={COMPARISON.columns.ignite} data-fog-clear>
+                  {row.ignite}
+                </td>
+                <td className={styles.us} data-label={COMPARISON.columns.proto} data-fog-clear>
                   {row.proto}
                 </td>
               </tr>

@@ -4,7 +4,6 @@ import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { BOARD_EMPTY, BOARD_INTRO } from '../content/board'
-import { BRAND } from '../content/site'
 import styles from './Board.module.css'
 
 const initials = (name: string) =>
@@ -16,15 +15,10 @@ const initials = (name: string) =>
     .toUpperCase()
 
 /** A conference badge on a lanyard: punch hole, photo, name, role, links. */
-function Badge({ member, index }: { member: BoardMember; index: number }) {
+function Badge({ member }: { member: BoardMember }) {
   return (
     <li className={styles.badge}>
       <span className={styles.hole} aria-hidden="true" />
-      <p className={styles.org} data-fog-clear>
-        <img src={BRAND.seal} alt="" width={14} height={14} />
-        {BRAND.full}
-        <span className={styles.no}>#{String(index + 1).padStart(3, '0')}</span>
-      </p>
 
       <div className={styles.photo}>
         {member.photo ? (
@@ -36,11 +30,11 @@ function Badge({ member, index }: { member: BoardMember; index: number }) {
 
       <h3 className={styles.name} data-fog-clear>
         {member.name}
+        <SampleTag show={member.placeholder} />
       </h3>
       <p className={styles.role} data-fog-clear>
         {member.role}
       </p>
-      <SampleTag show={member.placeholder} />
 
       {member.links.length > 0 && (
         <ul className={styles.links}>
@@ -69,8 +63,8 @@ export function Board() {
         </p>
       ) : (
         <ul className={styles.grid}>
-          {board.map((member, index) => (
-            <Badge key={member.id} member={member} index={index} />
+          {board.map((member) => (
+            <Badge key={member.id} member={member} />
           ))}
         </ul>
       )}
