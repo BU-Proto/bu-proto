@@ -1,4 +1,6 @@
-import { useLocation, useSearchParams } from 'react-router'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useLocation, useNavigate, useRevalidator, useSearchParams } from 'react-router'
+import { AUTH_CHANNEL } from '../../shared/constants'
 import { AsciiField, DEFAULT_FIELD_SETTINGS } from '../ascii-field'
 import styles from './SignIn.module.css'
 import { pageTitle } from './lib/format'
@@ -38,6 +40,57 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
   const query = next.toString()
   const href = `/api/auth/google?next=${encodeURIComponent(location.pathname + (query ? `?${query}` : ''))}`
 
+  const navigate = useNavigate()
+  const revalidator = useRevalidator()
+  const popupRef = useRef<Window | null>(null)
+  const [waiting, setWaiting] = useState(false)
+
+  // The pop-up reports where to go next (the page, or /admin?error=…) and closes itself.
+  useEffect(() => {
+    const finish = (to: unknown) => {
+      if (typeof to !== 'string' || !to.startsWith('/admin')) return
+      popupRef.current?.close()
+      popupRef.current = null
+      setWaiting(false)
+      navigate(to, { replace: true })
+      revalidator.revalidate()
+    }
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin === window.location.origin && event.data?.type === AUTH_CHANNEL) finish(event.data.to)
+    }
+    const channel = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(AUTH_CHANNEL)
+    if (channel) channel.onmessage = (event) => event.data?.type === AUTH_CHANNEL && finish(event.data.to)
+    window.addEventListener('message', onMessage)
+    // Back from the pop-up some other way (closed it, or a browser cut the channel): check the session.
+    const onFocus = () => {
+      if (popupRef.current) revalidator.revalidate()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      channel?.close()
+      window.removeEventListener('message', onMessage)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [navigate, revalidator])
+
+  const openPopup = (event: MouseEvent<HTMLAnchorElement>) => {
+    const width = 480
+    const height = 640
+    const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2)
+    const top = window.screenY + Math.max(0, (window.outerHeight - height) / 3)
+    const popup = window.open(
+      `${href}&popup=1`,
+      'proto-google-sign-in',
+      `popup,width=${width},height=${height},left=${Math.round(left)},top=${Math.round(top)}`,
+    )
+    // Blocked pop-ups fall through to the link's own full-page redirect.
+    if (!popup) return
+    event.preventDefault()
+    popup.focus()
+    popupRef.current = popup
+    setWaiting(true)
+  }
+
   return (
     <>
       <title>{pageTitle('Sign in')}</title>
@@ -68,10 +121,13 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
             {message && <p className={styles.error}>{message}</p>}
           </div>
 
-          <a className={styles.google} href={href} data-fog-clear="box">
+          <a className={styles.google} href={href} onClick={openPopup} data-fog-clear="box">
             <GoogleMark />
             Sign in with Google
           </a>
+          <p className={styles.waiting} role="status" aria-live="polite" data-fog-clear>
+            {waiting && 'Finish signing in in the Google window. It closes on its own when you’re done.'}
+          </p>
 
 
           <p className={styles.fine} data-fog-clear>

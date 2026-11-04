@@ -1,5 +1,6 @@
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
+import { AUTH_CHANNEL } from '../../shared/constants'
 import { randomToken, sha256Base64url } from '../lib/crypto'
 import { ApiError } from '../lib/http'
 import { createSession, destroySession, isAllowed, isLocalDev, LOCAL_EMAIL } from '../lib/session'
@@ -27,25 +28,52 @@ function safeNext(next: string | undefined): string | null {
 
 const callbackUrl = (url: string) => `${new URL(url).origin}/api/auth/callback`
 
+/**
+ * End a sign-in by sending the browser to `to` (the next page, or /admin?error=…). In the popup
+ * flow the window is a pop-up, so instead it tells the portal where to go and closes itself.
+ * It reports over a BroadcastChannel as well as window.opener, because Google's pages can cut the
+ * opener link; if it can't close (or nobody's listening), it just goes to `to` itself.
+ */
+function finish(c: Context<AppEnv>, popup: boolean, to: string): Response {
+  if (!popup) return c.redirect(to)
+  const target = JSON.stringify(to).replaceAll('<', '\\u003c')
+  const message = JSON.stringify({ type: AUTH_CHANNEL, to }).replaceAll('<', '\\u003c')
+  c.header('Cache-Control', 'no-store')
+  return c.html(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Signing in · BU Proto</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;display:grid;place-items:center;min-height:100vh;background:#061a2e;color:#f6fbff;font:15px/1.5 Inter,system-ui,sans-serif">
+<p>Signing you in…</p>
+<script>
+(function () {
+  var to = ${target}, message = ${message}
+  try { var channel = new BroadcastChannel(${JSON.stringify(AUTH_CHANNEL)}); channel.postMessage(message); channel.close() } catch (e) {}
+  try { if (window.opener && !window.opener.closed) window.opener.postMessage(message, location.origin) } catch (e) {}
+  window.close()
+  setTimeout(function () { location.replace(to) }, 400)
+})()
+</script></body></html>`)
+}
+
 app.get('/api/auth/google', async (c) => {
   const next = safeNext(c.req.query('next'))
   if (!next) throw new ApiError(400, 'next must be a path under /admin.')
+  const popup = c.req.query('popup') === '1'
 
   // Local sign-in: under `npm run dev` the button signs you straight in, without Google. The
   // whole branch is compiled out of production builds (see isLocalDev).
   if (import.meta.env.DEV && isLocalDev(c.req.url)) {
     const email = String(c.env.ADMIN_EMAILS ?? '').split(',')[0]?.trim().toLowerCase() || LOCAL_EMAIL
     await createSession(c, { sub: 'local', email, name: null, avatarUrl: null })
-    return c.redirect(next)
+    return finish(c, popup, next)
   }
 
-  if (!c.env.GOOGLE_CLIENT_ID || !c.env.GOOGLE_CLIENT_SECRET) return c.redirect('/admin?error=not-configured')
+  if (!c.env.GOOGLE_CLIENT_ID || !c.env.GOOGLE_CLIENT_SECRET) return finish(c, popup, '/admin?error=not-configured')
 
   const state = randomToken(16)
   const nonce = randomToken(16)
   const verifier = randomToken(32)
-  // The three tokens are base64url, so the first three '.'s are the separators.
-  setCookie(c, OAUTH_COOKIE, [state, nonce, verifier, next].join('.'), {
+  // The tokens are base64url and the mode is one letter, so the first four '.'s are the separators.
+  setCookie(c, OAUTH_COOKIE, [state, nonce, verifier, popup ? 'p' : 'r', next].join('.'), {
     path: '/',
     httpOnly: true,
     secure: true,
@@ -72,16 +100,18 @@ interface SavedFlow {
   state: string
   nonce: string
   verifier: string
+  /** Started from the portal's pop-up window rather than a full-page redirect. */
+  popup: boolean
   next: string
 }
 
 function readFlow(saved: string | undefined): SavedFlow | null {
   const parts = saved?.split('.') ?? []
-  if (parts.length < 4) return null
-  const [state, nonce, verifier] = parts
-  const next = safeNext(parts.slice(3).join('.'))
-  if (!state || !nonce || !verifier || !next) return null
-  return { state, nonce, verifier, next }
+  if (parts.length < 5) return null
+  const [state, nonce, verifier, mode] = parts
+  const next = safeNext(parts.slice(4).join('.'))
+  if (!state || !nonce || !verifier || (mode !== 'p' && mode !== 'r') || !next) return null
+  return { state, nonce, verifier, popup: mode === 'p', next }
 }
 
 interface GoogleClaims {
@@ -150,23 +180,26 @@ app.get('/api/auth/callback', async (c) => {
 
   // Google also lands here with ?error=access_denied when someone cancels; that has no code.
   const code = c.req.query('code')
-  if (!code || !flow || c.req.query('state') !== flow.state) return c.redirect('/admin?error=google')
+  // Without the cookie we can't know it was a pop-up, so assume it was: the page falls back to a
+  // plain redirect when nothing's listening.
+  const popup = flow?.popup ?? true
+  if (!code || !flow || c.req.query('state') !== flow.state) return finish(c, popup, '/admin?error=google')
 
   let user: GoogleUser
   try {
     user = await fetchGoogleUser(c.env, code, flow, callbackUrl(c.req.url))
   } catch (error) {
     console.error(error)
-    return c.redirect('/admin?error=google')
+    return finish(c, popup, '/admin?error=google')
   }
   // An unverified address could be anyone's, so it never matches the allow list.
-  if (!user.emailVerified) return c.redirect('/admin?error=google')
+  if (!user.emailVerified) return finish(c, popup, '/admin?error=google')
 
   if (!(await isAllowed(c.env, user.email, c.req.url))) {
-    return c.redirect(`/admin?${new URLSearchParams({ error: 'denied', email: user.email })}`)
+    return finish(c, popup, `/admin?${new URLSearchParams({ error: 'denied', email: user.email })}`)
   }
   await createSession(c, { sub: user.sub, email: user.email, name: user.name, avatarUrl: user.picture })
-  return c.redirect(flow.next)
+  return finish(c, popup, flow.next)
 })
 
 app.post('/api/auth/logout', async (c) => {

@@ -192,3 +192,14 @@
     transform: translateY(12px);
   }
 }
+
+.waiting {
+  min-height: 1.5em;
+  margin: -4px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.waiting:empty {
+  display: none;
+}

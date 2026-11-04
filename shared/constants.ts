@@ -15,3 +15,6 @@ export const FUND_AMOUNTS = ['$50–$100', '$100–$250', '$250–$500', 'Not su
 
 export const FUND_STATUSES = ['new', 'reviewing', 'approved', 'declined'] as const
 export type FundStatus = (typeof FUND_STATUSES)[number]
+
+/** The BroadcastChannel the admin sign-in pop-up reports its result on. */
+export const AUTH_CHANNEL = 'proto-auth'
