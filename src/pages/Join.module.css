@@ -1,0 +1,91 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 32px;
+  align-items: start;
+}
+
+/* Perks go straight on the field as a big numbered list, no panel. */
+.perks {
+  display: grid;
+  gap: 8px;
+}
+
+.perkList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: perk;
+}
+
+.perk {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 2px 0;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+  counter-increment: perk;
+  text-shadow: var(--on-field-shadow);
+}
+
+.perk::before {
+  content: '+' counter(perk);
+  grid-row: span 2;
+  padding-top: 5px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.perkTitle {
+  margin: 0;
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+.perkText {
+  margin: 0;
+  color: var(--ink);
+  opacity: 0.85;
+}
+
+.side {
+  display: grid;
+  gap: 16px;
+}
+
+.formTitle {
+  margin-bottom: 18px;
+}
+
+.discord {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+}
+
+.discordTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.discordText {
+  max-width: 40ch;
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

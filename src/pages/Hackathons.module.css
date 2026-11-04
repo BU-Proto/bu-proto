@@ -1,0 +1,203 @@
+/* An airport departures board: mono, ruled rows, status lamps. */
+.board {
+  padding: 0;
+  overflow: hidden;
+}
+
+.boardHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px clamp(16px, 2.4vw, 24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 16px clamp(10px, 1.4vw, 16px);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: clamp(16px, 2.4vw, 24px);
+}
+
+.table thead th {
+  padding-block: 10px;
+  color: var(--ink-dim);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.table tbody tr {
+  border-top: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dates {
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.name a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.name a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.apply {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  white-space: nowrap;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-dim);
+  font-size: 11px;
+}
+
+.status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status[data-status='open'] {
+  color: var(--accent);
+}
+
+.status[data-status='closing'] {
+  color: #ffd38a;
+}
+
+.travel[data-covered='true'] {
+  color: var(--accent);
+}
+
+.travel[data-covered='true']::before {
+  content: '✓ ';
+}
+
+.travel[data-covered='false'] {
+  color: var(--ink-dim);
+}
+
+.seats {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dots {
+  display: inline-grid;
+  grid-template-columns: repeat(5, 6px);
+  gap: 3px;
+}
+
+.dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.footnote {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  text-shadow: var(--on-field-shadow);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status[data-status='closing']::before {
+    animation: lamp 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes lamp {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* On phones each row becomes a stacked ticket. */
+@media (max-width: 760px) {
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    padding: 16px;
+  }
+
+  .table th,
+  .table td,
+  .table th:first-child,
+  .table td:first-child {
+    padding: 0;
+  }
+
+  .table .name {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: var(--ink-dim);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+}

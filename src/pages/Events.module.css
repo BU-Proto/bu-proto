@@ -1,0 +1,135 @@
+/* An agenda: a month heading in the margin, the month's events in one glass sheet. */
+.month {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.monthName {
+  position: sticky;
+  top: 20px;
+  margin: 18px 0 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: var(--on-field-shadow);
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding-block: 6px;
+  list-style: none;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 18px 0;
+}
+
+.event + .event {
+  border-top: 1px dashed rgba(255, 255, 255, 0.24);
+}
+
+/* A tear-off calendar page with a torn edge on top. */
+.tile {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: 76px;
+  padding: 10px 0 9px;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--on-light);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  text-shadow: none;
+  box-shadow: 0 16px 40px -20px rgba(0, 25, 55, 0.7);
+}
+
+.tile::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  right: 12px;
+  border-top: 2px dotted rgba(11, 42, 70, 0.3);
+}
+
+.tileMonth {
+  margin-top: 4px;
+}
+
+.tile b {
+  font-family: var(--font-ui);
+  font-size: 32px;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.body {
+  display: grid;
+  gap: 3px;
+}
+
+.kind {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.kind[data-kind='Hack night']::before {
+  content: '>';
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.text {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 760px) {
+  .month {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .monthName {
+    position: static;
+    margin: 0;
+  }
+
+  .event {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .event > button {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

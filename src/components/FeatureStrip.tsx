@@ -1,8 +1,8 @@
-import type { Feature } from '../content/hero'
+import type { Feature } from '../content/home'
 import { FeatureIcon } from './icons'
 import styles from './FeatureStrip.module.css'
 
-/** The ruled strip of club features along the bottom of the hero. */
+/** The ruled strip of Proto's features along the bottom of the hero. */
 export function FeatureStrip({ features }: { features: readonly Feature[] }) {
   return (
     <ul className={styles.strip}>

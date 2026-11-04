@@ -1,6 +1,6 @@
 # bu-proto
 
-The home hero for **BU Builders**, a BU-sponsored home base for students who make things, built with React, TypeScript and Vite.
+The site for **BU Proto** (working name), a BU-sponsored home base for students who make things, built with React, TypeScript, React Router and Vite. The concept behind every page is in [`docs/concept.md`](docs/concept.md).
 
 The background is an ASCII field: the gradient from the reference design rendered as monospace characters that drift and shimmer on their own. The cursor's wind slides the characters around and rewrites the ones along its path into a Stable-Fluids trail of `○ > _` glyphs that dissolves within about a second. The gradient's colors never move with the cursor.
 
@@ -21,18 +21,40 @@ npm run dev
 | `npm run typecheck` | Typecheck only |
 | `npm run lint` | Oxlint |
 
-## Using the page
+## Pages
+
+| Route | Page |
+| --- | --- |
+| `/` | Home: hero, the three tracks, the rhythm, next event, upcoming deadlines, latest wins, join |
+| `/hackathons` | Upcoming hackathons as a departures board |
+| `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
+| `/wins` | Win cards: photo, project, placement, team, Devpost |
+| `/track-record` | Logo walls: where members have worked, sponsors, partners, other wins |
+| `/resources` | The playbook index |
+| `/events` | Upcoming events with RSVP |
+| `/board` | The board |
+| `/join` | What you get, the sign-up form and the Discord |
+
+Anything else renders the 404 page. Every route is a client-side route, so the host has to answer any unknown path with `index.html` (see [Deploying](#deploying)).
+
+## Content
+
+All copy lives in `src/content/`, one typed file per page plus `site.ts` for the brand, the nav and hack night's time and place. Anything made up carries `placeholder: true` and renders with a small **sample** tag, so fake hackathons, wins, people or times can't ship unnoticed. Remove the flag only once the item is real and checked. `trackRecord.ts` takes real, verified logos only and has no samples on purpose.
+
+The two forms (`/grants` interest list and `/join`) validate in the browser and then show a thank-you state. They don't send anything anywhere yet; see the TODO in `src/components/Form.tsx`. RSVPs on `/events` are the same.
+
+## Using the field
 
 - **Move the cursor.** The characters slide with the wind and ease back into place. Along your path they turn into `○ > _` and dissolve back into the field within about a second. The trail uses the background's own grid at whatever glyph size is set.
 - **Click.** An expanding shockwave.
 - **Leave it alone.** The field keeps breathing: the gradient sways slowly, glyphs shimmer, and every few seconds a patch of characters swells sideways and settles.
-- **Sliders button (top right).** Live controls for glyph size and contrast, base color, wind, trail length, character push, ribbing, trail color and character set. It can also hide the page content to show the field alone, and settle the surface.
 - With `prefers-reduced-motion`, the field renders once and the simulation stays off.
 
 ## Layout
 
 ```
 src/
+  App.tsx                the routes; every page renders inside Layout
   ascii-field/           background engine (plain TypeScript) and its React wrapper
     AsciiField.tsx       <AsciiField>: owns the canvas and the engine's lifecycle
     engine.ts            animation loop, input and resize handling; lays the trail into the grid
@@ -46,8 +68,13 @@ src/
     noise.ts             value noise that picks ○ or > inside the trail
     textClearing.ts      keeps the trail off text marked data-fog-clear
     settings.ts          settings type, defaults and every tuning constant
-  components/            Hero, TopBar, ScheduleCard, FeatureStrip, TweakPanel, IconButton, icons
-  content/hero.ts        all page copy (placeholder) in one place
+  components/
+    Layout.tsx           mounts the field once, the top bar, the page and the footer
+    TopBar, MenuSheet, Footer, Hero, ScheduleCard, FeatureStrip, PageIntro, SampleTag, Form, IconButton, icons
+    ui.module.css        shared glass panels, buttons, the sample tag and the page intro
+  content/               all copy, one typed file per page (see Content)
+  lib/dates.ts           formatting and countdowns for the ISO dates in content
+  pages/                 one component and CSS module per route
 ```
 
 `AsciiField` has no dependency on the rest of the page. Drop it into any layout:
@@ -96,8 +123,18 @@ Every constant lives in `src/ascii-field/settings.ts`. Start with these:
 
 The defaults behind the panel's controls are `DEFAULT_FIELD_SETTINGS` in the same file.
 
+## Deploying
+
+`npm run build` writes a static site to `dist/`. Because the routes are client-side, a refresh or a shared link to `/grants` asks the server for a file that doesn't exist, so the host must serve `index.html` for unknown paths with a 200:
+
+- **Vite dev and `vite preview`**: already do this (Vite's default `appType: 'spa'`).
+- **Netlify**: a `public/_redirects` file with `/*  /index.html  200`.
+- **Vercel**: `vercel.json` with `{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }`.
+- **Cloudflare Pages / Workers static assets**: SPA fallback is the default when there's no `404.html` (Workers: `not_found_handling = "single-page-application"`).
+- **GitHub Pages**: no rewrites; copy `index.html` to `404.html` after the build (pages then return a 404 status but render).
+
 ## Notes
 
 - Inter and JetBrains Mono load from Google Fonts (see `index.html`). The engine waits briefly for JetBrains Mono so its glyph grid starts with the right metrics.
-- The copy in `src/content/hero.ts` is placeholder for the BU Builders concept.
+- The seal (`public/proto-seal.svg`) is a filled flat mark, used as-is for the top bar and the favicon.
 - Credits: the trail is modeled on the [Fluid ASCII technical note](https://vector-terminal-fluid-demo.pages.dev/), a Codex-style stable-fluids fog. The solver follows Jos Stam, *Stable Fluids* (SIGGRAPH 1999).

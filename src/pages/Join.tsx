@@ -1,0 +1,101 @@
+import { Field, Form } from '../components/Form'
+import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
+import { PageIntro } from '../components/PageIntro'
+import { SampleTag } from '../components/SampleTag'
+import ui from '../components/ui.module.css'
+import { DISCORD, JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS, TRACK_OPTIONS, YEAR_OPTIONS } from '../content/join'
+import styles from './Join.module.css'
+
+export function Join() {
+  return (
+    <div className={ui.page}>
+      <PageIntro intro={JOIN_INTRO} />
+
+      <div className={styles.layout}>
+        <section className={styles.perks} aria-labelledby="perks">
+          <h2 id="perks" className={ui.eyebrow} data-fog-clear>
+            {JOIN_FORM.perksTitle}
+          </h2>
+          <ul className={styles.perkList}>
+            {PERKS.map((perk) => (
+              <li key={perk.title} className={styles.perk}>
+                <h3 className={styles.perkTitle} data-fog-clear>
+                  {perk.title}
+                </h3>
+                <p className={styles.perkText} data-fog-clear>
+                  {perk.text}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <div className={styles.side}>
+          <section className={ui.panel} aria-labelledby="join-form">
+            <h2 id="join-form" className={`${ui.sectionTitle} ${styles.formTitle}`} data-fog-clear>
+              {JOIN_FORM.title}
+            </h2>
+            {/* Doesn't submit anywhere yet: see the note in Form. */}
+            <Form submitLabel={JOIN_FORM.submit} thanks={JOIN_THANKS}>
+              <Field label="Name" wide>
+                <input className={inputClass} name="name" autoComplete="name" required />
+              </Field>
+              <Field label="BU email" wide>
+                <input
+                  className={inputClass}
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@bu.edu"
+                  pattern={BU_EMAIL_PATTERN}
+                  title="Use your @bu.edu address"
+                  required
+                />
+              </Field>
+              <Field label="Year">
+                <select className={inputClass} name="year" required defaultValue="">
+                  <option value="" disabled>
+                    Pick one
+                  </option>
+                  {YEAR_OPTIONS.map((year) => (
+                    <option key={year}>{year}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Track">
+                <select className={inputClass} name="track" required defaultValue="">
+                  <option value="" disabled>
+                    Pick one
+                  </option>
+                  {TRACK_OPTIONS.map((track) => (
+                    <option key={track}>{track}</option>
+                  ))}
+                </select>
+              </Field>
+            </Form>
+          </section>
+
+          <section className={`${ui.panelDeep} ${styles.discord}`} aria-labelledby="discord">
+            <div>
+              <h2 id="discord" className={styles.discordTitle} data-fog-clear>
+                {DISCORD.label} <SampleTag show={DISCORD.placeholder} />
+              </h2>
+              <p className={styles.discordText} data-fog-clear>
+                {DISCORD.text}
+              </p>
+            </div>
+            {DISCORD.href ? (
+              <a className={ui.secondary} href={DISCORD.href} target="_blank" rel="noreferrer" data-fog-clear="box">
+                Open Discord <span aria-hidden="true">↗</span>
+              </a>
+            ) : (
+              <span className={ui.secondary} aria-disabled="true" data-fog-clear="box">
+                {JOIN_FORM.discordPending}
+              </span>
+            )}
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}

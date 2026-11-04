@@ -1,21 +1,25 @@
-import type { ScheduleSlot } from '../content/hero'
+import type { ScheduleSlot } from '../content/site'
 import { PinIcon } from './icons'
+import { SampleTag } from './SampleTag'
 import styles from './ScheduleCard.module.css'
 
 interface ScheduleCardProps {
   location: string
   slots: readonly ScheduleSlot[]
   className?: string
+  /** The time and place aren't confirmed yet. */
+  placeholder?: boolean
 }
 
 /** The glass "this week" card: where hack night happens and the next sessions. */
-export function ScheduleCard({ location, slots, className }: ScheduleCardProps) {
+export function ScheduleCard({ location, slots, className, placeholder }: ScheduleCardProps) {
   return (
     <aside className={[styles.card, className].filter(Boolean).join(' ')} aria-label="This week">
       <div className={styles.handle} aria-hidden="true" />
       <p className={styles.location} data-fog-clear>
         <PinIcon />
         {location}
+        <SampleTag show={placeholder} />
       </p>
 
       {slots.map((slot) => (

@@ -15,9 +15,10 @@
   letter-spacing: -0.01em;
 }
 
-.logo svg {
-  width: 22px;
-  height: 22px;
+.logo img {
+  display: block;
+  width: 24px;
+  height: 24px;
 }
 
 .nav {
@@ -77,22 +78,10 @@
   gap: 8px;
 }
 
-@media (max-width: 640px) {
-  .top {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
+/* Five links don't fit beside the logo on narrow screens; the menu sheet has them all. */
+@media (max-width: 760px) {
   .nav {
-    position: static;
-    order: 3;
-    width: 100%;
-    justify-content: space-between;
-    transform: none;
-  }
-
-  .nav a {
-    padding: 7px 10px;
+    display: none;
   }
 }
 

@@ -1,44 +1,38 @@
-import type { ReactNode } from 'react'
-import { NAV_ITEMS } from '../content/hero'
-import { IconButton } from './IconButton'
-import { ClockIcon, LogoMark, MenuIcon } from './icons'
+import { Link, NavLink } from 'react-router'
+import { BRAND, NAV_ITEMS } from '../content/site'
+import { IconLink } from './IconButton'
+import { ClockIcon } from './icons'
+import { MenuSheet } from './MenuSheet'
 import styles from './TopBar.module.css'
 
-/** Logo, centered nav pill and the round action buttons; `children` join the actions. */
-export function TopBar({ children }: { children?: ReactNode }) {
+/** Seal and name, the centered nav pill, and the round action buttons. */
+export function TopBar() {
   return (
     <header className={styles.top}>
-      <a className={styles.logo} href="#" data-fog-clear>
-        <LogoMark />
-        BU Builders
-      </a>
+      <Link className={styles.logo} to="/" data-fog-clear>
+        {/* A filled flat mark: shown as-is, not through the stroked icon helper. */}
+        <img src={BRAND.seal} alt="" width={24} height={24} />
+        {BRAND.short}
+      </Link>
 
       <nav className={styles.nav} aria-label="Primary">
-        {NAV_ITEMS.map((item) => (
-          <a
-            key={item.label}
-            href={item.href}
-            aria-current={item.current ? 'page' : undefined}
-            data-fog-clear="box"
-          >
+        {NAV_ITEMS.filter((item) => item.inPill).map((item) => (
+          <NavLink key={item.to} to={item.to} data-fog-clear="box">
             {item.label}
             {item.badge && (
               <span className={styles.badge} aria-hidden="true">
                 {item.badge}
               </span>
             )}
-          </a>
+          </NavLink>
         ))}
       </nav>
 
       <div className={styles.actions}>
-        <IconButton label="Upcoming events" variant="solid">
+        <IconLink to="/events" label="Upcoming events" variant="solid">
           <ClockIcon />
-        </IconButton>
-        <IconButton label="Menu">
-          <MenuIcon />
-        </IconButton>
-        {children}
+        </IconLink>
+        <MenuSheet />
       </div>
     </header>
   )
