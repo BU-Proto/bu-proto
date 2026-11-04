@@ -1,3 +1,4 @@
+import { LogoBand } from '../components/LogoBand'
 import { PageIntro } from '../components/PageIntro'
 import ui from '../components/ui.module.css'
 import { EMPTY_WALL, LOGO_WALLS, TRACK_RECORD_INTRO } from '../content/trackRecord'
@@ -11,10 +12,11 @@ export function TrackRecord() {
   return (
     <div className={ui.page}>
       <PageIntro intro={TRACK_RECORD_INTRO} />
+      <LogoBand showLink={false} />
 
       <div className={styles.walls}>
         {LOGO_WALLS.map((wall, index) => (
-          <section key={wall.title} className={ui.panel} aria-labelledby={`wall-${index}`}>
+          <section key={wall.id} className={ui.panel} aria-labelledby={`wall-${index}`}>
             <div className={styles.head}>
               <span className={styles.count} data-fog-clear>
                 {String(wall.logos.length).padStart(2, '0')}

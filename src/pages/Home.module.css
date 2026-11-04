@@ -31,8 +31,8 @@
 .lede {
   max-width: 46ch;
   margin: 0;
-  color: var(--ink-soft);
-  font-size: 16px;
+  color: var(--ink);
+  font-size: 17px;
   line-height: 1.55;
   text-shadow: var(--on-field-shadow);
 }
@@ -86,7 +86,7 @@
 
 .who {
   margin: 0;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 500;
 }
 
@@ -95,8 +95,8 @@
   gap: 4px;
   margin: 0;
   padding: 0;
-  color: var(--ink-soft);
-  font-size: 15px;
+  color: var(--ink);
+  font-size: 16px;
   list-style: none;
 }
 
@@ -127,7 +127,7 @@
     .trackBody {
       animation: settle linear both;
       animation-timeline: view();
-      animation-range: entry 20% cover 45%;
+      animation-range: entry 10% cover 30%;
     }
   }
 }
@@ -241,8 +241,7 @@
 
 .beatDetail {
   margin: 0;
-  color: var(--ink-soft);
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .beat[data-later] .beatWhat,
@@ -328,8 +327,7 @@
 .bandNote {
   margin: 0;
   padding: 0 16px;
-  color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 15px;
   text-align: center;
 }
 
@@ -377,7 +375,7 @@
   margin-top: 14px;
   color: var(--accent);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .eventCopy {
@@ -414,8 +412,7 @@
 .eventText {
   max-width: 44ch;
   margin: 0 0 6px;
-  color: var(--ink-soft);
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .schedule {
@@ -544,7 +541,7 @@
 .joinLede {
   max-width: 44ch;
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--ink);
   font-size: 17px;
   text-shadow: var(--on-field-shadow);
 }

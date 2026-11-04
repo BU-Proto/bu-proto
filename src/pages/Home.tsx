@@ -1,5 +1,6 @@
 import { Link, useLoaderData } from 'react-router'
 import { Hero } from '../components/Hero'
+import { LogoBand } from '../components/LogoBand'
 import { Decrypt } from '../components/motion/Decrypt'
 import { Marquee } from '../components/motion/Marquee'
 import { NumberTicker } from '../components/motion/NumberTicker'
@@ -245,6 +246,12 @@ export function Home() {
           )}
         </section>
 
+      </div>
+
+      {/* Partners and sponsors, scrolling the other way. */}
+      <LogoBand />
+
+      <div className={styles.flow}>
         {/* The ask, lit word by word as it rises up the screen. */}
         <section className={styles.join} aria-labelledby="join-cta">
           <h2 id="join-cta" className={styles.joinTitle} data-fog-clear>

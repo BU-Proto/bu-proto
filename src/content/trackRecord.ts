@@ -20,16 +20,20 @@ export interface Logo {
   href?: string
 }
 
+export type LogoWallId = 'worked' | 'sponsors' | 'partners' | 'wins'
+
 export interface LogoWall {
+  id: LogoWallId
   title: string
   text: string
   logos: readonly Logo[]
 }
 
 export const LOGO_WALLS: readonly LogoWall[] = [
-  { title: 'Where members have worked', text: 'Internships and jobs, confirmed by the member.', logos: [] },
-  { title: 'Sponsors', text: 'Companies funding hack nights, trips and the fund.', logos: [] },
+  { id: 'worked', title: 'Where members have worked', text: 'Internships and jobs, confirmed by the member.', logos: [] },
+  { id: 'sponsors', title: 'Sponsors', text: 'Companies funding hack nights, trips and the fund.', logos: [] },
   {
+    id: 'partners',
     title: 'Partners',
     text: 'BU programs and orgs we co-host with.',
     logos: [
@@ -37,7 +41,15 @@ export const LOGO_WALLS: readonly LogoWall[] = [
       { name: 'Spark!', href: 'https://www.bu.edu/spark/' },
     ],
   },
-  { title: 'Other wins', text: 'Accelerators, fellowships and awards members have landed.', logos: [] },
+  { id: 'wins', title: 'Other wins', text: 'Accelerators, fellowships and awards members have landed.', logos: [] },
 ]
+
+/** The scrolling band of partners and sponsors on the home page and the track record page. */
+export const LOGO_BAND = {
+  label: 'Partners and sponsors',
+  title: 'Built with',
+  walls: ['partners', 'sponsors'] as readonly LogoWallId[],
+  link: { label: 'See the track record', href: '/track-record' },
+}
 
 export const EMPTY_WALL = 'No verified logos yet. This fills in as they’re confirmed.'

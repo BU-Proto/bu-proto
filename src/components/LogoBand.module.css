@@ -1,0 +1,60 @@
+/* Full bleed, like the notes band, but quieter: no tint, just the names on the field. */
+.band {
+  display: grid;
+  gap: 22px;
+  /* Edge to edge from inside any column (the body clips the scrollbar's width of overflow). */
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding: clamp(28px, 5vh, 52px) 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 max(16px, env(safe-area-inset-left, 0px));
+  text-shadow: var(--on-field-shadow);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  height: clamp(44px, 6vw, 64px);
+  opacity: 0.88;
+}
+
+a.item:hover {
+  opacity: 1;
+}
+
+a.item:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 6px;
+  border-radius: 6px;
+}
+
+/* Logos turn white so every brand sits in the same voice over the gradient. */
+.logo {
+  max-height: 100%;
+  width: auto;
+  filter: brightness(0) invert(1) drop-shadow(0 1px 8px rgba(0, 25, 55, 0.45));
+}
+
+.wordmark {
+  font-size: clamp(30px, 4.6vw, 58px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+  text-shadow: var(--on-field-shadow);
+}
