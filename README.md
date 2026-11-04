@@ -10,16 +10,23 @@ Requires Node 20.19+ or 22.12+.
 
 ```bash
 npm install
-npm run dev
+cp .dev.vars.example .dev.vars   # secrets for local dev; see Admin portal
+npm run db:migrate               # create and seed the local D1
+npm run dev                      # http://localhost:5173
 ```
+
+`npm run dev` runs the site and the API together: the Cloudflare Vite plugin runs `worker/` in the Workers runtime with a local D1 (stored in `.wrangler/state`), so it behaves the way production does.
 
 | Script | What it does |
 | --- | --- |
-| `npm run dev` | Vite dev server with hot reload |
-| `npm run build` | Typecheck (`tsc -b`) and production build to `dist/` |
-| `npm run preview` | Serve the production build locally |
+| `npm run dev` | Site and API with hot reload, local D1 |
+| `npm run build` | Typecheck (`tsc -b`) and production build of the site and the Worker |
+| `npm run preview` | Build, then serve the production build locally |
 | `npm run typecheck` | Typecheck only |
 | `npm run lint` | Oxlint |
+| `npm run db:migrate` | Apply `migrations/` to the local D1 |
+| `npm run cf-typegen` | Regenerate `worker/worker-configuration.d.ts` after changing `wrangler.jsonc` or `.dev.vars` |
+| `npm run deploy` | Build, migrate the production D1, deploy the Worker |
 
 ## Pages
 
@@ -35,7 +42,34 @@ npm run dev
 | `/board` | The board |
 | `/join` | What you get, the sign-up form and the Discord |
 
-Anything else renders the 404 page. Every route is a client-side route, so the host has to answer any unknown path with `index.html` (see [Deploying](#deploying)).
+Anything else renders the 404 page. Every route is a client-side route; the Worker serves `index.html` for any path that isn't a file or under `/api` (`not_found_handling` in `wrangler.jsonc`), so deep links work on refresh.
+
+The portal lives at `/admin`; see [Admin portal](#admin-portal).
+
+## Admin portal
+
+`/admin` is where the team edits events, hackathons, wins and the board; looks after members and the fund interest list; reads an event's RSVPs; emails people; and decides who else gets in. It's a separate, lazy-loaded part of the app with its own layout (no ASCII field), so none of it ships to public visitors.
+
+**Who gets in.** Sign-in is GitHub only. Logins in `ADMIN_GITHUB_LOGINS` (`wrangler.jsonc`, comma-separated) are owners: always allowed, never removable in the portal. Owners and admins add everyone else on the Admins page, by GitHub username. Removing someone ends their sessions right away. Sessions are an HttpOnly cookie holding a random token (only its SHA-256 is stored) and last 14 days. Every state-changing API request must come from the site's own origin.
+
+**Email.** The Email page sends through [Resend](https://resend.com) to all members, one track, an event's RSVPs, or the fund list by status. Subject and body take variables (`{{name}}`, `{{fullName}}`, `{{email}}`, `{{track}}`, and `{{event}}`, `{{eventDate}}`, `{{eventTime}}`, `{{eventPlace}}` for event emails), and the live preview renders exactly what each real recipient will get. Member emails carry a one-click unsubscribe link. Every send is logged with its counts. Without `RESEND_API_KEY` nothing leaves: emails are printed to the dev server console and the campaign is marked *logged*.
+
+### Setting up GitHub sign-in
+
+GitHub OAuth apps allow one callback URL each, so make two: one for local dev, one for production. Create them under the GitHub organization's settings if Proto has one, otherwise under a personal account (Settings → Developer settings → OAuth Apps → New OAuth App).
+
+1. **Local:** homepage `http://localhost:5173`, callback `http://localhost:5173/api/auth/callback`. Generate a client secret and put both values in `.dev.vars` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, then restart `npm run dev`. Sign-in only works on the port the callback names.
+2. **Production:** homepage `https://<your domain>`, callback `https://<your domain>/api/auth/callback` (the `*.workers.dev` URL works until there's a custom domain). Then `npx wrangler secret put GITHUB_CLIENT_ID` and `npx wrangler secret put GITHUB_CLIENT_SECRET`.
+
+The app only asks for `read:user`, uses GitHub's token once to read the profile, and never stores it.
+
+### Setting up Resend
+
+1. In Resend, add the sending domain and the DNS records it shows (SPF and DKIM, usually on a `send.` subdomain), and wait for *Verified*. Add a DMARC record (`_dmarc` TXT, e.g. `v=DMARC1; p=none;`) too; Gmail and Yahoo expect it from bulk senders.
+2. Set `EMAIL_FROM` in `wrangler.jsonc` to an address on that domain, e.g. `BU Proto <hello@yourdomain>`. The placeholder `hello@buproto.example` will be rejected. `EMAIL_REPLY_TO` is optional.
+3. Create an API key with sending access and `npx wrangler secret put RESEND_API_KEY`. Leave it empty in `.dev.vars`.
+
+Sends go out in batches of 100 inside the request, which is fine for a few thousand recipients; a much bigger list would want a Queue.
 
 ## Content
 
@@ -70,6 +104,7 @@ src/
     noise.ts             value noise that picks ○ or > inside the trail
     textClearing.ts      keeps the trail off text marked data-fog-clear
     settings.ts          settings type, defaults and every tuning constant
+  admin/                 the portal at /admin: shell, sign-in, dashboard, editors, people and email pages
   components/
     Layout.tsx           mounts the field once, the top bar, the page and the footer
     TopBar, MenuSheet, Footer, Hero, ScheduleCard, PageIntro, SampleTag, Form, RouteStates, IconButton, icons
@@ -78,6 +113,15 @@ src/
   lib/content.ts         fetches the D1 content for the route loaders
   lib/dates.ts           formatting and countdowns for the ISO dates in content
   pages/                 one component and CSS module per route
+shared/
+  api.ts                 the API contract: every endpoint's types, zod input schemas, the content field specs
+  constants.ts           plain values (tracks, years, statuses) the public site can import without zod
+worker/
+  index.ts               the Hono app: same-origin check on /api, admin session check on /api/admin
+  routes/                auth, admins, content, public forms, people (members, fund, stats), email
+  lib/                   sessions, validation, content mapping, Resend, the email template
+migrations/              D1 schema and the sample content seed
+wrangler.jsonc           the Worker, its assets, D1, the form rate limiter, vars
 ```
 
 `AsciiField` has no dependency on the rest of the page. Drop it into any layout:
@@ -129,13 +173,14 @@ The defaults behind the panel's controls are `DEFAULT_FIELD_SETTINGS` in the sam
 
 ## Deploying
 
-`npm run build` writes a static site to `dist/`. Because the routes are client-side, a refresh or a shared link to `/grants` asks the server for a file that doesn't exist, so the host must serve `index.html` for unknown paths with a 200:
+It's one Cloudflare Worker: Workers Static Assets serve the built site, and only `/api/*` runs the Worker.
 
-- **Vite dev and `vite preview`**: already do this (Vite's default `appType: 'spa'`).
-- **Netlify**: a `public/_redirects` file with `/*  /index.html  200`.
-- **Vercel**: `vercel.json` with `{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }`.
-- **Cloudflare Pages / Workers static assets**: SPA fallback is the default when there's no `404.html` (Workers: `not_found_handling = "single-page-application"`).
-- **GitHub Pages**: no rewrites; copy `index.html` to `404.html` after the build (pages then return a 404 status but render).
+1. `npx wrangler login`.
+2. Set `ADMIN_GITHUB_LOGINS` and `EMAIL_FROM` in `wrangler.jsonc`, and the three secrets (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `RESEND_API_KEY`) with `npx wrangler secret put`.
+3. Once, create the production database: `npx wrangler d1 create bu-proto`, and paste the `database_id` it prints into the `d1_databases` entry in `wrangler.jsonc`.
+4. `npm run deploy`.
+
+`npm run deploy` applies any new files in `migrations/` to production before deploying. `0002_seed.sql` loads the sample content, all tagged *sample*; replace or delete it in the portal.
 
 ## Notes
 

@@ -13,8 +13,8 @@
     "run_worker_first": ["/api/*"]
   },
 
-  // database_id is left out so `wrangler deploy` provisions the database on first deploy.
-  // Once it exists, paste the id here so every machine points at the same one.
+  // Before the first deploy, run `npx wrangler d1 create bu-proto` and paste its database_id
+  // here. Local dev doesn't need it.
   "d1_databases": [
     {
       "binding": "DB",
