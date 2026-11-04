@@ -90,7 +90,7 @@ src/
 
 **Background.** Each cell of a monospace grid takes its character from the gradient's brightness at that cell, read bilinearly from a 48×30 colormap and mapped onto the ramp (default `.,:;'-~=+<>*xo%#@`). A column wave at the reference's rib spacing (about 67 ribs across) imitates its fluted glass. Glyphs are tinted with the gradient under them, lifted toward white so they read as texture over a wash of the same gradient on a dark ground.
 
-**Ambient motion.** The gradient sways slowly (about 1% of the viewport, over roughly 20 seconds), each glyph shimmers faintly, and every couple of seconds a swell slides a patch of characters a few pixels and lets it settle.
+**Ambient motion.** The gradient sways slowly (about 1% of the viewport, over roughly 20 seconds), each glyph shimmers faintly, and every couple of seconds a swell slides a patch of characters a few pixels and lets it settle. Two layers of value noise also roll through the field, pushing each character up or down the ramp, while the fluted-glass ribs slide sideways. These waves ease off behind elements marked `data-fog-clear`, and `DEFAULT_FIELD_SETTINGS.drift` sets their strength (0 turns them off).
 
 **Trail.** The trail follows the reference fog's math. A Stable Fluids solver runs diffuse, project, advect and project each frame. Each pointer move adds the pointer's velocity as force and deposits fog with a smoothstep brush that grows with speed; the fog is laid every half brush along the move, so fast flicks and slow frames still leave an unbroken trail. A click starts four rings that ease outward together. Fog drifts with the wind and decays as `exp(−1.2·dt)`.
 
@@ -119,6 +119,7 @@ Every constant lives in `src/ascii-field/settings.ts`. Start with these:
 | `FIELD.WARP_BLUR` / `WARP_LIMIT` | 20 / 0.4 | Smoothness of the slide (px) and the most a glyph may stretch |
 | `FIELD.GUST_SLIDE` / `GUST_EVERY` | 14 / 2.4 | Ambient swells: how far (px) and how often (s) |
 | `FIELD.SWAY_X` / `SWAY_Y` | 0.01 / 0.008 | Ambient sway of the gradient, as a fraction of the viewport |
+| `FIELD.DRIFT_AMOUNT` / `DRIFT_FLOW` | 0.16 / 0.22 | Character waves: how far they swing density, and how fast they travel |
 | `FIELD.RIBS_ACROSS` | 67 | Fluted-glass ribs across the viewport |
 
 The defaults behind the panel's controls are `DEFAULT_FIELD_SETTINGS` in the same file.

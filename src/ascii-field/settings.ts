@@ -46,6 +46,8 @@ export interface FieldSettings {
   push: number
   /** Strength of the fluted-glass column modulation, 0–1. */
   ribbing: number
+  /** Strength of the waves that roll through the background's characters; 0 turns them off. */
+  drift: number
   ramp: RampName
   trailColor: TrailColor
 }
@@ -58,6 +60,7 @@ export const DEFAULT_FIELD_SETTINGS: FieldSettings = {
   trailLength: 1,
   push: 0.25,
   ribbing: 0.5,
+  drift: 1,
   ramp: 'fine',
   trailColor: 'white',
 }
@@ -86,6 +89,15 @@ export const FIELD = {
   SWAY_Y_SPEED: -0.27,
   SHIMMER: 0.015,
   SHIMMER_SPEED: 1.3,
+  /**
+   * Ambient waves in the characters: two layers of value noise swing each cell's density by up
+   * to DRIFT_AMOUNT × the `drift` setting, and the fluted-glass ribs slide at RIB_SPEED rad/s.
+   * DRIFT_SCALE is noise cells per px and DRIFT_FLOW is noise cells travelled per second.
+   */
+  DRIFT_AMOUNT: 0.16,
+  DRIFT_SCALE: 0.0065,
+  DRIFT_FLOW: 0.22,
+  RIB_SPEED: 0.9,
   /** Glyphs are lifted toward white by LIFT (more on light colors) × glyph contrast. */
   LIFT: 0.5,
   LIFT_LIGHT: 0.35,

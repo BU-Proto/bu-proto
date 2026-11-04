@@ -37,10 +37,11 @@ export interface WarpField {
 }
 
 /**
- * What a renderer draws for one frame. `cells` holds 4 bytes per cell, row by row:
- * background glyph (index into the ramp, 0 = blank; only filled in for renderers that don't
- * pick glyphs themselves), its opacity (0–255, dimmed under the trail), trail glyph
- * (1–3 for ○ > _, 0 = none, which replaces the background glyph) and its opacity.
+ * What a renderer draws for one frame. `cells` holds 4 bytes per cell, row by row: background
+ * glyph (index into the ramp, 0 = blank) for renderers that don't pick glyphs themselves, or for
+ * those that do, how much of the drift the cell gets (0–255, less behind text); then the glyph's
+ * opacity (0–255, dimmed under the trail), trail glyph (1–3 for ○ > _, 0 = none, which replaces
+ * the background glyph) and its opacity.
  */
 export interface FieldFrame {
   /** Seconds, for the ambient sway; 0 draws the still pose. */

@@ -1,4 +1,4 @@
-import { swayPhases, swayU, swayV } from './ambient'
+import { driftPose, swayPhases, swayU, swayV } from './ambient'
 import { FluidField } from './fluid'
 import { sampleGradient } from './gradient'
 import { createValueNoise } from './noise'
@@ -140,6 +140,8 @@ export class AsciiFieldEngine {
   /** Cells whose fog bytes were written last frame: [i0, j0, i1, j1] inclusive. */
   private fogRect: [number, number, number, number] | null = null
   private clearMask: Float32Array = new Float32Array(0)
+  /** The clear mask changed, so `cells` needs uploading even if the fog didn't move. */
+  private calmChanged = false
   private texTime = 0
 
   // Pointer.
@@ -309,7 +311,6 @@ export class AsciiFieldEngine {
   /** Precompute where each column and row sits on the gradient and on the fluid grid. */
   private layoutCells(geometry: FieldGeometry, fluid: FluidField): void {
     const { cols, rows, cellW, cellH, width, height } = geometry
-    const ribK = TAU / geometry.ribPeriod
     this.colX = new Float32Array(cols)
     this.colU = new Float32Array(cols)
     this.colRib = new Float32Array(cols)
@@ -321,7 +322,6 @@ export class AsciiFieldEngine {
       const node = Math.min(x * fluid.scaleX, fluid.cols - 1.001)
       this.colX[i] = x
       this.colU[i] = x / width
-      this.colRib[i] = 0.5 + 0.5 * Math.sin(x * ribK)
       this.colNode[i] = node | 0
       this.colFrac[i] = node - (node | 0)
     }
@@ -386,7 +386,8 @@ export class AsciiFieldEngine {
   private render(time: number): void {
     if (!this.geometry) return
     const warping = this.renderer.canWarp && this.updateWarp()
-    let cellsChanged = this.paintFog(warping)
+    let cellsChanged = this.paintFog(warping) || this.calmChanged
+    this.calmChanged = false
     if (!this.renderer.picksGlyphs) {
       this.pickGlyphs(time)
       cellsChanged = true
@@ -460,14 +461,17 @@ export class AsciiFieldEngine {
 
   /**
    * Each cell's background glyph (for renderers that don't pick glyphs themselves): the
-   * gradient's brightness at its home, ribbed and shimmering. The renderer may slide the glyph
-   * with the wind; its color is always the gradient under it.
+   * gradient's brightness at its home, ribbed, shimmering and drifting, with the drift calmed
+   * behind marked text. The renderer may slide the glyph with the wind; its color is always the
+   * gradient under it.
    */
   private pickGlyphs(time: number): void {
-    const { geometry, cells, rgb } = this
+    const { geometry, cells, rgb, noise, clearMask } = this
     if (!geometry) return
     const { cols, rows } = geometry
     const { colX, colU, colRib, colSway, rowY, rowV, phaseSin, phaseCos } = this
+    const { amount, ribShift, flow } = driftPose(time, this.settings.drift)
+    const ribK = TAU / geometry.ribPeriod
     const { ribbing } = this.settings
     const steps = RAMPS[this.settings.ramp].length - 1
     const toGlyph = steps / (FIELD.DENSITY_HI - FIELD.DENSITY_LO)
@@ -476,10 +480,14 @@ export class AsciiFieldEngine {
     const shimmerSin = FIELD.SHIMMER * Math.sin(time * FIELD.SHIMMER_SPEED)
     const shimmerCos = FIELD.SHIMMER * Math.cos(time * FIELD.SHIMMER_SPEED)
     const [phaseX, phaseY] = swayPhases(time)
-    for (let i = 0; i < cols; i++) colSway[i] = swayV(colX[i], phaseY)
+    for (let i = 0; i < cols; i++) {
+      colSway[i] = swayV(colX[i], phaseY)
+      colRib[i] = 0.5 + 0.5 * Math.sin(colX[i] * ribK + ribShift)
+    }
     for (let j = 0; j < rows; j++) {
       const sway = swayU(rowY[j], phaseX)
       const v = rowV[j]
+      const waveY = rowY[j] * FIELD.DRIFT_SCALE
       for (let i = 0; i < cols; i++) {
         const k = j * cols + i
         sampleGradient(colU[i] + sway, v + colSway[i], rgb)
@@ -487,7 +495,15 @@ export class AsciiFieldEngine {
         const g = rgb[1]
         const b = rgb[2]
         const bright = (0.7 * (0.2126 * r + 0.7152 * g + 0.0722 * b) + 0.3 * (r > g ? (r > b ? r : b) : g > b ? g : b)) / 255
-        const dens = bright * (ribBase + ribAmp * colRib[i]) + shimmerSin * phaseCos[k] + shimmerCos * phaseSin[k]
+        let dens = bright * (ribBase + ribAmp * colRib[i]) + shimmerSin * phaseCos[k] + shimmerCos * phaseSin[k]
+        if (amount > 0) {
+          const waveX = colX[i] * FIELD.DRIFT_SCALE
+          const wave =
+            noise.sample(waveX + flow[0], waveY + flow[1]) +
+            noise.sample(waveX * 1.7 + flow[2], waveY * 1.7 + flow[3]) -
+            1
+          dens += wave * amount * (1 - clearMask[k])
+        }
         const gi = Math.round((dens - FIELD.DENSITY_LO) * toGlyph)
         cells[k * 4] = gi < 0 ? 0 : gi > steps ? steps : gi
       }
@@ -586,7 +602,13 @@ export class AsciiFieldEngine {
   private measureClearMask(elements: Iterable<Element>): void {
     const { geometry } = this
     if (!geometry) return
-    this.clearMask = buildClearMask(elements, geometry.cols, geometry.rows, geometry.cellW, geometry.cellH)
+    const mask = buildClearMask(elements, geometry.cols, geometry.rows, geometry.cellW, geometry.cellH)
+    this.clearMask = mask
+    if (this.renderer.picksGlyphs) {
+      // Hand the shader its share of the drift through the unused glyph byte.
+      for (let k = 0; k < mask.length; k++) this.cells[k * 4] = ((1 - mask[k]) * 255 + 0.5) | 0
+      this.calmChanged = true
+    }
   }
 
   // ---- events -------------------------------------------------------------------------------

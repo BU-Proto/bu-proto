@@ -1,4 +1,4 @@
-import { swayPhases } from './ambient'
+import { driftPose, swayPhases } from './ambient'
 import { gradientPixels } from './gradient'
 import type { FieldFrame, FieldGeometry, FieldRenderer, GlyphAtlas } from './renderer'
 import { FIELD, TRAIL_COLORS } from './settings'
@@ -19,8 +19,8 @@ void main() {
 // Per pixel: the gradient (swaying, never pushed by the cursor) as a wash over the dark ground,
 // then the glyph of whichever character the wind has carried over this pixel, tinted with the
 // gradient here, or the trail's glyph in its place. Each character's glyph comes from the
-// gradient's brightness at its home cell, with the fluted-glass rib and a faint shimmer, the
-// same rule the engine applies on the CPU for the Canvas 2D fallback.
+// gradient's brightness at its home cell, with the fluted-glass rib, a faint shimmer and the
+// drifting noise, the same rule the engine applies on the CPU for the Canvas 2D fallback.
 const FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 precision highp int;
@@ -36,6 +36,9 @@ uniform float uRibK;
 uniform float uRibBase;
 uniform float uRibAmp;
 uniform vec2 uShimmer;
+uniform float uDrift;
+uniform float uRibShift;
+uniform vec4 uDriftFlow;
 uniform float uSteps;
 uniform float uToGlyph;
 uniform vec2 uWarpScale;
@@ -86,13 +89,28 @@ float hash(ivec2 cell) {
   return float(h) * (1.0 / 4294967296.0);
 }
 
-float pickGlyph(ivec2 cell) {
+// Smooth value noise on a lattice that repeats every 256 cells.
+float valueNoise(vec2 p) {
+  vec2 whole = floor(p);
+  vec2 f = p - whole;
+  f = f * f * (3.0 - 2.0 * f);
+  ivec2 c = ivec2(whole);
+  float top = mix(hash(c & 255), hash((c + ivec2(1, 0)) & 255), f.x);
+  float bottom = mix(hash((c + ivec2(0, 1)) & 255), hash((c + ivec2(1, 1)) & 255), f.x);
+  return mix(top, bottom, f.y);
+}
+
+float pickGlyph(ivec2 cell, float calm) {
   vec2 home = (vec2(cell) + 0.5) * uCellCss;
   vec3 g = gradient(home / uView + sway(home));
   float bright = 0.7 * dot(g, vec3(0.2126, 0.7152, 0.0722)) + 0.3 * max(g.r, max(g.g, g.b));
-  float rib = 0.5 + 0.5 * sin(home.x * uRibK);
+  float rib = 0.5 + 0.5 * sin(home.x * uRibK + uRibShift);
   float phase = hash(cell) * 6.2831853;
   float density = bright * (uRibBase + uRibAmp * rib) + uShimmer.x * cos(phase) + uShimmer.y * sin(phase);
+  if (uDrift > 0.0 && calm > 0.0) {
+    vec2 wave = home * ${glsl(FIELD.DRIFT_SCALE)};
+    density += uDrift * calm * (valueNoise(wave + uDriftFlow.xy) + valueNoise(wave * 1.7 + uDriftFlow.zw) - 1.0);
+  }
   return clamp(floor((density - ${glsl(FIELD.DENSITY_LO)}) * uToGlyph + 0.5), 0.0, uSteps);
 }
 
@@ -116,12 +134,13 @@ void main() {
   ivec2 cell = ivec2(clamp(floor(home / uCell), vec2(0.0), vec2(uGrid - 1)));
   vec2 local = home - vec2(cell) * uCell;
   if (all(greaterThanEqual(local, vec2(0.0))) && all(lessThan(local, uCell))) {
-    // From the CPU: the veil's opacity, and the trail's glyph and opacity.
+    // From the CPU: the cell's share of the drift, the veil's opacity, and the trail's glyph
+    // and opacity.
     vec4 state = floor(texelFetch(uCells, cell, 0) * 255.0 + 0.5);
     if (state.b > 0.0) {
       rgb = mix(rgb, uTrailColor, coverage(uTrailBase + state.b - 1.0, local) * state.a / 255.0);
     } else {
-      float glyph = pickGlyph(cell);
+      float glyph = pickGlyph(cell, state.r / 255.0);
       if (glyph > 0.0) rgb = mix(rgb, tint, coverage(glyph, local) * state.g / 255.0);
     }
   }
@@ -143,6 +162,9 @@ const UNIFORMS = [
   'uRibBase',
   'uRibAmp',
   'uShimmer',
+  'uDrift',
+  'uRibShift',
+  'uDriftFlow',
   'uSteps',
   'uToGlyph',
   'uCanvas',
@@ -301,6 +323,10 @@ export class WebGLFieldRenderer implements FieldRenderer {
     gl.uniform1f(u.uRibAmp, settings.ribbing * 0.16)
     const shimmer = frame.time * FIELD.SHIMMER_SPEED
     gl.uniform2f(u.uShimmer, FIELD.SHIMMER * Math.sin(shimmer), FIELD.SHIMMER * Math.cos(shimmer))
+    const { amount, ribShift, flow } = driftPose(frame.time, settings.drift)
+    gl.uniform1f(u.uDrift, amount)
+    gl.uniform1f(u.uRibShift, ribShift)
+    gl.uniform4f(u.uDriftFlow, ...flow)
     const { warp } = frame
     gl.uniform1f(u.uWarpOn, warp ? 1 : 0)
     if (warp) {
