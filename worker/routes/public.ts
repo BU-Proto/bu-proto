@@ -1,6 +1,7 @@
 import { Hono, type Context } from 'hono'
 import { fundInterestInput, joinInput, rsvpInput, type RsvpResult } from '../../shared/api'
 import { randomToken } from '../lib/crypto'
+import { sendFundConfirmation, sendRsvpConfirmation, sendWelcome } from '../lib/confirmations'
 import { bostonToday } from '../lib/dates'
 import { limitForms } from '../lib/forms'
 import { ApiError, idParam, readBody } from '../lib/http'
@@ -12,6 +13,8 @@ import type { AppEnv } from '../types'
 // match the ones the forms render their widgets with.
 
 const app = new Hono<AppEnv>()
+
+const origin = (c: Context<AppEnv>) => new URL(c.req.url).origin
 
 /**
  * Whether the hidden `website` field came back filled. The shared schemas would reject that with
@@ -39,6 +42,8 @@ app.post('/api/join', limitForms, requireHuman('join'), async (c) => {
   )
     .bind(input.name, input.email, input.year, input.track, token, token)
     .first<{ inserted: number }>()
+  // Only a new member gets the welcome; someone updating their details has had it already.
+  if (row?.inserted) c.executionCtx.waitUntil(sendWelcome(c.env, origin(c), { ...input, unsubscribeToken: token }))
   return c.json({ ok: true }, row?.inserted ? 201 : 200)
 })
 
@@ -50,14 +55,15 @@ app.post('/api/fund-interest', limitForms, requireHuman('fund-interest'), async 
   )
     .bind(input.name, input.email, input.year, input.target, input.spend, input.amount)
     .run()
+  c.executionCtx.waitUntil(sendFundConfirmation(c.env, origin(c), input))
   return c.json({ ok: true }, 201)
 })
 
 app.post('/api/events/:id/rsvp', limitForms, requireHuman('rsvp'), async (c) => {
   const id = idParam(c)
-  const event = await c.env.DB.prepare('SELECT date FROM events WHERE id = ? AND published = 1')
+  const event = await c.env.DB.prepare('SELECT title, date, time, place FROM events WHERE id = ? AND published = 1')
     .bind(id)
-    .first<{ date: string }>()
+    .first<{ title: string; date: string; time: string; place: string }>()
   if (!event) throw new ApiError(404, 'That event isn’t on the calendar.')
   if (event.date < bostonToday()) throw new ApiError(400, 'That event has already happened.')
 
@@ -77,6 +83,8 @@ app.post('/api/events/:id/rsvp', limitForms, requireHuman('rsvp'), async (c) => 
     countRsvps,
   ])
   const result: RsvpResult = { ok: true, count: count.results[0]?.count ?? 0 }
+  // A repeat RSVP changes nothing, so it doesn't send a second confirmation either.
+  if (insert.meta.changes > 0) c.executionCtx.waitUntil(sendRsvpConfirmation(c.env, origin(c), input, event))
   return c.json(result, insert.meta.changes > 0 ? 201 : 200)
 })
 
