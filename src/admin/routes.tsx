@@ -41,9 +41,10 @@ export const adminRoutes: RouteObject[] = [
           { path: 'members/:id', lazy: () => import('./pages/MemberDetail') },
           { path: 'fund', lazy: () => import('./pages/Fund') },
           { path: 'email', lazy: () => import('./pages/Email') },
-          // Before ':resource/:id', or "import" would be read as a hackathon's or win's id.
+          // Before ':resource/:id', or "import" would be read as an event's, hackathon's or win's id.
           { path: 'hackathons/import', lazy: () => import('./pages/HackathonImport') },
           { path: 'wins/import', lazy: () => import('./pages/WinImport') },
+          { path: 'events/import', lazy: () => import('./pages/EventImport') },
           // events | hackathons | wins | board; anything else is a 404 from the loader.
           {
             path: ':resource',

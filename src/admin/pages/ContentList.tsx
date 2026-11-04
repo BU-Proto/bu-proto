@@ -39,6 +39,11 @@ export function Component() {
         lede="Drafts only show here. Sample rows are made-up content, and the site marks them as samples."
         actions={
           <>
+            {isEvents && (
+              <Link className={admin.button} to="/admin/events/import">
+                Import from Luma or Eventbrite
+              </Link>
+            )}
             {resource === 'hackathons' && (
               <Link className={admin.button} to="/admin/hackathons/import">
                 Import from MLH &amp; Devpost

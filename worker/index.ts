@@ -7,6 +7,7 @@ import auth from './routes/auth'
 import content from './routes/content'
 import devpost from './routes/devpost'
 import email from './routes/email'
+import eventImport from './routes/eventImport'
 import imports from './routes/imports'
 import pages from './routes/pages'
 import people from './routes/people'
@@ -33,6 +34,7 @@ app.route('/', people) //       /api/admin/members, /api/admin/fund, /api/admin/
 app.route('/', email) //        /api/admin/email/*, /api/unsubscribe
 app.route('/', imports) //      /api/admin/hackathon-imports/*
 app.route('/', devpost) //      /api/admin/devpost/* (projects → win drafts)
+app.route('/', eventImport) //  /api/admin/event-import/* (Luma, Eventbrite pages → event drafts)
 app.route('/', pages) //        /privacy, /terms rendered for crawlers
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404))

@@ -713,3 +713,42 @@ export interface DevpostImportResult {
   skipped: { url: string; id: number; reason: string }[]
   failed: { url: string; error: string }[]
 }
+
+// ---- Portal: event import from an event page --------------------------------------------------
+
+/** Where an imported event page came from; 'other' is any page with schema.org Event data. */
+export const EVENT_IMPORT_SOURCES = ['luma', 'eventbrite', 'other'] as const
+export type EventImportSource = (typeof EVENT_IMPORT_SOURCES)[number]
+
+/**
+ * POST /api/admin/event-import/lookup { url } → EventImportPreview
+ * POST /api/admin/event-import/import { url } → 201 { item: ProtoEvent }, an unpublished draft
+ * `url` is a public event page (lu.ma/…, eventbrite.com/e/…, or any page with schema.org Event
+ * JSON-LD). Import reads the page again rather than trusting the preview. A page with no event
+ * answers 400; a title and date that already exist answer 409 on import.
+ */
+export const eventImportInput = z.object({
+  url: z
+    .string()
+    .trim()
+    .min(1, 'Paste an event link.')
+    .max(2000, 'That link is too long.')
+    .refine((value) => {
+      try {
+        return new URL(value).protocol === 'https:'
+      } catch {
+        return false
+      }
+    }, 'Paste a full https:// link.'),
+})
+export type EventImportInput = z.input<typeof eventImportInput>
+
+export interface EventImportPreview {
+  /** The page's address after redirects (lu.ma links land on luma.com). */
+  url: string
+  source: EventImportSource
+  /** The draft as import would make it, already validated. */
+  event: z.output<typeof eventInput>
+  /** An event with the same title on the same day, so it isn't added twice. */
+  existingEventId: number | null
+}

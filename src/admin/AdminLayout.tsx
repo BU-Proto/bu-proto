@@ -24,7 +24,7 @@ const NAV: readonly NavGroup[] = [
   {
     label: 'Site',
     items: [
-      { to: '/admin/events', label: 'Events' },
+      { to: '/admin/events', label: 'Events', sub: [{ to: '/admin/events/import', label: 'Import' }] },
       { to: '/admin/hackathons', label: 'Hackathons', sub: [{ to: '/admin/hackathons/import', label: 'Import' }] },
       { to: '/admin/wins', label: 'Wins' },
       { to: '/admin/board', label: 'Board' },
