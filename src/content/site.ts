@@ -46,6 +46,12 @@ export const SCHEDULE: { location: string; slots: readonly ScheduleSlot[] } & Sa
   ],
 }
 
+/**
+ * BU Proto's LinkedIn page. Paste the full URL here (e.g. 'https://www.linkedin.com/company/…')
+ * once the page exists; while it's null, the board page and the footer leave the link out.
+ */
+export const PROTO_LINKEDIN: string | null = null
+
 export const FOOTER = {
   note: 'BU Proto is a working name. Nothing here is official with Spark! or Innovate@BU yet.',
 } as const

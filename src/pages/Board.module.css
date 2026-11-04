@@ -1,129 +1,153 @@
+/*
+ * The board as a masthead: a full portrait per person, then name, role and links set plainly on
+ * the field below it. Nothing is boxed but the photo, so the copy carries the on-field shadow.
+ */
+
+.contact {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.55;
+  text-shadow: var(--on-field-shadow);
+}
+
+.contact p {
+  margin: 0;
+}
+
+.contact a {
+  color: var(--ink);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 44px 20px;
+  gap: clamp(48px, 7vh, 72px) clamp(24px, 3.4vw, 44px);
   margin: 0;
-  padding: 28px 0 0;
+  padding: clamp(24px, 5vh, 48px) 0 0;
   list-style: none;
 }
 
-/* Each badge hangs from a strap that runs up out of the card. */
-.badge {
+.member {
+  display: grid;
+  align-content: start;
+  gap: 20px;
+  min-width: 0;
+}
+
+.portrait {
   position: relative;
   display: grid;
-  justify-items: center;
-  gap: 4px;
-  padding: 34px 20px 24px;
-  border: 1px solid var(--glass-edge);
-  border-radius: 20px;
-  background: linear-gradient(var(--glass), var(--glass)), rgba(6, 30, 56, 0.16);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
-  box-shadow:
-    0 24px 60px -34px rgba(0, 25, 55, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  text-align: center;
-  text-shadow: 0 1px 2px rgba(0, 25, 55, 0.25);
-}
-
-.badge::before {
-  content: '';
-  position: absolute;
-  bottom: calc(100% - 14px);
-  left: 50%;
-  width: 16px;
-  height: 40px;
-  border-radius: 3px 3px 0 0;
-  background: repeating-linear-gradient(180deg, var(--accent) 0 4px, rgba(157, 240, 168, 0.7) 4px 8px);
-  transform: translateX(-50%);
-  z-index: -1;
-}
-
-.hole {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  width: 34px;
-  height: 7px;
-  border-radius: 999px;
-  background: rgba(6, 30, 56, 0.55);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
-  transform: translateX(-50%);
-}
-
-.photo {
-  display: grid;
   place-items: center;
-  width: 112px;
-  aspect-ratio: 1;
-  margin-bottom: 14px;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  border: 3px solid #fff;
-  border-radius: 50%;
+  border-radius: 6px;
+  /* What shows with no photo, and under one while it loads: frosted glass that takes its colour
+     from the field behind it, deepening toward ink with a hint of mint at the top. */
   background:
-    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.45), transparent 60%),
-    rgba(6, 30, 56, 0.45);
-  font-size: 34px;
-  font-weight: 300;
-  letter-spacing: -0.02em;
+    radial-gradient(110% 70% at 20% 0%, rgba(157, 240, 168, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(6, 30, 56, 0.42));
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  backdrop-filter: blur(28px) saturate(140%);
+  box-shadow:
+    0 30px 70px -40px rgba(0, 20, 45, 0.8),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
-.photo img {
+.portrait img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
+.initials {
+  color: rgba(246, 251, 255, 0.9);
+  font-size: clamp(56px, 7vw, 96px);
+  font-weight: 200;
+  text-shadow: 0 2px 30px rgba(0, 25, 55, 0.3);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.text {
+  display: grid;
+  gap: 6px;
+  text-shadow: var(--on-field-shadow);
+}
+
 .name {
   margin: 0;
-  font-size: 19px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-size: clamp(24px, 2.4vw, 30px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+/* The sample tag sits on the name's baseline rather than floating at cap height. */
+.name > span {
+  vertical-align: 0.2em;
 }
 
 .role {
   margin: 0;
-  color: var(--accent);
-  font-size: 14px;
-  font-weight: 500;
+  color: rgba(246, 251, 255, 0.86);
+  font-size: 15px;
 }
 
 .links {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px 16px;
-  margin: 12px 0 0;
+  gap: 6px 20px;
+  margin: 8px 0 0;
   padding: 0;
-  font-size: 12.5px;
+  font-size: 14px;
   list-style: none;
 }
 
-@media (max-width: 900px) {
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-block: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.32);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.link:hover {
+  border-bottom-color: #fff;
+}
+
+.link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.glyph {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 960px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-/* One column on phones, but a badge is still badge-sized rather than a full-width slab. */
-@media (max-width: 560px) {
+/* Two narrow portraits stop reading as faces below this, so phones get one, capped in width. */
+@media (max-width: 520px) {
   .grid {
-    grid-template-columns: minmax(0, 320px);
-    justify-content: center;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .badge {
-    transform-origin: 50% -30px;
-    transition: transform 400ms cubic-bezier(0.3, 1.6, 0.5, 1);
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .badge:hover {
-    transform: rotate(-2deg);
-  }
-
-  .badge:nth-child(even):hover {
-    transform: rotate(2deg);
+  .member {
+    max-width: 420px;
   }
 }

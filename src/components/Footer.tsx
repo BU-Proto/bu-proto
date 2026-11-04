@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { LEGAL_LINKS } from '../content/legal'
-import { BRAND, FOOTER, NAV_ITEMS } from '../content/site'
+import { BRAND, FOOTER, NAV_ITEMS, PROTO_LINKEDIN } from '../content/site'
 import styles from './Footer.module.css'
 
 /** Every page again, the working-name note, and the legal pages on the note's line. */
@@ -20,6 +20,13 @@ export function Footer() {
               </Link>
             </li>
           ))}
+          {PROTO_LINKEDIN && (
+            <li>
+              <a href={PROTO_LINKEDIN} target="_blank" rel="noreferrer" data-fog-clear>
+                LinkedIn <span aria-hidden="true">↗</span>
+              </a>
+            </li>
+          )}
         </ul>
       </nav>
       <div className={styles.fine}>
