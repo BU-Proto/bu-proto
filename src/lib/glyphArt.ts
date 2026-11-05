@@ -249,3 +249,29 @@ export function rampWedge(cols = 96, rows = 8): string[] {
   }
   return lines
 }
+
+/**
+ * One week of the landing's rhythm, as a column of the fine ramp: `height` of `rows` lit from the
+ * bottom at `weight` (0–1, how big the night is), with a ragged top that thins out like the
+ * field's characters. `seed` keeps each week's grain its own and the same on every render.
+ */
+export function rhythmColumn(height: number, weight: number, rows: number, cols = 6, seed = 0): string[] {
+  const top = FINE_RAMP.length - 1
+  const lines: string[] = []
+  for (let j = 0; j < rows; j++) {
+    // 0 at the bottom row, counting up.
+    const lift = rows - 1 - j
+    let line = ''
+    for (let i = 0; i < cols; i++) {
+      const grain = hash(i + seed * 13, j) - 0.5
+      let v = 0
+      if (lift < height - 1) v = weight * (0.9 + 0.1 * Math.cos(i * 1.3)) + grain * 0.18
+      // The top row of a column frays, and a loose glyph or two floats above it.
+      else if (lift === height - 1) v = hash(j, i + seed) < 0.75 ? weight * 0.7 + grain * 0.2 : 0
+      else if (lift === height && hash(i + seed, j + 5) < 0.3) v = 0.12
+      line += FINE_RAMP[Math.round(clamp01(v) * top)]
+    }
+    lines.push(line)
+  }
+  return lines
+}

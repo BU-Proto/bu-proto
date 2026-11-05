@@ -69,6 +69,11 @@ export function showcaseOrder(wins: readonly Win[]): { featured: Win[]; rest: Wi
   return { featured, rest: wins.filter((win) => !featured.includes(win)) }
 }
 
+/** The latest wins: newest first by the hackathon's date, undated ones after, in the given order. */
+export function newestWins(wins: readonly Win[], count: number): Win[] {
+  return [...wins].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, count)
+}
+
 export type TeamPart = { kind: 'name'; text: string; bu: boolean } | { kind: 'text'; text: string }
 
 /**

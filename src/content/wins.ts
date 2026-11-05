@@ -42,7 +42,6 @@ export const WIN_TALLY = {
 export const WIN_SHOWCASE = {
   at: 'at',
   builtBy: 'Built by',
-  open: 'See the project',
   /** Over the projects that follow the lead win on /wins. */
   moreTitle: 'More projects that won',
 } as const

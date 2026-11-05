@@ -1,7 +1,6 @@
 /*
- * Wins set as accolades, not cards: nothing is boxed. Covers dissolve into the field the way a
- * win's own page opens, and the prize is the headline. Copy sits on the field or on the dissolved
- * edge of a photo, so it carries the on-field shadow.
+ * Wins set as accolades, not cards: nothing is boxed but the covers, and the prize is the
+ * headline. Copy sits on the field, so it carries the on-field shadow.
  */
 
 .features,
@@ -16,41 +15,35 @@
   gap: clamp(48px, 9vh, 112px);
 }
 
-/* ---- A top placement: the window's full width, photo on one side, prize on the other ---- */
+/* ---- A top placement: the cover framed at a moderate size, the prize large beside it ---- */
 
+/* Inside the page column, not the window's width: covers are Devpost screenshots, often of a UI,
+   and blown up behind the type they cropped badly and pushed everything else off the screen. */
 .feature {
-  /* Lines the text's outer edge up with the page column. */
-  --gutter: max(16px, calc((100vw - 1180px) / 2));
   position: relative;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: center;
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
+  column-gap: clamp(24px, 3vw, 48px);
 }
 
 .featurePhoto {
   position: relative;
   grid-row: 1;
-  grid-column: 1 / 9;
-  align-self: center;
-  /* Covers are mostly 16:9 screenshots and photos: 16:10 shows nearly all of one, instead of
-     stretching it to the section's height and showing a sliver. */
-  aspect-ratio: 16 / 10;
+  grid-column: 1 / 7;
+  /* Devpost's own ratio, so most covers show whole and the rest lose only a sliver. */
+  aspect-ratio: 3 / 2;
+  max-height: 50vh;
   overflow: hidden;
-  /* A soft fade toward the text and at top and bottom, so the photo has no hard edge, but most of
-     it stays clear. */
-  --across: linear-gradient(to right, #000 64%, transparent 100%);
-  --down: linear-gradient(to bottom, transparent, #000 9%, #000 88%, transparent);
-  -webkit-mask-image: var(--across), var(--down);
-  -webkit-mask-composite: source-in;
-  mask-image: var(--across), var(--down);
-  mask-composite: intersect;
+  border-radius: 16px;
+  background: var(--navy);
+  outline: 1px solid rgb(var(--frost-rgb) / 0.16);
+  outline-offset: -1px;
+  box-shadow: 0 30px 60px -40px rgb(var(--harbor-rgb) / 0.7);
 }
 
 .feature[data-side='right'] .featurePhoto {
-  grid-column: 5 / -1;
-  --across: linear-gradient(to left, #000 64%, transparent 100%);
+  grid-column: 7 / -1;
 }
 
 .featurePhoto img {
@@ -60,38 +53,23 @@
   object-fit: cover;
 }
 
-/* Ink pooled on the side the text overlaps, so the type holds up over a bright photo. */
-.featurePhoto::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to right, transparent 62%, rgb(var(--harbor-rgb) / 0.45));
-  pointer-events: none;
-}
-
-.feature[data-side='right'] .featurePhoto::after {
-  background: linear-gradient(to left, transparent 62%, rgb(var(--harbor-rgb) / 0.45));
-}
-
 .featureText {
-  /* Positioned, after the photo, so it paints over it. */
   position: relative;
   grid-row: 1;
   grid-column: 7 / -1;
-  padding: clamp(32px, 6vh, 64px) var(--gutter) clamp(32px, 6vh, 64px) 0;
+  padding: clamp(8px, 2vh, 24px) 0;
   text-shadow: var(--on-field-shadow);
 }
 
 .feature[data-side='right'] .featureText {
   grid-column: 1 / 7;
-  padding-inline: var(--gutter) 0;
 }
 
 .featurePrize {
-  max-width: 11ch;
+  max-width: 12ch;
   margin: 0;
-  font-size: clamp(52px, 6.6vw, 100px);
-  font-weight: 200;
+  font-size: clamp(40px, 4.4vw, 64px);
+  font-weight: 300;
   letter-spacing: -0.045em;
   line-height: 0.96;
   text-wrap: balance;
@@ -104,17 +82,17 @@
 
 .featureNote {
   max-width: 30ch;
-  margin: clamp(14px, 2vh, 20px) 0 0;
-  font-size: clamp(18px, 1.6vw, 22px);
+  margin: clamp(12px, 1.8vh, 16px) 0 0;
+  font-size: clamp(17px, 1.4vw, 19px);
   font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1.3;
 }
 
 .featureWhere {
-  margin: clamp(10px, 1.6vh, 16px) 0 0;
+  margin: clamp(6px, 1vh, 10px) 0 0;
   color: var(--ink-soft);
-  font-size: clamp(20px, 2vw, 28px);
+  font-size: clamp(18px, 1.6vw, 22px);
   font-weight: 300;
   letter-spacing: -0.02em;
 }
@@ -124,12 +102,12 @@
   justify-items: start;
   gap: 8px;
   max-width: 46ch;
-  margin-top: clamp(32px, 6vh, 56px);
+  margin-top: clamp(20px, 3.6vh, 32px);
 }
 
 .featureName {
   margin: 0;
-  font-size: clamp(24px, 2.2vw, 30px);
+  font-size: clamp(22px, 1.9vw, 26px);
   font-weight: 500;
   letter-spacing: -0.025em;
   line-height: 1.1;
@@ -138,7 +116,7 @@
 .featureBlurb {
   margin: 0;
   color: var(--ink);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.55;
   text-wrap: pretty;
 }
@@ -155,30 +133,6 @@
 
 .member {
   white-space: nowrap;
-}
-
-.cue {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 14px;
-  padding-bottom: 3px;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.4);
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.arrow {
-  display: inline-block;
-  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.feature:has(.overlay:hover, .name:hover) .cue {
-  border-bottom-color: var(--frost);
-}
-
-.feature:has(.overlay:hover, .name:hover) .arrow {
-  transform: translateX(4px);
 }
 
 /* ---- A prize set smaller: the prize, the photo under it, then the project ---- */
@@ -346,33 +300,25 @@
   letter-spacing: 0.2em;
 }
 
-/* ---- Phones and narrow windows: photo above, text rising out of it ---- */
+/* ---- Phones and narrow windows: the cover above, the text under it ---- */
 
 @media (max-width: 900px) {
   .feature {
     grid-template-columns: minmax(0, 1fr);
-    min-height: 0;
+    row-gap: clamp(20px, 4vw, 28px);
   }
 
   .featurePhoto,
   .feature[data-side='right'] .featurePhoto {
     grid-column: 1;
-    aspect-ratio: 4 / 3;
-    --across: linear-gradient(#000, #000);
-    --down: linear-gradient(to bottom, #000 45%, transparent 98%);
-  }
-
-  .featurePhoto::after,
-  .feature[data-side='right'] .featurePhoto::after {
-    background: linear-gradient(to top, rgb(var(--harbor-rgb) / 0.5), transparent 50%);
+    max-height: none;
   }
 
   .featureText,
   .feature[data-side='right'] .featureText {
     grid-row: 2;
     grid-column: 1;
-    margin-top: calc(-1 * clamp(72px, 16vw, 140px));
-    padding: 0 var(--gutter);
+    padding: 0;
   }
 
   .plates {
@@ -418,7 +364,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arrow,
   .platePhoto img {
     transition: none;
   }

@@ -12,24 +12,14 @@ export const HERO_COPY = {
 
 export type NoteIconName = 'grants' | 'handoff'
 
-/** The two things the tracks and the rhythm don't already say, in a slim strip under the rhythm. */
-export const NOTES: readonly { icon: NoteIconName; text: string; link?: Link }[] = [
-  { icon: 'grants', text: 'Microgrants of $50–$500, coming soon', link: { label: 'About the fund', href: '/grants' } },
-  { icon: 'handoff', text: 'Built to feed BU’s startup programs (Spark!, Innovate@BU)' },
-]
+/** The fund, said once, beside the trips it would pay for. Coming soon: it isn't funded yet. */
+export const FUND_NOTE: { text: string; link: Link } = {
+  text: 'A travel fund for these is coming soon.',
+  link: { label: 'About the fund', href: '/grants' },
+}
 
-/**
- * The full-bleed band between the rhythm and what's next. Glyphs between items come from the field.
- * The fund isn't in here: the line under the band says it, with the link.
- */
-export const MARQUEE: readonly string[] = [
-  'Weekly hack nights, with food',
-  'Group trips to hackathons',
-  'A demo night every semester',
-  'First hackathon? You get a veteran',
-  'Built to feed Spark! and Innovate@BU',
-]
-
+// The tracks only say what's particular to each one: hack night and demo night are for everyone,
+// and the hero and the rhythm already say so.
 export interface Track {
   name: TrackName
   /** One of the trail's own glyphs, drawn large behind the card. */
@@ -58,13 +48,13 @@ export const TRACKS: readonly Track[] = [
     name: 'Build',
     glyph: '>',
     who: 'Hackathon regulars and side-project people.',
-    offers: ['Weekly hack nights', 'Team matching', 'Group trips to HackMIT, PennApps and more'],
+    offers: ['Team matching', 'Group trips to HackMIT, PennApps and more'],
   },
   {
     name: 'Launch',
     glyph: '_',
     who: 'Student founders.',
-    offers: ['Demo nights', 'Founder talks', "A path into BU's startup programs"],
+    offers: ['Founder talks', 'A path into BU’s startup programs, Spark! and Innovate@BU'],
   },
 ]
 
@@ -108,7 +98,7 @@ export const NEXT_UP = {
 export const WINS_TITLE = 'Latest wins'
 
 export const HOME_EMPTY = {
-  next: 'Nothing on the calendar yet. Check back soon.',
+  next: 'Nothing on the calendar yet. Dates go up here as soon as they’re set.',
   deadlines: 'No open deadlines right now.',
 } as const
 

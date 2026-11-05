@@ -64,8 +64,8 @@ function ProjectLink({ win, className }: { win: Win; className: string }) {
 }
 
 /**
- * A top placement, given the width of the window: the cover large on one side, dissolving into the
- * field, and the prize set huge on the other. `side` says which side the photo takes.
+ * A top placement: the cover framed on one side, at a size a screenshot survives, and the prize
+ * set large on the other. `side` says which side the photo takes.
  */
 export function AccoladeFeature({
   win,
@@ -103,9 +103,6 @@ export function AccoladeFeature({
             </p>
           )}
           <Team win={win} max={6} />
-          <span className={styles.cue} aria-hidden="true" data-fog-clear>
-            {WIN_SHOWCASE.open} <span className={styles.arrow}>→</span>
-          </span>
         </div>
       </div>
     </article>

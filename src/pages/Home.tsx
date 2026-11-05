@@ -1,25 +1,21 @@
 import { useMemo, type CSSProperties } from 'react'
 import { Link, useLoaderData } from 'react-router'
-import { showcaseOrder } from '../components/accolade'
-import { AccoladeFeature, AccoladePlates } from '../components/Accolades'
+import { newestWins } from '../components/accolade'
 import { GlyphEdge } from '../components/GlyphEdge'
 import { Hero } from '../components/Hero'
 import { LogoBand } from '../components/LogoBand'
 import { AsciiFigure } from '../components/motion/AsciiFigure'
-import { Marquee } from '../components/motion/Marquee'
-import { NumberTicker } from '../components/motion/NumberTicker'
 import { ScrubWords } from '../components/motion/ScrubWords'
 import { SampleTag } from '../components/SampleTag'
 import { ScheduleCard } from '../components/ScheduleCard'
 import ui from '../components/ui.module.css'
+import { WinLog } from '../components/WinLog'
 import { WinTally } from '../components/WinTally'
-import { EVENT_COVERS } from '../content/covers'
 import {
+  FUND_NOTE,
   HOME_EMPTY,
   JOIN_CTA,
-  MARQUEE,
   NEXT_UP,
-  NOTES,
   RHYTHM,
   RHYTHM_INTRO,
   SEMESTER,
@@ -32,11 +28,9 @@ import { WINS_EMPTY } from '../content/wins'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
-import { glyphTexture, type FigureShape } from '../lib/glyphArt'
+import { glyphTexture, rhythmColumn, type FigureShape } from '../lib/glyphArt'
 import { GROUND } from '../lib/pageGround'
 import styles from './Home.module.css'
-
-const SEPARATORS = ['○', '>', '_']
 
 /** The trail glyph each track already carries, drawn as a figure. */
 const FIGURES: Record<string, FigureShape> = { '○': 'ring', '>': 'chevron', _: 'bar' }
@@ -44,9 +38,43 @@ const FIGURES: Record<string, FigureShape> = { '○': 'ring', '>': 'chevron', _:
 const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 
 /**
- * The landing. The hero keeps the field; below it the page walks through its own grounds, each
- * seam drawn rather than boxed: harbor that the field drains into, a paper score, a mint strip, a
- * photo of campus, harbor again, and the field once more for the ask.
+ * How each beat is drawn in the score, by its row in RHYTHM: the bigger the night, the taller and
+ * denser its column. A week shows its biggest beat. Year two has no column: it isn't on yet.
+ */
+const BEATS = [
+  { name: 'hack', height: 4, weight: 0.4 },
+  { name: 'trip', height: 8, weight: 0.66 },
+  { name: 'demo', height: 13, weight: 0.94 },
+] as const
+const TRIP_ROW = 1
+const SCORE_ROWS = 14
+const COLUMN_WIDTH = 8
+
+function beatIndex(week: number): number {
+  let index = -1
+  RHYTHM.forEach((beat, row) => {
+    if (!beat.later && row < BEATS.length && beat.weeks.includes(week)) index = Math.max(index, row)
+  })
+  return index
+}
+
+const beatOf = (week: number) => BEATS[beatIndex(week)]?.name
+
+function weekArt(week: number): string {
+  const beat = BEATS[beatIndex(week)]
+  return rhythmColumn(beat?.height ?? 0, beat?.weight ?? 0, SCORE_ROWS, COLUMN_WIDTH, week).join('\n')
+}
+
+/** A small piece of each beat's column, for the key; year two gets a few loose dots. */
+const SWATCHES = RHYTHM.map((_, row) => {
+  const beat = BEATS[row]
+  return rhythmColumn(beat ? 3 : 1, beat?.weight ?? 0.1, 3, 5, row + 40).join('\n')
+})
+
+/**
+ * The landing. The hero keeps the field; below it the field drains into one long harbor ground,
+ * which takes on a frozen texture of the field partway down and fills back up with the live field
+ * for the ask. Each section has one job: the ways in, the rhythm and its next beat, the record.
  */
 export function Home() {
   const { events, hackathons, wins } = useLoaderData<HomeData>()
@@ -57,30 +85,21 @@ export function Home() {
     .filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
     .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
     .slice(0, 3)
-  const fundNote = NOTES.find((note) => note.link)
   const nextDate = nextEvent && dateParts(nextEvent.date)
-  const { featured, rest } = showcaseOrder(wins)
-  const topWins = [...featured, ...rest].slice(0, 3)
-  // The next event's own photo if it has one; otherwise the campus photo for its kind, credited.
-  const stock = EVENT_COVERS[nextEvent?.kind ?? 'Hack night'] ?? EVENT_COVERS['Hack night']
+  const latest = newestWins(wins, 3)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
-  const photo = nextEvent?.photo ? { src: nextEvent.photo, alt: '', credit: null } : { src: stock.src, alt: '', credit: stock }
 
   return (
     <>
       <title>{`${BRAND.full} · The home base for building things at BU`}</title>
       <Hero />
 
-      {/* Harbor: the field drains into it. The record, then the three ways in. */}
+      {/* Harbor: the field drains into it, and the three ways in stand on it. */}
       <div className={`${styles.bleed} ${styles.ink} ${styles.afterHero}`}>
         <GlyphEdge color={GROUND.harbor} mode="drain" rows={44} cell={10} />
         <div className={styles.column}>
-          <div className={styles.tally}>
-            <WinTally wins={wins} showLink />
-          </div>
-
           <section className={styles.tracks} aria-labelledby="tracks">
-            <header className={styles.tracksHead}>
+            <header className={styles.sectionHead}>
               <h2 id="tracks" className={styles.title}>
                 {TRACKS_INTRO.title}
               </h2>
@@ -112,11 +131,14 @@ export function Home() {
         </div>
       </div>
 
-      {/* Paper: the rhythm, set as a score across a semester. */}
-      <div className={`${styles.bleed} ${styles.paper}`}>
-        <GlyphEdge color={GROUND.paper} mode="steps" rows={4} cell={7} />
+      {/* Harbor still, now with the field frozen into it: the rhythm and what's next on it, then
+          the record. The field comes back by degrees: plain harbor, its texture, then the field. */}
+      <div
+        className={`${styles.bleed} ${styles.ink} ${styles.inkTextured}`}
+        style={{ '--texture': texture ? `url(${texture})` : 'none' } as CSSProperties}
+      >
         <section className={`${styles.column} ${styles.rhythm}`} aria-labelledby="rhythm">
-          <header className={styles.rhythmHead}>
+          <header className={styles.sectionHead}>
             <h2 id="rhythm" className={styles.title}>
               {RHYTHM_INTRO.title}
             </h2>
@@ -124,190 +146,149 @@ export function Home() {
           </header>
 
           <figure className={styles.score}>
-            <div className={styles.axis} aria-hidden="true">
-              <span className={styles.axisLabel}>{SEMESTER.weekLabel}</span>
-              <span className={styles.axisWeeks}>
-                {WEEKS.map((week) => (
-                  <span key={week}>{week}</span>
-                ))}
-              </span>
-            </div>
-            <ol className={styles.lines}>
-              {RHYTHM.map((beat, row) => (
-                <li key={beat.what} className={styles.line} data-row={row} data-later={beat.later || undefined}>
-                  <div className={styles.lineLabel}>
-                    <p className={styles.when}>{beat.when}</p>
-                    <h3 className={styles.beatWhat}>{beat.what}</h3>
-                    <p className={styles.beatDetail}>{beat.detail}</p>
-                  </div>
-                  <div className={styles.lineTrack} aria-hidden="true">
-                    {beat.later ? (
-                      <span className={styles.later}>{SEMESTER.later}</span>
-                    ) : (
-                      WEEKS.map((week) => (
-                        <span key={week} className={styles.cell} data-on={beat.weeks.includes(week) || undefined} />
-                      ))
-                    )}
-                  </div>
-                </li>
+            <div className={styles.weeks} aria-hidden="true">
+              {WEEKS.map((week) => (
+                <pre key={week} className={styles.week} data-beat={beatOf(week)}>
+                  {weekArt(week)}
+                </pre>
               ))}
-            </ol>
+            </div>
+            <div className={styles.axis} aria-hidden="true">
+              {WEEKS.map((week) => (
+                <span key={week}>{week}</span>
+              ))}
+            </div>
             <figcaption className={styles.caption}>{SEMESTER.caption}</figcaption>
           </figure>
-        </section>
-      </div>
 
-      {/* Mint: a hard cut, the accent's one loud moment on the page. */}
-      <div className={`${styles.bleed} ${styles.mint}`}>
-        <Marquee label="What Proto does" duration={48}>
-          {MARQUEE.map((item, index) => (
-            <span key={item} className={styles.bandItem}>
-              <span>{item}</span>
-              <span className={styles.bandGlyph} aria-hidden="true">
-                {SEPARATORS[index % SEPARATORS.length]}
-              </span>
-            </span>
-          ))}
-        </Marquee>
-        {fundNote?.link && (
-          <p className={styles.bandNote}>
-            {fundNote.text}.{' '}
-            <Link className={ui.textLink} to={fundNote.link.href}>
-              {fundNote.link.label}
-            </Link>
-          </p>
-        )}
-      </div>
-
-      {/* Campus: the next thing on the calendar, over a photo of where it happens. */}
-      <section className={`${styles.bleed} ${styles.ink} ${styles.photoBand}`} aria-labelledby="next-event">
-        <div className={styles.photo} aria-hidden="true">
-          <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
-        </div>
-        <div className={`${styles.column} ${styles.next}`}>
-          <h2 id="next-event" className={styles.title}>
-            {NEXT_UP.title}
-          </h2>
-
-          <div className={styles.nextGrid}>
-            {nextEvent && nextDate ? (
-              <article className={styles.event}>
-                <p className={styles.date}>
-                  <span className={styles.dateDay}>{nextDate.day}</span>
-                  <span className={styles.dateMonth}>
-                    {nextDate.monthLong}
-                    <br />
-                    {nextDate.weekdayLong}
-                  </span>
+          <ol className={styles.key}>
+            {RHYTHM.map((beat, row) => (
+              <li key={beat.what} className={styles.beat} data-later={beat.later || undefined}>
+                <pre className={styles.swatch} data-beat={BEATS[row]?.name ?? 'later'} aria-hidden="true">
+                  {SWATCHES[row]}
+                </pre>
+                <p className={styles.when}>{beat.later ? SEMESTER.later : beat.when}</p>
+                <h3 className={styles.beatWhat}>{beat.what}</h3>
+                <p className={styles.beatDetail}>
+                  {beat.detail}
+                  {row === TRIP_ROW && (
+                    <>
+                      {' '}
+                      {FUND_NOTE.text}{' '}
+                      <Link className={ui.textLink} to={FUND_NOTE.link.href}>
+                        {FUND_NOTE.link.label}
+                      </Link>
+                    </>
+                  )}
                 </p>
-                <div className={styles.eventCopy}>
-                  <h3 className={styles.eventTitle}>
-                    {/* Stretched over the date and the copy; "All events" sits above it. */}
-                    <Link className={styles.stretch} to={`/events/${nextEvent.id}`}>
-                      {nextEvent.title}
-                    </Link>
-                    <SampleTag show={nextEvent.placeholder} />
-                  </h3>
-                  <p className={styles.eventMeta}>
-                    {kindAddsInfo(nextEvent.kind, nextEvent.title) && (
-                      <span className={styles.kind}>{nextEvent.kind}</span>
-                    )}
-                    <span>{nextEvent.time}</span>
-                    <span className={styles.place}>{nextEvent.place}</span>
+              </li>
+            ))}
+          </ol>
+
+          {/* The rhythm's next real beat, from the calendar. */}
+          <div className={styles.next} aria-labelledby="next-event" role="region">
+            <div className={styles.nextHead}>
+              <h3 id="next-event" className={styles.subTitle}>
+                {NEXT_UP.title}
+              </h3>
+              <Link className={ui.textLink} to="/events">
+                {NEXT_UP.allEvents}
+              </Link>
+            </div>
+
+            <div className={styles.nextGrid}>
+              {nextEvent && nextDate ? (
+                <article className={styles.event}>
+                  <p className={styles.date}>
+                    <span className={styles.dateDay}>{nextDate.day}</span>
+                    <span className={styles.dateMonth}>
+                      {nextDate.monthLong}
+                      <br />
+                      {nextDate.weekdayLong}
+                    </span>
                   </p>
-                  {nextEvent.text && <p className={styles.eventText}>{nextEvent.text}</p>}
-                  <Link className={`${ui.textLink} ${styles.aboveStretch}`} to="/events">
-                    {NEXT_UP.allEvents}
-                  </Link>
-                </div>
-              </article>
-            ) : (
-              <div className={`${styles.eventCopy} ${styles.eventEmpty}`}>
-                <p className={styles.eventText}>{HOME_EMPTY.next}</p>
-                <Link className={ui.textLink} to="/events">
-                  {NEXT_UP.allEvents}
-                </Link>
-              </div>
-            )}
-
-            {/* The room and times aren't booked yet: a sample locally, left off the deployed site. */}
-            {(import.meta.env.DEV || !SCHEDULE.placeholder) && (
-              <ScheduleCard
-                className={styles.schedule}
-                location={SCHEDULE.location}
-                slots={SCHEDULE.slots}
-                placeholder={SCHEDULE.placeholder}
-              />
-            )}
-          </div>
-
-          <div className={styles.deadlines}>
-            <h3 className={styles.deadlinesTitle}>{NEXT_UP.applyBy}</h3>
-            {deadlines.length === 0 ? (
-              <p className={styles.eventText}>{HOME_EMPTY.deadlines}</p>
-            ) : (
-              <ol className={styles.deadlineList}>
-                {deadlines.map((hackathon) => (
-                  <li key={hackathon.id} className={styles.deadline}>
-                    <span className={styles.countdown}>
-                      <NumberTicker value={daysUntil(hackathon.applyBy)} />
-                      <small>days</small>
-                    </span>
-                    <span className={styles.deadlineName}>
-                      {/* Hackathons have no page of their own: straight to its site, else the list. */}
-                      {hackathon.href ? (
-                        <a className={styles.stretch} href={hackathon.href} target="_blank" rel="noopener noreferrer">
-                          {hackathon.name}
-                        </a>
-                      ) : (
-                        <Link className={styles.stretch} to="/hackathons">
-                          {hackathon.name}
-                        </Link>
+                  <div className={styles.eventCopy}>
+                    <h4 className={styles.eventTitle}>
+                      {/* Stretched over the date and the copy. */}
+                      <Link className={styles.stretch} to={`/events/${nextEvent.id}`}>
+                        {nextEvent.title}
+                      </Link>
+                      <SampleTag show={nextEvent.placeholder} />
+                    </h4>
+                    <p className={styles.eventMeta}>
+                      {kindAddsInfo(nextEvent.kind, nextEvent.title) && (
+                        <span className={styles.kind}>{nextEvent.kind}</span>
                       )}
-                      <SampleTag show={hackathon.placeholder} />
-                    </span>
-                    <span className={styles.deadlineDate}>{formatDay(hackathon.applyBy)}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-            <Link className={ui.textLink} to="/hackathons">
-              {NEXT_UP.allHackathons}
-            </Link>
-          </div>
-        </div>
-        {photo.credit && (
-          <p className={styles.credit}>
-            Photo by {photo.credit.author},{' '}
-            <a href={photo.credit.source} target="_blank" rel="noopener noreferrer">
-              {photo.credit.license} via Wikimedia Commons
-            </a>
-          </p>
-        )}
-      </section>
+                      <span>{nextEvent.time}</span>
+                      <span className={styles.place}>{nextEvent.place}</span>
+                    </p>
+                    {nextEvent.text && <p className={styles.eventText}>{nextEvent.text}</p>}
+                  </div>
+                </article>
+              ) : (
+                <p className={`${styles.eventText} ${styles.eventEmpty}`}>{HOME_EMPTY.next}</p>
+              )}
 
-      {/* Ink again, with a frozen texture of the field: the wins and who we build with. */}
-      <div
-        className={`${styles.bleed} ${styles.ink} ${styles.inkTextured}`}
-        style={{ '--texture': texture ? `url(${texture})` : 'none' } as CSSProperties}
-      >
+              {/* The room and times aren't booked yet: a sample locally, left off the deployed site. */}
+              {(import.meta.env.DEV || !SCHEDULE.placeholder) && (
+                <ScheduleCard
+                  className={styles.schedule}
+                  location={SCHEDULE.location}
+                  slots={SCHEDULE.slots}
+                  placeholder={SCHEDULE.placeholder}
+                />
+              )}
+            </div>
+
+            <div className={styles.deadlines}>
+              <h4 className={styles.deadlinesTitle}>{NEXT_UP.applyBy}</h4>
+              {deadlines.length === 0 ? (
+                <p className={styles.eventText}>{HOME_EMPTY.deadlines}</p>
+              ) : (
+                <ol className={styles.deadlineList}>
+                  {deadlines.map((hackathon) => (
+                    <li key={hackathon.id} className={styles.deadline}>
+                      <span className={styles.countdown}>
+                        {daysUntil(hackathon.applyBy)}
+                        <small>{daysUntil(hackathon.applyBy) === 1 ? 'day' : 'days'}</small>
+                      </span>
+                      <span className={styles.deadlineName}>
+                        {/* Hackathons have no page of their own: straight to its site, else the list. */}
+                        {hackathon.href ? (
+                          <a className={styles.stretch} href={hackathon.href} target="_blank" rel="noopener noreferrer">
+                            {hackathon.name}
+                          </a>
+                        ) : (
+                          <Link className={styles.stretch} to="/hackathons">
+                            {hackathon.name}
+                          </Link>
+                        )}
+                        <SampleTag show={hackathon.placeholder} />
+                      </span>
+                      <span className={styles.deadlineDate}>{formatDay(hackathon.applyBy)}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <Link className={ui.textLink} to="/hackathons">
+                {NEXT_UP.allHackathons}
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* The record: the running tally, then the newest wins under it. */}
         <section className={`${styles.column} ${styles.wins}`} aria-labelledby="latest-wins">
-          <header className={styles.winsHead}>
-            <h2 id="latest-wins" className={styles.title}>
+          <WinTally wins={wins} />
+          <div className={styles.nextHead}>
+            <h2 id="latest-wins" className={styles.subTitle}>
               {WINS_TITLE}
             </h2>
             <Link className={ui.textLink} to="/wins">
               All wins
             </Link>
-          </header>
-          {topWins.length === 0 ? (
-            <p className={styles.lede}>{WINS_EMPTY}</p>
-          ) : (
-            <>
-              <AccoladeFeature win={topWins[0]} level={3} />
-              {topWins.length > 1 && <AccoladePlates wins={topWins.slice(1)} />}
-            </>
-          )}
+          </div>
+          {latest.length === 0 ? <p className={styles.lede}>{WINS_EMPTY}</p> : <WinLog wins={latest} />}
         </section>
 
         <LogoBand />
