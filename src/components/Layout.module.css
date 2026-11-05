@@ -72,13 +72,37 @@
   opacity: 0.84;
 }
 
+/* The field's light caught in the harbor just under the drain, as on the landing: its colours
+   where they were above, rising from nothing at the seam and gone a screen further down. */
+.ground::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  /* Never past the ground's own foot, or a short page would scroll on into nothing. */
+  height: min(clamp(480px, 80vh, 820px), 100%);
+  background:
+    radial-gradient(40% 60% at 12% 26%, rgb(var(--sky-deep-rgb) / 0.24), transparent 72%),
+    radial-gradient(42% 64% at 46% 30%, rgb(var(--rose-deep-rgb) / 0.2), transparent 72%),
+    radial-gradient(36% 56% at 70% 22%, rgb(var(--iris-deep-rgb) / 0.2), transparent 72%),
+    radial-gradient(34% 56% at 94% 30%, rgb(var(--lagoon-rgb) / 0.18), transparent 72%);
+  -webkit-mask-image: linear-gradient(transparent, #000 30%, #000 46%, transparent);
+  mask-image: linear-gradient(transparent, #000 30%, #000 46%, transparent);
+}
+
+/* The frozen field, its glyphs cut from the field's own sweep so it freezes with its colour. */
 .groundTexture {
   position: absolute;
   inset: 0;
-  background-image: var(--texture);
-  background-size: 595px 400px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 40vh);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 40vh);
+  background: var(--field-sweep);
+  opacity: 0.3;
+  -webkit-mask-image: var(--texture-mask), linear-gradient(to bottom, transparent 0, #000 40vh);
+  mask-image: var(--texture-mask), linear-gradient(to bottom, transparent 0, #000 40vh);
+  -webkit-mask-size: 595px 400px, 100% 100%;
+  mask-size: 595px 400px, 100% 100%;
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 @media (prefers-reduced-motion: reduce) {

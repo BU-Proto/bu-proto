@@ -19,7 +19,8 @@
   display: grid;
   gap: 6px;
   padding-top: 14px;
-  border-top: 1px solid var(--rule-strong);
+  /* Hack night's own colour, the rule over it the same sky as its columns on the landing. */
+  border-top: 1px solid rgb(var(--hue-rgb) / 0.6);
 }
 
 .rhythm p {
@@ -29,6 +30,7 @@
 }
 
 .rhythmTitle {
+  color: var(--hue);
   font-size: 17px;
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -47,20 +49,47 @@
 
 .lead {
   position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   min-height: clamp(440px, 56vh, 560px);
   overflow: hidden;
   border: 1px solid var(--rule);
   border-radius: 26px;
-  background: var(--navy);
+  /* The sheet lit from its far corner in the night's colour, the light the photo fades into. */
+  background:
+    radial-gradient(70% 80% at 100% 0%, rgb(var(--hue-deep-rgb) / 0.26), transparent 70%),
+    radial-gradient(60% 70% at 70% 100%, rgb(var(--rose-deep-rgb) / 0.12), transparent 70%),
+    var(--navy);
   box-shadow: 0 40px 90px -50px rgb(var(--harbor-rgb) / 0.9);
 }
 
 .cover {
   position: relative;
+  isolation: isolate;
   margin: 0;
   overflow: hidden;
+}
+
+/*
+ * A stock campus photo (the one with a credit) in the field's light: the building in greys, then
+ * the field's sweep laid over it as colour only, so its shadows go harbor and its stone takes the
+ * cerulean, lilac and raspberry. The event's own photos are left as they were taken.
+ */
+.cover:has(.credit) img {
+  filter: grayscale(1) contrast(1.08) brightness(0.9);
+}
+
+.cover:has(.credit)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--field-sweep);
+  mix-blend-mode: color;
+  opacity: 0.85;
+  -webkit-mask-image: linear-gradient(to right, #000 70%, transparent);
+  mask-image: linear-gradient(to right, #000 70%, transparent);
+  pointer-events: none;
 }
 
 .cover img {
@@ -76,6 +105,7 @@
 
 .credit {
   position: absolute;
+  z-index: 1;
   left: 18px;
   bottom: 14px;
   max-width: calc(100% - 36px);
@@ -110,6 +140,7 @@
 }
 
 .day {
+  color: var(--hue);
   font-size: clamp(96px, 10vw, 144px);
   font-weight: 200;
   letter-spacing: -0.06em;
@@ -244,6 +275,7 @@
 }
 
 .rowDay {
+  color: var(--hue);
   font-size: 34px;
   font-weight: 300;
   letter-spacing: -0.04em;
@@ -281,6 +313,7 @@
 }
 
 .kind {
+  color: var(--hue);
   font-weight: 500;
 }
 
@@ -377,7 +410,8 @@
     aspect-ratio: 16 / 10;
   }
 
-  .cover img {
+  .cover img,
+  .cover:has(.credit)::after {
     -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
     mask-image: linear-gradient(to bottom, #000 70%, transparent);
   }

@@ -21,7 +21,12 @@
   padding: clamp(18px, 2.6vw, 28px);
   border: 1px solid var(--rule);
   border-radius: 22px;
-  background: rgb(var(--navy-rgb) / 0.9);
+  /* The field's light reaching the sheet's top edge: cerulean in one corner, the core's raspberry
+     in the other, both gone well before the text. Every sheet has the same light. */
+  background:
+    radial-gradient(60% 50% at 0% 0%, rgb(var(--sky-deep-rgb) / 0.16), transparent 70%),
+    radial-gradient(50% 44% at 100% 0%, rgb(var(--rose-deep-rgb) / 0.12), transparent 70%),
+    rgb(var(--navy-rgb) / 0.9);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   box-shadow:
@@ -32,7 +37,10 @@
 /* The same sheet, fully opaque, for dense text and tables. */
 .panelDeep {
   composes: panel;
-  background: var(--navy);
+  background:
+    radial-gradient(60% 50% at 0% 0%, rgb(var(--sky-deep-rgb) / 0.16), transparent 70%),
+    radial-gradient(50% 44% at 100% 0%, rgb(var(--rose-deep-rgb) / 0.12), transparent 70%),
+    var(--navy);
 }
 
 .inset {
@@ -100,6 +108,12 @@
   text-shadow: none;
 }
 
+/* Pressing toward it turns it mint, the colour of acting: the same as a link in our emails. */
+.primary:not(:disabled):hover {
+  border-color: var(--mint);
+  background: var(--mint);
+}
+
 .secondary {
   border: 1px solid var(--glass-edge);
   background: var(--glass);
@@ -125,17 +139,18 @@
   outline-offset: 2px;
 }
 
-/* The rule follows the text's colour, so a link reads the same on harbor, paper and mint. */
+/* The text stays ink; the rule under it is mint, the colour of acting, or the colour of the
+   thing it leads to when it sits inside something with a hue ("All wins" under the record). */
 .textLink {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-bottom: 1px solid rgb(var(--hue-rgb, var(--mint-rgb)) / 0.62);
   font-weight: 500;
 }
 
 .textLink:hover {
-  border-bottom-color: currentColor;
+  border-bottom-color: var(--hue, var(--mint));
 }
 
 /*

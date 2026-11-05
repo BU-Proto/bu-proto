@@ -18,13 +18,16 @@ const TIER = REST.length % 2 === 1 ? 3 : 2
 const NEXT = REST.slice(0, TIER)
 const LIST = REST.slice(TIER)
 
+/** A BU photo from Commons rather than a win's own picture: those take the field's tint. */
+const isCampus = (image: Written['lead']['image']) => 'author' in image.credit
+
 function Featured({ guide }: { guide: Written }) {
   const href = guidePath(guide) ?? '/resources'
   const { image, authors, updated } = guide.lead
   return (
     <section className={styles.featured} aria-labelledby="featured">
       <Link className={styles.featuredImage} to={href} tabIndex={-1} aria-hidden="true">
-        <img src={image.src} alt="" fetchPriority="high" />
+        <img src={image.src} alt="" fetchPriority="high" data-campus={isCampus(image) || undefined} />
       </Link>
       <div className={styles.featuredText}>
         <p className={styles.featuredLabel} data-fog-clear>
@@ -67,7 +70,7 @@ export function Resources() {
               <li key={guide.title}>
                 <Link className={styles.card} to={href}>
                   <span className={styles.cardImage}>
-                    <img src={image.thumb ?? image.src} alt="" loading="lazy" />
+                    <img src={image.thumb ?? image.src} alt="" loading="lazy" data-campus={isCampus(image) || undefined} />
                   </span>
                   <span className={styles.entryText} data-fog-clear>
                     <span className={styles.cardTitle}>{guide.title}</span>
@@ -86,7 +89,13 @@ export function Resources() {
             return (
               <li key={guide.title}>
                 <Link className={styles.entry} to={href}>
-                  <img className={styles.thumb} src={image.thumb ?? image.src} alt="" loading="lazy" />
+                  <img
+                    className={styles.thumb}
+                    src={image.thumb ?? image.src}
+                    alt=""
+                    loading="lazy"
+                    data-campus={isCampus(image) || undefined}
+                  />
                   <span className={styles.entryText} data-fog-clear>
                     <span className={styles.title}>{guide.title}</span>
                     <span className={styles.line}>{guide.line}</span>

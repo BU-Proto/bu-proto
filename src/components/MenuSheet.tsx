@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { NavLink, useLocation } from 'react-router'
+import { Link, NavLink, useLocation } from 'react-router'
 import { BRAND, NAV_ITEMS } from '../content/site'
 import { IconButton } from './IconButton'
 import { CloseIcon, MenuIcon } from './icons'
@@ -11,12 +11,13 @@ import styles from './MenuSheet.module.css'
  */
 export function MenuSheet() {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
+  const close = () => dialogRef.current?.close()
 
-  // Picking a page (or using back/forward) closes the sheet.
+  // Picking a page or a section of one (or using back/forward) closes the sheet.
   useEffect(() => {
     dialogRef.current?.close()
-  }, [pathname])
+  }, [pathname, hash])
 
   return (
     <>
@@ -40,23 +41,54 @@ export function MenuSheet() {
               <img src={BRAND.seal} alt="" width={20} height={20} />
               {BRAND.full}
             </span>
-            <IconButton label="Close menu" onClick={() => dialogRef.current?.close()}>
+            <IconButton label="Close menu" onClick={close}>
               <CloseIcon />
             </IconButton>
           </div>
 
           <nav aria-label="All pages">
             <ol className={styles.list}>
-              {NAV_ITEMS.map((item) => (
-                <li key={item.to}>
-                  <NavLink to={item.to} end={item.to === '/'} className={styles.link}>
-                    <span className={styles.label}>{item.label}</span>
-                    <span className={styles.route} aria-hidden="true">
-                      {item.to}
+              {NAV_ITEMS.map((item) =>
+                item.children ? (
+                  // A group: its name, then its pages set smaller under it.
+                  <li key={item.to} className={styles.group}>
+                    <span id={`group-${item.label}`} className={styles.groupName}>
+                      {item.label}
                     </span>
-                  </NavLink>
-                </li>
-              ))}
+                    <ul className={styles.children} aria-labelledby={`group-${item.label}`}>
+                      {item.children.map((child) => {
+                        const [path, anchor] = child.to.split('#')
+                        // A section isn't the page itself, so only the plain path is current.
+                        const here = !anchor && path === pathname
+                        return (
+                          <li key={child.to}>
+                            <Link
+                              to={child.to}
+                              className={`${styles.link} ${styles.child}`}
+                              aria-current={here ? 'page' : undefined}
+                              onClick={close}
+                            >
+                              <span className={styles.label}>{child.label}</span>
+                              <span className={styles.route} aria-hidden="true">
+                                {child.to}
+                              </span>
+                            </Link>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </li>
+                ) : (
+                  <li key={item.to}>
+                    <NavLink to={item.to} end={item.to === '/'} className={styles.link} onClick={close}>
+                      <span className={styles.label}>{item.label}</span>
+                      <span className={styles.route} aria-hidden="true">
+                        {item.to}
+                      </span>
+                    </NavLink>
+                  </li>
+                ),
+              )}
             </ol>
           </nav>
         </div>

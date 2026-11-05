@@ -11,6 +11,9 @@ export const GROUND = {
   paper: '#e3eaf0',
   /** Frost, faint: the frozen glyph texture on harbor. */
   texture: 'rgba(246, 251, 255, 0.06)',
+  /** The same glyph tile drawn solid, for a mask: the field's sweep shows through its glyphs, so
+      the frozen texture keeps the field's colour. */
+  textureMask: '#ffffff',
 } as const
 
 export type GroundName = 'home' | 'events' | 'hackathons' | 'record' | 'reading' | 'membership' | 'legal'

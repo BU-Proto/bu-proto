@@ -36,7 +36,7 @@ export function WinDetail() {
       <title>{`${win.project} · ${BRAND.full}`}</title>
 
       <DetailOpener photo={win.photo} alt={`${win.project} at ${win.event}`}>
-        <p className={detail.kicker} data-fog-clear>
+        <p className={detail.kicker} data-hue="rose" data-fog-clear>
           {win.placement}
           {filled(win.track) && (
             <span className={detail.kickerNote} data-fog-clear>

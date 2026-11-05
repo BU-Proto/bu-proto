@@ -1,15 +1,16 @@
 :root {
   /*
-   * The palette. Five colours and the field.
+   * The palette. Five colours, and the field's own light.
    *
-   * The ASCII field's gradient (blue, violet-pink, teal) is the only multicolour thing on the
-   * site, and it only ever appears as the field itself or as imagery tinted from it. Everything
-   * else is drawn from these five:
+   * The ASCII field's gradient (blue, violet-pink, teal) is the site's only source of other
+   * colour: the field itself, and the named samples of it below (sky, iris, rose, lagoon), which
+   * each mean one thing wherever they appear. Everything else is drawn from these five:
    *   harbor  the one dark ground: the field's own base, so the field drains straight into it
    *   navy    a raised surface on harbor (panels, inputs), and the ink on paper
    *   paper   the one light ground
    *   frost   the ink on harbor and navy
-   *   mint    the one accent: the cursor in "Proto_", links in emails, what's open, what's yours.
+   *   mint    the primary accent: the cursor in "Proto_", links in emails, what's open, what's
+   *           yours, the rule under a link and a button as it's pressed.
    *           mint-deep is the same accent where it has to sit on paper.
    * BU red is not a theme colour. It only marks BU itself (the BU tag on a teammate's name).
    */
@@ -36,6 +37,34 @@
   --field-blue: #6f9bff;
   --field-violet: #a48af0;
 
+  /*
+   * The field's own light, as named colours: read across the field from its cerulean edge,
+   * through the lilac, to the raspberry core. They mean one thing everywhere, size: the further
+   * along, the bigger. Weekly hack night is sky, the month's trip or talk is iris, the semester's
+   * demo night is rose; down the stair Start is sky, Build iris, Launch rose; a win is rose.
+   * Text takes the light tone (AA on harbor and navy). The -deep tones are for light in a
+   * ground only (pools, glows, tinted glyphs), never text. Lagoon, the teal right edge, is
+   * ground only too. Mint stays apart from these: it's what's live, open or yours.
+   */
+  --sky: #7cc7f4;
+  --sky-rgb: 124 199 244;
+  --sky-deep-rgb: 26 143 192;
+  --iris: #ab9dff;
+  --iris-rgb: 171 157 255;
+  --iris-deep-rgb: 122 110 224;
+  --rose: #f4a2c0;
+  --rose-rgb: 244 162 192;
+  --rose-deep-rgb: 194 64 122;
+  --lagoon-rgb: 63 184 208;
+  /* The field's sweep, for glyph texture that keeps the field's colour as it freezes. */
+  --field-sweep: linear-gradient(
+    115deg,
+    rgb(var(--sky-deep-rgb)) 0%,
+    rgb(var(--iris-deep-rgb)) 38%,
+    rgb(var(--rose-deep-rgb)) 62%,
+    rgb(var(--lagoon-rgb)) 100%
+  );
+
   /* Roles. Older names stay as aliases, since the portal styles read them too. */
   --base: var(--harbor);
   --ink: var(--frost);
@@ -59,6 +88,26 @@
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
 
   color-scheme: dark;
+}
+
+/* Something with a size in the palette's sense carries data-hue; its styles read --hue (text),
+   --hue-rgb and --hue-deep-rgb (light), so one rule colours it wherever it appears. */
+[data-hue='sky'] {
+  --hue: var(--sky);
+  --hue-rgb: var(--sky-rgb);
+  --hue-deep-rgb: var(--sky-deep-rgb);
+}
+
+[data-hue='iris'] {
+  --hue: var(--iris);
+  --hue-rgb: var(--iris-rgb);
+  --hue-deep-rgb: var(--iris-deep-rgb);
+}
+
+[data-hue='rose'] {
+  --hue: var(--rose);
+  --hue-rgb: var(--rose-rgb);
+  --hue-deep-rgb: var(--rose-deep-rgb);
 }
 
 *,

@@ -13,6 +13,7 @@
   position: sticky;
   top: 20px;
   margin: 6px 0 0;
+  color: var(--hue);
   font-size: 17px;
   font-weight: 500;
   text-shadow: var(--on-field-shadow);
@@ -39,7 +40,7 @@
 }
 
 .card[data-linked='true']:hover {
-  border-color: var(--rule-strong);
+  border-color: rgb(var(--hue-rgb) / 0.55);
 }
 
 /* ---- The art: the event's background with its logo centred over it ---- */
@@ -53,13 +54,15 @@
   background: var(--harbor);
 }
 
-/* No photo: harbor with a stretch of the frozen field, lit a little toward the middle. */
+/* No photo: harbor with a stretch of the frozen field, lit toward the middle in the trips' iris
+   with the field's core warming one corner, so the name has a ground of its own. */
 .art:not([data-photo])::before {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 60% 70% at 50% 50%, rgb(var(--navy-rgb) / 0.9), transparent 75%),
+    radial-gradient(ellipse 60% 70% at 50% 50%, rgb(var(--iris-deep-rgb) / 0.42), transparent 75%),
+    radial-gradient(ellipse 50% 60% at 100% 100%, rgb(var(--rose-deep-rgb) / 0.3), transparent 75%),
     var(--texture) var(--offset, 0 0) / 595px 400px;
 }
 

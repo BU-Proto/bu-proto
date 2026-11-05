@@ -1,0 +1,147 @@
+/* A pill item with pages under it, and the small navy panel they open in. */
+
+.root {
+  position: relative;
+  display: flex;
+}
+
+/* Set like the pill's links beside it, with a chevron that turns over while it's open. */
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 11px 7px 13px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 13px;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgb(var(--harbor-rgb, 6 26 46) / 0.3);
+  cursor: pointer;
+}
+
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  color: var(--ink, #f6fbff);
+}
+
+/* On any of its pages it reads as the current section, the way a current link does. */
+.trigger[data-current] {
+  background: rgb(var(--frost-rgb, 246 251 255) / 0.08);
+  color: var(--ink, #f6fbff);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--frost, #f6fbff);
+  outline-offset: 2px;
+}
+
+.chevron {
+  width: 12px;
+  height: 12px;
+  opacity: 0.8;
+}
+
+.trigger[aria-expanded='true'] .chevron {
+  transform: rotate(180deg);
+}
+
+/* Solid navy, so its small print never sits on the field. Hangs from the trigger's left edge,
+   just below the pill. */
+.panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: -5px;
+  z-index: 3;
+  width: 272px;
+  padding: 6px;
+  border: 1px solid rgb(var(--frost-rgb, 246 251 255) / 0.14);
+  border-radius: 16px;
+  background: var(--navy, #0b2a46);
+  box-shadow: 0 28px 56px -28px rgb(var(--harbor-rgb, 6 26 46) / 0.95);
+  text-shadow: none;
+}
+
+.list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px 11px;
+  border-radius: 11px;
+}
+
+.link:hover,
+.link:focus-visible {
+  background: rgb(var(--frost-rgb, 246 251 255) / 0.07);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--frost, #f6fbff);
+  outline-offset: -2px;
+}
+
+/* The page you're on gets the accent dot the menu sheet uses. */
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink, #f6fbff);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+.link[aria-current='page'] .name::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #9df0a8);
+}
+
+.line {
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel:not([hidden]) {
+    animation: drop 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .chevron {
+    transition: transform 160ms ease;
+  }
+
+  .trigger,
+  .link {
+    transition:
+      background-color 120ms,
+      color 120ms;
+  }
+}
+
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

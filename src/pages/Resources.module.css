@@ -277,3 +277,27 @@ a.entry:focus-visible {
     aspect-ratio: 16 / 9;
   }
 }
+
+/*
+ * The campus photos in the field's light: the buildings and the river tinted toward the field's
+ * lilac, so a page of them reads as one set beside the wins' screenshots. Pointing at a guide
+ * brings its photo back to the colour it was taken in.
+ */
+img[data-campus] {
+  filter: grayscale(1) sepia(0.8) hue-rotate(200deg) saturate(2.6) brightness(0.9) contrast(1.05);
+  transition: filter 500ms ease;
+}
+
+.featured:has(.featuredImage:hover, .featuredTitle a:hover) img[data-campus],
+a.card:hover img[data-campus],
+a.entry:hover img[data-campus],
+a.card:focus-visible img[data-campus],
+a.entry:focus-visible img[data-campus] {
+  filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  img[data-campus] {
+    transition: none;
+  }
+}

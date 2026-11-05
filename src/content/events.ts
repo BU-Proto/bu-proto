@@ -1,7 +1,8 @@
 // Copy for the events page. The events themselves live in D1 and are edited in the portal at
 // /admin; the kinds of event (shared/constants.ts) are from the concept.
 
-import type { PageIntro } from './types'
+import type { EventKind } from '../../shared/constants'
+import type { Hue, PageIntro } from './types'
 
 export const EVENTS_INTRO: PageIntro = {
   path: '~/proto/events',
@@ -24,6 +25,19 @@ export const NEXT_EVENT = {
 } as const
 
 export const EVENTS_LATER = 'Also coming up'
+
+/**
+ * Each kind of night in the field's colours, by its size in the rhythm: the weekly hack night
+ * sky, the month's one-offs iris (as the hackathon trips are), the semester's demo night rose.
+ */
+export const KIND_HUE: Record<EventKind, Hue> = {
+  'Hack night': 'sky',
+  'Why hackathons': 'iris',
+  'Prep night': 'iris',
+  Panel: 'iris',
+  Workshop: 'iris',
+  'Demo night': 'rose',
+}
 
 /** Nothing scheduled: say what's coming and how to hear about it first. */
 export const EVENTS_EMPTY = {

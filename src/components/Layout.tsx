@@ -32,6 +32,7 @@ export function Layout() {
   const dimmed = shown !== target
   const ground = GROUNDS[shown]
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
+  const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   useSmoothAnchors()
 
   useEffect(() => {
@@ -100,7 +101,12 @@ export function Layout() {
         <div
           className={styles.ground}
           data-reach={GROUNDS[target].reach}
-          style={{ '--texture': texture ? `url(${texture})` : 'none' } as CSSProperties}
+          style={
+            {
+              '--texture': texture ? `url(${texture})` : 'none',
+              '--texture-mask': textureMask ? `url(${textureMask})` : 'none',
+            } as CSSProperties
+          }
           aria-hidden="true"
         >
           <GlyphEdge color={GROUND.harbor} mode="drain" rows={28} cell={10} />

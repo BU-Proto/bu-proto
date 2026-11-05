@@ -28,7 +28,7 @@ import {
   TRACKS_INTRO,
   WINS_TITLE,
 } from '../content/home'
-import { NEXT_EVENT } from '../content/events'
+import { KIND_HUE, NEXT_EVENT } from '../content/events'
 import { BRAND, SCHEDULE } from '../content/site'
 import { WINS_EMPTY } from '../content/wins'
 import type { HomeData } from '../lib/content'
@@ -67,6 +67,7 @@ function beatIndex(week: number): number {
 }
 
 const beatOf = (week: number) => BEATS[beatIndex(week)]?.name
+const hueOf = (week: number) => RHYTHM[beatIndex(week)]?.hue
 
 function weekArt(week: number): string {
   const beat = BEATS[beatIndex(week)]
@@ -87,7 +88,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
   const rsvp = useRsvp(event)
   const { day, monthLong, weekdayLong } = dateParts(event.date)
   return (
-    <article className={styles.event}>
+    <article className={styles.event} data-hue={KIND_HUE[event.kind]}>
       <p className={styles.date} data-reveal="rise">
         <span className={styles.dateDay}>{day}</span>
         <span className={styles.dateRest}>
@@ -160,6 +161,7 @@ export function Home() {
     .slice(0, 3)
   const latest = newestWins(wins, 3)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
+  const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   const revealRef = useReveal<HTMLDivElement>()
   useWheelEasing()
 
@@ -186,7 +188,13 @@ export function Home() {
 
             <ol className={styles.trackList}>
               {TRACKS.map((track, index) => (
-                <li key={track.name} className={styles.track} style={{ '--step': index } as CSSProperties}>
+                <li
+                  key={track.name}
+                  className={styles.track}
+                  data-hue={track.hue}
+                  data-shape={FIGURES[track.glyph] ?? 'ring'}
+                  style={{ '--step': index } as CSSProperties}
+                >
                   <AsciiFigure
                     shape={FIGURES[track.glyph] ?? 'ring'}
                     className={styles.figure}
@@ -213,7 +221,12 @@ export function Home() {
           the record. The field comes back by degrees: plain harbor, its texture, then the field. */}
       <div
         className={`${styles.bleed} ${styles.ink} ${styles.inkTextured}`}
-        style={{ '--texture': texture ? `url(${texture})` : 'none' } as CSSProperties}
+        style={
+          {
+            '--texture': texture ? `url(${texture})` : 'none',
+            '--texture-mask': textureMask ? `url(${textureMask})` : 'none',
+          } as CSSProperties
+        }
       >
         <section className={`${styles.column} ${styles.rhythm}`} aria-labelledby="rhythm">
           <header className={styles.sectionHead}>
@@ -233,6 +246,7 @@ export function Home() {
                   key={week}
                   className={styles.week}
                   data-beat={beatOf(week)}
+                  data-hue={hueOf(week)}
                   data-reveal="column"
                   style={after((week - 1) * 45)}
                 >
@@ -253,6 +267,7 @@ export function Home() {
               <li
                 key={beat.what}
                 className={styles.beat}
+                data-hue={beat.hue}
                 data-later={beat.later || undefined}
                 data-reveal="rise"
                 style={after(row * 90)}
@@ -301,7 +316,7 @@ export function Home() {
               )}
             </section>
 
-            <section className={styles.applyBy} aria-labelledby="apply-by">
+            <section className={styles.applyBy} data-hue="iris" aria-labelledby="apply-by">
               <div className={styles.nextHead} data-reveal="rise">
                 <h3 id="apply-by" className={styles.subTitle}>
                   {NEXT_UP.applyBy}
@@ -355,7 +370,7 @@ export function Home() {
         </section>
 
         {/* The record: the running tally, then the newest wins under it. */}
-        <section className={`${styles.column} ${styles.wins}`} aria-labelledby="latest-wins">
+        <section className={`${styles.column} ${styles.wins}`} data-hue="rose" aria-labelledby="latest-wins">
           <WinTally wins={wins} />
           <div className={styles.nextHead} data-reveal="rise">
             <h2 id="latest-wins" className={styles.subTitle}>

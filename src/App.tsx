@@ -63,6 +63,14 @@ const router = createBrowserRouter([
         HydrateFallback: PageLoading,
         ErrorBoundary: EventLoadError,
       },
+      {
+        path: 'about',
+        // The open seats it lists come from the board. If that can't load, the page still shows,
+        // just without them: it's mostly words, so a failed fetch shouldn't cost the whole page.
+        loader: ({ request }) => fetchContent('board', request.signal).catch(() => null),
+        lazy: { Component: async () => (await import('./pages/About')).About },
+        HydrateFallback: PageLoading,
+      },
       { path: 'board', Component: Board, loader: ({ request }) => fetchContent('board', request.signal), ...dataRoute },
       { path: 'join', Component: Join },
       { path: 'privacy', Component: Privacy },

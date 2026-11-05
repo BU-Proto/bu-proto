@@ -14,19 +14,43 @@ export interface NavItem {
   to: string
   /** Shown in the centered pill; everything is always in the menu sheet. */
   inPill?: boolean
+  /**
+   * Pages grouped under this item. In the pill it becomes a button that opens them as a menu; in
+   * the menu sheet they're listed under it. Each has a short line saying what's there.
+   */
+  children?: readonly NavChild[]
+}
+
+export interface NavChild {
+  label: string
+  to: string
+  line: string
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', to: '/' },
+  {
+    label: 'About',
+    to: '/about',
+    inPill: true,
+    children: [
+      { label: 'About Proto', to: '/about', line: 'What Proto is and why it exists' },
+      { label: 'What we offer', to: '/about#offer', line: 'Hack nights, trips and the playbook' },
+      { label: 'The board', to: '/board', line: 'Who runs Proto, and the open seats' },
+    ],
+  },
   { label: 'Hackathons', to: '/hackathons', inPill: true },
   { label: 'Grants', to: '/grants', inPill: true },
   { label: 'Wins', to: '/wins', inPill: true },
   { label: 'Resources', to: '/resources', inPill: true },
   { label: 'Events', to: '/events', inPill: true },
   { label: 'Track Record', to: '/track-record' },
-  { label: 'Board', to: '/board' },
   { label: 'Join', to: '/join' },
 ]
+
+/** Whether the page at `pathname` is one of an item's own pages (a child's hash doesn't count). */
+export const navItemHolds = (item: NavItem, pathname: string) =>
+  (item.children ?? [item]).some((child) => child.to.split('#')[0] === pathname)
 
 export interface ScheduleSlot {
   day: string
@@ -65,6 +89,8 @@ export const FOOTER = {
     {
       title: 'Explore',
       links: [
+        { label: 'About Proto', to: '/about' },
+        { label: 'The board', to: '/board' },
         { label: 'Events', to: '/events' },
         { label: 'Hackathons', to: '/hackathons' },
         { label: 'Playbook', to: '/resources' },
@@ -75,7 +101,6 @@ export const FOOTER = {
       links: [
         { label: 'Wins', to: '/wins' },
         { label: 'Track record', to: '/track-record' },
-        { label: 'Board', to: '/board' },
       ],
     },
     {

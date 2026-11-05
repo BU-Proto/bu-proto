@@ -43,6 +43,8 @@
   background: var(--navy);
   outline: 1px solid rgb(var(--frost-rgb) / 0.14);
   outline-offset: -1px;
+  /* The cover throws a win's rose onto the harbor under it. */
+  box-shadow: 0 26px 70px -36px rgb(var(--rose-deep-rgb) / 0.7);
 }
 
 .cover img {
@@ -61,7 +63,8 @@
   display: grid;
   place-items: center;
   height: 100%;
-  color: rgb(var(--frost-rgb) / 0.35);
+  background: radial-gradient(70% 70% at 50% 45%, rgb(var(--rose-deep-rgb) / 0.26), transparent 70%);
+  color: rgb(var(--rose-rgb) / 0.5);
   font-family: var(--font-mono);
   font-size: 28px;
   letter-spacing: 0.2em;
@@ -76,6 +79,8 @@
 
 .prize {
   margin: 0;
+  /* The prize is the record's headline, in a win's rose, as on /wins. */
+  color: var(--rose);
   font-size: clamp(26px, 2.6vw, 36px);
   font-weight: 300;
   letter-spacing: -0.035em;

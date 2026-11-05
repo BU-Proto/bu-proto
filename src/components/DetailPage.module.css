@@ -49,10 +49,28 @@
   object-fit: cover;
 }
 
+/* A stock campus photo (the opener credits it) in the field's light, as on /events: the building in
+   greys, the field's sweep laid over it as colour only. A page's own photo is left as it was taken. */
+.opener:has(> .credit) .cover img {
+  filter: grayscale(1) contrast(1.08) brightness(0.9);
+}
+
+/* Stacked over the photo (whose settling animation lifts it into its own layer), under the ink. */
+.opener:has(> .credit) .cover::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: var(--field-sweep);
+  mix-blend-mode: color;
+  opacity: 0.85;
+}
+
 /* Ink pooled under the text, so the type holds up over a bright photo. */
 .cover::after {
   content: '';
   position: absolute;
+  z-index: 2;
   inset: 0;
   background:
     linear-gradient(to bottom, rgb(var(--harbor-rgb) / 0.55), transparent 140px),
@@ -74,6 +92,8 @@
 /* The line set above the title: a win's placement, an event's date, a hackathon's dates. */
 .kicker {
   margin: 0 0 clamp(12px, 2.4vh, 22px);
+  /* In the colour of what it marks, where it has one: a win's placement is rose. */
+  color: var(--hue, inherit);
   font-size: clamp(30px, 4.4vw, 56px);
   font-weight: 200;
   letter-spacing: -0.035em;
