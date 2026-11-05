@@ -1,11 +1,9 @@
 // The site's ASCII field, redrawn for email: a grid of glyphs from the fine ramp, tinted along the
-// hero gradient over navy, with the fluted-glass ribs and the Proto wordmark set out of it. It's
+// hero gradient over navy, with the fluted-glass ribs in the glyphs' colour. It's
 // generated, not pasted, so every email of a kind gets the same art and the HTML stays small:
 // colour is held per rib (three columns), so a row is a few dozen <font> runs, not one per glyph.
 
 const RAMP = " .,:;'-~=+<>*xo%#@"
-// Letters are solid blocks: at 9px the ramp's densest glyphs are too airy to carry a wordmark.
-const SOLID = '\u2588'
 
 /** GRADIENT_COLORMAP sampled at nine points across its top, middle and bottom rows. */
 const STOPS = [
@@ -15,7 +13,6 @@ const STOPS = [
 ].map((row) => row.map((hex) => [0, 2, 4].map((at) => parseInt(hex.slice(at, at + 2), 16))))
 
 const WHITE = [255, 255, 255]
-export const ART_MINT = '#9df0a8'
 const RIB = 3
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
@@ -52,15 +49,6 @@ function noise(x: number, y: number, seed: number): number {
   return top + (bottom - top) * sy
 }
 
-/** A 4 x 7 pixel face for the wordmark; each pixel is drawn two columns wide and one row tall. */
-const LETTERS: Record<string, string[]> = {
-  P: ['###.', '#..#', '#..#', '###.', '#...', '#...', '#...'],
-  r: ['....', '....', '#.##', '##..', '#...', '#...', '#...'],
-  o: ['....', '....', '.##.', '#..#', '#..#', '#..#', '.##.'],
-  t: ['.#..', '.#..', '####', '.#..', '.#..', '.#..', '..##'],
-  _: ['....', '....', '....', '....', '....', '....', '####'],
-}
-
 interface Cell {
   glyph: string
   /** Null for a blank, which can join any run. */
@@ -71,8 +59,6 @@ export interface ArtOptions {
   cols: number
   rows: number
   seed: number
-  /** Set the Proto_ wordmark out of the field, its top-left at this cell. */
-  wordmark?: { col: number; row: number }
   /** Where on the gradient the art sits, top and bottom (0 is the colormap's top row). */
   band?: [number, number]
   /** Thin the field toward the bottom so it dissolves into what's below. */
@@ -81,48 +67,14 @@ export interface ArtOptions {
   fadeTop?: boolean
 }
 
-/** Which cells the wordmark covers, and in which colour. */
-function wordmarkMask(at: { col: number; row: number }): Map<string, string> {
-  const mask = new Map<string, string>()
-  let col = at.col
-  for (const letter of 'Proto_') {
-    const shape = LETTERS[letter]
-    shape.forEach((line, row) => {
-      for (let px = 0; px < line.length; px++) {
-        if (line[px] !== '#') continue
-        const color = letter === '_' ? ART_MINT : '#ffffff'
-        mask.set(`${col + px * 2},${at.row + row}`, color)
-        mask.set(`${col + px * 2 + 1},${at.row + row}`, color)
-      }
-    })
-    col += 10
-  }
-  return mask
-}
-
 function artCells(options: ArtOptions): Cell[][] {
   const { cols, rows, seed } = options
   const [bandTop, bandBottom] = options.band ?? [0.3, 0.75]
-  const mask = options.wordmark ? wordmarkMask(options.wordmark) : new Map<string, string>()
-  const near = (i: number, j: number) => {
-    for (let dj = -1; dj <= 1; dj++) for (let di = -2; di <= 2; di++) if (mask.has(`${i + di},${j + dj}`)) return true
-    return false
-  }
   const grid: Cell[][] = []
   for (let j = 0; j < rows; j++) {
     const v = rows === 1 ? 0.5 : j / (rows - 1)
     const line: Cell[] = []
     for (let i = 0; i < cols; i++) {
-      const letter = mask.get(`${i},${j}`)
-      if (letter) {
-        line.push({ glyph: SOLID, color: letter })
-        continue
-      }
-      // A clear margin around the letters, so they read against the field.
-      if (near(i, j)) {
-        line.push({ glyph: ' ', color: null })
-        continue
-      }
       const u = i / Math.max(1, cols - 1)
       const rib = Math.floor(i / RIB)
       // Two scales of noise for the waves, a diagonal swell like the hero's light, and the ribs.
@@ -153,14 +105,14 @@ function artCells(options: ArtOptions): Cell[][] {
 }
 
 /**
- * The ground under the glyphs, as the site draws it: the gradient across the band, with faint
- * ribs of fluted glass over it. Clients that drop background images show the navy bgcolor.
+ * The ground under the glyphs: the site's gradient across the band. (The site's fluted ribs read
+ * as barcode stripes at email size, so they're left out.) Clients that drop background images
+ * show the navy bgcolor.
  */
 export function artGround(band: [number, number]): string {
   const v = (band[0] + band[1]) / 2
   const stops = Array.from({ length: 9 }, (_, k) => `${hex(gradient(k / 8, v))} ${k * 12.5}%`)
-  const ribs = 'repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 8px, rgba(6,26,46,0.045) 8px, rgba(6,26,46,0.045) 16px)'
-  return `${ribs}, linear-gradient(90deg, ${stops.join(', ')})`
+  return `linear-gradient(90deg, ${stops.join(', ')})`
 }
 
 const escapeGlyph = (glyph: string) => (glyph === '<' ? '&lt;' : glyph === '>' ? '&gt;' : glyph === '&' ? '&amp;' : glyph)

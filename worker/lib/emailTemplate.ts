@@ -226,20 +226,24 @@ const ART_COLS = 110
  * A block of art in a fixed-layout table, so its long rows can't widen the card: the cell clips
  * them on phones. A <pre> keeps the spaces in every client, Outlook's Word renderer included.
  */
-function artBlock(art: ArtOptions, padding: string, label?: string): string {
-  const a11y = label ? ` role="img" aria-label="${escapeHtml(label)}"` : ' aria-hidden="true"'
+function artBlock(art: ArtOptions, padding: string, heading = ''): string {
   const ground = artGround(art.band ?? [0.3, 0.75])
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${NAVY}" style="width:100%;table-layout:fixed;background-color:${NAVY}">
 <tr><td bgcolor="${NAVY}" style="padding:${padding};background-color:${NAVY};background-image:${ground};overflow:hidden">
-<div style="width:100%;overflow:hidden">
-<pre${a11y} style="margin:0;padding:0;font-family:${MONO};font-size:9px;line-height:10px;mso-line-height-rule:exactly;letter-spacing:0;font-variant-ligatures:none;font-feature-settings:'liga' 0, 'calt' 0;white-space:pre;word-wrap:normal;overflow:hidden;color:#9fc3dc">${artHtmlRows(art).join('\n')}</pre>
+${heading}<div style="width:100%;overflow:hidden">
+<pre aria-hidden="true" style="margin:0;padding:0;font-family:${MONO};font-size:9px;line-height:10px;mso-line-height-rule:exactly;letter-spacing:0;font-variant-ligatures:none;font-feature-settings:'liga' 0, 'calt' 0;white-space:pre;word-wrap:normal;overflow:hidden;color:#9fc3dc">${artHtmlRows(art).join('\n')}</pre>
 </div>
 </td></tr>
 </table>`
 }
 
+/**
+ * The header: the Proto wordmark in the site's own type, set over the field the way the hero sets
+ * its headline, with the field's glyphs running under it and thinning out at the top.
+ */
 function headerArt(kind: EmailReason['kind']): string {
-  return artBlock({ cols: ART_COLS, rows: 15, seed: ART_SEED[kind], wordmark: { col: 4, row: 4 }, band: [0.1, 0.6] }, '14px 0 14px 4px', 'Proto')
+  const wordmark = `<div style="padding:30px 44px 18px 44px;font-family:${FONT};font-size:40px;font-weight:300;line-height:44px;letter-spacing:-1.2px;color:#ffffff;mso-line-height-rule:exactly">Proto<span style="color:${MINT}">_</span></div>`
+  return artBlock({ cols: ART_COLS, rows: 8, seed: ART_SEED[kind], band: [0.25, 0.65], fadeTop: true }, '0 0 12px 4px', wordmark)
 }
 
 function footerArt(kind: EmailReason['kind']): string {
