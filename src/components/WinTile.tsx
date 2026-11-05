@@ -9,8 +9,6 @@ import motion from './motion/motion.module.css'
 import { SampleTag } from './SampleTag'
 import styles from './WinSheet.module.css'
 
-/** How much of a tile has to be on screen before its entrance plays. */
-const ENTRANCE_AT = 0.2
 const LETTER_COPIES = [0, 1, 2, 3]
 const ROLL_STEP = 62.5
 
@@ -54,7 +52,7 @@ function TagLine({ text, inView }: { text: string; inView: boolean }) {
         node.textContent = text
         return
       }
-      node.textContent = text.slice(0, real) + noiseGlyphs(Math.min(shown, DECODE_NOISE))
+      node.textContent = text.slice(0, real) + noiseGlyphs(Math.min(DECODE_NOISE, text.length - real))
       frame.id = requestAnimationFrame(tick)
     }
     frame.id = requestAnimationFrame(tick)
@@ -186,8 +184,8 @@ interface WinTileProps {
 
 /** One win: its cover, a decoding tag line and its name, opening its Devpost page when it has one. */
 export function WinTile({ win, side, details = false, eager = false }: WinTileProps) {
-  // Each tile watches for itself, so a long grid's lower rows don't play out of sight.
-  const [ref, inView] = useInView<HTMLLIElement>('0px', ENTRANCE_AT)
+  // Each tile plays as its top edge crosses the fold, so the motion is already under way as it arrives.
+  const [ref, inView] = useInView<HTMLLIElement>('0px')
   const { hackathon } = accoladeOf(win)
   const content = (
     <>
