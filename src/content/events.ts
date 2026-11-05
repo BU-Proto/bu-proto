@@ -6,13 +6,36 @@ import type { PageIntro } from './types'
 export const EVENTS_INTRO: PageIntro = {
   path: '~/proto/events',
   title: 'Events',
-  lede: 'Hack nights every week, plus talks, prep nights and workshops. Everything is open to every track.',
+  lede: 'Talks, workshops, prep nights and demo nights at BU. Everything is open to every track.',
 }
+
+/** The weekly beat beside the intro. No day or time: hack night's slot isn't booked yet. */
+export const HACK_NIGHT = {
+  title: 'Hack night is every week',
+  text: 'Open to everyone, with food. Bring something you’re building, or find a team there.',
+  next: 'The next one is',
+} as const
+
+/** The next event, set large at the top of the page. */
+export const NEXT_EVENT = {
+  details: 'Details',
+  /** How far off it is, in words: the one line that says "this is the next one". */
+  when: (days: number) => (days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`),
+} as const
+
+export const EVENTS_LATER = 'Also coming up'
+
+/** Nothing scheduled: say what's coming and how to hear about it first. */
+export const EVENTS_EMPTY = {
+  title: 'Nothing on the calendar yet',
+  text: 'This semester’s hack nights, talks and demo night are being planned now. Join Proto and we’ll email you before the first one.',
+  join: { label: 'Join Proto', href: '/join' },
+  hackathons: { label: 'See upcoming hackathons', href: '/hackathons' },
+} as const
 
 export const RSVP = {
   label: 'RSVP',
   going: 'You’re going ✓',
-  empty: 'Nothing on the calendar yet. Check back soon.',
   formLabel: (title: string) => `RSVP for ${title}`,
   submit: 'Count me in',
   pending: 'Saving…',
