@@ -41,7 +41,7 @@ const isLinkedIn = (link: MemberLink) => {
   }
 }
 
-// A member whose role names a seat ("Head of the Fund", "Head of Hype and socials") fills it.
+// A member whose role names a seat ("Head of the Fund", "Head of Growth and socials") fills it.
 const fills = (member: BoardMember, seat: OpenSeat) =>
   member.role.toLowerCase().includes(seat.role.toLowerCase().replace(/^the /, ''))
 

@@ -44,8 +44,8 @@ export const OPEN_SEATS: readonly { role: Exclude<BoardSeat, 'Not sure yet'>; de
     detail: 'Internal outreach: reaching BU students through clubs and department lists, and getting them to hack night.',
   },
   {
-    role: 'Head of Hype',
-    detail: 'Socials and marketing: Instagram, LinkedIn, the posters, and how each event gets announced.',
+    role: 'Head of Growth',
+    detail: 'Marketing and socials: Instagram, LinkedIn and the posters, getting Proto’s name out beyond the people who already come.',
   },
 ]
 
