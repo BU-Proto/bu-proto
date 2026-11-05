@@ -9,6 +9,8 @@ import { GlyphEdge } from './GlyphEdge'
 import { TopBar } from './TopBar'
 import styles from './Layout.module.css'
 
+const CONTROLS = 'a, button, input, select, textarea, label, summary, [role="button"], [role="tab"]'
+
 /** How long the field dims before it takes the next page's settings (see the CSS for the rise). */
 const DIM_MS = 200
 
@@ -35,6 +37,18 @@ export function Layout() {
     const timer = window.setTimeout(() => setTrailing(target), reducedMotion() ? 0 : DIM_MS)
     return () => window.clearTimeout(timer)
   }, [trailing, target])
+
+  // A click splashes the field, which is right on open ground but noisy on a button. The field
+  // skips pointer-downs inside [data-fog-ignore], so mark whichever control was pressed before its
+  // own (bubbling) listener reads the event.
+  useEffect(() => {
+    const markControl = (event: PointerEvent) => {
+      if (!(event.target instanceof Element)) return
+      event.target.closest(CONTROLS)?.setAttribute('data-fog-ignore', '')
+    }
+    window.addEventListener('pointerdown', markControl, { capture: true, passive: true })
+    return () => window.removeEventListener('pointerdown', markControl, { capture: true })
+  }, [])
 
   // The field re-measures marked text on scroll and resize, but not when a new page or a
   // form's thank-you state mounts new text. Tell it whenever the content changes.
