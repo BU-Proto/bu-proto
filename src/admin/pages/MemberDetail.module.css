@@ -3,16 +3,16 @@
   justify-self: start;
   margin-bottom: -16px;
   border-radius: 4px;
-  color: var(--ink-soft);
+  color: var(--ink-dim);
   font-size: 13px;
 }
 
 .back:hover {
-  color: var(--accent);
+  color: var(--ink);
 }
 
 .back:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -102,7 +102,7 @@
 }
 
 .fundAmount {
-  color: var(--accent);
+  color: var(--mint);
 }
 
 
@@ -123,8 +123,8 @@
   display: grid;
   justify-items: start;
   gap: 10px;
-  border-color: rgba(255, 150, 130, 0.3);
-  background: linear-gradient(rgba(255, 110, 95, 0.05), rgba(255, 110, 95, 0.05)), var(--surface);
+  border-color: var(--danger-edge);
+  background: linear-gradient(var(--danger-wash), var(--danger-wash)), var(--surface);
 }
 
 .dangerZone > h2 {

@@ -4,6 +4,12 @@
   container-type: inline-size;
 }
 
+/* The send result's live region stays in the page so it's announced, but takes no row (and no
+   extra gap) until there's a result in it. */
+.root > [aria-live]:empty {
+  position: absolute;
+}
+
 /* Stacked by default: compose, then the preview at the full column. Side by side only once the
    preview column can hold the email's 600px card. */
 .layout {
@@ -40,16 +46,16 @@
 
 .option {
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: var(--radius-control);
 }
 
 .option:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--hover);
 }
 
 .option[data-checked] {
-  border-color: rgba(157, 240, 168, 0.35);
-  background: rgba(157, 240, 168, 0.07);
+  border-color: var(--edge);
+  background: var(--selected);
 }
 
 .optionLabel {
@@ -69,11 +75,11 @@
   width: 16px;
   height: 16px;
   margin: 2px 0 0;
-  accent-color: var(--accent);
+  accent-color: var(--mint);
 }
 
 .optionLabel input:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -102,7 +108,7 @@
 }
 
 .recipientCount {
-  color: var(--accent);
+  color: var(--ink);
   font-size: 22px;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
@@ -157,7 +163,6 @@
 
 .sendBar p {
   flex: 1 1 200px;
-  text-shadow: var(--on-field-shadow);
 }
 
 /* ---- Variables ---- */
@@ -192,7 +197,7 @@
 
 .variables[open] .variablesSummary::before {
   content: '▾';
-  color: var(--accent);
+  color: var(--mint);
 }
 
 .variablesSummary:hover {
@@ -201,7 +206,7 @@
 
 
 .variablesSummary:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -225,19 +230,19 @@
   width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-control);
+  background: var(--fill);
   text-align: left;
   cursor: pointer;
 }
 
 .variable:hover {
-  border-color: rgba(157, 240, 168, 0.5);
-  background: rgba(157, 240, 168, 0.07);
+  border-color: var(--ok-edge);
+  background: var(--ok-wash);
 }
 
 .variable:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -258,7 +263,7 @@
 }
 
 .variableToken {
-  color: var(--accent);
+  color: var(--mint);
   font-family: var(--font-mono);
   font-size: 12px;
 }
@@ -295,6 +300,7 @@
   margin: 0;
 }
 
+/* The HTML / plain text switch: the shared segmented control, one size down. */
 .modes {
   display: flex;
   flex-wrap: wrap;
@@ -302,66 +308,41 @@
   width: fit-content;
   max-width: 100%;
   margin: 0;
-  padding: 4px;
-  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
-  border-radius: 999px;
-  background: rgba(6, 26, 46, 0.5);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--surface-sunk);
   list-style: none;
-}
-
-.mode:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 .mode {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 32px;
-  padding: 5px 14px;
+  min-height: 26px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
   cursor: pointer;
 }
 
 .mode:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--hover);
   color: var(--ink);
 }
 
-.mode[aria-current='page'],
-.mode[aria-current='true'],
 .mode[aria-pressed='true'] {
-  background: #fff;
-  color: var(--on-light);
+  background: var(--fill-hover);
+  color: var(--ink);
   font-weight: 500;
-  box-shadow: 0 4px 14px -6px rgba(0, 20, 45, 0.7);
-}
-
-.mode {
-  min-height: 28px;
-  padding: 3px 12px;
-  border: 0;
-  background: transparent;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.mode[aria-pressed='true'] {
-  background: #fff;
-  color: var(--on-light);
-  font-weight: 500;
+  box-shadow: inset 0 0 0 1px var(--line-strong);
 }
 
 .mode:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
 
@@ -379,8 +360,8 @@
   justify-content: space-between;
   gap: 6px 12px;
   padding: 10px 14px;
-  border-radius: 14px 14px 0 0;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-control) var(--radius-control) 0 0;
+  background: var(--fill);
 }
 
 .to {
@@ -400,8 +381,8 @@
 .previewSubject {
   margin: -10px 0 0;
   padding: 0 14px 12px;
-  border-radius: 0 0 14px 14px;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0 0 var(--radius-control) var(--radius-control);
+  background: var(--fill);
   font-size: 15px;
   font-weight: 500;
   overflow-wrap: anywhere;
@@ -410,9 +391,9 @@
 .unfilled {
   margin: 0;
   padding: 9px 14px;
-  border: 1px solid rgba(255, 211, 138, 0.45);
-  border-radius: 12px;
-  background: rgba(255, 211, 138, 0.08);
+  border: 1px solid var(--warn-edge);
+  border-radius: var(--radius-control);
+  background: var(--warn-wash);
   color: var(--warn-ink);
   font-size: 13px;
 }
@@ -422,15 +403,14 @@
   opacity: 0.6;
 }
 
-/* The email paints its own page; the white is only what shows before it loads, as in an inbox. */
+/* The email paints its own page; frost is only what shows before it loads, as in an inbox. */
 .frame {
   display: block;
   width: 100%;
   height: 720px;
   border: 0;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 18px 50px -30px rgba(0, 0, 0, 0.8);
+  border-radius: var(--radius-control);
+  background: var(--frost);
 }
 
 .plain {
@@ -439,7 +419,7 @@
   overflow: auto;
   padding: 16px 18px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-control);
   background: var(--surface-sunk);
   color: var(--ink-soft);
   font-family: var(--font-mono);
@@ -455,9 +435,9 @@
   display: grid;
   gap: 4px;
   padding: 14px 18px;
-  border: 1px solid rgba(157, 240, 168, 0.45);
-  border-radius: 16px;
-  background: linear-gradient(rgba(157, 240, 168, 0.1), rgba(157, 240, 168, 0.1)), var(--surface);
+  border: 1px solid var(--ok-edge);
+  border-radius: var(--radius-panel);
+  background: linear-gradient(var(--ok-wash), var(--ok-wash)), var(--surface);
 }
 
 .result p {
@@ -466,13 +446,13 @@
 
 .result[data-tone='logged'],
 .result[data-tone='partial'] {
-  border-color: rgba(255, 211, 138, 0.5);
-  background: linear-gradient(rgba(255, 211, 138, 0.08), rgba(255, 211, 138, 0.08)), var(--surface);
+  border-color: var(--warn-edge);
+  background: linear-gradient(var(--warn-wash), var(--warn-wash)), var(--surface);
 }
 
 .result[data-tone='failed'] {
-  border-color: rgba(255, 160, 140, 0.5);
-  background: linear-gradient(rgba(255, 120, 100, 0.1), rgba(255, 120, 100, 0.1)), var(--surface);
+  border-color: var(--danger-edge);
+  background: linear-gradient(var(--danger-wash), var(--danger-wash)), var(--surface);
 }
 
 .resultTitle {
@@ -489,20 +469,14 @@
 
 .campaigns {
   position: relative;
+  display: grid;
   min-width: 0;
-  padding: 20px 22px;
-  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
-  border-radius: 20px;
-  background: var(--surface, rgba(8, 28, 52, 0.62));
-  -webkit-backdrop-filter: blur(14px) saturate(130%);
-  backdrop-filter: blur(14px) saturate(130%);
-  box-shadow:
-    var(--lift, 0 24px 60px -36px rgba(0, 10, 25, 0.9)),
-    var(--highlight, inset 0 1px 0 rgba(255, 255, 255, 0.1));
+  margin: 0;
   padding: 0;
   overflow: hidden;
-  display: grid;
-  margin: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
   list-style: none;
 }
 
@@ -515,7 +489,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(150px, auto) minmax(150px, auto);
   align-items: start;
   gap: 6px 28px;
-  padding: 13px 18px;
+  padding: 13px 20px;
   cursor: pointer;
   list-style: none;
 }
@@ -537,7 +511,7 @@
 }
 
 .summary:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: -2px;
 }
 
@@ -557,7 +531,7 @@
 
 .campaign[open] .summarySubject::before {
   content: '▾';
-  color: var(--accent);
+  color: var(--mint);
 }
 
 .summaryAudience {
@@ -590,7 +564,7 @@
   margin: 0;
   padding: 14px 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background: var(--surface-sunk);
   color: var(--ink-soft);
   font-family: inherit;
@@ -600,8 +574,7 @@
   overflow-wrap: anywhere;
 }
 
-@media (prefers-reduced-motion
-: no-preference) {
+@media (prefers-reduced-motion: no-preference) {
   .stale {
     transition: opacity 120ms;
   }
@@ -633,9 +606,6 @@
     height: 600px;
   }
 
-  .sendBar {
-    border-radius: 20px;
-  }
 }
 
 /* Stacked, but with room: the audience and test beside the message, the preview below. */

@@ -93,12 +93,17 @@ export const NEXT_UP = {
   applyBy: 'Apply by',
   allEvents: 'All events',
   allHackathons: 'Every hackathon',
+  closes: 'Closes',
 } as const
 
 export const WINS_TITLE = 'Latest wins'
 
 export const HOME_EMPTY = {
-  next: 'Nothing on the calendar yet. Dates go up here as soon as they’re set.',
+  next: {
+    title: 'Nothing on the calendar yet',
+    text: 'This semester’s hack nights, talks and demo night are being planned now. Join Proto and we’ll email you before the first one.',
+    link: { label: 'Join to hear first', href: '/join' },
+  },
   deadlines: 'No open deadlines right now.',
 } as const
 

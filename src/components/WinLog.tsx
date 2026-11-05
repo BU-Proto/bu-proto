@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
 import type { Win } from '../../shared/api'
 import { WIN_SHOWCASE } from '../content/wins'
@@ -15,12 +16,18 @@ import styles from './WinLog.module.css'
 export function WinLog({ wins }: { wins: readonly Win[] }) {
   return (
     <ol className={styles.log}>
-      {wins.map((win) => {
+      {wins.map((win, index) => {
         const { prize, rank, note, hackathon } = accoladeOf(win)
         const when = win.date ? dateParts(win.date) : null
         const team = teamParts(win.team, 4)
         return (
-          <li key={win.id} className={styles.entry}>
+          // Each row settles in as it comes up the screen, when inside a reveal wrapper.
+          <li
+            key={win.id}
+            className={styles.entry}
+            data-reveal="rise"
+            style={{ '--d': `${index * 70}ms` } as CSSProperties}
+          >
             {/* The row is one link for the pointer; screen readers and the tab order get the name. */}
             <Link className={styles.overlay} to={`/wins/${win.id}`} tabIndex={-1} aria-hidden="true" />
             <p className={styles.when}>

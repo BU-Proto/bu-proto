@@ -8,8 +8,34 @@
 
 .live {
   margin: 0;
-  color: var(--accent);
+  color: var(--ok-ink);
   font-size: 13px;
+}
+
+/* Kept in the page so screen readers hear it change, but out of the layout until it has words. */
+.live:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* Board interest: how many people per seat, as a quiet line of names and figures. */
+.seats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 0;
+  padding: 0;
+  color: var(--ink-dim);
+  font-size: 13px;
+  list-style: none;
+}
+
+.seats span {
+  margin-left: 4px;
+  color: var(--ink);
 }
 
 /* ---- Demand summary ---- */
@@ -33,9 +59,9 @@
 }
 
 .totalValue {
-  color: var(--accent);
-  font-size: 28px;
-  font-weight: 300;
+  color: var(--mint);
+  font-size: 26px;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -72,9 +98,8 @@
   display: block;
   min-inline-size: 2px;
   block-size: 8px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(157, 240, 168, 0.55), var(--accent));
-  box-shadow: 0 0 12px rgba(157, 240, 168, 0.35);
+  border-radius: 2px;
+  background: rgb(var(--mint-rgb) / 0.75);
 }
 
 /* ---- Entries ---- */
@@ -131,7 +156,7 @@
 }
 
 .amount {
-  color: var(--accent);
+  color: var(--mint);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -143,6 +168,11 @@
   grid-template-columns: 200px minmax(0, 1fr);
   gap: 12px 14px;
   margin: 0;
+}
+
+/* One answer alone (board interest) takes the whole row. */
+.answers > div:only-child {
+  grid-column: 1 / -1;
 }
 
 .answers dd {
@@ -181,30 +211,23 @@
   min-height: 40px;
 }
 
+/* The chosen status reads in its own colour, the same word-in-colour as everywhere else. */
 .statusControl {
-  position: relative;
   display: block;
 }
 
-.statusControl::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 13px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--tone, var(--ink-dim));
-  transform: translateY(-50%);
-  pointer-events: none;
+.statusControl select {
+  color: var(--tone, var(--ink));
+  font-weight: 500;
 }
 
-.statusControl select {
-  padding-left: 30px;
+.statusControl option {
+  color: var(--ink);
+  font-weight: 400;
 }
 
 .statusControl[data-tone='new'] {
-  --tone: #a8cfff;
+  --tone: var(--info-ink);
 }
 
 .statusControl[data-tone='reviewing'] {
@@ -212,7 +235,7 @@
 }
 
 .statusControl[data-tone='approved'] {
-  --tone: var(--accent);
+  --tone: var(--mint);
 }
 
 .statusControl[data-tone='declined'] {

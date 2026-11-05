@@ -18,8 +18,8 @@
   gap: 4px;
   width: 100%;
   padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
@@ -28,18 +28,18 @@
 }
 
 .pick:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--hover);
   color: var(--ink);
 }
 
 .pick[aria-pressed='true'] {
-  border-color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--edge-hover);
+  background: var(--selected);
   color: var(--ink);
 }
 
 .pick:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -55,8 +55,9 @@
 
 .subject {
   margin: 0;
-  font-size: 17px;
   color: var(--ink);
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .test {

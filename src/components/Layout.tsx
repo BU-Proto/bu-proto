@@ -3,6 +3,7 @@ import { Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { AsciiField, type AsciiFieldHandle } from '../ascii-field'
 import { glyphTexture } from '../lib/glyphArt'
 import { GROUND, GROUNDS, groundFor, lightFilter, type GroundName } from '../lib/pageGround'
+import { useSmoothAnchors } from '../lib/smoothScroll'
 import { reducedMotion } from '../lib/useInView'
 import { Footer } from './Footer'
 import { GlyphEdge } from './GlyphEdge'
@@ -31,6 +32,7 @@ export function Layout() {
   const dimmed = shown !== target
   const ground = GROUNDS[shown]
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
+  useSmoothAnchors()
 
   useEffect(() => {
     if (trailing === target) return

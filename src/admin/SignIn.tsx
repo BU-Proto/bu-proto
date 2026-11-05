@@ -5,7 +5,6 @@ import { AsciiField, DEFAULT_FIELD_SETTINGS } from '../ascii-field'
 import styles from './SignIn.module.css'
 import { pageTitle } from './lib/format'
 
-
 function errorMessage(error: string | null, email: string | null) {
   switch (error) {
     case null:
@@ -98,16 +97,11 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
 
       <main className={styles.screen}>
         <a className={styles.brand} href="/" data-fog-clear>
-          {/* Drawn in CSS, like the sidebar's mark, so the door never shows a broken image. */}
-          <span className={styles.mark} aria-hidden="true" />
-
+          <img className={styles.mark} src="/proto-seal.svg" alt="" width={24} height={24} />
           Proto
         </a>
 
         <div className={styles.card}>
-          <div className={styles.handle} aria-hidden="true" />
-
-
           <h1 className={styles.title} data-fog-clear>
             {expired ? 'Your session ended' : 'Sign in to the portal'}
           </h1>
@@ -129,12 +123,11 @@ export function SignIn({ expired = false }: { expired?: boolean }) {
             {waiting && 'Finish signing in in the Google window. It closes on its own when you’re done.'}
           </p>
 
-
           <p className={styles.fine} data-fog-clear>
             {import.meta.env.DEV
               ? 'Local dev: this signs you straight in as the first owner. Production always uses Google.'
               : 'Only Google accounts on the admin list get in. We read your name, email and photo, nothing else.'}{' '}
-            <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
+            See the <a href="/privacy">privacy policy</a> and <a href="/terms">terms</a>.
           </p>
         </div>
 

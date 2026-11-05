@@ -70,7 +70,7 @@
 }
 
 .near {
-  color: var(--accent);
+  color: var(--mint);
 }
 
 @media (max-width: 640px) {

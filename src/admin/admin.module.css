@@ -1,12 +1,12 @@
 /* Shared pieces for the portal: page header, panels, buttons, fields, tables, row flags, dialogs.
-   The site's glass and type, tuned for a work tool: denser, darker glass so long tables stay
-   easy to read. The tokens (--surface, --line, ...) are set on the shell in AdminLayout. */
+   Every colour comes from the tokens set on the shell in AdminLayout.module.css. */
 
 .page {
   display: grid;
   /* minmax(0, ...) so a wide child (a tab strip that scrolls) can't widen the page on phones. */
   grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
+  align-content: start;
+  gap: 20px;
   width: 100%;
   max-width: var(--column, 1120px);
   min-width: 0;
@@ -20,10 +20,9 @@
   max-width: 880px;
 }
 
-
 .mono {
   font-family: var(--font-mono);
-  font-size: 0.93em;
+  font-size: 0.92em;
 }
 
 /* Dates and counts in Inter: figures line up, and a range never breaks across lines. */
@@ -62,24 +61,20 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid;
-  border-image: linear-gradient(90deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.04) 70%) 1;
+  padding-bottom: 4px;
 }
 
-/* The header sits straight on the gradient, so it gets the site's on-field shadow. */
 .headerText {
   display: grid;
   flex: 1 1 320px;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
-  text-shadow: var(--on-field-shadow);
 }
 
 /* Only ever a way back to the parent page; section names live in the sidebar. */
 .back {
-  margin: 0;
-  color: var(--ink-soft);
+  margin: 0 0 2px;
+  color: var(--ink-dim);
   font-size: 13px;
 }
 
@@ -88,20 +83,20 @@
 }
 
 .back a:hover {
-  color: var(--accent);
+  color: var(--ink);
 }
 
 .back a:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
 .title {
   margin: 0;
-  font-size: clamp(30px, 3.4vw, 40px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.08;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
@@ -116,10 +111,11 @@
 }
 
 .lede {
-  max-width: 64ch;
+  max-width: 68ch;
   margin: 0;
   color: var(--ink-soft);
-  font-size: 14.5px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .lede p {
@@ -135,19 +131,13 @@
 
 /* ---- Panels ------------------------------------------------------------------------------ */
 
-/* The main container: deep glass with a lit top edge. */
 .panel {
   position: relative;
   min-width: 0;
-  padding: 20px 22px;
-  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
-  border-radius: 20px;
-  background: var(--surface, rgba(8, 28, 52, 0.62));
-  -webkit-backdrop-filter: blur(14px) saturate(130%);
-  backdrop-filter: blur(14px) saturate(130%);
-  box-shadow:
-    var(--lift, 0 24px 60px -36px rgba(0, 10, 25, 0.9)),
-    var(--highlight, inset 0 1px 0 rgba(255, 255, 255, 0.1));
+  padding: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
 }
 
 /* Holds a table edge to edge. If a table ever can't fit, it scrolls here rather than being cut off. */
@@ -163,7 +153,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px 16px;
+  gap: 4px 16px;
   margin-bottom: 16px;
 }
 
@@ -173,8 +163,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
-  padding: 16px 18px 14px;
-  border-bottom: 1px solid var(--line-strong, rgba(255, 255, 255, 0.18));
+  min-height: 56px;
+  padding: 10px 16px 10px 20px;
+  border-bottom: 1px solid var(--line-strong);
 }
 
 .flushStatus {
@@ -183,83 +174,93 @@
 }
 
 .panelTitle {
-
   margin: 0;
-  font-size: 15.5px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 /* ---- Buttons ----------------------------------------------------------------------------- */
 
+/* Every button is as wide as its label: no button ever stretches to fill a row. */
 .button,
 .secondary,
 .primary,
 .danger,
 .ghost {
   display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: center;
+  justify-self: start;
   gap: 6px;
-  min-height: 38px;
-  padding: 8px 16px;
-  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  width: auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-control);
+  background: var(--fill);
+  color: var(--ink);
+  font: inherit;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .button:hover,
 .secondary:hover {
-  border-color: rgba(255, 255, 255, 0.34);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--edge-hover);
+  background: var(--fill-hover);
 }
 
-/* The site's white pill. */
+/* The site's frost button, in the portal's shape. */
 .primary {
-  border-color: #fff;
-  background: #fff;
-  color: var(--on-light);
-  box-shadow: 0 10px 28px -14px rgba(0, 25, 55, 0.8);
+  border-color: var(--frost);
+  background: var(--frost);
+  color: var(--navy);
 }
 
 .primary:hover {
-  background: #eefbf0;
+  border-color: var(--primary-hover);
+  background: var(--primary-hover);
 }
 
 .danger {
-  border-color: rgba(255, 150, 130, 0.5);
-  background: rgba(255, 110, 95, 0.14);
-  color: #ffd4cc;
-  box-shadow: none;
+  border-color: var(--danger-edge);
+  background: var(--danger-wash);
+  color: var(--danger-ink);
 }
 
 .danger:hover {
-  border-color: rgba(255, 150, 130, 0.75);
-  background: rgba(255, 110, 95, 0.24);
+  border-color: var(--danger-ink);
+  background: var(--danger-wash-strong);
 }
 
 .ghost {
   border-color: transparent;
   background: transparent;
   color: var(--ink-soft);
-  box-shadow: none;
 }
 
 .ghost:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--fill);
   color: var(--ink);
 }
 
 .small {
   min-height: 30px;
-  padding: 5px 12px;
-  font-size: 12px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+
+.button svg,
+.secondary svg,
+.primary svg,
+.danger svg,
+.ghost svg {
+  flex: none;
 }
 
 .button:disabled,
@@ -268,7 +269,7 @@
 .danger:disabled,
 .ghost:disabled {
   cursor: default;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .button:focus-visible,
@@ -278,30 +279,34 @@
 .ghost:focus-visible,
 .link:focus-visible,
 .tab:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
+/* Also used on buttons, so it clears a button's own chrome. */
 .link {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--edge-hover);
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
   font-weight: 500;
+  cursor: pointer;
 }
 
 .link:hover {
-  border-bottom-color: var(--accent);
-  color: var(--accent);
+  border-bottom-color: var(--mint);
+  color: var(--mint);
 }
 
 /* ---- Fields ------------------------------------------------------------------------------ */
 
-.form {
-  display: grid;
-  gap: 18px;
-}
-
 .field {
   display: grid;
-  gap: 7px;
+  align-content: start;
+  gap: 6px;
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -326,38 +331,39 @@
 
 .error {
   margin: 0;
-  color: var(--danger-ink, #ffbcb0);
+  color: var(--danger-ink);
   font-size: 12.5px;
+  line-height: 1.5;
 }
 
 .input {
   width: 100%;
-  min-height: 40px;
-  padding: 9px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  background: var(--surface-sunk, rgba(2, 14, 28, 0.5));
+  min-height: 38px;
+  padding: 8px 11px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-control);
+  background: var(--surface-sunk);
   color: var(--ink);
   font: inherit;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  font-size: 14px;
 }
 
 .input::placeholder {
-  color: rgba(246, 251, 255, 0.42);
+  color: var(--placeholder);
 }
 
 .input:hover {
-  border-color: rgba(255, 255, 255, 0.28);
+  border-color: var(--edge-hover);
 }
 
 .input:focus-visible {
-  border-color: var(--accent);
+  border-color: var(--focus);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(157, 240, 168, 0.22);
+  box-shadow: var(--focus-ring);
 }
 
 .input[aria-invalid='true'] {
-  border-color: rgba(255, 160, 140, 0.8);
+  border-color: var(--danger-ink);
 }
 
 textarea.input {
@@ -377,10 +383,12 @@ select.input {
     right 12px center;
   background-size: 5px 5px;
   background-repeat: no-repeat;
+  cursor: pointer;
 }
 
 select.input option {
-  background: var(--base);
+  background: var(--navy);
+  color: var(--ink);
 }
 
 input[type='date'].input {
@@ -388,7 +396,7 @@ input[type='date'].input {
 }
 
 /* A checkbox drawn as a switch, with its label and hint beside it. It stays a real checkbox, so
-   space toggles it. No box around it: the form's grid already sets it apart. */
+   space toggles it. */
 .switchRow {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -397,16 +405,16 @@ input[type='date'].input {
   cursor: pointer;
 }
 
-
 .switch {
   position: relative;
-  width: 38px;
-  height: 22px;
+  flex: none;
+  width: 36px;
+  height: 20px;
   margin: 0;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
+  border: 1px solid var(--edge-hover);
+  border-radius: 10px;
   appearance: none;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--fill);
   cursor: pointer;
 }
 
@@ -415,25 +423,24 @@ input[type='date'].input {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--ink-soft);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .switch:checked {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--mint);
+  background: var(--mint);
 }
 
 .switch:checked::after {
   left: 18px;
-  background: var(--on-light);
+  background: var(--navy);
 }
 
 .switch:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -455,9 +462,9 @@ input[type='date'].input {
 }
 
 .table th {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line-strong, rgba(255, 255, 255, 0.18));
-  background: rgba(255, 255, 255, 0.035);
+  height: 40px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line-strong);
   color: var(--ink-dim);
   font-size: 12.5px;
   font-weight: 500;
@@ -466,9 +473,8 @@ input[type='date'].input {
 }
 
 .table td {
-  padding: 13px 14px;
-
-  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
   /* Baseline, so a mono email or a smaller note lines up with the name beside it. */
   vertical-align: baseline;
 }
@@ -476,12 +482,12 @@ input[type='date'].input {
 /* The outer cells keep the panel's own inset. */
 .table th:first-child,
 .table td:first-child {
-  padding-left: 18px;
+  padding-left: 20px;
 }
 
 .table th:last-child,
 .table td:last-child {
-  padding-right: 18px;
+  padding-right: 20px;
 }
 
 .table tbody tr:last-child td {
@@ -489,7 +495,7 @@ input[type='date'].input {
 }
 
 .table tbody tr:hover {
-  background: var(--hover, rgba(255, 255, 255, 0.05));
+  background: var(--hover);
 }
 
 .num {
@@ -511,7 +517,7 @@ input[type='date'].input {
 
 /* A text-only button at the end lines its label up with the column's edge, not its invisible one. */
 .rowActions > .ghost:last-child {
-  margin-right: -12px;
+  margin-right: -10px;
 }
 
 /* Buttons are taller than a line of text; pull them up so their label sits on the row's text line. */
@@ -524,17 +530,17 @@ input[type='date'].input {
   font-weight: 500;
 }
 
-.rowTitle:hover {
-  color: var(--accent);
+a.rowTitle:hover {
+  color: var(--mint);
 }
 
 .rowTitle:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Phones: each row stacks into a small card, with the column name before each value. */
+/* Phones: each row stacks into a small block, with the column name before each value. */
 @media (max-width: 640px) {
   .table thead {
     display: none;
@@ -549,7 +555,7 @@ input[type='date'].input {
 
   .table tr {
     padding: 14px 16px;
-    border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.09));
+    border-bottom: 1px solid var(--line);
   }
 
   .table tbody tr:last-child {
@@ -570,11 +576,10 @@ input[type='date'].input {
     padding-bottom: 6px;
   }
 
-
   .table td[data-label]::before {
     content: attr(data-label);
     display: inline-block;
-    min-width: 76px;
+    min-width: 84px;
     margin-right: 10px;
     color: var(--ink-dim);
     /* Set outright: the value's cell may be in mono (an email), the name never is. */
@@ -590,6 +595,7 @@ input[type='date'].input {
 
   .rowActions {
     padding-top: 10px !important;
+    white-space: normal;
   }
 
   .rowActions > button,
@@ -599,14 +605,12 @@ input[type='date'].input {
 
   /* A text-only button lines its label up with the values above, not its invisible edge. */
   .rowActions > .ghost:first-child {
-    margin-left: -12px;
+    margin-left: -10px;
   }
 
   .rowActions > .ghost:last-child {
     margin-right: 0;
   }
-
-
 }
 
 /* ---- Row flags, tabs -------------------------------------------------------------------- */
@@ -622,7 +626,7 @@ input[type='date'].input {
 }
 
 .flagSample {
-  color: var(--warn-ink, #ffd894);
+  color: var(--warn-ink);
 }
 
 .flagDraft {
@@ -640,7 +644,7 @@ input[type='date'].input {
   font-weight: 400;
 }
 
-/* A segmented control: a glass track with the current option as a white pill. */
+/* A segmented control: a sunk track, the current option lifted out of it. */
 .tabs {
   display: flex;
   flex-wrap: wrap;
@@ -648,12 +652,10 @@ input[type='date'].input {
   width: fit-content;
   max-width: 100%;
   margin: 0;
-  padding: 4px;
-  border: 1px solid var(--edge, rgba(255, 255, 255, 0.2));
-  border-radius: 999px;
-  background: rgba(6, 26, 46, 0.5);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-sunk);
   list-style: none;
 }
 
@@ -662,10 +664,10 @@ input[type='date'].input {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 32px;
-  padding: 5px 14px;
+  min-height: 30px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 7px;
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
@@ -674,20 +676,20 @@ input[type='date'].input {
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--hover);
   color: var(--ink);
 }
 
 .tab[aria-current='page'],
 .tab[aria-current='true'],
 .tab[aria-pressed='true'] {
-  background: #fff;
-  color: var(--on-light);
+  background: var(--fill-hover);
+  color: var(--ink);
   font-weight: 500;
-  box-shadow: 0 4px 14px -6px rgba(0, 20, 45, 0.7);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
 }
 
-/* On a phone the options scroll sideways rather than wrapping the pill into a blob. */
+/* On a phone the options scroll sideways rather than wrapping onto a second row. */
 @media (max-width: 640px) {
   .tabs {
     flex-wrap: nowrap;
@@ -702,52 +704,35 @@ input[type='date'].input {
 
 /* A count after a tab label or heading: the same type, lighter. */
 .count {
+  color: var(--ink-dim);
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  opacity: 0.6;
 }
 
 /* ---- Status line, empty state, error ------------------------------------------------------ */
 
 .status {
   margin: 0;
-  min-height: 1.45em;
+  min-height: 1.5em;
   color: var(--ink-soft);
   font-size: 13px;
-}
-
-.statusOk,
-.statusError {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  line-height: 1.5;
 }
 
 .statusOk {
-  color: var(--accent);
+  color: var(--ok-ink);
 }
 
 .statusError {
-  color: var(--danger-ink, #ffbcb0);
+  color: var(--danger-ink);
 }
 
-.statusOk:not(:empty)::before,
-.statusError:not(:empty)::before {
-  content: '';
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 10px currentColor;
-}
-
-/* Nothing here yet: the field's fog glyphs stand in for an illustration. */
+/* Nothing here yet: a heading that says so, and what to do about it. */
 .empty {
   display: grid;
   justify-items: center;
-  gap: 8px;
-  padding: 44px 24px;
+  gap: 6px;
+  padding: 48px 24px;
   color: var(--ink-soft);
   text-align: center;
 }
@@ -756,29 +741,28 @@ input[type='date'].input {
 .empty h3 {
   margin: 0;
   color: var(--ink);
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .empty p {
   margin: 0;
 }
 
+/* Something went wrong: a tinted panel, not a red one. */
 .callout {
   display: grid;
   gap: 8px;
   padding: 18px 20px;
-  border: 1px solid rgba(255, 150, 130, 0.4);
-  border-radius: 18px;
-  background: linear-gradient(rgba(255, 110, 95, 0.1), rgba(255, 110, 95, 0.1)), var(--surface, rgba(8, 28, 52, 0.62));
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  border: 1px solid var(--danger-edge);
+  border-radius: var(--radius-panel);
+  background: linear-gradient(var(--danger-wash), var(--danger-wash)), var(--surface);
 }
 
 .callout h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .callout p {
@@ -786,50 +770,52 @@ input[type='date'].input {
   color: var(--ink-soft);
 }
 
+.callout .actions {
+  margin-top: 6px;
+}
+
 /* ---- Confirm dialog ---------------------------------------------------------------------- */
 
-/* The sign-in card's glass, deep enough to read over whatever is behind it. */
 .dialog {
   width: min(440px, calc(100vw - 32px));
   padding: 0;
-  border: 1px solid var(--glass-edge);
-  border-radius: 24px;
-  background: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)), rgba(8, 30, 54, 0.9);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-dialog);
+  background: var(--surface-raised);
   color: var(--ink);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
-  backdrop-filter: blur(22px) saturate(140%);
-  box-shadow:
-    0 40px 90px -30px rgba(0, 10, 25, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: var(--pop);
 }
 
 .dialog::backdrop {
-  background: rgba(2, 12, 26, 0.55);
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
+  background: var(--scrim);
 }
 
 .dialogBody {
   display: grid;
-  gap: 12px;
-  padding: 24px 24px 20px;
+  gap: 10px;
+  padding: 22px 22px 18px;
 }
 
 .dialogTitle {
   margin: 0;
-  font-size: 22px;
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
 }
 
 .dialogText {
   margin: 0;
   color: var(--ink-soft);
+  line-height: 1.55;
 }
 
 .dialogText p {
   margin: 0;
+}
+
+.dialogBody > .error:empty {
+  display: none;
 }
 
 .dialogActions {
@@ -837,7 +823,17 @@ input[type='date'].input {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
+}
+
+@media (max-width: 640px) {
+  .panel {
+    padding: 16px;
+  }
+
+  .panelFlush {
+    padding: 0;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -849,12 +845,13 @@ input[type='date'].input {
   .tab,
   .input,
   .switch,
-  .switchRow {
+  .link,
+  a.rowTitle {
     transition:
-      background-color 0.15s ease,
-      border-color 0.15s ease,
-      box-shadow 0.15s ease,
-      color 0.15s ease;
+      background-color 0.12s ease,
+      border-color 0.12s ease,
+      box-shadow 0.12s ease,
+      color 0.12s ease;
   }
 
   .switch::after {
@@ -864,13 +861,13 @@ input[type='date'].input {
   }
 
   .dialog[open] {
-    animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: rise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(6px) scale(0.985);
   }
 }

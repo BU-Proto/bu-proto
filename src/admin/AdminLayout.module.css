@@ -1,84 +1,84 @@
-/* The portal's frame: a floating glass sidebar on laptops, a glass top bar with a menu on phones,
-   all over a still copy of the site's gradient. */
+/* The portal's frame: a fixed sidebar on laptops, a top bar with a menu sheet on phones, on the
+   site's harbor ground. No field behind it: this is a screen people sit in for an hour. */
+
+.shell,
+.fatal {
+  /* Portal tokens, built from the site's palette in index.css. Every page inherits these,
+     dialogs included (they inherit from where they sit in the DOM, even in the top layer). */
+
+  /* Grounds: the sidebar a step below harbor, panels a step above it, inputs sunk into panels. */
+  --ground: var(--harbor);
+  --side: #04131f;
+  --surface: color-mix(in srgb, var(--navy) 62%, var(--harbor));
+  --surface-raised: var(--navy);
+  --surface-sunk: rgb(var(--harbor-rgb) / 0.72);
+  --scrim: rgb(var(--harbor-rgb) / 0.72);
+
+  /* Lines and fills, all frost at low strength so they sit on any of the grounds above. */
+  --line: rgb(var(--frost-rgb) / 0.08);
+  --line-strong: rgb(var(--frost-rgb) / 0.13);
+  --edge: rgb(var(--frost-rgb) / 0.17);
+  --edge-hover: rgb(var(--frost-rgb) / 0.3);
+  --hover: rgb(var(--frost-rgb) / 0.045);
+  --selected: rgb(var(--frost-rgb) / 0.09);
+  --fill: rgb(var(--frost-rgb) / 0.06);
+  --fill-hover: rgb(var(--frost-rgb) / 0.11);
+  --placeholder: rgb(var(--frost-rgb) / 0.4);
+
+  /* States: always the word in colour, never a capsule. Info is a pale sample of the field's blue. */
+  --ok-ink: var(--mint);
+  --ok-edge: rgb(var(--mint-rgb) / 0.34);
+  --ok-wash: rgb(var(--mint-rgb) / 0.07);
+  --warn-ink: var(--amber);
+  --warn-edge: rgb(var(--amber-rgb) / 0.4);
+  --warn-wash: rgb(var(--amber-rgb) / 0.07);
+  --danger-ink: var(--coral);
+  --danger-edge: rgb(var(--coral-rgb) / 0.42);
+  --danger-wash: rgb(var(--coral-rgb) / 0.08);
+  --danger-wash-strong: rgb(var(--coral-rgb) / 0.15);
+  --info-ink: #a8cfff;
+
+  --primary-hover: color-mix(in srgb, var(--frost) 86%, var(--mint));
+  --focus: var(--mint);
+  --focus-ring: 0 0 0 3px rgb(var(--mint-rgb) / 0.2);
+  --pop: 0 30px 80px -24px rgb(0 0 0 / 0.6);
+
+  /* Older names some page styles still read. */
+  --highlight: inset 0 0 0 0 transparent;
+  --lift: 0 0 0 0 transparent;
+
+  /* Radii step with size: controls, then panels, then dialogs. */
+  --radius-control: 8px;
+  --radius-panel: 14px;
+  --radius-dialog: 16px;
+
+  --column: 1120px;
+  --sidebar: 236px;
+}
 
 .shell {
-  /* Portal tokens. Every page inherits these, dialogs included (they inherit from where they sit
-     in the DOM, even in the top layer). */
-  --surface: rgba(8, 28, 52, 0.62);
-  --surface-raised: rgba(16, 42, 72, 0.66);
-  --surface-sunk: rgba(2, 14, 28, 0.5);
-  --line: rgba(255, 255, 255, 0.09);
-  --line-strong: rgba(255, 255, 255, 0.18);
-  --edge: rgba(255, 255, 255, 0.2);
-  --hover: rgba(255, 255, 255, 0.05);
-  --highlight: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  --lift: 0 24px 60px -36px rgba(0, 10, 25, 0.9);
-  --danger-ink: #ffbcb0;
-  --warn-ink: #ffd894;
-  --column: 1120px;
-  --sidebar: 252px;
-
-  position: relative;
   display: grid;
   grid-template-columns: var(--sidebar) minmax(0, 1fr);
   min-height: 100vh;
   min-height: 100dvh;
-}
-
-/* The hero gradient (blue top-left, lilac and pink through the middle, cyan bottom-right), held
-   still and veiled in navy. A live field would pull the eye on every mouse move, and this is a
-   screen people sit in for an hour; this costs nothing to draw and stays out of the way. */
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(55% 60% at 4% 0%, rgba(4, 118, 175, 0.95), transparent 72%),
-    radial-gradient(42% 48% at 72% 22%, rgba(166, 150, 250, 0.95), transparent 70%),
-    radial-gradient(38% 44% at 50% 62%, rgba(232, 150, 176, 0.85), transparent 72%),
-    radial-gradient(50% 55% at 100% 100%, rgba(20, 162, 206, 0.7), transparent 72%),
-    radial-gradient(40% 45% at 10% 100%, rgba(105, 170, 200, 0.5), transparent 72%),
-    #0a4a78;
-}
-
-/* The navy veil: thin at the top, where the page title and stat tiles sit like the site's hero,
-   and deeper further down, where the tables and forms are. */
-.backdrop::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(6, 26, 46, 0.34), rgba(6, 26, 46, 0.7) 50%, rgba(6, 26, 46, 0.8));
-}
-
-/* A faint grid of the field's glyphs, fading out toward the middle: the ASCII field, at rest. */
-.backdrop::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='54' font-family='monospace' font-size='9' fill='white'%3E%3Ctext x='2' y='9'%3E. : - . %3E .%3C/text%3E%3Ctext x='2' y='27'%3E: . + : . -%3C/text%3E%3Ctext x='2' y='45'%3E- . : = . :%3C/text%3E%3C/svg%3E");
-  background-size: 90px 54px;
-  opacity: 0.1;
-  -webkit-mask-image: radial-gradient(90% 90% at 55% 50%, transparent 30%, #000 85%);
-  mask-image: radial-gradient(90% 90% at 55% 50%, transparent 30%, #000 85%);
+  background: var(--ground);
 }
 
 .skip {
   position: fixed;
   top: 8px;
   left: 8px;
-  z-index: 20;
+  z-index: 30;
   padding: 8px 14px;
-  border-radius: 999px;
-  background: #fff;
-  color: var(--on-light);
+  border-radius: var(--radius-control);
+  background: var(--frost);
+  color: var(--navy);
   font-weight: 500;
   transform: translateY(-200%);
 }
 
 .skip:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
   transform: none;
 }
@@ -96,9 +96,9 @@
 .progress {
   position: fixed;
   inset: 0 0 auto;
-  z-index: 15;
+  z-index: 25;
   height: 2px;
-  background: linear-gradient(90deg, rgba(157, 240, 168, 0), var(--accent) 40%);
+  background: linear-gradient(90deg, transparent, var(--mint) 40%);
   opacity: 0;
   transform: scaleX(0);
   transform-origin: left;
@@ -115,64 +115,52 @@
 .sidebar {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  height: calc(100dvh - 24px);
-  margin: 12px 0 12px 12px;
-  padding: 16px 12px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)), rgba(6, 26, 46, 0.42);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  backdrop-filter: blur(20px) saturate(140%);
-  box-shadow:
-    0 30px 70px -40px rgba(0, 10, 25, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  overflow-y: auto;
-  scrollbar-width: thin;
+  height: 100vh;
+  height: 100dvh;
+  padding: 12px 12px 12px;
+  border-right: 1px solid var(--line);
+  background: var(--side);
 }
 
 .brandRow {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-height: 44px;
+  margin-bottom: 12px;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 6px;
-  border-radius: 10px;
+  gap: 9px;
+  min-height: 36px;
+  padding: 0 8px;
+  border-radius: var(--radius-control);
   font-size: 15px;
-  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
+/* The sail sits low and wide in its square, so it's drawn a little larger than the text. */
 .mark {
   flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
-  background:
-    radial-gradient(80% 80% at 80% 20%, #9e94f6, transparent 70%),
-    radial-gradient(70% 70% at 40% 90%, #d6a0ac, transparent 70%),
-    linear-gradient(135deg, #0576ad, #1fa5cd);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
-    0 6px 16px -6px rgba(4, 118, 175, 0.8);
+  display: block;
+  width: 26px;
+  height: 26px;
+  margin-left: -2px;
 }
 
-.brandText {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
+.brandName {
+  font-weight: 600;
 }
 
 .brandSub {
+  margin-left: -5px;
   color: var(--ink-dim);
   font-weight: 400;
 }
@@ -181,50 +169,53 @@
   display: none;
   align-items: center;
   gap: 6px;
-  min-height: 38px;
-  padding: 6px 14px;
+  min-height: 36px;
+  padding: 0 12px;
   border: 1px solid var(--edge);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-control);
+  background: var(--fill);
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .menuButton:hover {
-  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--edge-hover);
+  background: var(--fill-hover);
 }
 
 .brand:focus-visible,
 .menuButton:focus-visible,
 .navLink:focus-visible,
 .subLink:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
 }
 
 .menu {
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
+  min-height: 0;
 }
 
+/* The links scroll on a short screen; the account stays put under them. Side padding so the
+   focus rings aren't clipped by the scroll box. */
 .navGroups {
   display: grid;
-  gap: 16px;
-}
-
-.navGroup {
-  display: grid;
+  flex: 1;
   align-content: start;
-  gap: 4px;
+  gap: 20px;
+  min-height: 0;
+  margin: 0 -4px;
+  padding: 2px 4px 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
-/* Quiet, sentence case: it groups the links without competing with them. */
 .navLabel {
-  margin: 0;
-  padding: 0 12px 2px;
+  margin: 0 0 6px;
+  padding: 0 10px;
   color: var(--ink-dim);
   font-size: 12px;
   font-weight: 500;
@@ -233,103 +224,159 @@
 .nav,
 .subNav {
   display: grid;
-  gap: 1px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.navLink {
-  position: relative;
+/* A link, and for a section with sub-pages, its chevron beside it: two targets on one row. The
+   row carries the lit background, so the pair reads as one item. */
+.navRow {
   display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: var(--radius-control);
+}
+
+.navLink {
+  display: flex;
+  flex: 1;
   align-items: center;
+  gap: 10px;
+  min-width: 0;
   min-height: 34px;
-  padding: 6px 12px;
-  border-radius: 10px;
+  padding: 0 10px;
+  border-radius: var(--radius-control);
   color: var(--ink-soft);
   font-size: 13.5px;
 }
 
+.navIcon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--ink-dim);
+}
+
 .navLink:hover,
-.subLink:hover {
-  background: rgba(255, 255, 255, 0.06);
+.subLink:hover,
+.disclosure:hover {
+  background: var(--hover);
   color: var(--ink);
 }
 
-/* The current page: a lit glass pill, with a small mint dot at its far end. */
+.navLink:hover .navIcon {
+  color: var(--ink-soft);
+}
+
+/* The current page: a lit row, its icon in the one accent. Editors under a list (an event's page)
+   count as that list, since NavLink matches the start of the path. */
+.navRow:has(> .navLink[aria-current='page']) {
+  background: var(--selected);
+}
+
 .navLink[aria-current='page'] {
-  background: rgba(255, 255, 255, 0.14);
   color: var(--ink);
   font-weight: 500;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
-.navLink[aria-current='page']::after {
-  content: '';
-  width: 6px;
-  height: 6px;
-  margin-left: auto;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px rgba(157, 240, 168, 0.7);
+.navLink[aria-current='page'] .navIcon {
+  color: var(--mint);
 }
 
-/* When a sub-page is the current one, its parent steps back to a plain "you're in here". */
-.navLink[aria-current='page']:has(+ .subNav [aria-current='page']) {
+/* On a sub-page the light moves down to the sub-link; the parent keeps its mint icon and bright
+   label, which says "the current page is in here". If someone folds that group shut, the parent
+   takes the light back, so the current page always shows somewhere. */
+.navItem[data-open]:has(.subLink[aria-current='page']) > .navRow {
   background: transparent;
-  box-shadow: none;
 }
 
-.navLink[aria-current='page']:has(+ .subNav [aria-current='page'])::after {
-  display: none;
+.disclosure {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-dim);
+  cursor: pointer;
 }
 
-/* Indented under its parent, so it reads as part of it. */
+.chevron {
+  width: 14px;
+  height: 14px;
+  transform: rotate(-90deg);
+}
+
+.disclosure[aria-expanded='true'] .chevron {
+  transform: none;
+}
+
+.disclosure:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+
+/* Inside the fold's clipping box, so the ring is drawn inward to stay whole. */
+.subLink:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Folds by animating the row's height from nothing to its content's; hidden once shut, and inert
+   in the markup, so closed links are out of the tab order. */
+.subWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+}
+
+.navItem[data-open] > .subWrap {
+  grid-template-rows: 1fr;
+  visibility: visible;
+}
+
+/* Children start where the parent's label does, with no icon of their own: the indent is the
+   guide. */
 .subNav {
-  margin: 1px 0 2px 14px;
+  min-height: 0;
+  overflow: hidden;
 }
 
+.subNav > li:first-child {
+  padding-top: 2px;
+}
+
+.subNav > li:last-child {
+  padding-bottom: 4px;
+}
 
 .subLink {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 28px;
-  padding: 4px 10px;
-  border-radius: 8px;
+  min-height: 30px;
+  padding: 0 10px 0 36px;
+  border-radius: var(--radius-control);
   color: var(--ink-dim);
-  font-size: 12.5px;
+  font-size: 13px;
 }
-
 
 .subLink[aria-current='page'] {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--selected);
   color: var(--ink);
   font-weight: 500;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-}
-
-.subLink[aria-current='page']::after {
-  content: '';
-  width: 6px;
-  height: 6px;
-  margin-left: auto;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px rgba(157, 240, 168, 0.7);
 }
 
 /* ---- Account ------------------------------------------------------------------------------ */
 
 .account {
   display: grid;
+  flex: none;
   gap: 10px;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  background: rgba(2, 14, 28, 0.28);
+  padding: 12px 2px 0;
+  border-top: 1px solid var(--line);
 }
 
 .user {
@@ -337,20 +384,21 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  padding: 0 8px;
 }
 
 .avatar {
   display: grid;
   flex: none;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: rgba(157, 240, 168, 0.18);
-  color: var(--accent);
+  background: rgb(var(--mint-rgb) / 0.14);
+  color: var(--mint);
+  font-size: 12.5px;
   font-weight: 600;
   object-fit: cover;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .userText {
@@ -375,10 +423,10 @@
   font-size: 12px;
 }
 
-
 .accountActions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 6px;
 }
@@ -387,13 +435,15 @@
   display: none;
 }
 
+.account p {
+  padding: 0 8px;
+}
+
 /* ---- Main column -------------------------------------------------------------------------- */
 
 .main {
-  position: relative;
-  z-index: 1;
   min-width: 0;
-  padding: clamp(24px, 4.5vh, 48px) clamp(16px, 3.5vw, 48px) 80px;
+  padding: 36px clamp(20px, 4vw, 48px) 80px;
 }
 
 .main:focus {
@@ -401,33 +451,41 @@
 }
 
 .fatal {
-  position: relative;
   display: grid;
   place-items: center;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 24px 16px;
+  background: var(--ground);
 }
 
-.fatal > div:last-child {
-  position: relative;
+.fatal > div {
   width: min(480px, 100%);
 }
 
+/* ---- Phones: a top bar, and the menu as a sheet over the page ------------------------------ */
+
 @media (max-width: 860px) {
+  /* The bar keeps its own height; a short page's spare room goes to the page, not the bar. */
   .shell {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
   }
 
   .sidebar {
-    z-index: 10;
     height: auto;
+    padding: env(safe-area-inset-top, 0px) 12px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brandRow {
+    min-height: 56px;
     margin: 0;
-    padding: 10px 14px;
-    padding-top: max(10px, env(safe-area-inset-top, 0px));
-    border-width: 0 0 1px;
-    border-radius: 0;
-    background: rgba(6, 26, 46, 0.72);
-    overflow: visible;
+  }
+
+  .brand {
+    margin-left: -8px;
   }
 
   .menuButton {
@@ -438,25 +496,66 @@
     display: none;
   }
 
+  /* Under the bar, to the bottom of the screen, scrolling on its own. */
   .menu[data-open] {
+    position: fixed;
+    inset: calc(57px + env(safe-area-inset-top, 0px)) 0 0;
     display: flex;
-    max-height: calc(100dvh - 64px);
-    padding: 6px 0 8px;
+    padding: 12px 16px max(16px, env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--side);
   }
 
   .navGroups {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px 10px;
+    flex: none;
+    gap: 22px;
+    overflow: visible;
   }
 
-  /* Dashboard has no group label; give it its own row so the columns line up under it. */
-  .navGroup:first-child {
-    grid-column: 1 / -1;
+  .navLink {
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .navIcon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .disclosure {
+    width: 44px;
+  }
+
+  .chevron {
+    width: 16px;
+    height: 16px;
+  }
+
+  .subLink {
+    min-height: 44px;
+    padding-left: 38px;
+    font-size: 14px;
+  }
+
+  .navLabel {
+    font-size: 13px;
+  }
+
+  .account {
+    margin-top: auto;
+    padding-top: 16px;
   }
 
   .main {
-    padding-top: 24px;
+    padding: 24px 16px 64px;
+  }
+}
+
+/* The page under the open sheet stays still. */
+@media (max-width: 860px) {
+  html:has(.menu[data-open]) {
+    overflow: hidden;
   }
 }
 
@@ -469,20 +568,40 @@
 
   .navLink,
   .subLink,
-  .menuButton {
+  .menuButton,
+  .navIcon,
+  .disclosure,
+  .navRow {
     transition:
-      background-color 0.15s ease,
-      color 0.15s ease;
+      background-color 0.12s ease,
+      color 0.12s ease;
+  }
+
+  .chevron {
+    transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* Visibility waits for the fold to finish closing, and flips at once when it opens. */
+  .subWrap {
+    transition:
+      grid-template-rows 0.16s cubic-bezier(0.2, 0.8, 0.2, 1),
+      visibility 0s linear 0.16s;
+  }
+
+  .navItem[data-open] > .subWrap {
+    transition:
+      grid-template-rows 0.16s cubic-bezier(0.2, 0.8, 0.2, 1),
+      visibility 0s;
   }
 
   .menu[data-open] {
-    animation: drop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: sheet 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
 
-@keyframes drop {
+@keyframes sheet {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(-6px);
   }
 }

@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type SVGProps } from 'react'
 import {
   isRouteErrorResponse,
   Link,
   NavLink,
   Outlet,
   useLoaderData,
+  useLocation,
   useNavigation,
   useRouteError,
 } from 'react-router'
@@ -12,7 +13,21 @@ import type { Me } from '../../shared/api'
 import { api, ApiError } from '../lib/api'
 import styles from './AdminLayout.module.css'
 import admin from './admin.module.css'
-import { ArrowOutIcon, CloseIcon, MenuIcon } from './components/icons'
+import {
+  ArrowOutIcon,
+  CalendarIcon,
+  ChevronDownIcon,
+  CloseIcon,
+  CodeIcon,
+  CoinIcon,
+  HomeIcon,
+  KeyIcon,
+  MailIcon,
+  MenuIcon,
+  PeopleIcon,
+  SeatIcon,
+  TrophyIcon,
+} from './components/icons'
 import { pageTitle } from './lib/format'
 import { isUnauthorized, messageFor, SessionContext } from './lib/session'
 import type { layoutLoader } from './loaders'
@@ -20,30 +35,31 @@ import { SignIn } from './SignIn'
 
 // Grouped the way people think about the portal: what's on the site, who's signed up, who runs it.
 const NAV: readonly NavGroup[] = [
-  { items: [{ to: '/admin', label: 'Dashboard', end: true }] },
+  { items: [{ to: '/admin', label: 'Dashboard', icon: HomeIcon, end: true }] },
   {
     label: 'Site',
     items: [
-      { to: '/admin/events', label: 'Events', sub: [{ to: '/admin/events/import', label: 'Import' }] },
-      { to: '/admin/hackathons', label: 'Hackathons', sub: [{ to: '/admin/hackathons/import', label: 'Import' }] },
-      { to: '/admin/wins', label: 'Wins' },
-      { to: '/admin/board', label: 'Board', sub: [{ to: '/admin/board/interest', label: 'Interest' }] },
+      { to: '/admin/events', label: 'Events', icon: CalendarIcon, sub: [{ to: '/admin/events/import', label: 'Import' }] },
+      { to: '/admin/hackathons', label: 'Hackathons', icon: CodeIcon, sub: [{ to: '/admin/hackathons/import', label: 'Import' }] },
+      { to: '/admin/wins', label: 'Wins', icon: TrophyIcon, sub: [{ to: '/admin/wins/import', label: 'Import' }] },
+      { to: '/admin/board', label: 'Board', icon: SeatIcon, sub: [{ to: '/admin/board/interest', label: 'Interest' }] },
     ],
   },
   {
     label: 'People',
     items: [
-      { to: '/admin/members', label: 'Members' },
-      { to: '/admin/fund', label: 'Fund' },
-      { to: '/admin/email', label: 'Email', sub: [{ to: '/admin/email/automatic', label: 'Automatic' }] },
+      { to: '/admin/members', label: 'Members', icon: PeopleIcon },
+      { to: '/admin/fund', label: 'Fund', icon: CoinIcon },
+      { to: '/admin/email', label: 'Email', icon: MailIcon, sub: [{ to: '/admin/email/automatic', label: 'Automatic' }] },
     ],
   },
-  { label: 'Portal', items: [{ to: '/admin/admins', label: 'Admins' }] },
+  { label: 'Portal', items: [{ to: '/admin/admins', label: 'Admins', icon: KeyIcon }] },
 ]
 
 interface NavItem {
   to: string
   label: string
+  icon?: ComponentType<SVGProps<SVGSVGElement>>
   end?: boolean
   sub?: readonly NavItem[]
 }
@@ -77,7 +93,22 @@ function Shell({ me }: { me: Me }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
   const [signOutError, setSignOutError] = useState('')
+  const menuButton = useRef<HTMLButtonElement>(null)
+  const { isOpen, toggle } = useNavGroups()
   const loading = navigation.state === 'loading'
+  const close = () => setMenuOpen(false)
+
+  // On a phone the open menu covers the page, so Escape closes it like any other sheet.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setMenuOpen(false)
+      menuButton.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [menuOpen])
 
   async function signOut() {
     setSigningOut(true)
@@ -98,7 +129,6 @@ function Shell({ me }: { me: Me }) {
 
   return (
     <div className={styles.shell}>
-      <div className={styles.backdrop} aria-hidden="true" />
       <a className={styles.skip} href="#admin-main">
         Skip to content
       </a>
@@ -106,15 +136,14 @@ function Shell({ me }: { me: Me }) {
 
       <aside className={styles.sidebar}>
         <div className={styles.brandRow}>
-          <Link className={styles.brand} to="/admin" onClick={() => setMenuOpen(false)}>
-            {/* The field's gradient in miniature, so the mark doesn't depend on an image loading. */}
-            <span className={styles.mark} aria-hidden="true" />
-            <span className={styles.brandText}>
-              Proto <span className={styles.brandSub}>Admin</span>
-
-            </span>
+          <Link className={styles.brand} to="/admin" onClick={close}>
+            {/* The site's sail, as a file: a flat filled mark, the same one the favicon carries. */}
+            <img className={styles.mark} src="/proto-seal.svg" alt="" width={26} height={26} />
+            <span className={styles.brandName}>Proto</span>
+            <span className={styles.brandSub}>Admin</span>
           </Link>
           <button
+            ref={menuButton}
             type="button"
             className={styles.menuButton}
             aria-expanded={menuOpen}
@@ -137,22 +166,7 @@ function Shell({ me }: { me: Me }) {
                 )}
                 <ul className={styles.nav} aria-labelledby={group.label ? `nav-${group.label.toLowerCase()}` : undefined}>
                   {group.items.map((item) => (
-                    <li key={item.to}>
-                      <NavLink to={item.to} end={item.end} className={styles.navLink} onClick={() => setMenuOpen(false)}>
-                        {item.label}
-                      </NavLink>
-                      {item.sub && (
-                        <ul className={styles.subNav}>
-                          {item.sub.map((sub) => (
-                            <li key={sub.to}>
-                              <NavLink to={sub.to} className={styles.subLink} onClick={() => setMenuOpen(false)}>
-                                {sub.label}
-                              </NavLink>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
+                    <NavEntry key={item.to} item={item} open={isOpen(item)} onToggle={() => toggle(item)} onNavigate={close} />
                   ))}
                 </ul>
               </div>
@@ -162,7 +176,7 @@ function Shell({ me }: { me: Me }) {
           <div className={styles.account}>
             <div className={styles.user}>
               {me.avatarUrl ? (
-                <img className={styles.avatar} src={me.avatarUrl} alt="" width={32} height={32} />
+                <img className={styles.avatar} src={me.avatarUrl} alt="" width={28} height={28} />
               ) : (
                 <span className={styles.avatar} aria-hidden="true">
                   {(me.name ?? me.email).slice(0, 1).toUpperCase()}
@@ -198,6 +212,101 @@ function Shell({ me }: { me: Me }) {
   )
 }
 
+const OPEN_KEY = 'proto-admin-nav-open'
+
+const within = (pathname: string, to: string) => pathname === to || pathname.startsWith(`${to}/`)
+
+function readOpen(): Record<string, boolean> {
+  try {
+    const saved: unknown = JSON.parse(sessionStorage.getItem(OPEN_KEY) ?? '{}')
+    return saved && typeof saved === 'object' ? (saved as Record<string, boolean>) : {}
+  } catch {
+    return {}
+  }
+}
+
+/** Arriving on a sub-page reopens its group, so the current page is never hidden in a closed one. */
+function reopenFor(pathname: string, saved: Record<string, boolean>) {
+  const hidden = NAV.flatMap((group) => group.items).find(
+    (item) => saved[item.to] === false && item.sub?.some((sub) => within(pathname, sub.to)),
+  )
+  return hidden ? { ...saved, [hidden.to]: true } : saved
+}
+
+/**
+ * Which groups with sub-pages are expanded. Untouched, a group is open while you're in it and
+ * closed otherwise; once someone opens or closes one, that choice holds for the session so the
+ * sidebar doesn't rearrange itself on every navigation.
+ */
+function useNavGroups() {
+  const { pathname } = useLocation()
+  const [saved, setSaved] = useState(() => reopenFor(pathname, readOpen()))
+
+  const [lastPath, setLastPath] = useState(pathname)
+  if (pathname !== lastPath) {
+    setLastPath(pathname)
+    const next = reopenFor(pathname, saved)
+    if (next !== saved) setSaved(next)
+  }
+
+  const isOpen = (item: NavItem) => saved[item.to] ?? within(pathname, item.to)
+
+  const toggle = (item: NavItem) => {
+    const next = { ...saved, [item.to]: !isOpen(item) }
+    setSaved(next)
+    try {
+      sessionStorage.setItem(OPEN_KEY, JSON.stringify(next))
+    } catch {
+      // Private mode can refuse storage; the toggle still works for this page.
+    }
+  }
+
+  return { isOpen, toggle }
+}
+
+/** One sidebar link, and for a section with sub-pages, the chevron that shows or hides them. */
+function NavEntry({ item, open, onToggle, onNavigate }: { item: NavItem; open: boolean; onToggle: () => void; onNavigate: () => void }) {
+  const { icon: Icon, sub } = item
+  const listId = `nav-sub-${item.to.split('/').pop()}`
+  return (
+    <li className={styles.navItem} data-open={(sub && open) || undefined}>
+      <div className={styles.navRow}>
+        <NavLink to={item.to} end={item.end} className={styles.navLink} onClick={onNavigate}>
+          {Icon && <Icon className={styles.navIcon} />}
+          {item.label}
+        </NavLink>
+        {sub && (
+          <button
+            type="button"
+            className={styles.disclosure}
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-label={`${item.label} pages`}
+            onClick={onToggle}
+          >
+            <ChevronDownIcon className={styles.chevron} />
+          </button>
+        )}
+      </div>
+      {sub && (
+        // inert while closed, so its links drop out of the tab order and the accessibility tree
+        // while the height animates shut.
+        <div id={listId} className={styles.subWrap} inert={!open}>
+          <ul className={styles.subNav}>
+            {sub.map((child) => (
+              <li key={child.to}>
+                <NavLink to={child.to} className={styles.subLink} onClick={onNavigate}>
+                  {child.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </li>
+  )
+}
+
 /** /me itself failed with something other than a 401, so there's no shell to show it in. */
 export function ErrorBoundary() {
   const error = useRouteError()
@@ -207,7 +316,6 @@ export function ErrorBoundary() {
 
   return (
     <main className={styles.fatal}>
-      <div className={styles.backdrop} aria-hidden="true" />
       <title>{pageTitle('Error')}</title>
       <div className={admin.callout} role="alert">
         <h2>The portal couldn’t start.</h2>

@@ -55,9 +55,13 @@ export function Component() {
       </p>
 
       {data && all.length > 0 && (
-        <p className={shared.dim}>
-          {BOARD_SEATS.map((seat) => `${seat}: ${all.filter((entry) => entry.role === seat).length}`).join(', ')}
-        </p>
+        <ul className={styles.seats} aria-label="People per seat">
+          {BOARD_SEATS.map((seat) => (
+            <li key={seat}>
+              {seat} <span className={shared.figure}>{all.filter((entry) => entry.role === seat).length}</span>
+            </li>
+          ))}
+        </ul>
       )}
       <p className={styles.live} aria-live="polite">
         {announcement}
@@ -95,7 +99,7 @@ export function Component() {
                 </dl>
               )}
               <div>
-                <button type="button" className={shared.small} onClick={() => setDeleting(entry)}>
+                <button type="button" className={shared.dangerSmall} onClick={() => setDeleting(entry)}>
                   Delete
                 </button>
               </div>

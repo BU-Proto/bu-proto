@@ -529,7 +529,7 @@ function PreviewPane({ audience, state, mode, onStep }: PreviewPaneProps) {
             >
               ←
             </button>
-            <span className={shared.mono} aria-live="polite">
+            <span className={shared.figure} aria-live="polite">
               {index + 1} of {recipientCount}
             </span>
             <button type="button" className={shared.small} aria-label="Next recipient" onClick={() => onStep((index + 1) % recipientCount)}>

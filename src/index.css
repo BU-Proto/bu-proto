@@ -67,6 +67,14 @@
   box-sizing: border-box;
 }
 
+/* In-page links glide to their target. Only while one was just clicked (lib/smoothScroll sets the
+   attribute): left on, every route change's reset to the top would slide up the old page too. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-smooth-scroll] {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   margin: 0;
   /* clip, not hidden: a full-bleed band can never be scrolled into view sideways. */

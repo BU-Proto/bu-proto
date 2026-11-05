@@ -1,8 +1,10 @@
 /* Layout only; colours, buttons, fields and the table come from admin.module.css. */
 
+/* The same measure as the editors, so a link box isn't a screen wide. */
 .form {
   display: grid;
   gap: 16px;
+  max-width: 880px;
 }
 
 .urls {
@@ -31,12 +33,12 @@
   width: 16px;
   height: 16px;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--mint);
   vertical-align: middle;
 }
 
 .box:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -51,8 +53,8 @@
   flex: none;
   width: 72px;
   aspect-ratio: 3 / 2;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  background: var(--fill);
   object-fit: cover;
 }
 
@@ -79,12 +81,12 @@
 }
 
 .winner {
-  color: var(--accent);
+  color: var(--mint);
   font-weight: 500;
 }
 
 .error {
-  color: var(--danger-ink, #ffbcb0);
+  color: var(--danger-ink);
 }
 
 .result {

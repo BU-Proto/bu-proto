@@ -104,3 +104,56 @@
   white-space: pre;
   user-select: none;
 }
+
+/* ---- Scroll-in reveals (useReveal) ---- */
+
+/*
+ * Four ways in, so the page doesn't fade up the same way everywhere: `rise` settles up a little,
+ * `slide` comes in from the left, `column` lifts out of a baseline, and `words` sets a title word
+ * by word. Each runs once; `--d` staggers a group. Only armed wrappers hide anything.
+ */
+.revealWord {
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal[data-armed] [data-reveal] {
+    transition:
+      opacity 560ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 640ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: var(--d, 0ms);
+  }
+
+  .reveal[data-armed] [data-reveal]:not([data-shown]) {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  .reveal[data-armed] [data-reveal='slide']:not([data-shown]) {
+    transform: translateX(-28px);
+  }
+
+  .reveal[data-armed] [data-reveal='column']:not([data-shown]) {
+    transform: translateY(45%);
+  }
+
+  /* The title itself stays put; its words move. */
+  .reveal[data-armed] [data-reveal='words'],
+  .reveal[data-armed] [data-reveal='words']:not([data-shown]) {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .reveal[data-armed] [data-reveal='words'] .revealWord {
+    transition:
+      opacity 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 620ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: calc(var(--d, 0ms) + var(--i) * 70ms);
+  }
+
+  .reveal[data-armed] [data-reveal='words']:not([data-shown]) .revealWord {
+    opacity: 0;
+    transform: translateY(0.45em);
+  }
+}

@@ -20,8 +20,8 @@
   aspect-ratio: 1;
   margin-top: 25px;
   overflow: hidden;
-  border: 1px dashed rgba(255, 255, 255, 0.22);
-  border-radius: 14px;
+  border: 1px dashed var(--edge);
+  border-radius: var(--radius-control);
   background: var(--surface-sunk);
   text-align: center;
 }
@@ -118,8 +118,8 @@
   place-items: center;
   aspect-ratio: 3 / 2;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
   background: var(--surface-sunk);
 }
 
@@ -130,13 +130,13 @@
 }
 
 .thumbBroken {
-  border: 1px dashed rgba(255, 190, 120, 0.6);
-  background: repeating-linear-gradient(135deg, rgba(255, 190, 120, 0.06) 0 6px, transparent 6px 12px), var(--surface-sunk);
+  border: 1px dashed var(--warn-edge);
+  background: repeating-linear-gradient(135deg, var(--warn-wash) 0 6px, transparent 6px 12px), var(--surface-sunk);
 }
 
 .thumbBroken span {
   padding: 2px 4px;
-  color: var(--warn-ink, #ffd894);
+  color: var(--warn-ink);
   font-size: 11px;
   line-height: 1.25;
   text-align: center;
@@ -144,7 +144,7 @@
 
 .warn {
   margin: 0;
-  color: var(--warn-ink, #ffd894);
+  color: var(--warn-ink);
   font-size: 12.5px;
 }
 
@@ -227,5 +227,5 @@
 }
 
 .personBu input {
-  accent-color: var(--accent);
+  accent-color: var(--mint);
 }
