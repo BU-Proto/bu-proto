@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono'
 import { fundInterestInput, joinInput, rsvpInput, type RsvpResult } from '../../shared/api'
 import { randomToken } from '../lib/crypto'
 import { sendFundConfirmation, sendRsvpConfirmation, sendWelcome } from '../lib/confirmations'
+import { PUBLIC_ROWS } from '../lib/content'
 import { bostonToday } from '../lib/dates'
 import { limitForms } from '../lib/forms'
 import { ApiError, idParam, readBody } from '../lib/http'
@@ -61,7 +62,7 @@ app.post('/api/fund-interest', limitForms, requireHuman('fund-interest'), async 
 
 app.post('/api/events/:id/rsvp', limitForms, requireHuman('rsvp'), async (c) => {
   const id = idParam(c)
-  const event = await c.env.DB.prepare('SELECT title, date, time, place FROM events WHERE id = ? AND published = 1')
+  const event = await c.env.DB.prepare(`SELECT title, date, time, place FROM events WHERE id = ? AND ${PUBLIC_ROWS}`)
     .bind(id)
     .first<{ title: string; date: string; time: string; place: string }>()
   if (!event) throw new ApiError(404, 'That event isn’t on the calendar.')

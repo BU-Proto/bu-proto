@@ -230,12 +230,15 @@ export function Home() {
               </div>
             )}
 
-            <ScheduleCard
-              className={styles.schedule}
-              location={SCHEDULE.location}
-              slots={SCHEDULE.slots}
-              placeholder={SCHEDULE.placeholder}
-            />
+            {/* The room and times aren't booked yet: a sample locally, left off the deployed site. */}
+            {(import.meta.env.DEV || !SCHEDULE.placeholder) && (
+              <ScheduleCard
+                className={styles.schedule}
+                location={SCHEDULE.location}
+                slots={SCHEDULE.slots}
+                placeholder={SCHEDULE.placeholder}
+              />
+            )}
           </div>
 
           <div className={styles.deadlines}>

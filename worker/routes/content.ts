@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono'
 import { CONTENT_INPUTS, type ResourceSpec, type Rsvp } from '../../shared/api'
-import { adminSelect, inputToColumns, rowToItem, specFor, type DbRow, type Item } from '../lib/content'
+import { adminSelect, inputToColumns, PUBLIC_ROWS, rowToItem, specFor, type DbRow, type Item } from '../lib/content'
 import { ApiError, idParam, readBody } from '../lib/http'
 import type { AppEnv } from '../types'
 
@@ -22,7 +22,7 @@ async function readContent(c: Context<AppEnv>, spec: ResourceSpec): Promise<Item
 app.get('/api/content/:resource', async (c) => {
   const spec = specFor(c.req.param('resource'))
   const { results } = await c.env.DB.prepare(
-    `SELECT * FROM ${spec.table} WHERE published = 1 ORDER BY ${spec.orderBy}`,
+    `SELECT * FROM ${spec.table} WHERE ${PUBLIC_ROWS} ORDER BY ${spec.orderBy}`,
   ).all<DbRow>()
   c.header('Cache-Control', 'no-store')
   return c.json({ items: results.map((row) => rowToItem(spec, row)) })
@@ -31,7 +31,7 @@ app.get('/api/content/:resource', async (c) => {
 // One published row, for detail pages like /wins/:id.
 app.get('/api/content/:resource/:id', async (c) => {
   const spec = specFor(c.req.param('resource'))
-  const row = await c.env.DB.prepare(`SELECT * FROM ${spec.table} WHERE id = ? AND published = 1`)
+  const row = await c.env.DB.prepare(`SELECT * FROM ${spec.table} WHERE id = ? AND ${PUBLIC_ROWS}`)
     .bind(idParam(c))
     .first<DbRow>()
   if (!row) throw new ApiError(404, 'Not found.')

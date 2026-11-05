@@ -7,6 +7,13 @@ import { ApiError } from './http'
 export type DbRow = Record<string, unknown>
 export type Item = Record<string, unknown>
 
+/**
+ * Which rows the public site may see. Sample rows (placeholder = 1) stay visible under `vite dev`,
+ * where they fill the pages while there's no real content; import.meta.env.DEV is false in builds,
+ * so the deployed site serves only real, published rows.
+ */
+export const PUBLIC_ROWS = import.meta.env.DEV ? 'published = 1' : 'published = 1 AND placeholder = 0'
+
 /** The spec for a :resource param, or 404. */
 export function specFor(resource: string): ResourceSpec {
   if (!(CONTENT_RESOURCES as readonly string[]).includes(resource)) throw new ApiError(404, 'Not found.')
