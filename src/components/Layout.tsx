@@ -38,16 +38,30 @@ export function Layout() {
     return () => window.clearTimeout(timer)
   }, [trailing, target])
 
-  // A click splashes the field, which is right on open ground but noisy on a button. The field
-  // skips pointer-downs inside [data-fog-ignore], so mark whichever control was pressed before its
-  // own (bubbling) listener reads the event.
+  // A click splashes the field and a move draws its trail, which is right on open ground but noisy
+  // on a button. The field skips pointer-downs inside [data-fog-ignore], so mark whichever control
+  // was pressed before the field's own (bubbling) listener reads the event.
   useEffect(() => {
     const markControl = (event: PointerEvent) => {
       if (!(event.target instanceof Element)) return
       event.target.closest(CONTROLS)?.setAttribute('data-fog-ignore', '')
     }
+    // The trail too: moves over a control never reach the field's window listener. Entering one
+    // tells the field the pointer left, so moving off it again starts a fresh trail instead of
+    // drawing a streak from where the pointer went in.
+    let overControl = false
+    const holdTrail = (event: PointerEvent) => {
+      const over = event.target instanceof Element && event.target.closest(CONTROLS) !== null
+      if (over && !overControl) window.dispatchEvent(new PointerEvent('pointerout', { relatedTarget: null }))
+      overControl = over
+      if (over) event.stopPropagation()
+    }
     window.addEventListener('pointerdown', markControl, { capture: true, passive: true })
-    return () => window.removeEventListener('pointerdown', markControl, { capture: true })
+    window.addEventListener('pointermove', holdTrail, { capture: true, passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', markControl, { capture: true })
+      window.removeEventListener('pointermove', holdTrail, { capture: true })
+    }
   }, [])
 
   // The field re-measures marked text on scroll and resize, but not when a new page or a
