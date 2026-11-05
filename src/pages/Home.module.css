@@ -89,7 +89,9 @@
 
 .track {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  /* The name's column never narrows below the name itself: further down the stair there's less
+     room, and an even split let "Launch" run into its list. */
+  grid-template-columns: auto minmax(min-content, 1fr) minmax(0, 1fr);
   align-items: center;
   gap: clamp(20px, 3.2vw, 56px);
   margin-left: calc(var(--step) * clamp(0px, 9vw, 132px));
