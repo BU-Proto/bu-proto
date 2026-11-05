@@ -14,7 +14,7 @@ import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import { ScheduleCard } from '../components/ScheduleCard'
 import ui from '../components/ui.module.css'
-import { WinLog } from '../components/WinLog'
+import { LatestWins } from '../components/WinSheet'
 import { WinTally } from '../components/WinTally'
 import {
   FUND_NOTE,
@@ -26,11 +26,9 @@ import {
   SEMESTER,
   TRACKS,
   TRACKS_INTRO,
-  WINS_TITLE,
 } from '../content/home'
 import { NEXT_EVENT } from '../content/events'
 import { BRAND, SCHEDULE } from '../content/site'
-import { WINS_EMPTY } from '../content/wins'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
@@ -158,7 +156,7 @@ export function Home() {
     .filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
     .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
     .slice(0, 3)
-  const latest = newestWins(wins, 3)
+  const latest = newestWins(wins, 4)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   const revealRef = useReveal<HTMLDivElement>()
   useWheelEasing()
@@ -354,18 +352,12 @@ export function Home() {
           </div>
         </section>
 
-        {/* The record: the running tally, then the newest wins under it. */}
-        <section className={`${styles.column} ${styles.wins}`} aria-labelledby="latest-wins">
-          <WinTally wins={wins} />
-          <div className={styles.nextHead} data-reveal="rise">
-            <h2 id="latest-wins" className={styles.subTitle}>
-              {WINS_TITLE}
-            </h2>
-            <Link className={ui.textLink} to="/wins">
-              All wins
-            </Link>
+        {/* The record: the running tally, then the newest wins on their own light sheet. */}
+        <section className={styles.wins} aria-labelledby="latest-wins">
+          <div className={styles.column}>
+            <WinTally wins={wins} />
           </div>
-          {latest.length === 0 ? <p className={styles.lede}>{WINS_EMPTY}</p> : <WinLog wins={latest} />}
+          <LatestWins wins={latest} id="latest-wins" />
         </section>
 
         <LogoBand />

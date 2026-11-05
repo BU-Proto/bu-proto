@@ -96,8 +96,6 @@ export const NEXT_UP = {
   closes: 'Closes',
 } as const
 
-export const WINS_TITLE = 'Latest wins'
-
 export const HOME_EMPTY = {
   next: {
     title: 'Nothing on the calendar yet',
