@@ -17,6 +17,7 @@ import ui from '../components/ui.module.css'
 import { BRAND } from '../content/site'
 import { WIN_DETAIL, WIN_NOT_FOUND } from '../content/wins'
 import type { WinPageData } from '../lib/content'
+import { formatMonth } from '../lib/dates'
 import { filled, neighboursOf } from '../lib/detail'
 import styles from './WinDetail.module.css'
 
@@ -51,6 +52,7 @@ export function WinDetail() {
         )}
         <p className={detail.note} data-fog-clear>
           {win.event}
+          {win.date && `, ${formatMonth(win.date)}`}
         </p>
         {(win.github || win.devpost) && (
           <div className={detail.actions}>

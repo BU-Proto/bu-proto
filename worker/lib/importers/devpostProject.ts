@@ -191,6 +191,8 @@ export interface DevpostProject {
   /** A small version of the first image (or the project thumbnail), for lists. */
   thumbnail: string | null
   submissions: DevpostSubmission[]
+  /** The day it was submitted (yyyy-mm-dd), which is the hackathon's last day; '' if not shown. */
+  submitted: string
 }
 
 function parseSubmissions(html: string): DevpostSubmission[] {
@@ -288,6 +290,8 @@ export function parseProjectPage(html: string, url: string): DevpostProject {
     links,
     ...parseGallery(html),
     submissions: parseSubmissions(html),
+    // The page's first timestamp is the submission's, written in the event's own offset.
+    submitted: /<time class="timeago" datetime="(\d{4}-\d{2}-\d{2})T/.exec(html)?.[1] ?? '',
   }
 }
 
@@ -313,6 +317,7 @@ export function projectToWin(project: DevpostProject, buProfiles: ReadonlySet<st
     blurb: clamp(project.tagline, 300),
     // A project that went to no hackathon still needs one named; the admin fixes it in review.
     event: clamp(submission?.hackathon || 'Hackathon not listed', 80),
+    date: project.submitted,
     placement: clamp(prize ?? (submission ? 'Submitted' : 'Not submitted'), 60),
     track: clamp(more.join(', '), 80),
     team: project.team

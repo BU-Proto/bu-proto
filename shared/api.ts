@@ -94,6 +94,8 @@ export const winInput = z.object({
   project: text(80),
   blurb: optionalText(300),
   event: text(80),
+  /** When the hackathon was (yyyy-mm-dd), or empty when unknown. Wins list newest first. */
+  date: z.union([z.literal(''), isoDay]),
   placement: text(60),
   /** The prize track or category, when it's not the placement itself (e.g. "Healthcare track"). */
   track: optionalText(80),
@@ -263,12 +265,14 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
     label: 'Wins',
     singular: 'Win',
     titleKey: 'project',
-    summaryKeys: ['placement', 'event'],
-    orderBy: 'position ASC, id DESC',
+    summaryKeys: ['placement', 'event', 'date'],
+    // Newest first; an undated win ('') sorts after every dated one, then the portal's order.
+    orderBy: 'date DESC, position ASC, id DESC',
     fields: [
       { key: 'project', column: 'project', label: 'Project', type: 'text' },
       { key: 'blurb', column: 'blurb', label: 'One line', type: 'textarea', hint: 'Shown on the card and under the title.' },
       { key: 'event', column: 'event', label: 'Hackathon', type: 'text' },
+      { key: 'date', column: 'date', label: 'Date', type: 'date', hint: 'When the hackathon ended. Wins show newest first.' },
       { key: 'placement', column: 'placement', label: 'Placement', type: 'text', hint: 'e.g. 1st overall, 2nd place, Best hardware hack' },
       { key: 'track', column: 'track', label: 'Track or prize category', type: 'text', hint: 'Optional, e.g. Healthcare track, Best use of AI' },
       { key: 'team', column: 'team', label: 'Team', type: 'people', hint: 'Each name can link to a LinkedIn, personal site or GitHub.' },
@@ -280,7 +284,7 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       { key: 'devpost', column: 'devpost', label: 'Devpost link', type: 'url' },
       { key: 'funding', column: 'funding', label: 'Funding', type: 'text', hint: 'Optional, e.g. Proto microgrant ($250) or Spark! Ignite award.' },
       { key: 'nextSteps', column: 'next_steps', label: 'Where it’s going', type: 'textarea', hint: 'Optional: what the team is doing with it next.' },
-      { key: 'position', column: 'position', label: 'Order', type: 'number', hint: 'Lower shows first.' },
+      { key: 'position', column: 'position', label: 'Order', type: 'number', hint: 'Breaks ties between wins on the same date; lower shows first.' },
       ...FLAG_FIELDS,
     ],
   },
