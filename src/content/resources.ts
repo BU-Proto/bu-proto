@@ -1,15 +1,18 @@
 // The playbook index: every guide's title and one line. A written guide has a slug, and its text
-// lives in `./guides`, loaded only on its own page.
+// lives in `./guides`, loaded only on its own page. The playbook sits under the resources hub
+// (`./resourcesHub.ts`), at /resources/playbook.
 
 import { type Author, PLAYBOOK_AUTHORS } from './guides/authors'
-import { guideHref, SLUGS } from './guides/links'
+import { guideHref, PLAYBOOK_HREF, SLUGS } from './guides/links'
 import type { GuideImage } from './guides/types'
 import { EYRIE, FLOWCAST, HEAR_ME_OUT, NEMO, winCover, winImage } from './guides/wins'
 import { EVENT_COVERS, HACKATHON_COVER, type CoverPhoto } from './covers'
 import type { PageIntro } from './types'
 
-export const RESOURCES_INTRO: PageIntro = {
-  path: '~/proto/resources',
+export { PLAYBOOK_HREF }
+
+export const PLAYBOOK_INTRO: PageIntro = {
+  path: '~/proto/resources/playbook',
   title: 'The playbook',
   lede: 'Everything we wish we’d known before our first hackathon, written down.',
 }
@@ -19,7 +22,7 @@ export const CONTENTS_LABEL = 'Contents'
 export interface Guide {
   title: string
   line: string
-  /** Set once the guide is written: its page is `/resources/<slug>`. */
+  /** Set once the guide is written: its page is `/resources/playbook/<slug>`. */
   slug?: string
   /** The written guide's lead photo, its byline and when it last changed. */
   lead?: {
@@ -114,7 +117,7 @@ export function guidePath(guide: Guide): string | undefined {
 
 /** Copy around a guide page. The guides themselves live in `./guides`. */
 export const GUIDE_PAGE = {
-  pathRoot: '~/proto/resources',
+  pathRoot: '~/proto/resources/playbook',
   contentsLabel: 'On this page',
   sections: (n: number) => `${n} sections`,
   exampleLabel: 'From our wins',

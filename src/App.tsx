@@ -2,6 +2,7 @@ import { createBrowserRouter, redirect, RouterProvider } from 'react-router'
 import { adminRoutes } from './admin/routes'
 import { Layout } from './components/Layout'
 import { LoadError, PageLoading } from './components/RouteStates'
+import { PLAYBOOK_HREF } from './content/guides/links'
 import { fetchContent, fetchEventPage, fetchHome, fetchWinPage } from './lib/content'
 import { Board } from './pages/Board'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
@@ -11,6 +12,7 @@ import { Hackathons } from './pages/Hackathons'
 import { Home } from './pages/Home'
 import { Join } from './pages/Join'
 import { NotFound } from './pages/NotFound'
+import { Playbook } from './pages/Playbook'
 import { Privacy } from './pages/Privacy'
 import { Resources } from './pages/Resources'
 import { Terms } from './pages/Terms'
@@ -48,11 +50,19 @@ const router = createBrowserRouter([
         ErrorBoundary: WinLoadError,
       },
       { path: 'track-record', Component: TrackRecord },
+      // The hub: the playbook, then BU's programs for builders.
       { path: 'resources', Component: Resources },
+      { path: 'resources/playbook', Component: Playbook },
       {
-        path: 'resources/:slug',
+        path: 'resources/playbook/:slug',
         // Lazy, so the guides' long text loads only when someone opens one.
         lazy: { Component: async () => (await import('./pages/Guide')).Guide },
+        HydrateFallback: PageLoading,
+      },
+      // Guides lived at /resources/<slug> before the playbook had its own page; old links follow it.
+      {
+        path: 'resources/:slug',
+        loader: ({ params }) => redirect(`${PLAYBOOK_HREF}/${params.slug ?? ''}`),
         HydrateFallback: PageLoading,
       },
       { path: 'events', Component: Events, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },

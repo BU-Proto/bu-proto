@@ -98,7 +98,14 @@ export const AFTER: GuideDoc = {
           facts: [
             { term: 'Start', detail: 'Beginner workshops, and first-hackathon squads paired with a veteran. For anyone without a project yet.' },
             { term: 'Build', detail: 'Weekly hack nights with food, team matching and group trips to hackathons. Where a project from the weekend gets its second and third evening.' },
-            { term: 'Launch', detail: 'Demo nights, founder talks and a path into BU’s startup programs, Spark! and Innovate@BU. For a project that’s turning into something more.' },
+            {
+              term: 'Launch',
+              detail: [
+                'Demo nights, founder talks and a path into BU’s startup programs, Spark! and Innovate@BU. For a project that’s turning into something more. ',
+                { label: 'What each one does', href: '/resources#around-bu' },
+                '.',
+              ],
+            },
           ],
         },
         [

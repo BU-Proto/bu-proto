@@ -51,7 +51,7 @@ export function welcomeDraft(
           [event.title, `${formatEventDate(event.date)}, ${event.time}`, event.place].filter((line) => line.trim()).join('\n'),
           `RSVP on the events page: ${origin}/events`,
         ]
-      : [`Nothing’s on the calendar yet; we’ll email you when it is. Until then, the playbook is the best place to start: ${origin}/resources`]),
+      : [`Nothing’s on the calendar yet; we’ll email you when it is. Until then, the playbook is the best place to start: ${origin}/resources/playbook`]),
     'Questions? Just reply to this email.',
   ].join('\n\n')
   return { recipient: member, subject: 'Welcome to BU Proto', body, reason: { kind: 'member' } }

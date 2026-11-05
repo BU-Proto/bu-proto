@@ -1,126 +1,170 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Byline } from '../components/Byline'
 import { PageIntro } from '../components/PageIntro'
 import ui from '../components/ui.module.css'
-import { CONTENTS_LABEL, GUIDE_PAGE, GUIDES, guidePath, RESOURCES_INTRO, type Guide } from '../content/resources'
+import { GUIDES, guidePath, type Guide } from '../content/resources'
+import { AROUND_BU, HUB_INTRO, NEEDS, ORG_COPY, ORGS, PATH, PLAYBOOK_CARD, type Org } from '../content/resourcesHub'
 import styles from './Resources.module.css'
 
 type Written = Guide & { slug: string; lead: NonNullable<Guide['lead']> }
 
-const isWritten = (guide: Guide): guide is Written => Boolean(guide.slug && guide.lead)
+const WRITTEN = GUIDES.filter((guide): guide is Written => Boolean(guide.slug && guide.lead))
+const ORG_HUE = Object.fromEntries(ORGS.map((org) => [org.id, org.hue]))
 
-const WRITTEN = GUIDES.filter(isWritten)
-const SOON = GUIDES.filter((guide) => !isWritten(guide))
-const [FEATURED, ...REST] = WRITTEN
-// The next few guides get a picture each across the top; the rest pair up below in two columns,
-// so the tier above takes whatever would leave the list with an odd one out.
-const TIER = REST.length % 2 === 1 ? 3 : 2
-const NEXT = REST.slice(0, TIER)
-const LIST = REST.slice(TIER)
-
-/** A BU photo from Commons rather than a win's own picture: those take the field's tint. */
-const isCampus = (image: Written['lead']['image']) => 'author' in image.credit
-
-function Featured({ guide }: { guide: Written }) {
-  const href = guidePath(guide) ?? '/resources'
-  const { image, authors, updated } = guide.lead
+/** An outside site: a new tab, so the hub stays where it was. */
+function Out({ href, className, children }: { href: string; className?: string; children: ReactNode }) {
   return (
-    <section className={styles.featured} aria-labelledby="featured">
-      <Link className={styles.featuredImage} to={href} tabIndex={-1} aria-hidden="true">
-        <img src={image.src} alt="" fetchPriority="high" data-campus={isCampus(image) || undefined} />
-      </Link>
-      <div className={styles.featuredText}>
-        <p className={styles.featuredLabel} data-fog-clear>
-          {GUIDE_PAGE.featured}
+    <a className={className} href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  )
+}
+
+/** Our own resource first: the playbook, with its lead photo and the first few guides by name. */
+function PlaybookCard() {
+  const lead = WRITTEN[0]
+  return (
+    <section className={`${ui.panelDeep} ${styles.playbook}`} aria-labelledby="playbook">
+      {lead && (
+        <Link className={styles.playbookImage} to={PLAYBOOK_CARD.cta.href} tabIndex={-1} aria-hidden="true">
+          <img src={lead.lead.image.src} alt="" fetchPriority="high" />
+        </Link>
+      )}
+      <div className={styles.playbookText}>
+        <p className={styles.label}>
+          {PLAYBOOK_CARD.label}
+          <span className={styles.count}>{PLAYBOOK_CARD.count(WRITTEN.length)}</span>
         </p>
-        <h2 id="featured" className={styles.featuredTitle} data-fog-clear>
-          <Link to={href}>{guide.title}</Link>
+        <h2 id="playbook" className={styles.playbookTitle}>
+          <Link to={PLAYBOOK_CARD.cta.href}>{PLAYBOOK_CARD.title}</Link>
         </h2>
-        <p className={styles.featuredLine} data-fog-clear>
-          {guide.line}
-        </p>
-        <Byline authors={authors} updated={updated} copy={GUIDE_PAGE} />
-        <Link className={`${ui.primary} ${styles.read}`} to={href} data-fog-clear="box">
-          {GUIDE_PAGE.readGuide}
+        <p className={styles.playbookLine}>{PLAYBOOK_CARD.text}</p>
+        <ul className={styles.guideList}>
+          {WRITTEN.slice(0, PLAYBOOK_CARD.preview).map((guide) => (
+            <li key={guide.slug}>
+              <Link to={guidePath(guide) ?? PLAYBOOK_CARD.cta.href}>{guide.title}</Link>
+            </li>
+          ))}
+        </ul>
+        <Link className={`${ui.primary} ${styles.open}`} to={PLAYBOOK_CARD.cta.href}>
+          {PLAYBOOK_CARD.cta.label}
         </Link>
       </div>
     </section>
   )
 }
 
-/** The playbook as a magazine's contents: the lead guide large, the next few as a row of pictures,
- * the rest as a two-column list, and the ones still being written listed quietly after them. */
+function OrgCard({ org }: { org: Org }) {
+  return (
+    <article className={`${ui.panelDeep} ${styles.org}`} data-hue={org.hue} aria-labelledby={`org-${org.id}`}>
+      <header className={styles.orgHead}>
+        <h3 id={`org-${org.id}`} className={styles.orgName}>
+          {org.name}
+        </h3>
+        <p className={styles.orgPart}>{org.part}</p>
+      </header>
+      <p className={styles.orgText}>{org.text}</p>
+      <p className={styles.fit}>{org.fit}</p>
+
+      <dl className={`${ui.inset} ${styles.place}`}>
+        <dt>{ORG_COPY.where}</dt>
+        <dd>
+          {org.place.where} {org.place.hours}
+        </dd>
+      </dl>
+
+      <h4 className={styles.programsTitle}>{ORG_COPY.programs}</h4>
+      <ul className={styles.programs}>
+        {org.programs.map((program) => (
+          <li key={program.name} className={styles.program}>
+            <Out className={styles.programName} href={program.href}>
+              {program.name}
+            </Out>
+            <span className={styles.programText}>{program.text}</span>
+            {program.when && <span className={styles.when}>{program.when}</span>}
+          </li>
+        ))}
+      </ul>
+
+      <p className={styles.visit}>
+        {ORG_COPY.visit}{' '}
+        <Out className={ui.textLink} href={org.site.href}>
+          {org.site.label}
+        </Out>
+      </p>
+    </article>
+  )
+}
+
+/**
+ * The resources hub: our playbook, then BU's two programs for builders, Spark! and Innovate@BU.
+ * Said in the order a student meets them: how the three fit, which to go to for what, then each
+ * one in full. Theirs are described and linked, never spoken for.
+ */
 export function Resources() {
   return (
     <div className={ui.page}>
-      <PageIntro intro={RESOURCES_INTRO} />
+      <PageIntro intro={HUB_INTRO} />
 
-      {FEATURED && <Featured guide={FEATURED} />}
+      <PlaybookCard />
 
-      <section className={`${ui.panelDeep} ${styles.book}`} aria-labelledby="contents">
-        {/* The list explains itself; the heading is for screen readers. */}
-        <h2 id="contents" className={ui.srOnly}>
-          {CONTENTS_LABEL}
-        </h2>
-        <ol className={styles.tier}>
-          {NEXT.map((guide) => {
-            const href = guidePath(guide) ?? '/resources'
-            const image = guide.lead.image
-            return (
-              <li key={guide.title}>
-                <Link className={styles.card} to={href}>
-                  <span className={styles.cardImage}>
-                    <img src={image.thumb ?? image.src} alt="" loading="lazy" data-campus={isCampus(image) || undefined} />
-                  </span>
-                  <span className={styles.entryText} data-fog-clear>
-                    <span className={styles.cardTitle}>{guide.title}</span>
-                    <span className={styles.line}>{guide.line}</span>
-                  </span>
-                </Link>
+      <section id={AROUND_BU.id} className={styles.around} aria-labelledby="around-title">
+        <header className={styles.aroundHead}>
+          <h2 id="around-title" className={styles.aroundTitle} data-fog-clear>
+            {AROUND_BU.title}
+          </h2>
+          <p className={ui.sectionLede}>{AROUND_BU.lede}</p>
+        </header>
+
+        <div className={styles.path} aria-labelledby="path-title">
+          <h3 id="path-title" className={ui.srOnly}>
+            {PATH.title}
+          </h3>
+          <ol className={styles.steps}>
+            {PATH.steps.map((step, index) => (
+              <li key={step.name} className={styles.step} data-hue={step.hue}>
+                <span className={styles.stepNumber} aria-hidden="true">
+                  {index + 1}
+                </span>
+                <span className={styles.stepName}>{step.name}</span>
+                <span className={styles.stepText}>{step.text}</span>
               </li>
-            )
-          })}
-        </ol>
+            ))}
+          </ol>
+          <p className={styles.example} data-fog-clear>
+            {PATH.example.lead}{' '}
+            <Link className={ui.textLink} to={PATH.example.win.href}>
+              {PATH.example.win.label}
+            </Link>
+          </p>
+        </div>
 
-        <ol className={styles.toc}>
-          {LIST.map((guide) => {
-            const href = guidePath(guide) ?? '/resources'
-            const image = guide.lead.image
-            return (
-              <li key={guide.title}>
-                <Link className={styles.entry} to={href}>
-                  <img
-                    className={styles.thumb}
-                    src={image.thumb ?? image.src}
-                    alt=""
-                    loading="lazy"
-                    data-campus={isCampus(image) || undefined}
-                  />
-                  <span className={styles.entryText} data-fog-clear>
-                    <span className={styles.title}>{guide.title}</span>
-                    <span className={styles.line}>{guide.line}</span>
-                  </span>
-                </Link>
+        <section className={`${ui.panel} ${styles.needs}`} aria-labelledby="needs-title">
+          <h3 id="needs-title" className={styles.needsTitle}>
+            {NEEDS.title}
+          </h3>
+          <ul className={styles.needList}>
+            {NEEDS.items.map((need) => (
+              <li key={need.want} className={styles.need} data-hue={need.org ? ORG_HUE[need.org] : undefined}>
+                <span className={styles.want}>{need.want}</span>
+                <Out className={styles.go} href={need.href}>
+                  {need.go}
+                  <span aria-hidden="true"> ↗</span>
+                </Out>
               </li>
-            )
-          })}
-        </ol>
+            ))}
+          </ul>
+        </section>
 
-        {SOON.length > 0 && (
-          <div className={styles.soon}>
-            <h3 className={styles.soonTitle} data-fog-clear>
-              {GUIDE_PAGE.stillWriting}
-            </h3>
-            <ul className={styles.soonList}>
-              {SOON.map((guide) => (
-                <li key={guide.title} data-fog-clear>
-                  <span className={styles.soonName}>{guide.title}</span>
-                  <span className={styles.line}>{guide.line}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div className={styles.orgs}>
+          {ORGS.map((org) => (
+            <OrgCard key={org.id} org={org} />
+          ))}
+        </div>
+
+        <p className={styles.note} data-fog-clear>
+          {AROUND_BU.note}
+        </p>
       </section>
     </div>
   )
