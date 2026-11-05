@@ -106,6 +106,24 @@ app.post('/api/admin/hackathon-imports/run', async (c) => {
 })
 
 const asUrl = z.url()
+const urlOrEmpty = (value: unknown) => (typeof value === 'string' && asUrl.safeParse(value).success ? value : '')
+
+/**
+ * The card art for a candidate, by the same rule as migration 0008: MLH's JSON has a background
+ * and a logo (and `image` is the logo when there is one); a Devpost thumbnail is the logo.
+ */
+function cardArt(candidate: CandidateRow, raw: string): { photo: string; logo: string } {
+  let event: { backgroundUrl?: unknown; logoUrl?: unknown } = {}
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object') event = parsed
+  } catch {
+    // A bad parse only costs the card its art.
+  }
+  if (candidate.source === 'devpost') return { photo: '', logo: urlOrEmpty(candidate.image) }
+  const logo = urlOrEmpty(event.logoUrl)
+  return { photo: urlOrEmpty(event.backgroundUrl) || (logo ? '' : urlOrEmpty(candidate.image)), logo }
+}
 
 app.post('/api/admin/hackathon-imports/:id/add', async (c) => {
   const id = idParam(c)
@@ -114,6 +132,8 @@ app.post('/api/admin/hackathon-imports/:id/add', async (c) => {
     throw new ApiError(409, 'Already added as a hackathon.')
   }
   const spec = RESOURCE_SPECS.hackathons
+  const raw = await c.env.DB.prepare('SELECT raw FROM hackathon_candidates WHERE id = ?').bind(id).first<{ raw: string }>()
+  const { photo, logo } = cardArt(candidate, raw?.raw ?? '{}')
   // Unpublished and not a sample; apply-by is a stand-in the admin has to correct.
   const input = hackathonInput.safeParse({
     name: candidate.name.slice(0, 80),
@@ -123,9 +143,10 @@ app.post('/api/admin/hackathon-imports/:id/add', async (c) => {
     applyBy: candidate.starts,
     travelCovered: false,
     buGoing: 0,
-    href: asUrl.safeParse(candidate.url).success ? candidate.url : '',
-    // The source's logo or banner makes a better start than no cover at all.
-    photo: candidate.image && asUrl.safeParse(candidate.image).success ? candidate.image : '',
+    href: urlOrEmpty(candidate.url),
+    mode: candidate.mode,
+    photo,
+    logo,
     description: '',
     trip: '',
     tripSignup: '',

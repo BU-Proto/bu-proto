@@ -70,6 +70,10 @@ export const eventInput = z.object({
   ...flags,
 })
 
+/** How a hackathon is run. The same three values the import queue uses. */
+export const HACKATHON_MODES = ['in-person', 'hybrid', 'online'] as const
+export type HackathonMode = (typeof HACKATHON_MODES)[number]
+
 export const hackathonInput = z.object({
   name: text(80),
   starts: isoDay,
@@ -79,7 +83,12 @@ export const hackathonInput = z.object({
   travelCovered: z.boolean(),
   buGoing: z.number().int().min(0).max(999),
   href: z.union([z.literal(''), z.url('Must be a full URL')]),
+  /** In person, hybrid or online, shown on its card. */
+  mode: z.enum(HACKATHON_MODES).default('in-person'),
+  /** The card's background. */
   photo: optionalImage,
+  /** The event's logo, centred over the photo on its card. */
+  logo: optionalImage,
   /** What the hackathon is and why it's worth going. */
   description: optionalText(8000),
   /** How the group trip works: bus, where we stay, who to ask. */
@@ -250,8 +259,10 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       { key: 'applyBy', column: 'apply_by', label: 'Apply by', type: 'date' },
       { key: 'travelCovered', column: 'travel_covered', label: 'Travel covered', type: 'boolean', hint: 'The hackathon pays for or reimburses travel.' },
       { key: 'buGoing', column: 'bu_going', label: 'BU people going', type: 'number' },
-      { key: 'href', column: 'href', label: 'Website', type: 'url' },
-      { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'A full URL or a path under public/.' },
+      { key: 'href', column: 'href', label: 'Website', type: 'url', hint: 'Its card on the site links here.' },
+      { key: 'mode', column: 'mode', label: 'Format', type: 'select', options: HACKATHON_MODES },
+      { key: 'photo', column: 'photo', label: 'Card background', type: 'image', hint: 'A full URL or a path under public/. Imports use the MLH banner.' },
+      { key: 'logo', column: 'logo', label: 'Logo', type: 'image', hint: 'Centred over the background. A PNG with a transparent background works best.' },
       { key: 'description', column: 'description', label: 'About the hackathon', type: 'textarea', hint: 'What it is and why it’s worth going. Blank lines make paragraphs.' },
       { key: 'trip', column: 'trip', label: 'How we’re going', type: 'textarea', hint: 'The group trip: getting there, where we stay, who to ask.' },
       { key: 'tripSignup', column: 'trip_signup', label: 'Trip sign-up link', type: 'url', hint: 'A form or post where people join the trip.' },

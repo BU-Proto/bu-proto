@@ -254,9 +254,16 @@ export function Home() {
                       <small>days</small>
                     </span>
                     <span className={styles.deadlineName}>
-                      <Link className={styles.stretch} to={`/hackathons/${hackathon.id}`}>
-                        {hackathon.name}
-                      </Link>
+                      {/* Hackathons have no page of their own: straight to its site, else the list. */}
+                      {hackathon.href ? (
+                        <a className={styles.stretch} href={hackathon.href} target="_blank" rel="noopener noreferrer">
+                          {hackathon.name}
+                        </a>
+                      ) : (
+                        <Link className={styles.stretch} to="/hackathons">
+                          {hackathon.name}
+                        </Link>
+                      )}
                       <SampleTag show={hackathon.placeholder} />
                     </span>
                     <span className={styles.deadlineDate}>{formatDay(hackathon.applyBy)}</span>

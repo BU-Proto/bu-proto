@@ -1,4 +1,4 @@
-// Small helpers for showing a hackathon, shared by the board, the home page and its own page.
+// Small helpers for showing a hackathon, shared by the hackathons list and the home page.
 
 import type { Hackathon } from '../../shared/api'
 import { daysUntil } from './dates'
@@ -13,7 +13,3 @@ export function statusOf(hackathon: Pick<Hackathon, 'applyBy'>): HackathonStatus
   if (days < 0) return 'closed'
   return days <= 14 ? 'closing' : 'open'
 }
-
-/** Whether a win's event text ("Hack@Brown 2026, Best hardware hack") names this hackathon. */
-export const winIsFrom = (winEvent: string, hackathonName: string) =>
-  hackathonName.trim() !== '' && winEvent.toLowerCase().includes(hackathonName.trim().toLowerCase())

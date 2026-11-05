@@ -1,13 +1,12 @@
-import { createBrowserRouter, RouterProvider } from 'react-router'
+import { createBrowserRouter, redirect, RouterProvider } from 'react-router'
 import { adminRoutes } from './admin/routes'
 import { Layout } from './components/Layout'
 import { LoadError, PageLoading } from './components/RouteStates'
-import { fetchContent, fetchEventPage, fetchHackathonPage, fetchHome, fetchWinPage } from './lib/content'
+import { fetchContent, fetchEventPage, fetchHome, fetchWinPage } from './lib/content'
 import { Board } from './pages/Board'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
 import { Events } from './pages/Events'
 import { Grants } from './pages/Grants'
-import { HackathonDetail, HackathonLoadError } from './pages/HackathonDetail'
 import { Hackathons } from './pages/Hackathons'
 import { Home } from './pages/Home'
 import { Join } from './pages/Join'
@@ -35,13 +34,9 @@ const router = createBrowserRouter([
         loader: ({ request }) => fetchContent('hackathons', request.signal),
         ...dataRoute,
       },
-      {
-        path: 'hackathons/:id',
-        Component: HackathonDetail,
-        loader: ({ params, request }) => fetchHackathonPage(params.id, request.signal),
-        HydrateFallback: PageLoading,
-        ErrorBoundary: HackathonLoadError,
-      },
+      // Hackathons had their own pages once; each card now opens the hackathon's site, so old
+      // links land on the list instead of a 404.
+      { path: 'hackathons/:id', loader: () => redirect('/hackathons'), HydrateFallback: PageLoading },
       { path: 'grants', Component: Grants },
       { path: 'wins', Component: Wins, loader: ({ request }) => fetchContent('wins', request.signal), ...dataRoute },
       {

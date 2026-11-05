@@ -211,10 +211,14 @@ const SECTIONS: Partial<Record<ContentResource, SectionPlan[]>> = {
     { title: 'Publishing', keys: ['placeholder', 'published'] },
   ],
   hackathons: [
-    { title: 'Basics', keys: ['name', 'starts', 'ends', 'location', 'applyBy', 'href'] },
-    { title: 'The trip', keys: ['travelCovered', 'buGoing', 'trip', 'tripSignup'] },
-    { title: 'Hackathon page', hint: 'The write-up on the hackathon’s own page.', keys: ['description'] },
-    { title: 'Photos', keys: ['photo', 'gallery'] },
+    { title: 'Basics', keys: ['name', 'starts', 'ends', 'location', 'mode', 'applyBy', 'href'] },
+    { title: 'The card', hint: 'The background and logo on the hackathon’s card.', keys: ['photo', 'logo'] },
+    { title: 'The trip', keys: ['travelCovered', 'buGoing'] },
+    {
+      title: 'Not shown on the site',
+      hint: 'Kept for our own notes: hackathons no longer have their own page.',
+      keys: ['description', 'trip', 'tripSignup', 'gallery'],
+    },
     { title: 'Publishing', keys: ['placeholder', 'published'] },
   ],
   wins: [
@@ -275,5 +279,7 @@ export function layoutFor(resource: ContentResource, key: string): FieldLayout {
 /** Where a saved row lives on the public site, for resources that have their own page. */
 export function sitePathFor(resource: ContentResource, row: ContentRow | null): string | null {
   if (!row?.published) return null
-  return resource === 'board' ? null : `/${resource}/${row.id}`
+  if (resource === 'board') return null
+  // Hackathons have no page of their own any more; their card is on the list.
+  return resource === 'hackathons' ? '/hackathons' : `/${resource}/${row.id}`
 }
