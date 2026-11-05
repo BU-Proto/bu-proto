@@ -1,364 +1,437 @@
 /*
- * The fund's coming-soon page. The status line under the title has to be impossible to miss, so
- * it's set big, in the same amber as the sample mark and the closing-soon lamp, and says it in words.
+ * The fund's coming-soon page. The field over the intro, then solid harbor to the end: one
+ * ground. Sections are told apart by type, space and a rule at each one's head, never by a change
+ * of background. The one loud thing is the range, measured in the field's own ramp.
  */
-.status {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 16px;
-  margin: 10px 0 0;
-  text-shadow: var(--on-field-shadow);
+
+.column {
+  width: min(1180px, 100%);
+  margin-inline: auto;
 }
 
-.statusWord {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--amber);
-  font-size: clamp(20px, 2.2vw, 24px);
-  font-weight: 500;
-  letter-spacing: -0.015em;
-}
-
-.statusWord::before {
-  content: '';
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--amber);
-  box-shadow: 0 0 12px rgb(var(--amber-rgb) / 0.8);
-}
-
-.statusNote {
-  color: var(--ink);
-  font-size: 16px;
-}
-
-/* What it covers and how much, as two columns of one sheet split by a rule. */
-.plan {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-  gap: 32px clamp(28px, 4vw, 56px);
-}
-
-.covers {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px clamp(20px, 3vw, 36px);
-  margin: 22px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.cover {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  gap: 4px 14px;
-  padding-top: 16px;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.18);
-}
-
-.coverIcon {
-  grid-row: span 2;
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
-  color: var(--accent);
-}
-
-.coverTitle {
+.title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: clamp(40px, 6.4vw, 84px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  text-wrap: balance;
 }
 
-.coverText {
+.subtitle {
   margin: 0;
-  color: var(--ink-soft);
+  font-size: clamp(30px, 3.6vw, 46px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.lede {
+  max-width: 46ch;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.55;
   text-wrap: pretty;
 }
 
-.amounts {
-  display: grid;
-  align-content: start;
-  gap: 22px;
-  padding-left: clamp(28px, 4vw, 56px);
-  border-left: 1px solid rgb(var(--frost-rgb) / 0.18);
-}
-
-.range {
-  display: flex;
-  align-items: baseline;
-  margin: 8px 0 0;
-  font-size: clamp(44px, 5.4vw, 68px);
-  font-weight: 300;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.rangeTo {
-  margin: 0 0.3em;
+.soft {
   color: var(--ink-soft);
-  font-size: 0.36em;
-  font-style: italic;
-  letter-spacing: 0;
 }
 
-/* A ruler from $50 to $500 with its ticks. */
-.scale {
-  position: relative;
-  height: 14px;
-  border-radius: 4px;
-  background: repeating-linear-gradient(90deg, rgb(var(--frost-rgb) / 0.5) 0 1px, transparent 1px 10%);
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px 48px;
 }
 
-.scaleFill {
-  position: absolute;
-  inset: 5px 0;
-  border-radius: 2px;
-  background: linear-gradient(90deg, rgb(var(--mint-rgb) / 0.4), var(--accent));
-}
-
-.planned {
-  max-width: 40ch;
+.note {
   margin: 0;
   color: var(--ink-soft);
   font-size: 14px;
-  font-style: italic;
-  text-wrap: pretty;
 }
 
-/* Four steps straight on the field, each under its own rule. */
-.how {
+/* Every section after the range opens on a rule across the column, so the page reads as one
+   sheet of harbor with clear stops in it. */
+.section {
   display: grid;
-  gap: 22px;
-  padding-top: 12px;
+  gap: clamp(36px, 6vh, 64px);
+  padding: clamp(28px, 4vh, 40px) 0 clamp(80px, 12vh, 120px);
+  border-top: 1px solid var(--rule-strong);
 }
 
-.steps {
+/* ---- The intro, on the field ------------------------------------------------------------------ */
+
+.intro {
+  padding-top: clamp(28px, 6vh, 64px);
+}
+
+.status {
+  max-width: 66ch;
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
+  text-shadow: var(--on-field-shadow);
+}
+
+/* Amber, the site's colour for "not yet". The only place on the page it appears. */
+.statusWord {
+  color: var(--amber);
+  font-weight: 500;
+}
+
+/* ---- The range -------------------------------------------------------------------------------- */
+
+/* Starts below where the field has drained, so the numerals stand on solid harbor. */
+.range {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 28px clamp(20px, 3vw, 36px);
+  gap: clamp(18px, 3vh, 28px);
+  padding: clamp(110px, 19vh, 200px) 0 clamp(96px, 15vh, 150px);
+}
+
+/* Set at the section titles' scale, so the range sits in the page's type rather than over it. */
+.amounts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: clamp(16px, 2.4vw, 32px);
+  margin: 0;
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The low end sits back, the high end at full strength: the same reading as the wedge. */
+.min {
+  color: var(--ink-soft);
+}
+
+/* Takes whatever width is left between the numbers, its base on their baseline. */
+.wedge {
+  container-type: inline-size;
+  display: block;
+  margin-bottom: 0.12em;
+  overflow: hidden;
+  color: var(--ink-soft);
+}
+
+/* Its columns fit that width exactly: mono cells are 0.6em wide. */
+.wedgeText {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: calc(100cqi / (var(--cols) * 0.6));
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0;
+  white-space: pre;
+  user-select: none;
+}
+
+.rangeCopy {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px 48px;
+}
+
+/* ---- Travel ----------------------------------------------------------------------------------- */
+
+.travelList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px clamp(20px, 3vw, 44px);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.step {
+.travel {
   display: grid;
   align-content: start;
-  gap: 6px;
-  padding-top: 16px;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.4);
-  text-shadow: var(--on-field-shadow);
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 2px solid var(--frost);
 }
 
-.stepNo {
-  color: var(--accent);
-  font-size: 40px;
-  font-weight: 200;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
+.travelTitle {
+  margin: 0;
+  font-size: clamp(26px, 2.8vw, 36px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
 }
 
-.stepTitle {
-  margin: 10px 0 0;
-  font-size: 17px;
-  font-weight: 500;
-}
-
-.stepText {
+.travelText {
   max-width: 30ch;
   margin: 0;
-  color: var(--ink);
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
   text-wrap: pretty;
 }
 
-/* The one ask goes straight on the field, huge. */
-.ask {
+/* ---- Who it's for, and how it differs from Ignite --------------------------------------------- */
+
+.audience {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  column-gap: clamp(32px, 6vw, 96px);
+  align-items: start;
+}
+
+.audienceHead {
   display: grid;
-  justify-items: center;
+  justify-items: start;
   gap: 16px;
-  padding: clamp(36px, 7vw, 88px) 0;
-  text-align: center;
-}
-
-.askTitle {
-  margin: 0;
-  color: var(--ink);
-  font-size: 17px;
-  font-weight: 400;
-  text-shadow: var(--on-field-shadow);
-}
-
-.quote {
-  margin: 0;
-  font-size: clamp(44px, 8vw, 104px);
-  font-weight: 300;
-  letter-spacing: -0.045em;
-  line-height: 0.95;
-  text-wrap: balance;
-  text-shadow: 0 2px 40px rgb(var(--harbor-rgb) / 0.4);
-}
-
-.quote::before {
-  content: '> ';
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 0.6em;
-}
-
-.askText {
-  max-width: 48ch;
-  margin: 0;
-  color: var(--ink);
-  font-size: 16px;
-  text-wrap: balance;
-  text-shadow: var(--on-field-shadow);
 }
 
 .compare {
   width: 100%;
   border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.4;
 }
 
 .compare th,
 .compare td {
-  padding: 14px 16px;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.14);
+  padding: 14px 16px 14px 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-soft);
   text-align: left;
   vertical-align: top;
 }
 
 .compare thead th {
-  border-top: 0;
-  color: var(--ink-soft);
+  padding-top: 0;
+  border-bottom-color: var(--rule-strong);
   font-size: 13px;
   font-weight: 500;
 }
 
 .compare tbody th {
-  width: 26%;
-  color: var(--ink-soft);
+  width: 30%;
   font-weight: 400;
 }
 
-.compare td {
-  color: var(--ink-soft);
-}
-
-.compare .us {
-  background: rgb(var(--frost-rgb) / 0.07);
+.compare .ours {
   color: var(--ink);
+  font-weight: 500;
 }
 
-.compare thead .us {
-  border-radius: 12px 12px 0 0;
-  color: var(--accent);
+/* ---- How it'll work --------------------------------------------------------------------------- */
+
+.steps {
+  --gap: clamp(20px, 3vw, 44px);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.plannedWord {
-  margin-left: 4px;
+/* The track: one line from the first stop to the last, through the stops' middles. Its right
+   end is the fourth column's start plus half the last stop. */
+.steps::before {
+  content: '';
+  position: absolute;
+  top: calc(22px + 12px + 14px);
+  left: 7px;
+  right: calc((100% - 3 * var(--gap)) / 4 - 14px);
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+/* Number, a stop on the track, title, text. */
+.step {
+  position: relative;
+  display: grid;
+  grid-template-rows: 22px 28px auto auto;
+  align-content: start;
+  gap: 12px;
+}
+
+.stepNo {
   color: var(--ink-soft);
-  font-weight: 400;
+  font-size: 15px;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
 }
 
+.stop {
+  position: relative;
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--frost);
+  background: var(--harbor);
+}
+
+/* The one ask: the line arrives at a solid stop, in the accent. */
+.step[data-last] .stop {
+  width: 28px;
+  height: 28px;
+  border-color: var(--mint);
+  background: var(--mint);
+}
+
+.step[data-last] .stepTitle {
+  color: var(--mint);
+}
+
+.stepTitle {
+  margin: 4px 0 0;
+  font-size: clamp(24px, 2.4vw, 30px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.stepText {
+  max-width: 30ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* ---- The interest list ------------------------------------------------------------------------ */
+
+.end {
+  padding-bottom: clamp(64px, 10vh, 112px);
+  scroll-margin-top: 80px;
+}
+
+/* A solid navy panel inside the column, so the form never stands on anything but one colour. */
 .interest {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  gap: 24px 40px;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 40px clamp(32px, 5vw, 80px);
+  align-items: start;
+  padding: clamp(28px, 4vw, 56px);
 }
 
 .interestHead {
   display: grid;
-  align-content: start;
-  gap: 10px;
+  gap: 20px;
 }
 
-@media (max-width: 900px) {
-  .plan,
+/* ---- Narrow screens --------------------------------------------------------------------------- */
+
+@media (max-width: 960px) {
+  .audience,
   .interest {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .amounts {
-    padding: 28px 0 0;
-    border-top: 1px solid rgb(var(--frost-rgb) / 0.18);
-    border-left: 0;
+@media (max-width: 760px) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
 
-  .steps {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .step {
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: 6px 20px;
+    padding-bottom: 36px;
+  }
+
+  .stepNo {
+    display: none;
+  }
+
+  .stop {
+    grid-row: 1 / span 2;
+    justify-self: center;
+    align-self: start;
+    margin-top: 10px;
+  }
+
+  .step[data-last] .stop {
+    margin-top: 3px;
+  }
+
+  /* The track runs down instead, through the left column. */
+  .steps::before {
+    display: none;
+  }
+
+  .step:not([data-last])::after {
+    content: '';
+    position: absolute;
+    top: 24px;
+    bottom: -10px;
+    left: 14px;
+    width: 1px;
+    background: var(--rule-strong);
+  }
+
+  .stepTitle,
+  .stepText {
+    grid-column: 2;
+  }
+
+  .stepTitle {
+    margin: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .amounts {
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+    row-gap: 16px;
+  }
+
+  .wedge {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
   }
 }
 
 @media (max-width: 560px) {
-  .covers,
-  .steps {
+  .travelList {
     grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
   }
 
-  /* Three columns don't fit, so each row becomes the question, then both answers, labelled. */
-  .compare thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
+  /* Each row's label on its own line, the two funds side by side under it. */
   .compare tr {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px 12px;
-    padding: 16px 0;
-    border-top: 1px solid rgb(var(--frost-rgb) / 0.14);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .compare thead tr {
+    border-bottom-color: var(--rule-strong);
+  }
+
+  .compare thead td {
+    display: none;
   }
 
   .compare th,
   .compare td {
-    padding: 0;
-    border: 0;
+    padding: 0 0 12px;
+    border-bottom: 0;
   }
 
   .compare tbody th {
     grid-column: 1 / -1;
     width: auto;
-    color: var(--ink);
-    font-weight: 500;
-  }
-
-  .compare td::before {
-    content: attr(data-label);
-    display: block;
-    margin-bottom: 3px;
-    color: var(--ink-soft);
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .compare td.us {
-    background: none;
-  }
-
-  .compare td.us::before {
-    color: var(--accent);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .statusWord::before {
-    animation: lamp 1.8s ease-in-out infinite;
-  }
-}
-
-@keyframes lamp {
-  50% {
-    opacity: 0.35;
-    box-shadow: none;
+    padding: 14px 0 4px;
   }
 }

@@ -219,3 +219,32 @@ export function glyphTexture(color: string, cols = 96, rows = 40, cell = 10): st
   textureCache.set(key, url)
   return url
 }
+
+/**
+ * A measure drawn in the fine ramp, as rows of text: a wedge that rises and thickens from left to
+ * right, so the low end of a range reads sparse and the high end dense. A thin glow runs above
+ * the wedge's slope, like the field's characters thinning out.
+ */
+export function rampWedge(cols = 96, rows = 8): string[] {
+  const top = FINE_RAMP.length - 1
+  const lines: string[] = []
+  for (let j = 0; j < rows; j++) {
+    // 0 at the bottom row, 1 at the top.
+    const lift = (rows - 1 - j + 0.5) / rows
+    let line = ''
+    for (let i = 0; i < cols; i++) {
+      const t = i / (cols - 1)
+      const height = 0.14 + 0.86 * t
+      const grain = (hash(i, j) - 0.5) * 0.3
+      const v =
+        lift < height
+          ? clamp01(0.22 + 0.78 * t + grain)
+          : lift - height < 0.16 && hash(j, i) < 0.5
+            ? clamp01(0.12 + grain * 0.5)
+            : 0
+      line += FINE_RAMP[Math.round(v * top)]
+    }
+    lines.push(line)
+  }
+  return lines
+}
