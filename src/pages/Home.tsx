@@ -68,7 +68,7 @@ export function Home() {
 
   return (
     <>
-      <title>{`${BRAND.full} · A home base for making things at BU`}</title>
+      <title>{`${BRAND.full} · The home base for building things at BU`}</title>
       <Hero />
 
       {/* Harbor: the field drains into it. The record, then the three ways in. */}
