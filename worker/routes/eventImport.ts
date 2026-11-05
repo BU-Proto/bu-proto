@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { RESOURCE_SPECS, eventImportInput, eventInput, type EventImportPreview } from '../../shared/api'
 import { inputToColumns, rowToItem, type DbRow } from '../lib/content'
 import { ApiError, readBody } from '../lib/http'
-import { fetchEventPage, parseEventPage } from '../lib/importers/eventPage'
+import { fetchEventPage, fetchLumaEvent, parseEventPage, sourceOf } from '../lib/importers/eventPage'
 import type { AppEnv } from '../types'
 
 // An event page (Luma, Eventbrite, or any page with schema.org Event data) to an unpublished
@@ -13,17 +13,23 @@ const app = new Hono<AppEnv>()
 
 /** Fetch, parse and validate one page. Every failure is a 4xx with a message the admin can act on. */
 async function readEvent(url: string) {
-  let page: { html: string; url: string }
-  try {
-    page = await fetchEventPage(url)
-  } catch (error) {
-    throw new ApiError(502, error instanceof Error ? error.message : 'Could not read that page.')
-  }
+  // Luma first through its API: its pages turn Workers away with a 429. The page is the fallback.
+  const viaApi = sourceOf(new URL(url)) === 'luma' ? await fetchLumaEvent(url) : null
+  let page: { html: string; url: string } = { html: '', url }
   let parsed: ReturnType<typeof parseEventPage>
-  try {
-    parsed = parseEventPage(page.html, page.url)
-  } catch (error) {
-    throw new ApiError(400, error instanceof Error ? error.message : 'No event on that page.')
+  if (viaApi) {
+    parsed = viaApi
+  } else {
+    try {
+      page = await fetchEventPage(url)
+    } catch (error) {
+      throw new ApiError(502, error instanceof Error ? error.message : 'Could not read that page.')
+    }
+    try {
+      parsed = parseEventPage(page.html, page.url)
+    } catch (error) {
+      throw new ApiError(400, error instanceof Error ? error.message : 'No event on that page.')
+    }
   }
   const input = eventInput.safeParse(parsed.event)
   if (!input.success) {

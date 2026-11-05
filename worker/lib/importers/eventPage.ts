@@ -325,7 +325,11 @@ interface Extras {
 /** Luma: JSON-LD repeats the venue name as its street; the payload has the real one, and the uncropped cover. */
 function lumaExtras(data: Json | null): Extras {
   const event = dig(data, 'props', 'pageProps', 'initialData', 'data', 'event')
-  if (!isObject(event)) return {}
+  return isObject(event) ? lumaEventExtras(event) : {}
+}
+
+/** The place and cover from a Luma event object, the same in the page payload and the API. */
+function lumaEventExtras(event: Json): Extras {
   const extras: Extras = {}
   const geo = event.geo_address_info
   if (isObject(geo) && geo.mode !== 'obfuscated' && str(geo.address)) {
@@ -397,6 +401,81 @@ export function parseEventPage(html: string, pageUrl: string): ParsedEventPage {
       description: clamp(description, 8000),
       agenda: [],
       hosts: hostsOf(event),
+      gallery: [],
+      placeholder: false,
+      published: false,
+    },
+  }
+}
+
+// ---- Luma's own API ------------------------------------------------------------------------------
+
+/** The JSON Luma's event pages render from, by the event's slug. Public; no key. */
+const LUMA_API = 'https://api.lu.ma/url?url='
+
+/** A Luma description (a ProseMirror document) as plain paragraphs: one per block, list items on lines. */
+function mirrorText(node: unknown): string {
+  if (!isObject(node)) return ''
+  if (node.type === 'text') return str(node.text)
+  if (node.type === 'hard_break') return '\n'
+  const children = asList(node.content)
+  if (node.type === 'doc') return children.map(mirrorText).filter((block) => block.trim()).join('\n\n')
+  if (node.type === 'bullet_list' || node.type === 'ordered_list') return children.map(mirrorText).join('\n')
+  return children.map(mirrorText).join('')
+}
+
+/**
+ * Read a Luma event through Luma's API instead of its page. Luma's pages answer 429 to shared cloud
+ * addresses such as a Worker's, while the API serves them. Null when the URL has no slug or the API
+ * doesn't know it, so the caller can still try the page.
+ */
+export async function fetchLumaEvent(pageUrl: string): Promise<ParsedEventPage | null> {
+  const slug = new URL(pageUrl).pathname.split('/').filter(Boolean).at(-1)
+  if (!slug) return null
+  let response: Response
+  try {
+    response = await fetch(LUMA_API + encodeURIComponent(slug), {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      signal: AbortSignal.timeout(12_000),
+    })
+  } catch {
+    return null
+  }
+  if (!response.ok) return null
+  const body: unknown = await response.json().catch(() => null)
+  const data = dig(body as Json, 'data')
+  const event = dig(data as Json, 'event')
+  if (!isObject(data) || !isObject(event)) return null
+
+  const title = clamp(cleanText(str(event.name)), 120)
+  const start = toNewYork(event.start_at)
+  if (!title || !start) return null
+  const end = toNewYork(event.end_at)
+  const extras = lumaEventExtras(event)
+  const description = toParagraphs(mirrorText(data.description_mirror))
+  const hosts: EventInput['hosts'] = asList(data.hosts)
+    .filter(isObject)
+    .map((host) => ({
+      name: clamp(cleanText(str(host.name)), 80),
+      href: str(host.username) ? `https://luma.com/${str(host.username)}` : (absoluteUrl(host.website) ?? ''),
+      bu: false,
+    }))
+    .filter((host) => host.name)
+    .slice(0, 16)
+
+  return {
+    source: 'luma',
+    event: {
+      kind: guessKind(title, description),
+      title,
+      date: start.day,
+      time: clamp(formatTime(start, end), 40),
+      place: clamp(extras.place || 'To be announced', 120),
+      text: description ? summaryOf(description) : '',
+      photo: extras.photo || '',
+      description: clamp(description, 8000),
+      agenda: [],
+      hosts,
       gallery: [],
       placeholder: false,
       published: false,
