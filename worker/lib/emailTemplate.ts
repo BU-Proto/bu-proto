@@ -31,6 +31,8 @@ export type EmailReason =
   | { kind: 'test' }
   /** Transactional: someone was added as a portal admin. No list, so no unsubscribe. */
   | { kind: 'admin' }
+  /** Transactional: someone put themselves forward for a board seat (or, to owners, that they did). */
+  | { kind: 'board' }
 
 export interface RenderedEmail {
   subject: string
@@ -217,7 +219,7 @@ function preheaderText(body: string): string {
 // ---- ASCII art ----------------------------------------------------------------------------------
 
 /** Each kind of email gets its own field, the same every time. */
-const ART_SEED: Record<EmailReason['kind'], number> = { member: 1, event: 2, fund: 3, test: 4, admin: 5 }
+const ART_SEED: Record<EmailReason['kind'], number> = { member: 1, event: 2, fund: 3, test: 4, admin: 5, board: 6 }
 
 // Wide enough to fill the 600px card at 9px (a 0.6em cell is 5.4px); phones crop the right side.
 const ART_COLS = 110
@@ -317,6 +319,8 @@ function reasonText(reason: EmailReason): string {
       return 'This is a test copy sent from the BU Proto portal.'
     case 'admin':
       return "You're getting this because you were added as an admin of the BU Proto portal."
+    case 'board':
+      return "You're getting this because of a board seat form sent on buproto.com."
   }
 }
 

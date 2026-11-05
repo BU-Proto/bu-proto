@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono'
-import { fundInterestInput, joinInput, rsvpInput, type RsvpResult } from '../../shared/api'
+import { boardInterestInput, fundInterestInput, joinInput, rsvpInput, type RsvpResult } from '../../shared/api'
 import { randomToken } from '../lib/crypto'
-import { sendFundConfirmation, sendRsvpConfirmation, sendWelcome } from '../lib/confirmations'
+import { sendBoardInterest, sendFundConfirmation, sendRsvpConfirmation, sendWelcome } from '../lib/confirmations'
 import { PUBLIC_ROWS } from '../lib/content'
 import { bostonToday } from '../lib/dates'
 import { limitForms } from '../lib/forms'
@@ -9,7 +9,7 @@ import { ApiError, idParam, readBody } from '../lib/http'
 import { requireHuman } from '../lib/turnstile'
 import type { AppEnv } from '../types'
 
-// The three forms the public site posts. None needs a session; all are rate limited per IP, then
+// The four forms the public site posts. None needs a session; all are rate limited per IP, then
 // need a Turnstile token (lib/turnstile) before anything is read or written. The action names
 // match the ones the forms render their widgets with.
 
@@ -57,6 +57,16 @@ app.post('/api/fund-interest', limitForms, requireHuman('fund-interest'), async 
     .bind(input.name, input.email, input.year, input.target, input.spend, input.amount)
     .run()
   c.executionCtx.waitUntil(sendFundConfirmation(c.env, origin(c), input))
+  return c.json({ ok: true }, 201)
+})
+
+app.post('/api/board-interest', limitForms, requireHuman('board-interest'), async (c) => {
+  if (await isBot(c)) return c.json({ ok: true }, 201)
+  const { website: _website, ...input } = await readBody(c, boardInterestInput)
+  await c.env.DB.prepare('INSERT INTO board_interest (name, email, year, role, note) VALUES (?, ?, ?, ?, ?)')
+    .bind(input.name, input.email, input.year, input.role, input.note)
+    .run()
+  c.executionCtx.waitUntil(sendBoardInterest(c.env, origin(c), input))
   return c.json({ ok: true }, 201)
 })
 

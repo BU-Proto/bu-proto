@@ -13,7 +13,7 @@ import {
   type EmailCampaign,
   type EmailPreview,
 } from '../../shared/api'
-import { fundDraft, nextEvent, renderDraft, rsvpDraft, sendDraft, welcomeDraft } from '../lib/confirmations'
+import { boardDraft, fundDraft, nextEvent, renderDraft, rsvpDraft, sendDraft, welcomeDraft } from '../lib/confirmations'
 import { randomToken } from '../lib/crypto'
 import {
   escapeHtml,
@@ -245,6 +245,7 @@ const AUTOMATIC_INFO: Record<AutomaticEmailKey, { title: string; when: string }>
   welcome: { title: 'Welcome', when: 'Sent when someone joins the list for the first time. Re-joining to update details doesn’t send it again.' },
   rsvp: { title: 'RSVP confirmation', when: 'Sent when someone RSVPs to an event. A repeat RSVP doesn’t send a second one.' },
   fund: { title: 'Grants list confirmation', when: 'Sent when someone joins the grants interest list.' },
+  board: { title: 'Board seat confirmation', when: 'Sent when someone puts themselves forward for a board seat. The owners also get a note with what they wrote.' },
 }
 
 /** Each automatic email as the signed-in admin would get it. Unsubscribe links use the preview token. */
@@ -261,6 +262,7 @@ async function automaticDrafts(c: Context<AppEnv>) {
       welcome: welcomeDraft(origin, { ...person, track: 'Build', unsubscribeToken: PREVIEW_TOKEN }, upcoming),
       rsvp: rsvpDraft(person, event),
       fund: fundDraft(person),
+      board: boardDraft({ ...person, year: 'Third year', role: 'External outreach', note: '' }),
     } satisfies Record<AutomaticEmailKey, unknown>,
   }
 }

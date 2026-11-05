@@ -12,6 +12,7 @@
 
 import { z } from 'zod'
 import {
+  BOARD_SEATS,
   EVENT_KINDS,
   FUND_AMOUNTS,
   FUND_STATUSES,
@@ -348,6 +349,31 @@ export const fundInterestInput = z.object({
   amount: z.enum(FUND_AMOUNTS),
   ...honeypot,
 })
+
+/** POST /api/board-interest → 201 { ok: true }: someone putting themselves forward for a board seat. */
+export const boardInterestInput = z.object({
+  name: text(80),
+  email: buEmail,
+  year: z.enum(YEARS),
+  role: z.enum(BOARD_SEATS),
+  /** What they'd take on. Optional. */
+  note: optionalText(1000).default(''),
+  ...honeypot,
+})
+export type BoardInterestInput = z.input<typeof boardInterestInput>
+/** A board-interest submission once parsed: `note` is always a string. */
+export type BoardInterestValues = z.output<typeof boardInterestInput>
+
+/** GET /api/admin/board-interest → { items }: newest first. DELETE /api/admin/board-interest/:id → 204. */
+export interface BoardInterest {
+  id: number
+  name: string
+  email: string
+  year: string
+  role: string
+  note: string
+  createdAt: string
+}
 
 /** POST /api/events/:id/rsvp → 201 { ok: true, count } (200 if already RSVP'd). Any email, not just BU. */
 export const rsvpInput = z.object({
@@ -770,8 +796,8 @@ export interface EventImportPreview {
 
 // ---- Portal: automatic emails -------------------------------------------------------------------
 
-/** The emails the public forms send on their own: a welcome, an RSVP and a fund confirmation. */
-export const AUTOMATIC_EMAIL_KEYS = ['welcome', 'rsvp', 'fund'] as const
+/** The emails the public forms send on their own: a welcome, an RSVP, a fund and a board confirmation. */
+export const AUTOMATIC_EMAIL_KEYS = ['welcome', 'rsvp', 'fund', 'board'] as const
 export type AutomaticEmailKey = (typeof AUTOMATIC_EMAIL_KEYS)[number]
 
 /**

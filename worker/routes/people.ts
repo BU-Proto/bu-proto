@@ -4,6 +4,7 @@ import {
   TRACKS,
   fundPatch,
   memberPatch,
+  type BoardInterest,
   type FundInterest,
   type FundStatus,
   type Member,
@@ -179,6 +180,22 @@ app.delete('/api/admin/members/:id', async (c) => {
 })
 
 // ---- Fund interest ----------------------------------------------------------------------------
+
+// ---- Board interest: who put their hand up for a seat ---------------------------------------------
+
+app.get('/api/admin/board-interest', async (c) => {
+  const { results } = await c.env.DB.prepare(
+    'SELECT id, name, email, year, role, note, created_at FROM board_interest ORDER BY created_at DESC, id DESC',
+  ).all<{ id: number; name: string; email: string; year: string; role: string; note: string; created_at: string }>()
+  const items: BoardInterest[] = results.map(({ created_at, ...row }) => ({ ...row, createdAt: created_at }))
+  return c.json({ items })
+})
+
+app.delete('/api/admin/board-interest/:id', async (c) => {
+  const { meta } = await c.env.DB.prepare('DELETE FROM board_interest WHERE id = ?').bind(idParam(c)).run()
+  if (meta.changes === 0) throw new ApiError(404, 'No such entry.')
+  return c.body(null, 204)
+})
 
 app.get('/api/admin/fund', async (c) => {
   const status = c.req.query('status')

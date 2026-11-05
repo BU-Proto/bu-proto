@@ -3,11 +3,12 @@
 // throws, so a slow or failing Resend can't hold up or undo a sign-up. The portal previews and
 // test-sends them through the same builders, so what it shows is what people get.
 
-import type { AutomaticEmailKey } from '../../shared/api'
+import type { AutomaticEmailKey, BoardInterestValues } from '../../shared/api'
 import { bostonToday } from './dates'
 import { type EventDetails, formatEventDate, renderEmail, type EmailReason, type Recipient, type RenderedEmail } from './emailTemplate'
 import { randomToken } from './crypto'
 import { sendEmails, type SendResult } from './resend'
+import { owners } from './session'
 
 /** What each track is for, said back to someone who just picked it. */
 const TRACK_LINES: Record<string, string> = {
@@ -106,4 +107,38 @@ export async function sendRsvpConfirmation(env: Env, origin: string, rsvp: { nam
 
 export async function sendFundConfirmation(env: Env, origin: string, person: { name: string; email: string }) {
   await sendDraft(env, fundDraft(person), origin, 'fund')
+}
+
+type BoardInterest = Omit<BoardInterestValues, 'website'>
+
+export function boardDraft(person: BoardInterest): Draft {
+  const seat = person.role === 'Not sure yet' ? 'a seat on the board' : `the ${person.role} seat`
+  const body = [
+    'Thanks for throwing your hat in, {{name}}',
+    `We've got your note about ${seat}. Andres and Jose read every one, and we'll reach out to set up a quick chat.`,
+    'In the meantime, the best way to get a feel for Proto is to come to a hack night.',
+    'Anything to add? Just reply to this email.',
+  ].join('\n\n')
+  return { recipient: person, subject: 'We got your board note', body, reason: { kind: 'board' } }
+}
+
+/** Tells the owners (ADMIN_EMAILS) someone put their hand up, with what they wrote. */
+function boardNoticeDrafts(env: Env, origin: string, person: BoardInterest): Draft[] {
+  const body = [
+    `${person.name} wants a board seat`,
+    `${person.name} (${person.email}, ${person.year}) put their hand up for: ${person.role}.`,
+    person.note.trim() ? `What they'd take on:\n${person.note.trim()}` : 'They didn’t add a note.',
+    `Everyone who's applied: ${origin}/admin/board/interest`,
+  ].join('\n\n')
+  return [...owners(env)].map((email) => ({
+    recipient: { email, name: '' },
+    subject: `Board interest: ${person.name}, ${person.role}`,
+    body,
+    reason: { kind: 'board' },
+  }))
+}
+
+export async function sendBoardInterest(env: Env, origin: string, person: BoardInterest) {
+  await sendDraft(env, boardDraft(person), origin, 'board')
+  for (const notice of boardNoticeDrafts(env, origin, person)) await sendDraft(env, notice, origin, 'board')
 }

@@ -46,6 +46,7 @@ export const adminRoutes: RouteObject[] = [
           { path: 'hackathons/import', lazy: () => import('./pages/HackathonImport') },
           { path: 'wins/import', lazy: () => import('./pages/WinImport') },
           { path: 'events/import', lazy: () => import('./pages/EventImport') },
+          { path: 'board/interest', lazy: () => import('./pages/BoardInterest') },
           // events | hackathons | wins | board; anything else is a 404 from the loader.
           {
             path: ':resource',
