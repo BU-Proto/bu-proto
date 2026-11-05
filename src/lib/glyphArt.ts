@@ -30,8 +30,9 @@ function shapeDistance(shape: FigureShape, x: number, y: number): number {
   if (shape === 'chevron') {
     return Math.min(segment(x, y, -0.42, -0.72, 0.42, 0), segment(x, y, 0.42, 0, -0.42, 0.72)) - 0.18
   }
-  const qx = Math.abs(x) - 0.8
-  const qy = Math.abs(y - 0.5) - 0.2
+  // The underscore: a thin rule down on the baseline, not a block, so it reads as `_`.
+  const qx = Math.abs(x) - 0.82
+  const qy = Math.abs(y - 0.68) - 0.065
   return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0)
 }
 
