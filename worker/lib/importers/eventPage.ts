@@ -438,10 +438,14 @@ export async function fetchLumaEvent(pageUrl: string): Promise<ParsedEventPage |
       headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
       signal: AbortSignal.timeout(12_000),
     })
-  } catch {
+  } catch (error) {
+    console.warn('[event-import] Luma API unreachable', error)
     return null
   }
-  if (!response.ok) return null
+  if (!response.ok) {
+    console.warn(`[event-import] Luma API answered ${response.status} for ${slug}`, (await response.text().catch(() => '')).slice(0, 300))
+    return null
+  }
   const body: unknown = await response.json().catch(() => null)
   const data = dig(body as Json, 'data')
   const event = dig(data as Json, 'event')
