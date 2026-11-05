@@ -37,7 +37,9 @@ npm run dev                      # http://localhost:5173
 | `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
 | `/wins` | Win cards: photo, project, placement, team, Devpost |
 | `/track-record` | Logo walls: where members have worked, sponsors, partners, other wins |
-| `/resources` | The playbook index |
+| `/resources` | The resources hub: a card each for the playbook, Spark! and Innovate@BU |
+| `/resources/spark`, `/resources/innovate` | A BU program's page: what it is, where and when, what to go there for, its programs |
+| `/resources/playbook` | The playbook index; each guide is at `/resources/playbook/<slug>` (old `/resources/<slug>` links redirect) |
 | `/events` | Upcoming events with RSVP |
 | `/board` | The board |
 | `/join` | What you get, the sign-up form and the Discord |

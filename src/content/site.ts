@@ -42,7 +42,17 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Hackathons', to: '/hackathons', inPill: true },
   { label: 'Grants', to: '/grants', inPill: true },
   { label: 'Wins', to: '/wins', inPill: true },
-  { label: 'Resources', to: '/resources', inPill: true },
+  {
+    label: 'Resources',
+    to: '/resources',
+    inPill: true,
+    children: [
+      { label: 'All resources', to: '/resources', line: 'The playbook, and where to go at BU' },
+      { label: 'The playbook', to: '/resources/playbook', line: 'Our guides to hackathons, start to finish' },
+      { label: 'Spark!', to: '/resources/spark', line: 'BU’s lab for building things, with mentors' },
+      { label: 'Innovate@BU', to: '/resources/innovate', line: 'Funding and mentors to launch a venture' },
+    ],
+  },
   { label: 'Events', to: '/events', inPill: true },
   { label: 'Track Record', to: '/track-record' },
   { label: 'Join', to: '/join' },
@@ -93,7 +103,8 @@ export const FOOTER = {
         { label: 'The board', to: '/board' },
         { label: 'Events', to: '/events' },
         { label: 'Hackathons', to: '/hackathons' },
-        { label: 'Playbook', to: '/resources' },
+        { label: 'Playbook', to: '/resources/playbook' },
+        { label: 'Resources', to: '/resources' },
       ],
     },
     {

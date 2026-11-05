@@ -61,7 +61,7 @@ export const OFFER = {
     {
       name: 'The playbook',
       text: 'Everything we wish we’d known before our first hackathon, written down.',
-      where: { label: 'The playbook', href: '/resources' },
+      where: { label: 'The playbook', href: '/resources/playbook' },
     },
     {
       name: 'Wins and track record',
@@ -71,7 +71,7 @@ export const OFFER = {
     {
       name: 'A way into BU’s startup programs',
       text: 'For student founders on the Launch track: founder talks, and a path into Spark! and Innovate@BU. Nothing is official with either yet.',
-      where: { label: 'Join on Launch', href: '/join' },
+      where: { label: 'What each one does', href: '/resources' },
     },
     {
       name: 'Hackathon travel fund',
