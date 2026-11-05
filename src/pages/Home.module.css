@@ -298,7 +298,8 @@
   display: flex;
   align-items: flex-end;
   gap: clamp(16px, 2vw, 24px);
-  margin: 0 0 clamp(14px, 2.4vh, 24px);
+  /* The numeral's light top sits high in its line; this keeps it off the heading above. */
+  margin: 12px 0 clamp(14px, 2.4vh, 24px);
 }
 
 .dateDay {
@@ -356,7 +357,7 @@
   color: var(--ink-soft);
 }
 
-/* The event's one line. Two at most, so the block keeps its shape whatever gets typed. */
+/* The event's line (the portal asks for one or two), or the empty state's. */
 .eventText {
   max-width: 48ch;
   margin: 0;
@@ -364,11 +365,6 @@
   font-size: 16px;
   line-height: 1.55;
   text-wrap: pretty;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
 }
 
 .actions {
