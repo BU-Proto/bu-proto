@@ -246,10 +246,6 @@ function headerArt(kind: EmailReason['kind']): string {
   return artBlock({ cols: ART_COLS, rows: 8, seed: ART_SEED[kind], band: [0.25, 0.65], fadeTop: true }, '0 0 12px 4px', wordmark)
 }
 
-function footerArt(kind: EmailReason['kind']): string {
-  return artBlock({ cols: ART_COLS, rows: 4, seed: ART_SEED[kind] + 20, band: [0.6, 1] }, '8px 0 8px 4px')
-}
-
 /** The plain-text header: a narrow strip of the field with the wordmark set into its middle row. */
 function textHeader(kind: EmailReason['kind']): string[] {
   const rows = artTextRows({ cols: 56, rows: 3, seed: ART_SEED[kind] }).map((row) => row.padEnd(56))
@@ -313,7 +309,8 @@ function reasonText(reason: EmailReason): string {
     case 'member':
       return "You're getting this because you're a BU Proto member."
     case 'event':
-      return `You're getting this because you RSVP'd to ${reason.event.title}.`
+      // A title that ends in its own punctuation ("Why hackathons?") doesn't get a second stop.
+      return `You're getting this because you RSVP'd to ${reason.event.title.trim()}${/[.!?]$/.test(reason.event.title.trim()) ? '' : '.'}`
     case 'fund':
       return "You're getting this because you joined the BU Proto fund interest list."
     case 'test':
@@ -443,10 +440,8 @@ ${contentHtml}
 </td></tr>
 ${event ? eventHtml(event, origin) : ''}
 <tr><td style="padding:28px 0 0 0;font-size:0;line-height:0">&nbsp;</td></tr>
-<tr><td bgcolor="${NAVY}" style="padding:0;background-color:${NAVY};overflow:hidden">
-${footerArt(reason.kind)}
-</td></tr>
-<tr><td class="pe-footpad" bgcolor="${NAVY}" style="padding:14px 48px 34px 48px;background-color:${NAVY};border-radius:0 0 17px 17px">
+<tr><td class="pe-px" bgcolor="${NAVY}" style="padding:0 48px;background-color:${NAVY}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #23415c;font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>
+<tr><td class="pe-footpad" bgcolor="${NAVY}" style="padding:22px 48px 34px 48px;background-color:${NAVY};border-radius:0 0 17px 17px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="font-family:${FONT};font-size:22px;font-weight:300;line-height:28px;letter-spacing:-0.6px;color:#ffffff">Proto<span style="color:${MINT}">_</span></td></tr>
 <tr><td style="padding-top:6px;font-family:${FONT};font-size:14px;line-height:21px;color:#c9d6e2">For anyone at BU who makes things. Hack nights, hackathon trips and demo nights, all year.</td></tr>
