@@ -29,11 +29,12 @@
   content: '';
   position: absolute;
   z-index: -1;
-  left: -12%;
-  right: 10%;
-  bottom: -8%;
-  height: 78%;
-  background: radial-gradient(60% 62% at 34% 66%, rgb(var(--harbor-rgb) / 0.55), rgb(var(--harbor-rgb) / 0) 100%);
+  left: -30%;
+  right: -10%;
+  bottom: -12%;
+  height: 90%;
+  /* closest-side keeps the whole ellipse inside the box, so it never meets an edge and leaves a line. */
+  background: radial-gradient(closest-side at 42% 62%, rgb(var(--harbor-rgb) / 0.55), rgb(var(--harbor-rgb) / 0));
   pointer-events: none;
 }
 
