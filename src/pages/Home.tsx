@@ -156,7 +156,7 @@ export function Home() {
     .filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
     .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
     .slice(0, 3)
-  const latest = newestWins(wins, 4)
+  const latest = newestWins(wins, 12)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   const revealRef = useReveal<HTMLDivElement>()
   useWheelEasing()

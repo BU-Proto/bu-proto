@@ -7,11 +7,11 @@ import { WinTile } from './WinTile'
 import styles from './WinSheet.module.css'
 
 /** Scroll speed, in px per second, at which the tiles are fully bent. */
-const BEND_SPEED = 900
+const BEND_SPEED = 2700
 /** How far a tile's outer edge spreads at full bend, as a share of its width, at the viewport's edge. */
-const BEND_SPREAD = 0.019
+const BEND_SPREAD = 0.05
 /** How far a tile tips toward the viewer at full bend, at the viewport's edge. */
-const BEND_TILT = 3
+const BEND_TILT = 8
 const BEND_EASE_MS = 90
 
 /**
@@ -69,7 +69,7 @@ function useScrollBend() {
 
 /** The heading, its characters tipping up out of the line, with the lede rising beside it. */
 function Head({ id }: { id: string }) {
-  const [ref, inView] = useInView<HTMLElement>('0px')
+  const [ref, inView] = useInView<HTMLElement>('0px', 0, true)
   const seen = { count: 0 }
   return (
     <header ref={ref} className={styles.head} data-in={inView || undefined}>
@@ -96,7 +96,7 @@ function Head({ id }: { id: string }) {
 
 /** The way through to every win. */
 function AllWins() {
-  const [ref, inView] = useInView<HTMLDivElement>('0px')
+  const [ref, inView] = useInView<HTMLDivElement>('0px', 0, true)
   return (
     <div ref={ref} className={styles.pillRow} data-in={inView || undefined}>
       <div className={styles.pillRise}>

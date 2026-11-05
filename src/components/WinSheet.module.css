@@ -6,6 +6,7 @@
   background: var(--paper);
   color: var(--paper-ink);
   color-scheme: light;
+  font-family: var(--font-display);
 }
 
 .empty {
@@ -49,7 +50,6 @@
   max-width: 100%;
   margin: 0;
   overflow: hidden;
-  font-family: var(--font-mono);
   font-size: clamp(10px, 0.9vw, 13px);
   line-height: 1.4;
   text-transform: uppercase;
@@ -144,7 +144,6 @@
 .tag {
   position: relative;
   margin: 1.5em 0 1em;
-  font-family: var(--font-mono);
   font-size: clamp(10px, 0.9vw, 13px);
   line-height: 1.4;
 }
@@ -329,7 +328,8 @@
 /* ---- Entrance, once ---- */
 
 @media (prefers-reduced-motion: no-preference) {
-  .char {
+  /* Only the way in is animated: off screen, everything snaps back, ready to play again. */
+  .head[data-in] .char {
     transition: transform 667ms var(--ease-lusion) calc(var(--i) * 33ms);
   }
 
@@ -337,7 +337,7 @@
     transform: translateY(1em) rotate(10deg);
   }
 
-  .ledeLine {
+  .head[data-in] .ledeLine {
     transition: transform 1s var(--ease-lusion);
   }
 
@@ -345,7 +345,7 @@
     transform: translateY(100%);
   }
 
-  .pillRise {
+  .pillRow[data-in] .pillRise {
     transition:
       transform 1s var(--ease-lusion),
       opacity 1s var(--ease-lusion);
@@ -356,7 +356,7 @@
     transform: translateY(150%) rotate(10deg);
   }
 
-  .media {
+  .item[data-in] .media {
     transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -368,7 +368,7 @@
     transform: translateX(-3.5vw) rotate(2.3deg);
   }
 
-  .clip {
+  .item[data-in] .clip {
     transition: clip-path 1.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -377,7 +377,7 @@
     clip-path: inset(12.5% round 16px);
   }
 
-  .zoom {
+  .item[data-in] .zoom {
     transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -387,11 +387,11 @@
 }
 
 @media (prefers-reduced-motion: no-preference) and (min-width: 813px) {
-  .column {
+  .words[data-in] .column {
     transition: transform 1250ms cubic-bezier(0.87, 0, 0.13, 1) var(--roll);
   }
 
-  .item:not([data-in]) .column {
+  .words:not([data-in]) .column {
     transform: translateY(-500%);
   }
 }

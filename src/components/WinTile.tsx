@@ -183,16 +183,20 @@ interface WinTileProps {
 
 /** One win: its cover, a decoding tag line and its name, opening its Devpost page or else its own page. */
 export function WinTile({ win, side, details = false, eager = false }: WinTileProps) {
-  // Each tile plays as its top edge crosses the fold, so the motion is already under way as it arrives.
-  const [ref, inView] = useInView<HTMLLIElement>('0px')
+  // The cover plays as the tile crosses the fold and the words as they do, every time either comes
+  // back on screen, from above or below.
+  const [ref, inView] = useInView<HTMLLIElement>('0px', 0, true)
+  const [wordsRef, wordsIn] = useInView<HTMLDivElement>('0px', 0, true)
   const { hackathon } = accoladeOf(win)
   const content = (
     <>
       <Media side={side}>
         <Art win={win} alt={`${win.project} at ${hackathon}`} eager={eager} />
       </Media>
-      <TagLine text={tagLine(win)} inView={inView} />
-      <RollingTitle text={win.project} />
+      <div ref={wordsRef} data-in={wordsIn || undefined} className={styles.words}>
+        <TagLine text={tagLine(win)} inView={wordsIn} />
+        <RollingTitle text={win.project} />
+      </div>
       {win.placeholder && (
         <p className={styles.sample}>
           <SampleTag />
