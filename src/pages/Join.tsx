@@ -2,9 +2,8 @@ import { Field, Form } from '../components/Form'
 import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
 import { PageIntro } from '../components/PageIntro'
 import { PrivacyNote } from '../components/PrivacyNote'
-import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { DISCORD, JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS } from '../content/join'
+import { JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS } from '../content/join'
 import { api } from '../lib/api'
 import { TRACKS, YEARS } from '../../shared/constants'
 import styles from './Join.module.css'
@@ -81,26 +80,6 @@ export function Join() {
               </Field>
             </Form>
             <PrivacyNote text={JOIN_FORM.privacy} className={styles.privacy} />
-          </section>
-
-          {/* Straight on the field under the form: a second, smaller way in, not another card. */}
-          <section className={styles.discord} aria-labelledby="discord">
-            <h2 id="discord" className={styles.discordTitle} data-fog-clear>
-              {DISCORD.label}
-              <SampleTag show={DISCORD.placeholder} />
-            </h2>
-            <p className={styles.discordText} data-fog-clear>
-              {DISCORD.text}
-            </p>
-            {DISCORD.href ? (
-              <a className={ui.textLink} href={DISCORD.href} target="_blank" rel="noreferrer" data-fog-clear>
-                Open Discord <span aria-hidden="true">↗</span>
-              </a>
-            ) : (
-              <p className={styles.pending} data-fog-clear>
-                {JOIN_FORM.discordPending}
-              </p>
-            )}
           </section>
         </div>
       </div>

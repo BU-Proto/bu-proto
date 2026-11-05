@@ -1,12 +1,12 @@
 .footer {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px 32px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 28px 48px;
+  align-items: start;
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 16px 20px;
+  padding: 28px 32px;
   border: 1px solid rgb(var(--frost-rgb) / 0.12);
   border-radius: 22px;
   /* Navy enough to read its small print over the brightest part of the field. */
@@ -14,8 +14,15 @@
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 13px;
   text-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.4);
+}
+
+.about {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  max-width: 36ch;
 }
 
 .brand {
@@ -24,17 +31,42 @@
   gap: 8px;
   margin: 0;
   color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.line {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.note {
+  margin: 4px 0 0;
+  color: var(--ink-dim);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, max-content));
+  justify-content: end;
+  gap: 24px 48px;
+}
+
+.title {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 13px;
   font-weight: 500;
 }
 
 .links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 4px 18px;
+  display: grid;
+  gap: 8px;
   margin: 0;
   padding: 0;
-  font-size: 12.5px;
   list-style: none;
 }
 
@@ -47,48 +79,22 @@
   outline-offset: 2px;
 }
 
-/* The working-name note and the legal links share a quieter second row, under a hairline. */
-.fine {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px 24px;
-  padding-top: 10px;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.1);
-}
-
-.note {
-  margin: 0;
-  color: var(--ink-dim);
-  font-size: 11.5px;
-}
-
-.legal {
-  display: flex;
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  font-size: 11.5px;
-  list-style: none;
-}
-
-.legal a:hover {
-  color: var(--ink);
-}
-
-.legal a:focus-visible {
-  outline: 2px solid var(--frost);
-  outline-offset: 2px;
-}
-
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .footer {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .links {
-    justify-content: flex-start;
+  .columns {
+    justify-content: start;
+  }
+}
+
+@media (max-width: 560px) {
+  .footer {
+    padding: 24px 22px;
+  }
+
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

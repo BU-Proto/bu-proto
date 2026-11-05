@@ -52,8 +52,40 @@ export const SCHEDULE: { location: string; slots: readonly ScheduleSlot[] } & Sa
  */
 export const PROTO_LINKEDIN: string | null = null
 
+export interface FooterGroup {
+  title: string
+  links: readonly { label: string; to: string }[]
+}
+
 export const FOOTER = {
+  line: 'Hack nights, hackathon trips and demo nights for BU students who make things.',
   note: 'BU Proto is a working name. Nothing here is official with Spark! or Innovate@BU yet.',
+  /** The site, sorted into columns. Legal links come from LEGAL_LINKS, the email from CONTACT_EMAIL. */
+  groups: [
+    {
+      title: 'Explore',
+      links: [
+        { label: 'Events', to: '/events' },
+        { label: 'Hackathons', to: '/hackathons' },
+        { label: 'Playbook', to: '/resources' },
+      ],
+    },
+    {
+      title: 'Our record',
+      links: [
+        { label: 'Wins', to: '/wins' },
+        { label: 'Track record', to: '/track-record' },
+        { label: 'Board', to: '/board' },
+      ],
+    },
+    {
+      title: 'Get involved',
+      links: [
+        { label: 'Join Proto', to: '/join' },
+        { label: 'Grants', to: '/grants' },
+      ],
+    },
+  ] satisfies readonly FooterGroup[],
 } as const
 
 /** What a page shows while its content loads, or when it couldn't. */

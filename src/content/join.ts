@@ -1,6 +1,6 @@
 // The join page. The year and track options are shared with the API (shared/constants.ts).
 
-import type { PageIntro, Sampleable } from './types'
+import type { PageIntro } from './types'
 
 export const JOIN_INTRO: PageIntro = {
   path: '~/proto/join',
@@ -16,14 +16,6 @@ export const PERKS: readonly { title: string; text: string }[] = [
   { title: 'First word on the fund', text: 'Members hear first when microgrants open.' },
 ]
 
-/** The Discord server doesn't exist yet; set `href` and drop the flag when it does. */
-export const DISCORD: { label: string; text: string; href: string | null } & Sampleable = {
-  placeholder: true,
-  label: 'Join the Discord',
-  text: 'Where hack night plans, team matching and trip sign-ups happen.',
-  href: null,
-}
-
 export const JOIN_THANKS = {
   title: 'You’re in',
   text: 'Thanks for joining. We’ll email you before the next hack night.',
@@ -33,6 +25,5 @@ export const JOIN_FORM = {
   perksTitle: 'What you get',
   title: 'Sign up',
   submit: 'Join Proto',
-  discordPending: 'The invite link goes up here once the server exists.',
   privacy: 'We use this to email you about hack nights, trips and events.',
 } as const

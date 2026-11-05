@@ -1,7 +1,7 @@
 // Shared shapes for the page content in this folder.
 
 /**
- * Copy in this folder that's made up (hack night's times and place, the Discord) carries
+ * Copy in this folder that's made up (hack night's times and place, for example) carries
  * `placeholder: true` and renders with a small "sample" tag, so fake content can't ship
  * unnoticed. Delete the flag only once it's real and checked. Content in D1 has its own flag.
  */

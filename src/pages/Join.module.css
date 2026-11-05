@@ -60,34 +60,6 @@
   margin-top: 16px;
 }
 
-/* Lined up with the form's fields above it. */
-.discord {
-  display: grid;
-  justify-items: start;
-  gap: 6px;
-  padding: 0 clamp(18px, 2.6vw, 28px);
-  text-shadow: var(--on-field-shadow);
-}
-
-.discordTitle {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.discordText {
-  max-width: 46ch;
-  margin: 0;
-  color: var(--ink);
-  text-wrap: pretty;
-}
-
-.pending {
-  margin: 2px 0 0;
-  color: var(--ink-soft);
-  font-style: italic;
-}
-
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
