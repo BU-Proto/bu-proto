@@ -43,6 +43,6 @@ export const WIN_SHOWCASE = {
   at: 'at',
   builtBy: 'Built by',
   open: 'See the project',
-  /** Over the prizes that follow the big placements on /wins. */
-  moreTitle: 'Prizes from the tracks',
+  /** Over the projects that follow the lead win on /wins. */
+  moreTitle: 'More projects that won',
 } as const
