@@ -1,15 +1,18 @@
 /*
- * The home page below the hero. Each section stands on its own ground (ink, paper, BU red, a campus
- * photo, ink again) and the seams between them are drawn: the field frays into ink, ink steps up
- * into paper through ░▒▓, red cuts hard, the photo fades into ink, ink frays back into the field.
- * Only the last section sits on the field, so only it marks text for the field to clear around.
+ * The home page below the hero. Each section stands on one of the palette's grounds (harbor,
+ * paper, a mint strip, a campus photo tinted by the field, harbor again) and the seams between
+ * them are drawn: the field drains into harbor through its own characters, harbor steps up into
+ * paper through ░▒▓, mint cuts hard, the photo fades into harbor, and harbor fills back up with
+ * the field. Only the last section sits on the field, so only it marks text for the field to
+ * clear around.
  */
 
-/* Edge to edge from inside the shell's padding (the body clips the scrollbar's sliver). */
+/* Edge to edge, by undoing the shell's padding rather than sizing to 100vw, so the column inside
+   lines up with the hero's to the pixel even where the scrollbar takes up room. */
 .bleed {
   position: relative;
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
 }
 
 /* The page column, inside a full-bleed band. */
@@ -34,30 +37,27 @@
   text-wrap: pretty;
 }
 
-/* ---- Ink ------------------------------------------------------------------------------------ */
+/* ---- Harbor --------------------------------------------------------------------------------- */
 
+/* Plain harbor, the field's own base colour, so where the field drains away nothing changes. */
 .ink {
-  /* The field's fluted-glass columns, pressed faintly into the ink. */
-  --ribs: repeating-linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.03) 0,
-    rgba(255, 255, 255, 0) 6px,
-    rgba(0, 0, 0, 0.24) 13px,
-    rgba(255, 255, 255, 0.03) 14px
-  );
-  background-color: var(--ground-ink);
-  /* The hero's warm light still glows for a moment under the seam. */
-  background-image: radial-gradient(90% 420px at 62% 0, rgba(214, 96, 168, 0.2), transparent 70%), var(--ribs);
+  background-color: var(--harbor);
   color: var(--ink);
 }
 
-/* The first ink band: room above for the frayed seam so it never sits on the hero's buttons. */
+/* The first harbor band. The drain strip hangs above it, partly under the hero's last lines (the
+   hero paints over it), so the field is already thinning by the time the copy ends. */
 .afterHero {
-  margin-top: 96px;
+  margin-top: 170px;
 }
 
 .tally {
   padding: clamp(56px, 10vh, 112px) 0 0;
+}
+
+/* The record carries a shadow for when it sits on the field; on solid harbor it only smudges. */
+.tally > * {
+  text-shadow: none;
 }
 
 /* The three ways in walk down and to the right, a step per track: Start, then Build, then Launch. */
@@ -94,17 +94,14 @@
   gap: clamp(20px, 3.2vw, 56px);
   margin-left: calc(var(--step) * clamp(0px, 9vw, 132px));
   padding: clamp(22px, 4vh, 40px) 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid var(--rule);
 }
 
-/* The figure, tinted with the field's own gradient so it reads as a piece of it, set apart. */
+/* The figure in frost on harbor: the field's characters, with its colour left behind above. */
 .figure {
   --figure-size: clamp(6px, 0.84vw, 11px);
+  color: var(--ink-soft);
   font-weight: 500;
-  background: linear-gradient(140deg, #fff0f8 0%, #ffa3d6 34%, #b5c9ff 72%, #e6fbff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 
 .trackCopy {
@@ -141,7 +138,7 @@
 /* ---- Paper ---------------------------------------------------------------------------------- */
 
 .paper {
-  background: var(--ground-paper);
+  background: var(--paper);
   color: var(--on-paper);
   /* Dark text on light: every link and focus ring inside follows the ink, not white. */
   --ink: var(--on-paper);
@@ -207,11 +204,11 @@
 .line {
   align-items: center;
   padding: clamp(18px, 3vh, 28px) 0;
-  border-top: 1px solid rgba(11, 42, 70, 0.2);
+  border-top: 1px solid rgb(var(--navy-rgb) / 0.2);
 }
 
 .line:last-child {
-  border-bottom: 1px solid rgba(11, 42, 70, 0.2);
+  border-bottom: 1px solid rgb(var(--navy-rgb) / 0.2);
 }
 
 .lineLabel {
@@ -221,7 +218,7 @@
 
 .when {
   margin: 0;
-  color: var(--bu-red);
+  color: var(--mint-deep);
   font-size: 14px;
   font-weight: 500;
 }
@@ -248,7 +245,7 @@
 /* An empty week: one dot, the ramp's lightest glyph. */
 .cell {
   height: 100%;
-  background: radial-gradient(circle, rgba(11, 42, 70, 0.35) 1.6px, transparent 2.2px);
+  background: radial-gradient(circle, rgb(var(--navy-rgb) / 0.35) 1.6px, transparent 2.2px);
 }
 
 /* The weight of a mark says how big the night is. Hack night: a ▒ shade every week. */
@@ -257,10 +254,10 @@
   background: repeating-conic-gradient(var(--on-paper) 0 25%, transparent 0 50%) 0 0 / 4px 4px;
 }
 
-/* A trip: solid BU red. */
+/* A trip: solid, in the accent. */
 .line[data-row='1'] .cell[data-on] {
   height: 46px;
-  background: var(--bu-red);
+  background: var(--mint-deep);
 }
 
 /* Demo night: one full block. */
@@ -279,8 +276,8 @@
   align-items: center;
   height: 46px;
   padding: 0 16px;
-  border: 1px dashed rgba(11, 42, 70, 0.4);
-  background: repeating-linear-gradient(135deg, rgba(11, 42, 70, 0.12) 0 1px, transparent 1px 8px);
+  border: 1px dashed rgb(var(--navy-rgb) / 0.4);
+  background: repeating-linear-gradient(135deg, rgb(var(--navy-rgb) / 0.12) 0 1px, transparent 1px 8px);
   color: var(--on-paper-soft);
   font-size: 14px;
 }
@@ -291,14 +288,16 @@
   font-size: 13px;
 }
 
-/* ---- BU red --------------------------------------------------------------------------------- */
+/* ---- Mint ----------------------------------------------------------------------------------- */
 
-.red {
+/* The accent, full bleed, once. Navy on mint, and links inside follow the navy. */
+.mint {
+  --ink: var(--navy);
   display: grid;
   gap: 16px;
   padding: clamp(26px, 4.6vh, 44px) 0;
-  background: var(--bu-red);
-  color: #fff;
+  background: var(--mint);
+  color: var(--navy);
 }
 
 .bandItem {
@@ -312,7 +311,7 @@
 }
 
 .bandGlyph {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgb(var(--navy-rgb) / 0.5);
   font-family: var(--font-mono);
 }
 
@@ -361,20 +360,20 @@
 .photo::before {
   /* Above the image, whose filter would otherwise paint it over this in DOM order. */
   z-index: 1;
-  background: linear-gradient(155deg, #6f9bff 0%, #a48af0 45%, #ff86c4 100%);
+  background: linear-gradient(155deg, var(--field-blue) 0%, var(--field-blue) 50%, var(--field-violet) 100%);
   mix-blend-mode: multiply;
 }
 
 .photo::after {
   z-index: 2;
   background:
-    linear-gradient(to right, rgba(3, 17, 31, 0.62), rgba(3, 17, 31, 0.15) 70%),
+    linear-gradient(to right, rgb(var(--harbor-rgb) / 0.72), rgb(var(--harbor-rgb) / 0.3) 70%),
     repeating-linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.08) 0,
-      rgba(255, 255, 255, 0) 8px,
-      rgba(0, 0, 0, 0.26) 17px,
-      rgba(255, 255, 255, 0.08) 18px
+      rgb(var(--frost-rgb) / 0.08) 0,
+      rgb(var(--frost-rgb) / 0) 8px,
+      rgb(var(--harbor-rgb) / 0.3) 17px,
+      rgb(var(--frost-rgb) / 0.08) 18px
     );
 }
 
@@ -469,9 +468,9 @@
   align-items: start;
   gap: 8px clamp(24px, 4vw, 64px);
   padding: clamp(20px, 2.6vw, 30px) clamp(20px, 2.6vw, 32px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--rule-strong);
   border-radius: 20px;
-  background: rgba(3, 17, 31, 0.36);
+  background: rgb(var(--harbor-rgb) / 0.6);
   -webkit-backdrop-filter: blur(16px) saturate(130%);
   backdrop-filter: blur(16px) saturate(130%);
 }
@@ -506,7 +505,7 @@
   align-items: baseline;
   gap: 16px;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 1px solid var(--rule);
 }
 
 .countdown {
@@ -548,7 +547,7 @@
 }
 
 .credit a {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 1px solid var(--rule-strong);
 }
 
 /* A title's link stretched over its whole block (the next event, an apply-by row), so a click
@@ -566,7 +565,7 @@
 
 .event:has(.stretch:focus-visible),
 .deadline:has(.stretch:focus-visible) {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 6px;
   border-radius: 6px;
 }
@@ -583,13 +582,12 @@
   z-index: 2;
 }
 
-/* ---- Ink, textured: the wins and the names we build with ------------------------------------ */
+/* ---- Harbor, textured: the wins and the names we build with --------------------------------- */
 
 .inkTextured {
-  /* Flush under the photo's fade, so the ribs only: the hero's glow here would draw a seam. */
-  background-image: var(--ribs);
   isolation: isolate;
-  margin-bottom: 96px;
+  /* Room below for the strip where the field fills back in. */
+  margin-bottom: 440px;
   padding-bottom: clamp(40px, 6vh, 72px);
 }
 
@@ -623,11 +621,23 @@
 /* ---- Join, back on the field ---------------------------------------------------------------- */
 
 .join {
+  position: relative;
+  isolation: isolate;
   display: grid;
   justify-items: center;
   gap: 22px;
   padding: clamp(96px, 18vh, 200px) 0 clamp(64px, 12vh, 120px);
   text-align: center;
+}
+
+/* The hero's pool of harbor again, under the ask, so it reads over the brightest part of the field. */
+.join::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 6% -10% 0;
+  background: radial-gradient(52% 56% at 50% 54%, rgb(var(--harbor-rgb) / 0.6), rgb(var(--harbor-rgb) / 0) 100%);
+  pointer-events: none;
 }
 
 .joinTitle {
@@ -638,7 +648,7 @@
   letter-spacing: -0.05em;
   line-height: 0.9;
   text-wrap: balance;
-  text-shadow: 0 4px 60px rgba(0, 25, 55, 0.45);
+  text-shadow: 0 4px 60px rgb(var(--harbor-rgb) / 0.5);
 }
 
 .joinLede {
@@ -720,6 +730,11 @@
 }
 
 @media (max-width: 560px) {
+  /* On a phone the copy runs the photo's full width, so the shade does too. */
+  .photo::after {
+    background: rgb(var(--harbor-rgb) / 0.6);
+  }
+
   /* The figure beside the name, the offers under both. */
   .track {
     grid-template-columns: auto minmax(0, 1fr);

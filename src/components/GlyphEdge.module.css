@@ -19,3 +19,8 @@
   margin: -1px 0 0;
   transform: scaleY(-1);
 }
+
+/* The drain strip is drawn the right way up for either side, so its glyphs aren't mirrored. */
+.edge[data-side='bottom'][data-mode='drain'] {
+  transform: none;
+}

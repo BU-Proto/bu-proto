@@ -15,7 +15,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #ffd38a;
+  color: var(--amber);
   font-size: clamp(20px, 2.2vw, 24px);
   font-weight: 500;
   letter-spacing: -0.015em;
@@ -27,8 +27,8 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #ffd38a;
-  box-shadow: 0 0 12px rgba(255, 211, 138, 0.8);
+  background: var(--amber);
+  box-shadow: 0 0 12px rgb(var(--amber-rgb) / 0.8);
 }
 
 .statusNote {
@@ -57,7 +57,7 @@
   grid-template-columns: 22px minmax(0, 1fr);
   gap: 4px 14px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.18);
 }
 
 .coverIcon {
@@ -85,7 +85,7 @@
   align-content: start;
   gap: 22px;
   padding-left: clamp(28px, 4vw, 56px);
-  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  border-left: 1px solid rgb(var(--frost-rgb) / 0.18);
 }
 
 .range {
@@ -112,14 +112,14 @@
   position: relative;
   height: 14px;
   border-radius: 4px;
-  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 10%);
+  background: repeating-linear-gradient(90deg, rgb(var(--frost-rgb) / 0.5) 0 1px, transparent 1px 10%);
 }
 
 .scaleFill {
   position: absolute;
   inset: 5px 0;
   border-radius: 2px;
-  background: linear-gradient(90deg, rgba(157, 240, 168, 0.4), var(--accent));
+  background: linear-gradient(90deg, rgb(var(--mint-rgb) / 0.4), var(--accent));
 }
 
 .planned {
@@ -152,7 +152,7 @@
   align-content: start;
   gap: 6px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.4);
   text-shadow: var(--on-field-shadow);
 }
 
@@ -202,7 +202,7 @@
   letter-spacing: -0.045em;
   line-height: 0.95;
   text-wrap: balance;
-  text-shadow: 0 2px 40px rgba(0, 25, 55, 0.4);
+  text-shadow: 0 2px 40px rgb(var(--harbor-rgb) / 0.4);
 }
 
 .quote::before {
@@ -229,7 +229,7 @@
 .compare th,
 .compare td {
   padding: 14px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.14);
   text-align: left;
   vertical-align: top;
 }
@@ -252,7 +252,7 @@
 }
 
 .compare .us {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--frost-rgb) / 0.07);
   color: var(--ink);
 }
 
@@ -287,7 +287,7 @@
 
   .amounts {
     padding: 28px 0 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    border-top: 1px solid rgb(var(--frost-rgb) / 0.18);
     border-left: 0;
   }
 
@@ -316,7 +316,7 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px 12px;
     padding: 16px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    border-top: 1px solid rgb(var(--frost-rgb) / 0.14);
   }
 
   .compare th,

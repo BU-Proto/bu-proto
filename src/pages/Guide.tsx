@@ -173,7 +173,7 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
         <h3 className={styles.checklistTitle} data-fog-clear>
           <svg className={styles.checkMark} width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
             <circle cx="11" cy="11" r="11" fill="currentColor" />
-            <path d="M6.5 11.5l3 3 6-6.5" fill="none" stroke="#0b2a46" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M6.5 11.5l3 3 6-6.5" fill="none" stroke="var(--navy)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           {block.title}
         </h3>
@@ -411,9 +411,6 @@ function GuideMissing() {
   return (
     <div className={ui.page}>
       <title>{`${copy.title} · ${BRAND.full}`}</title>
-      <p className={ui.path} data-fog-clear>
-        {RESOURCES_INTRO.path}
-      </p>
       <section className={styles.missing}>
         <h1 className={ui.introTitle} data-fog-clear>
           {copy.title}

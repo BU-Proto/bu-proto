@@ -18,17 +18,17 @@
 }
 
 .button:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: rgb(var(--frost-rgb) / 0.24);
 }
 
 .button:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
 .solid,
 .solid:hover {
-  border-color: #fff;
-  background: #fff;
+  border-color: var(--frost);
+  background: var(--frost);
   color: var(--on-light);
 }

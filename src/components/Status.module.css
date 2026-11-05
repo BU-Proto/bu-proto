@@ -21,7 +21,7 @@
 }
 
 .status[data-status='closing'] {
-  color: #ffd38a;
+  color: var(--amber);
 }
 
 @media (prefers-reduced-motion: no-preference) {

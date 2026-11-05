@@ -1,15 +1,15 @@
 .card {
   display: grid;
   padding: 12px 18px 8px;
-  border: 1px solid var(--glass-edge);
+  border: 1px solid var(--rule);
   border-radius: 22px;
-  /* The panels' glass over a faint ink tint, so the small labels hold up over the pink. */
-  background: linear-gradient(var(--glass), var(--glass)), rgba(6, 30, 56, 0.16);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
+  /* The panels' navy sheet, so the small labels hold up over the photo. */
+  background: rgb(var(--navy-rgb) / 0.82);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   box-shadow:
-    0 24px 60px -34px rgba(0, 25, 55, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    0 24px 60px -34px rgb(var(--harbor-rgb) / 0.6),
+    inset 0 1px 0 rgb(var(--frost-rgb) / 0.1);
 }
 
 .handle {
@@ -17,7 +17,7 @@
   height: 3px;
   margin: 2px auto 6px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgb(var(--frost-rgb) / 0.75);
 }
 
 .location {
@@ -42,7 +42,7 @@
   display: grid;
   gap: 10px;
   padding: 14px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.22);
 }
 
 .row {
@@ -133,5 +133,5 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgb(var(--frost-rgb) / 0.35);
 }

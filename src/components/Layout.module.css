@@ -47,21 +47,20 @@
 }
 
 /*
- * The page's own ground, scrolling with it. On full-field pages it's empty. On reading pages the
- * field shows behind the header, then fades into solid ink with a faint frozen glyph texture.
+ * The page's own ground, scrolling with it. On the landing it's off (the landing draws its own).
+ * Elsewhere the field shows behind the header, then drains into harbor through the field's own
+ * characters (GlyphEdge's drain strip hangs off this layer's top edge): solid harbor for pages
+ * people read or fill in, harbor with the field faintly under it for lists.
  */
 .ground {
   position: absolute;
-  inset: 0;
+  top: clamp(360px, 54vh, 560px);
+  right: 0;
+  bottom: 0;
+  left: 0;
   opacity: 0;
   transition: opacity 600ms ease;
-  background: linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 30vh,
-    rgba(3, 17, 31, 0.7) 52vh,
-    var(--ground-ink) 74vh
-  );
+  background: var(--harbor);
   pointer-events: none;
 }
 
@@ -69,13 +68,17 @@
   opacity: 1;
 }
 
+.ground[data-reach='veil'] {
+  opacity: 0.84;
+}
+
 .groundTexture {
   position: absolute;
   inset: 0;
   background-image: var(--texture);
   background-size: 595px 400px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 46vh, #000 90vh);
-  mask-image: linear-gradient(to bottom, transparent 46vh, #000 90vh);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 40vh);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 40vh);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,29 +1,28 @@
 import { Link } from 'react-router'
 import { HERO_COPY } from '../content/home'
+import ui from './ui.module.css'
 import styles from './Hero.module.css'
 
-/** The home hero: just the headline and the two calls to action over the field, one screen tall. */
+/**
+ * The home hero: who Proto is and the two ways in, set low over the field in the same column and
+ * type as the sections below, so the page reads as one piece from the first screen.
+ */
 export function Hero() {
   const { headline, lede, primaryCta, secondaryCta } = HERO_COPY
 
   return (
     <section className={styles.hero}>
-      <div className={styles.copy}>
-        <h1 className={styles.headline} data-fog-clear>
-          {headline[0]}
-          <br />
-          {headline[1]}
-        </h1>
-        <p className={styles.lede} data-fog-clear>
-          {lede}
-        </p>
-      </div>
-
+      <h1 className={styles.headline} data-fog-clear>
+        {headline}
+      </h1>
+      <p className={styles.lede} data-fog-clear>
+        {lede}
+      </p>
       <div className={styles.ctas}>
-        <Link className={styles.primary} to={primaryCta.href} data-fog-clear="box">
-          {primaryCta.label} <span aria-hidden="true">→</span>
+        <Link className={`${ui.primary} ${styles.primary}`} to={primaryCta.href} data-fog-clear="box">
+          {primaryCta.label}
         </Link>
-        <Link className={styles.secondary} to={secondaryCta.href} data-fog-clear>
+        <Link className={ui.textLink} to={secondaryCta.href} data-fog-clear>
           {secondaryCta.label}
         </Link>
       </div>

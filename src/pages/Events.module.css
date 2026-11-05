@@ -32,7 +32,7 @@
 }
 
 .event + .event {
-  border-top: 1px dashed rgba(255, 255, 255, 0.24);
+  border-top: 1px dashed rgb(var(--frost-rgb) / 0.24);
 }
 
 /* A tear-off calendar page: the date is what you scan the list by. */
@@ -43,13 +43,13 @@
   width: 72px;
   padding: 8px 0 9px;
   border-radius: 14px;
-  background: #fff;
+  background: var(--frost);
   color: var(--on-light);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.2;
   text-shadow: none;
-  box-shadow: 0 16px 40px -20px rgba(0, 25, 55, 0.7);
+  box-shadow: 0 16px 40px -20px rgb(var(--harbor-rgb) / 0.7);
 }
 
 .tile span:last-child {
@@ -115,7 +115,7 @@
 }
 
 .event:has(.rowLink:focus-visible) {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
   border-radius: 12px;
 }
@@ -137,7 +137,7 @@
   z-index: 2;
   grid-column: 2 / -1;
   padding: 18px 0 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.18);
 }
 
 @media (prefers-reduced-motion: no-preference) {

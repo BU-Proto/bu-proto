@@ -7,14 +7,15 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 16px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--frost-rgb) / 0.12);
   border-radius: 22px;
-  background: var(--pill);
-  -webkit-backdrop-filter: blur(14px) saturate(130%);
-  backdrop-filter: blur(14px) saturate(130%);
+  /* Navy enough to read its small print over the brightest part of the field. */
+  background: rgb(var(--navy-rgb) / 0.88);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   color: var(--ink-soft);
   font-size: 12px;
-  text-shadow: 0 1px 2px rgba(0, 25, 55, 0.4);
+  text-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.4);
 }
 
 .brand {
@@ -42,7 +43,7 @@
 }
 
 .links a:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
@@ -55,7 +56,7 @@
   justify-content: space-between;
   gap: 6px 24px;
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.1);
 }
 
 .note {
@@ -78,7 +79,7 @@
 }
 
 .legal a:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 

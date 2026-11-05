@@ -14,7 +14,7 @@
 }
 
 .kicker a {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.5);
   font-weight: 500;
 }
 
@@ -24,7 +24,7 @@
 }
 
 .kicker a:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
@@ -63,7 +63,7 @@
 
 .leadCredit a {
   text-decoration: underline;
-  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-decoration-color: rgb(var(--frost-rgb) / 0.35);
   text-underline-offset: 3px;
 }
 
@@ -122,14 +122,14 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.28);
 }
 
 .contentsList a {
   position: relative;
   display: block;
   padding: 7px 0 7px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
   color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.4;
@@ -168,7 +168,7 @@
 }
 
 .contentsList a:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
@@ -201,7 +201,7 @@
   display: grid;
   gap: 18px;
   padding: clamp(36px, 4.6vw, 56px) 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
   /* Lands a contents jump with a little air above the heading. */
   scroll-margin-top: 24px;
 }
@@ -251,14 +251,14 @@
   padding: 0;
   list-style: none;
   counter-reset: step;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
 .steps li {
   position: relative;
   min-height: 64px;
   padding: 16px 0 16px 72px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
   counter-increment: step;
   text-wrap: pretty;
 }
@@ -353,14 +353,14 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
 /* An empty box to tick, drawn so it lines up with the first line of text. */
 .checks li {
   position: relative;
   padding: 11px 0 11px 34px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
   text-wrap: pretty;
 }
 
@@ -382,8 +382,8 @@
   gap: 20px;
   max-width: calc(var(--measure) + 40px);
   padding: 18px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.2);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.2);
 }
 
 /* Examples in a run share their rules. */
@@ -437,7 +437,7 @@
 }
 
 .exampleName:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
@@ -478,7 +478,7 @@
   max-width: none;
   margin-block: 10px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.2);
 }
 
 .exampleCard {
@@ -533,7 +533,7 @@
 
 .credit a {
   text-decoration: underline;
-  text-decoration-color: rgba(255, 255, 255, 0.3);
+  text-decoration-color: rgb(var(--frost-rgb) / 0.3);
   text-underline-offset: 3px;
 }
 
@@ -556,7 +556,7 @@
   max-height: min(560px, 70vh);
   object-fit: cover;
   object-position: top;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgb(var(--harbor-rgb) / 0.25);
 }
 
 .wide .figcaption {
@@ -578,7 +578,7 @@
   width: 100%;
   height: auto;
   border-radius: 14px;
-  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 60px -30px rgb(var(--harbor-rgb) / 0.6);
 }
 
 .tall .figcaption {
@@ -595,7 +595,7 @@
 
 .facts {
   display: grid;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
 .fact {
@@ -603,7 +603,7 @@
   grid-template-columns: minmax(110px, 150px) minmax(0, 1fr);
   gap: 4px 20px;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
 .fact dt {
@@ -617,7 +617,7 @@
 }
 
 .link {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.45);
   font-weight: 500;
   overflow-wrap: anywhere;
 }
@@ -628,7 +628,7 @@
 }
 
 .link:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
@@ -638,7 +638,7 @@
   display: grid;
   gap: 20px;
   padding: clamp(32px, 4vw, 48px) var(--pad) clamp(32px, 4vw, 52px);
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.28);
   scroll-margin-top: 24px;
 }
 
@@ -768,7 +768,7 @@
 }
 
 .nextCard:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 3px;
 }
 
@@ -799,7 +799,7 @@
 }
 
 .moreLink:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
@@ -846,14 +846,14 @@
 
   .contentsSummary {
     padding: 12px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.28);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    border-top: 1px solid rgb(var(--frost-rgb) / 0.28);
+    border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
     cursor: pointer;
     pointer-events: auto;
   }
 
   .contentsSummary:focus-visible {
-    outline: 2px solid #fff;
+    outline: 2px solid var(--frost);
     outline-offset: 2px;
   }
 
@@ -920,7 +920,7 @@
     grid-template-rows: none;
     gap: 14px;
     padding: 18px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgb(var(--frost-rgb) / 0.2);
   }
 
   .exampleCard .exampleThumb img {

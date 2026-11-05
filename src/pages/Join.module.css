@@ -20,14 +20,14 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  border-top: 1px solid var(--rule-strong);
 }
 
 .perk {
   display: grid;
   gap: 4px;
   padding: 18px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+  border-bottom: 1px solid var(--rule-strong);
   text-shadow: var(--on-field-shadow);
 }
 

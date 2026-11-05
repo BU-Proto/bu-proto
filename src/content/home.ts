@@ -4,8 +4,8 @@
 import type { Link, TrackName } from './types'
 
 export const HERO_COPY = {
-  headline: ['Your Home Base', 'for Making Things'],
-  lede: 'Hack nights, hackathon trips and demo nights for BU students who make things.',
+  headline: 'Proto is a home base for making things at BU',
+  lede: 'We’re BU students who build things together: a hack night every week, trips to hackathons as a group, and a demo night each semester.',
   primaryCta: { label: 'Join Proto', href: '/join' },
   secondaryCta: { label: 'See hack nights', href: '/events' },
 } as const

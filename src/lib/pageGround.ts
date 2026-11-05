@@ -1,14 +1,16 @@
 // Which ground each page stands on. The ASCII field stays mounted behind every page; each kind of
-// page tunes it differently (ramp, glyph size, ribbing, wash, hue), so moving around the site
-// feels like moving between rooms of the same building rather than scrolling one wallpaper.
+// page tunes it differently (ramp, glyph size, ribbing, wash, how far down it reaches), so moving
+// around the site feels like moving between rooms of the same building. The rooms share one light:
+// the field's own gradient is never hue-shifted, so every page is in the site's one palette.
 
 import { DEFAULT_FIELD_SETTINGS, type FieldSettings } from '../ascii-field'
 
 /** Solid grounds, for canvas-drawn edges and textures. Kept in step with the tokens in index.css. */
 export const GROUND = {
-  ink: '#03111f',
+  harbor: '#061a2e',
   paper: '#e3eaf0',
-  red: '#cc0000',
+  /** Frost, faint: the frozen glyph texture on harbor. */
+  texture: 'rgba(246, 251, 255, 0.06)',
 } as const
 
 export type GroundName = 'home' | 'events' | 'hackathons' | 'record' | 'reading' | 'membership' | 'legal'
@@ -17,69 +19,77 @@ export interface PageGround {
   name: GroundName
   field: FieldSettings
   /**
-   * A CSS filter on the field's canvas, as hue turn (deg), saturation and brightness. The field's
-   * gradient is baked in, so this is how a page gets its own light without touching the renderer.
-   * Always all three, so the browser can tween from one page's light to the next.
+   * A CSS filter on the field's canvas, as saturation and brightness: a page can turn the field
+   * down, but not recolour it. Always both, so the browser can tween from one page's to the next.
    */
-  light: readonly [hue: number, saturate: number, brightness: number]
+  light: readonly [saturate: number, brightness: number]
   /**
-   * `full`: the field runs behind the whole page. `top`: it shows behind the page header, then a
-   * solid ground with a faint glyph texture takes over, for pages people read at length.
+   * How far down the page the field runs. `full`: behind the whole page (the landing, which
+   * draws its own grounds). `veil`: the field frames the header, then drains into harbor and stays
+   * faintly visible under it, for lists people scan. `top`: the field frames the header, then
+   * drains into solid harbor, for pages people read or fill in.
    */
-  reach: 'full' | 'top'
+  reach: 'full' | 'veil' | 'top'
 }
 
 const field = (overrides: Partial<FieldSettings>): FieldSettings => ({ ...DEFAULT_FIELD_SETTINGS, ...overrides })
 
 export const GROUNDS: Record<GroundName, PageGround> = {
-  // The hero's field, untouched.
-  home: { name: 'home', field: DEFAULT_FIELD_SETTINGS, light: [0, 1, 1], reach: 'full' },
-  // Events: the trail's own sparse ramp in bigger cells, ribs pronounced, blues turned to sea green.
+  // The landing: the default field turned down so the hero's words have room. Slower waves,
+  // softer glyphs, shallower ribs, in slightly bigger cells.
+  home: {
+    name: 'home',
+    field: field({ cellSize: 10, baseColor: 0.82, glyphContrast: 0.42, ribbing: 0.3, drift: 0.55 }),
+    light: [1, 1],
+    reach: 'full',
+  },
+  // Events: the trail's own sparse ramp in bigger cells, the ribs pronounced.
   events: {
     name: 'events',
-    field: field({ ramp: 'codex', cellSize: 11, ribbing: 0.8, glyphContrast: 0.75, drift: 1.3 }),
-    light: [-28, 1.05, 0.95],
-    reach: 'full',
+    field: field({ ramp: 'codex', cellSize: 11, ribbing: 0.6, glyphContrast: 0.5, baseColor: 0.75, drift: 0.8 }),
+    light: [1, 0.95],
+    reach: 'veil',
   },
-  // Hackathons: chunky block shades, the pinks pushed to coral and the blues to indigo.
+  // Hackathons: chunky block shades, like a departures board.
   hackathons: {
     name: 'hackathons',
-    field: field({ ramp: 'blocks', cellSize: 12, ribbing: 0.35, glyphContrast: 0.5, baseColor: 0.8 }),
-    light: [38, 1.15, 0.95],
-    reach: 'full',
+    field: field({ ramp: 'blocks', cellSize: 12, ribbing: 0.3, glyphContrast: 0.4, baseColor: 0.75, drift: 0.7 }),
+    light: [1, 0.95],
+    reach: 'veil',
   },
-  // Wins and the track record: the classic ramp in fine cells, deep fluting, in trophy gold and teal.
+  // Wins and the track record: the classic ramp in fine cells, deep fluting, a little dimmer.
   record: {
     name: 'record',
-    field: field({ ramp: 'classic', cellSize: 8, ribbing: 1, glyphContrast: 0.7, baseColor: 0.6, drift: 0.7 }),
-    light: [-150, 1, 0.72],
-    reach: 'full',
+    field: field({ ramp: 'classic', cellSize: 8, ribbing: 0.8, glyphContrast: 0.55, baseColor: 0.6, drift: 0.6 }),
+    light: [0.9, 0.85],
+    reach: 'veil',
   },
   // Resources and guides: long reading, so the field quiets down and only frames the header.
   reading: {
     name: 'reading',
-    field: field({ cellSize: 8, baseColor: 0.55, glyphContrast: 0.4, ribbing: 0.25, drift: 0.4 }),
-    light: [-200, 0.5, 0.9],
+    field: field({ cellSize: 8, baseColor: 0.55, glyphContrast: 0.35, ribbing: 0.25, drift: 0.4 }),
+    light: [0.7, 0.9],
     reach: 'top',
   },
-  // Join, the fund and the board: the wash nearly off, so the gradient lives only in the glyphs,
-  // bright on navy, like the field after dark. Forms sit calmly on it.
+  // Join, the fund and the board: forms and names, so the field frames the header and the
+  // form stands on solid harbor.
   membership: {
     name: 'membership',
-    field: field({ ramp: 'classic', cellSize: 10, baseColor: 0.3, glyphContrast: 0.85, ribbing: 0.65, drift: 0.6 }),
-    light: [-12, 1.1, 1],
-    reach: 'full',
+    field: field({ ramp: 'classic', cellSize: 10, baseColor: 0.6, glyphContrast: 0.45, ribbing: 0.5, drift: 0.5 }),
+    light: [1, 0.95],
+    reach: 'top',
   },
-  // Legal: the quietest. A faint field over the header, then plain ink.
+  // Legal: the quietest. A faint field over the header, then plain harbor.
   legal: {
     name: 'legal',
     field: field({ cellSize: 7, baseColor: 0.35, glyphContrast: 0.3, ribbing: 0.15, drift: 0.2, push: 0.1 }),
-    light: [0, 0.25, 0.8],
+    light: [0.4, 0.8],
     reach: 'top',
   },
 }
 
-/** Path prefixes to grounds, first match wins. Anything unlisted (the 404) gets the home field. */
+/** Path prefixes to grounds, first match wins. The landing gets the home field; anything else
+    unlisted (the 404) gets the reading ground, so its links stand on harbor. */
 const ROUTES: readonly [prefix: string, ground: GroundName][] = [
   ['/events', 'events'],
   ['/hackathons', 'hackathons'],
@@ -95,8 +105,9 @@ const ROUTES: readonly [prefix: string, ground: GroundName][] = [
 
 export function groundFor(pathname: string): PageGround {
   const match = ROUTES.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))
-  return GROUNDS[match ? match[1] : 'home']
+  if (match) return GROUNDS[match[1]]
+  return GROUNDS[pathname === '/' ? 'home' : 'reading']
 }
 
-export const lightFilter = ([hue, saturate, brightness]: PageGround['light']) =>
-  `hue-rotate(${hue}deg) saturate(${saturate}) brightness(${brightness})`
+export const lightFilter = ([saturate, brightness]: PageGround['light']) =>
+  `saturate(${saturate}) brightness(${brightness})`

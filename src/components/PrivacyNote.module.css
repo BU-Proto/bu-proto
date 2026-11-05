@@ -8,17 +8,17 @@
 }
 
 .link {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.4);
   color: var(--ink);
   font-weight: 500;
   white-space: nowrap;
 }
 
 .link:hover {
-  border-bottom-color: #fff;
+  border-bottom-color: var(--frost);
 }
 
 .link:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }

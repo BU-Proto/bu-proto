@@ -2,9 +2,10 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { AsciiField, type AsciiFieldHandle } from '../ascii-field'
 import { glyphTexture } from '../lib/glyphArt'
-import { GROUNDS, groundFor, lightFilter, type GroundName } from '../lib/pageGround'
+import { GROUND, GROUNDS, groundFor, lightFilter, type GroundName } from '../lib/pageGround'
 import { reducedMotion } from '../lib/useInView'
 import { Footer } from './Footer'
+import { GlyphEdge } from './GlyphEdge'
 import { TopBar } from './TopBar'
 import styles from './Layout.module.css'
 
@@ -27,7 +28,7 @@ export function Layout() {
   const shown = reducedMotion() ? target : trailing
   const dimmed = shown !== target
   const ground = GROUNDS[shown]
-  const texture = useMemo(() => glyphTexture('rgba(190, 215, 240, 0.075)'), [])
+  const texture = useMemo(() => glyphTexture(GROUND.texture), [])
 
   useEffect(() => {
     if (trailing === target) return
@@ -65,13 +66,14 @@ export function Layout() {
         <AsciiField ref={fieldRef} settings={ground.field} className={styles.field} />
       </div>
       <div ref={shellRef} className={styles.shell} data-ground={shown}>
-        {/* For reading pages: the field frames the header, then a solid ground takes over. */}
+        {/* Below the header the field drains into harbor, solid or veiled (see pageGround). */}
         <div
           className={styles.ground}
           data-reach={GROUNDS[target].reach}
           style={{ '--texture': texture ? `url(${texture})` : 'none' } as CSSProperties}
           aria-hidden="true"
         >
+          <GlyphEdge color={GROUND.harbor} mode="drain" rows={28} cell={10} />
           <span className={styles.groundTexture} />
         </div>
         <TopBar />

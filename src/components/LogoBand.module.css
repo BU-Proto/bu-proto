@@ -38,7 +38,7 @@ a.item:hover {
 }
 
 a.item:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 6px;
   border-radius: 6px;
 }
@@ -47,7 +47,7 @@ a.item:focus-visible {
 .logo {
   max-height: 100%;
   width: auto;
-  filter: brightness(0) invert(1) drop-shadow(0 1px 8px rgba(0, 25, 55, 0.45));
+  filter: brightness(0) invert(1) drop-shadow(0 1px 8px rgb(var(--harbor-rgb) / 0.45));
 }
 
 .wordmark {

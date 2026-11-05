@@ -126,6 +126,59 @@ export function edgeStrip(color: string, mode: EdgeMode, rows = 10, cell = 8, co
   return url
 }
 
+const drainCache = new Map<string, string>()
+
+/**
+ * Where the field meets a solid ground. Read from the field's side: first the ground's colour
+ * rises under the field row by row, but it leaves the field's own characters cut out of it, so
+ * the wash drains away and the glyphs stay lit by the live field behind; then the glyphs thin
+ * out down the ramp (@ to %, to +, to .) until only the ground is left. `towards` is the side the
+ * solid ground is on. Cells are `cell` px tall and one mono advance wide, like the field's.
+ */
+export function drainStrip(color: string, rows = 32, cell = 10, towards: 'top' | 'bottom' = 'bottom', cols = 320): string {
+  const key = `${color}|${rows}|${cell}|${towards}|${cols}`
+  const cached = drainCache.get(key)
+  if (cached) return cached
+  if (typeof document === 'undefined') return ''
+  const scale = 2
+  const cw = cell * 0.62
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(cols * cw * scale)
+  canvas.height = rows * cell * scale
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return ''
+  ctx.scale(scale, scale)
+  ctx.textBaseline = 'top'
+  ctx.font = `${cell}px ui-monospace, Menlo, Consolas, monospace`
+  const top = FINE_RAMP.length - 1
+  const width = cols * cw
+  for (let j = 0; j < rows; j++) {
+    // 0 on the field's side, 1 on the ground's.
+    const depth = (j + 0.5) / rows
+    const y = (towards === 'bottom' ? j : rows - 1 - j) * cell
+    // The wash goes first and is gone by about two thirds of the way.
+    const wash = clamp01(depth / 0.66) ** 1.35
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.globalAlpha = wash
+    ctx.fillStyle = color
+    ctx.fillRect(0, y, width, cell)
+    // Then the characters, cut out of the ground so the field shows through them.
+    const thin = clamp01((depth - 0.1) / 0.86)
+    if (thin >= 1) continue
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.globalAlpha = 1
+    for (let i = 0; i < cols; i++) {
+      if (hash(i + 3, j * 7) > (1 - thin) ** 0.7 * 1.05) continue
+      const v = clamp01((1 - thin) ** 1.1 + (hash(i, j) - 0.5) * 0.3)
+      const char = FINE_RAMP[Math.round(v * top)]
+      if (char !== ' ') ctx.fillText(char, i * cw, y)
+    }
+  }
+  const url = canvas.toDataURL('image/png')
+  drainCache.set(key, url)
+  return url
+}
+
 const textureCache = new Map<string, string>()
 
 /**

@@ -15,7 +15,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.3);
   font-size: 20px;
   font-weight: 300;
   letter-spacing: -0.015em;
@@ -35,7 +35,7 @@
 }
 
 .link:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
   border-radius: 4px;
 }

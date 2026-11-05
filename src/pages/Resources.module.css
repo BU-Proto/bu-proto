@@ -11,7 +11,7 @@
   display: block;
   overflow: hidden;
   border-radius: 26px;
-  box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 30px 80px -40px rgb(var(--harbor-rgb) / 0.7);
 }
 
 .featuredImage img {
@@ -54,7 +54,7 @@
 }
 
 .featuredTitle a:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 4px;
   border-radius: 4px;
 }
@@ -92,7 +92,7 @@
   margin: 0;
   padding: 0 0 clamp(20px, 3vw, 30px);
   list-style: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.22);
 }
 
 .card {
@@ -131,7 +131,7 @@ a.card:hover .cardTitle {
 }
 
 a.card:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 4px;
   border-radius: 16px;
 }
@@ -158,7 +158,7 @@ a.card:focus-visible {
   gap: 18px;
   height: 100%;
   padding: 20px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
 }
 
 .thumb {
@@ -197,7 +197,7 @@ a.entry:hover .title {
 }
 
 a.entry:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
   border-radius: 8px;
 }

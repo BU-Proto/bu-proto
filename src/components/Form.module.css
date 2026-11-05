@@ -29,9 +29,9 @@
   width: 100%;
   min-height: 44px;
   padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 14px;
-  background: rgba(6, 30, 56, 0.35);
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--harbor);
   color: var(--ink);
   font-size: 14px;
 }
@@ -59,22 +59,22 @@ select.input {
 }
 
 select.input option {
-  background: var(--base);
+  background: var(--harbor);
 }
 
 .input:hover {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: rgb(var(--frost-rgb) / 0.5);
 }
 
 .input:focus-visible {
   outline: none;
-  border-color: #fff;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  border-color: var(--frost);
+  box-shadow: 0 0 0 3px rgb(var(--frost-rgb) / 0.2);
 }
 
 /* Only complain once someone has typed something and moved on. */
 .input:user-invalid {
-  border-color: #ffb4a8;
+  border-color: var(--coral);
 }
 
 .actions {
@@ -90,21 +90,21 @@ select.input option {
 /* The server's word on one field, and on the form as a whole. */
 .issue,
 .error {
-  color: #ffd0c8;
+  color: var(--coral);
   font-size: 12px;
 }
 
 .input[aria-invalid='true'] {
-  border-color: #ffb4a8;
+  border-color: var(--coral);
 }
 
 .error {
   grid-column: 1 / -1;
   margin: 0;
   padding: 10px 14px;
-  border: 1px solid rgba(255, 180, 168, 0.5);
-  border-radius: 14px;
-  background: rgba(6, 30, 56, 0.4);
+  border: 1px solid rgb(var(--coral-rgb) / 0.5);
+  border-radius: 12px;
+  background: var(--harbor);
   font-size: 13px;
 }
 
@@ -140,8 +140,8 @@ select.input option {
   height: 52px;
   margin-bottom: 6px;
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--on-light);
+  background: var(--mint);
+  color: var(--navy);
   font-size: 22px;
   font-weight: 600;
   text-shadow: none;

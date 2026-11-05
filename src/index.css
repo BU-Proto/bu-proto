@@ -1,22 +1,60 @@
 :root {
-  --base: #061a2e;
-  --ink: #f6fbff;
-  --ink-soft: rgba(246, 251, 255, 0.76);
-  --ink-dim: rgba(246, 251, 255, 0.56);
-  --glass: rgba(255, 255, 255, 0.15);
-  --glass-strong: rgba(255, 255, 255, 0.23);
-  --glass-edge: rgba(255, 255, 255, 0.36);
-  --pill: rgba(6, 30, 56, 0.4);
-  --accent: #9df0a8;
-  --on-light: #0b2a46;
-  /* For copy that sits straight on the field rather than on glass. */
-  --on-field-shadow: 0 1px 2px rgba(0, 25, 55, 0.55), 0 0 18px rgba(0, 25, 55, 0.45);
-  /* Solid grounds the home page's sections and the reading pages stand on (see lib/pageGround.ts). */
-  --ground-ink: #03111f;
-  --ground-paper: #e3eaf0;
+  /*
+   * The palette. Five colours and the field.
+   *
+   * The ASCII field's gradient (blue, violet-pink, teal) is the only multicolour thing on the
+   * site, and it only ever appears as the field itself or as imagery tinted from it. Everything
+   * else is drawn from these five:
+   *   harbor  the one dark ground: the field's own base, so the field drains straight into it
+   *   navy    a raised surface on harbor (panels, inputs), and the ink on paper
+   *   paper   the one light ground
+   *   frost   the ink on harbor and navy
+   *   mint    the one accent: the cursor in "Proto_", links in emails, what's open, what's yours.
+   *           mint-deep is the same accent where it has to sit on paper.
+   * BU red is not a theme colour. It only marks BU itself (the BU tag on a teammate's name).
+   */
+  --harbor: #061a2e;
+  --harbor-rgb: 6 26 46;
+  --navy: #0b2a46;
+  --navy-rgb: 11 42 70;
+  --paper: #e3eaf0;
+  --frost: #f6fbff;
+  --frost-rgb: 246 251 255;
+  --mint: #9df0a8;
+  --mint-rgb: 157 240 168;
+  --mint-deep: #17603a;
   --bu-red: #cc0000;
-  --on-paper: #0b2a46;
-  --on-paper-soft: rgba(11, 42, 70, 0.72);
+
+  /* Two states, not brand colours: amber for "not yet" (sample content, closing soon, coming
+     soon) and coral for something that went wrong. */
+  --amber: #ffd38a;
+  --amber-rgb: 255 211 138;
+  --coral: #ffb4a8;
+  --coral-rgb: 255 180 168;
+
+  /* Two samples of the field's gradient, for imagery tinted to match it (the campus photo). */
+  --field-blue: #6f9bff;
+  --field-violet: #a48af0;
+
+  /* Roles. Older names stay as aliases, since the portal styles read them too. */
+  --base: var(--harbor);
+  --ink: var(--frost);
+  --ink-soft: rgb(var(--frost-rgb) / 0.78);
+  --ink-dim: rgb(var(--frost-rgb) / 0.58);
+  --rule: rgb(var(--frost-rgb) / 0.16);
+  --rule-strong: rgb(var(--frost-rgb) / 0.32);
+  --glass: rgb(var(--frost-rgb) / 0.15);
+  --glass-strong: rgb(var(--frost-rgb) / 0.23);
+  --glass-edge: rgb(var(--frost-rgb) / 0.36);
+  --pill: rgb(var(--navy-rgb) / 0.62);
+  --accent: var(--mint);
+  --on-light: var(--navy);
+  --ground-ink: var(--harbor);
+  --ground-paper: var(--paper);
+  --on-paper: var(--navy);
+  --on-paper-soft: rgb(var(--navy-rgb) / 0.74);
+  /* For copy that sits straight on the field rather than on a ground. */
+  --on-field-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.6), 0 0 18px rgb(var(--harbor-rgb) / 0.5);
   --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
 
@@ -33,7 +71,7 @@ body {
   margin: 0;
   /* clip, not hidden: a full-bleed band can never be scrolled into view sideways. */
   overflow-x: clip;
-  background: var(--base);
+  background: var(--harbor);
   color: var(--ink);
   font-family: var(--font-ui);
   font-size: 14px;

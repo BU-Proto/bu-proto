@@ -45,8 +45,8 @@ const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 
 /**
  * The landing. The hero keeps the field; below it the page walks through its own grounds, each
- * seam drawn rather than boxed: ink that frays out of the field, a paper score, a BU red strip, a
- * photo of campus, ink again, and the field once more for the ask.
+ * seam drawn rather than boxed: harbor that the field drains into, a paper score, a mint strip, a
+ * photo of campus, harbor again, and the field once more for the ask.
  */
 export function Home() {
   const { events, hackathons, wins } = useLoaderData<HomeData>()
@@ -63,17 +63,17 @@ export function Home() {
   const topWins = [...featured, ...rest].slice(0, 3)
   // The next event's own photo if it has one; otherwise the campus photo for its kind, credited.
   const stock = EVENT_COVERS[nextEvent?.kind ?? 'Hack night'] ?? EVENT_COVERS['Hack night']
-  const texture = useMemo(() => glyphTexture('rgba(190, 215, 240, 0.07)'), [])
+  const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   const photo = nextEvent?.photo ? { src: nextEvent.photo, alt: '', credit: null } : { src: stock.src, alt: '', credit: stock }
 
   return (
     <>
-      <title>{`${BRAND.full} · Your home base for making things`}</title>
+      <title>{`${BRAND.full} · A home base for making things at BU`}</title>
       <Hero />
 
-      {/* Ink: the field frays into it. The record, then the three ways in. */}
+      {/* Harbor: the field drains into it. The record, then the three ways in. */}
       <div className={`${styles.bleed} ${styles.ink} ${styles.afterHero}`}>
-        <GlyphEdge color={GROUND.ink} rows={12} />
+        <GlyphEdge color={GROUND.harbor} mode="drain" rows={44} cell={10} />
         <div className={styles.column}>
           <div className={styles.tally}>
             <WinTally wins={wins} showLink />
@@ -157,8 +157,8 @@ export function Home() {
         </section>
       </div>
 
-      {/* BU red: a hard cut, the one loud strip on the page. */}
-      <div className={`${styles.bleed} ${styles.red}`}>
+      {/* Mint: a hard cut, the accent's one loud moment on the page. */}
+      <div className={`${styles.bleed} ${styles.mint}`}>
         <Marquee label="What Proto does" duration={48}>
           {MARQUEE.map((item, index) => (
             <span key={item} className={styles.bandItem}>
@@ -301,8 +301,8 @@ export function Home() {
         </section>
 
         <LogoBand />
-        {/* The ink frays back out into the field for the last word. */}
-        <GlyphEdge color={GROUND.ink} side="bottom" rows={12} />
+        {/* Harbor fills back up with the field for the last word. */}
+        <GlyphEdge color={GROUND.harbor} mode="drain" side="bottom" rows={44} cell={10} />
       </div>
 
       <div className={styles.column}>

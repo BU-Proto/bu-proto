@@ -21,7 +21,7 @@
   scroll-snap-type: x proximity;
   scroll-padding-inline: 2px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+  scrollbar-color: rgb(var(--frost-rgb) / 0.35) transparent;
   list-style: none;
 }
 
@@ -35,9 +35,9 @@
   height: var(--height);
   padding: 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid rgb(var(--frost-rgb) / 0.22);
   border-radius: 16px;
-  background: rgba(6, 30, 56, 0.45);
+  background: rgb(var(--navy-rgb) / 0.45);
   cursor: zoom-in;
 }
 
@@ -56,7 +56,7 @@
 }
 
 .thumb:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 3px;
 }
 
@@ -69,7 +69,7 @@
   height: 44px;
   border: 1px solid var(--glass-edge);
   border-radius: 999px;
-  background: rgba(6, 30, 56, 0.72);
+  background: rgb(var(--navy-rgb) / 0.72);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   color: var(--ink);
@@ -79,11 +79,11 @@
 }
 
 .stripControl:hover {
-  background: rgba(6, 30, 56, 0.9);
+  background: rgb(var(--navy-rgb) / 0.9);
 }
 
 .stripControl:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
@@ -115,12 +115,12 @@
   margin: 0;
   padding: 0;
   border: 0;
-  background: rgba(3, 14, 26, 0.94);
+  background: rgb(var(--harbor-rgb) / 0.94);
   color: var(--ink);
 }
 
 .lightbox::backdrop {
-  background: rgba(3, 14, 26, 0.6);
+  background: rgb(var(--harbor-rgb) / 0.6);
 }
 
 :global(html):has(.lightbox[open]) {
@@ -150,7 +150,7 @@
   max-height: calc(100dvh - 150px);
   border-radius: 10px;
   object-fit: contain;
-  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 30px 80px -30px rgb(var(--harbor-rgb) / 0.8);
 }
 
 .counter {
@@ -168,19 +168,19 @@
   width: 48px;
   height: 48px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  border: 1px solid rgb(var(--frost-rgb) / 0.24);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgb(var(--frost-rgb) / 0.08);
   font-size: 20px;
   cursor: pointer;
 }
 
 .control:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgb(var(--frost-rgb) / 0.18);
 }
 
 .control:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
