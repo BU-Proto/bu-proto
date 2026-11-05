@@ -102,7 +102,7 @@ export const AFTER: GuideDoc = {
               term: 'Launch',
               detail: [
                 'Demo nights, founder talks and a path into BU’s startup programs, Spark! and Innovate@BU. For a project that’s turning into something more. ',
-                { label: 'What each one does', href: '/resources#around-bu' },
+                { label: 'What each one does', href: '/resources' },
                 '.',
               ],
             },

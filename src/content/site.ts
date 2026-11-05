@@ -49,7 +49,8 @@ export const NAV_ITEMS: readonly NavItem[] = [
     children: [
       { label: 'All resources', to: '/resources', line: 'The playbook, and where to go at BU' },
       { label: 'The playbook', to: '/resources/playbook', line: 'Our guides to hackathons, start to finish' },
-      { label: 'Spark! and Innovate@BU', to: '/resources#around-bu', line: 'BU’s programs for building and launching' },
+      { label: 'Spark!', to: '/resources/spark', line: 'BU’s lab for building things, with mentors' },
+      { label: 'Innovate@BU', to: '/resources/innovate', line: 'Funding and mentors to launch a venture' },
     ],
   },
   { label: 'Events', to: '/events', inPill: true },
@@ -103,7 +104,7 @@ export const FOOTER = {
         { label: 'Events', to: '/events' },
         { label: 'Hackathons', to: '/hackathons' },
         { label: 'Playbook', to: '/resources/playbook' },
-        { label: 'Resources at BU', to: '/resources#around-bu' },
+        { label: 'Resources', to: '/resources' },
       ],
     },
     {

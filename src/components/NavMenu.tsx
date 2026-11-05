@@ -3,9 +3,13 @@ import { Link, useLocation } from 'react-router'
 import { navItemHolds, type NavItem } from '../content/site'
 import styles from './NavMenu.module.css'
 
+/** How long the panel waits after the pointer leaves before it closes, so a slightly crooked path
+ * from the trigger down to a link doesn't drop it. */
+const CLOSE_DELAY = 180
+
 /**
- * A pill item with pages under it: a disclosure button that opens a short list of links. Click
- * or Enter opens it; the arrow keys, Home and End move through the links, Tab moves on as usual,
+ * A pill item with pages under it: a disclosure button that opens a short list of links. With a
+ * mouse it opens on hover and closes shortly after the pointer leaves. Click or Enter opens it; the arrow keys, Home and End move through the links, Tab moves on as usual,
  * and Escape, a click outside or focus leaving it closes it. Not a role="menu": these are links.
  */
 export function NavMenu({ item }: { item: NavItem }) {
@@ -20,6 +24,13 @@ export function NavMenu({ item }: { item: NavItem }) {
   const id = useId()
   const current = navItemHolds(item, pathname)
   const links = () => [...(listRef.current?.querySelectorAll<HTMLAnchorElement>('a') ?? [])]
+  // Whether a mouse is over it, so a click on the trigger while hovering doesn't shut what the
+  // hover just opened. Touch and pens fire no hover, so they open and close with a tap as before.
+  const hovering = useRef(false)
+  const closeTimer = useRef<number | undefined>(undefined)
+  const cancelClose = () => window.clearTimeout(closeTimer.current)
+
+  useEffect(() => cancelClose, [])
 
   useEffect(() => {
     if (!open) return
@@ -62,6 +73,21 @@ export function NavMenu({ item }: { item: NavItem }) {
     <div
       ref={rootRef}
       className={styles.root}
+      onPointerEnter={(event) => {
+        if (event.pointerType !== 'mouse') return
+        hovering.current = true
+        cancelClose()
+        setOpen(true)
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType !== 'mouse') return
+        hovering.current = false
+        cancelClose()
+        closeTimer.current = window.setTimeout(() => {
+          // Keyboard focus inside keeps it open; only the pointer leaving closes it.
+          if (!rootRef.current?.contains(document.activeElement) || document.activeElement === buttonRef.current) setOpenAt(null)
+        }, CLOSE_DELAY)
+      }}
       onKeyDown={(event) => {
         if (event.key !== 'Escape' || !open) return
         event.stopPropagation()
@@ -81,7 +107,8 @@ export function NavMenu({ item }: { item: NavItem }) {
         aria-controls={id}
         data-current={current || undefined}
         data-fog-clear="box"
-        onClick={() => setOpen(!open)}
+        // A mouse click while hovering keeps it open; a keyboard click (detail 0) or a tap toggles.
+        onClick={(event) => setOpen(event.detail > 0 && hovering.current ? true : !open)}
         onKeyDown={onButtonKey}
       >
         {item.label}

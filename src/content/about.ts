@@ -71,7 +71,7 @@ export const OFFER = {
     {
       name: 'A way into BU’s startup programs',
       text: 'For student founders on the Launch track: founder talks, and a path into Spark! and Innovate@BU. Nothing is official with either yet.',
-      where: { label: 'What each one does', href: '/resources#around-bu' },
+      where: { label: 'What each one does', href: '/resources' },
     },
     {
       name: 'Hackathon travel fund',

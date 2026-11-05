@@ -63,6 +63,17 @@
   text-shadow: none;
 }
 
+/* A bridge over the gap between the trigger and the panel, so moving the mouse down to a link
+   never leaves the menu on the way. */
+.panel::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: 14px;
+}
+
 .list {
   display: grid;
   gap: 2px;

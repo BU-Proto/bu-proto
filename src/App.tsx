@@ -3,6 +3,7 @@ import { adminRoutes } from './admin/routes'
 import { Layout } from './components/Layout'
 import { LoadError, PageLoading } from './components/RouteStates'
 import { PLAYBOOK_HREF } from './content/guides/links'
+import { ORGS } from './content/resourcesHub'
 import { fetchContent, fetchEventPage, fetchHome, fetchWinPage } from './lib/content'
 import { Board } from './pages/Board'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
@@ -12,6 +13,7 @@ import { Hackathons } from './pages/Hackathons'
 import { Home } from './pages/Home'
 import { Join } from './pages/Join'
 import { NotFound } from './pages/NotFound'
+import { OrgPage } from './pages/OrgPage'
 import { Playbook } from './pages/Playbook'
 import { Privacy } from './pages/Privacy'
 import { Resources } from './pages/Resources'
@@ -59,10 +61,12 @@ const router = createBrowserRouter([
         lazy: { Component: async () => (await import('./pages/Guide')).Guide },
         HydrateFallback: PageLoading,
       },
-      // Guides lived at /resources/<slug> before the playbook had its own page; old links follow it.
+      // A BU program's page (/resources/spark, /resources/innovate). Anything else here is a guide
+      // from before the playbook had its own page, so old links follow it there.
       {
         path: 'resources/:slug',
-        loader: ({ params }) => redirect(`${PLAYBOOK_HREF}/${params.slug ?? ''}`),
+        loader: ({ params }) => (ORGS.some((org) => org.slug === params.slug) ? null : redirect(`${PLAYBOOK_HREF}/${params.slug ?? ''}`)),
+        Component: OrgPage,
         HydrateFallback: PageLoading,
       },
       { path: 'events', Component: Events, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
