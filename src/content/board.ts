@@ -1,6 +1,8 @@
 // Copy for the board page. The members themselves live in D1 and are edited in the portal at
-// /admin; each one is a sample until the board is set.
+// /admin; the open seats are here, and their names are the values the board-interest form sends
+// (shared/constants.ts).
 
+import type { BoardSeat } from '../../shared/constants'
 import { CONTACT_EMAIL } from './legal'
 import type { PageIntro } from './types'
 
@@ -16,19 +18,51 @@ export const BOARD_CONTACT = {
   linkedin: 'Follow BU Proto on LinkedIn',
 } as const
 
-/** While there's no board yet: what it's for, the roles being filled, and how to put your hand up. */
+/** Shown above the seats while any are open. */
 export const BOARD_FORMING = {
   title: 'The first board is forming',
-  text: 'We’re picking the people who’ll run Proto this year. If one of these sounds like you, tell us what you’d take on.',
-  rolesLabel: 'Roles we’re filling',
-  roles: [
-    { role: 'President', detail: 'Sets the plan for the year and keeps it moving.' },
-    { role: 'Start track lead', detail: 'Workshops and first-hackathon squads for people just starting.' },
-    { role: 'Build track lead', detail: 'Hack nights, team matching and the regulars.' },
-    { role: 'Launch track lead', detail: 'Demo nights, founder talks and the path into BU’s startup programs.' },
-    { role: 'Trips and travel', detail: 'Getting groups to hackathons and home again.' },
-    { role: 'Sponsorships', detail: 'Finding the companies that fund hack nights, trips and the fund.' },
-  ],
-  cta: 'Put your hand up',
-  subject: 'Joining the BU Proto board',
+  text: 'Andres and Jose are in place as co-presidents. We’re now choosing the people for four seats. If one fits what you already do, we’d like to hear from you.',
+  /** Read out in place of the title once every seat is filled. */
+  filledTitle: 'Who’s on the board',
+} as const
+
+/**
+ * The seats being filled now. A seat drops off the page on its own once a member's role names it,
+ * so filling one is just adding the person in /admin.
+ */
+export const OPEN_SEATS: readonly { role: Exclude<BoardSeat, 'Not sure yet'>; detail: string }[] = [
+  {
+    role: 'Head of Partnerships',
+    detail: 'External outreach: sponsors, partner groups, and companies and organisations outside BU.',
+  },
+  {
+    role: 'Head of the Fund',
+    detail: 'Sets up the hackathon travel fund, then runs it once it opens.',
+  },
+  {
+    role: 'Head of Community',
+    detail: 'Internal outreach: reaching BU students through clubs and department lists, and getting them to hack night.',
+  },
+  {
+    role: 'Head of Hype',
+    detail: 'Socials and marketing: Instagram, LinkedIn, the posters, and how each event gets announced.',
+  },
+]
+
+export const OPEN_SEAT = {
+  status: 'Seat open',
+  cta: 'Throw your hat in the ring',
+} as const
+
+export const BOARD_FORM = {
+  id: 'throw-your-hat-in',
+  title: 'Throw your hat in the ring',
+  text: 'Tell us which seat and what you’d bring to it: what you’ve built, run or organised before, and what you’d take on first. We read every note and reach out about the ones that fit.',
+  submit: 'Throw your hat in',
+  privacy: 'We use this only to talk to you about joining the board.',
+} as const
+
+export const BOARD_THANKS = {
+  title: 'Thanks, we’ve got your note',
+  text: 'We read every one, and we’ll write to your BU email if it’s a fit.',
 } as const

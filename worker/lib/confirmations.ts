@@ -115,7 +115,7 @@ export function boardDraft(person: BoardInterest): Draft {
   const seat = person.role === 'Not sure yet' ? 'a seat on the board' : `the ${person.role} seat`
   const body = [
     'Thanks for throwing your hat in, {{name}}',
-    `We've got your note about ${seat}. Andres and Jose read every one, and we'll reach out to set up a quick chat.`,
+    `We've got your note about ${seat}. Andres and Jose read every one, and we'll reach out if it's a fit.`,
     'In the meantime, the best way to get a feel for Proto is to come to a hack night.',
     'Anything to add? Just reply to this email.',
   ].join('\n\n')

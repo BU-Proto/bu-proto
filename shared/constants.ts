@@ -14,7 +14,7 @@ export type Track = (typeof TRACKS)[number]
 export const FUND_AMOUNTS = ['$50–$100', '$100–$250', '$250–$500', 'Not sure yet'] as const
 
 /** The open board seats people can put themselves forward for, plus "Not sure yet". */
-export const BOARD_SEATS = ['External outreach', 'The fund', 'Internal outreach', 'Socials and marketing', 'Not sure yet'] as const
+export const BOARD_SEATS = ['Head of Partnerships', 'Head of the Fund', 'Head of Community', 'Head of Hype', 'Not sure yet'] as const
 export type BoardSeat = (typeof BOARD_SEATS)[number]
 
 export const FUND_STATUSES = ['new', 'reviewing', 'approved', 'declined'] as const

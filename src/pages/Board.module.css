@@ -1,6 +1,7 @@
 /*
- * The board as a masthead: a full portrait per person, then name, role and links set plainly on
- * the field below it. Nothing is boxed but the photo, so the copy carries the on-field shadow.
+ * The board as a masthead: a full portrait per seat, then name, role and links set plainly on the
+ * field below it. Open seats keep the same shape with an empty frame, so the board reads as one
+ * table with gaps in it. Nothing is boxed but the frames, so the copy carries the on-field shadow.
  */
 
 .contact {
@@ -21,29 +22,64 @@
   color: var(--ink);
 }
 
+/* While seats are open: what's happening, above the seats. */
+.board {
+  display: grid;
+  gap: clamp(28px, 5vh, 44px);
+  padding-top: clamp(16px, 4vh, 40px);
+}
+
+.lead {
+  display: grid;
+  gap: 14px;
+  text-shadow: var(--on-field-shadow);
+}
+
+.leadTitle {
+  margin: 0;
+  font-size: clamp(34px, 4.6vw, 60px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.leadText {
+  max-width: 46ch;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(48px, 7vh, 72px) clamp(24px, 3.4vw, 44px);
   margin: 0;
-  padding: clamp(24px, 5vh, 48px) 0 0;
+  padding: 0;
   list-style: none;
 }
 
-.member {
+.seat {
   display: grid;
+  grid-template-rows: auto 1fr;
   align-content: start;
   gap: 20px;
   min-width: 0;
 }
 
-.portrait {
+.portrait,
+.empty {
   position: relative;
-  display: grid;
-  place-items: center;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 6px;
+}
+
+.portrait {
+  display: grid;
+  place-items: center;
   /* What shows with no photo, and under one while it loads: frosted glass that takes its colour
      from the field behind it, deepening toward ink with a hint of mint at the top. */
   background:
@@ -64,6 +100,26 @@
   object-fit: cover;
 }
 
+/*
+ * An open seat's frame: a dashed edge with the frozen field gathered just inside it and nothing
+ * where the face would be. A dark wash keeps the live field from showing through as a picture.
+ */
+.empty {
+  border: 1px dashed rgb(var(--frost-rgb) / 0.5);
+  background: rgb(var(--harbor-rgb) / 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.empty::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--texture) 0 0 / 595px 400px;
+  -webkit-mask-image: radial-gradient(ellipse 58% 52% at 50% 46%, transparent 40%, #000 92%);
+  mask-image: radial-gradient(ellipse 58% 52% at 50% 46%, transparent 40%, #000 92%);
+}
+
 .initials {
   color: rgb(var(--frost-rgb) / 0.9);
   font-size: clamp(56px, 7vw, 96px);
@@ -74,7 +130,9 @@
 }
 
 .text {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
   text-shadow: var(--on-field-shadow);
 }
@@ -97,6 +155,32 @@
   margin: 0;
   color: rgb(var(--frost-rgb) / 0.86);
   font-size: 15px;
+}
+
+/* Where a member's role goes, an open seat says it's open, in the page's one accent. */
+.status {
+  margin: 0;
+  color: var(--mint);
+  font-size: 15px;
+}
+
+.detail {
+  max-width: 34ch;
+  margin: 4px 0 14px;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* Pushed to the foot of the seat, so the buttons line up across a row whatever the copy's length. */
+.pick {
+  margin-top: auto;
+}
+
+.pick:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 3px;
 }
 
 .links {
@@ -135,9 +219,42 @@
   height: 14px;
 }
 
+/* The one form for every open seat, on solid navy: the pitch on the left, the fields on the right. */
+.apply {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: start;
+  margin-top: clamp(24px, 6vh, 56px);
+  padding: clamp(22px, 3.4vw, 40px);
+  scroll-margin-top: 24px;
+}
+
+.applyLead {
+  display: grid;
+  gap: 12px;
+}
+
+.applyText {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.privacy {
+  margin-top: 4px;
+}
+
 @media (max-width: 960px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .apply {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -147,79 +264,23 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .member {
+  .seat {
     max-width: 420px;
   }
-}
 
-/* No board yet: what's forming and how to join it, set on the field like the rest of the page. */
-.forming {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: clamp(32px, 6vw, 96px);
-  align-items: start;
-  text-shadow: var(--on-field-shadow);
-}
+  /* Full-height empty frames would make a phone scroll past four blanks, so open seats shrink to
+     a small frame beside their copy. Members keep the full portrait. */
+  .vacancy {
+    grid-template-columns: 84px minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: 18px;
+  }
 
-.formingLead {
-  display: grid;
-  justify-items: start;
-  gap: 18px;
-}
+  .vacancy .empty {
+    border-radius: 4px;
+  }
 
-.formingTitle {
-  margin: 0;
-  font-size: clamp(34px, 4.6vw, 60px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  text-wrap: balance;
-}
-
-.formingText {
-  max-width: 40ch;
-  margin: 0 0 6px;
-  font-size: 17px;
-  line-height: 1.55;
-}
-
-.rolesLabel {
-  margin: 0 0 6px;
-  color: var(--ink-soft);
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.roles {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.4);
-}
-
-.roles li {
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  gap: 6px 24px;
-  align-items: baseline;
-  padding: 16px 0;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.4);
-}
-
-.roleName {
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-}
-
-.roleDetail {
-  font-size: 15px;
-  opacity: 0.88;
-}
-
-@media (max-width: 860px) {
-  .forming,
-  .roles li {
-    grid-template-columns: minmax(0, 1fr);
+  .vacancy .pick {
+    margin-top: 0;
   }
 }

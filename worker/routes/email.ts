@@ -262,7 +262,7 @@ async function automaticDrafts(c: Context<AppEnv>) {
       welcome: welcomeDraft(origin, { ...person, track: 'Build', unsubscribeToken: PREVIEW_TOKEN }, upcoming),
       rsvp: rsvpDraft(person, event),
       fund: fundDraft(person),
-      board: boardDraft({ ...person, year: 'Third year', role: 'External outreach', note: '' }),
+      board: boardDraft({ ...person, year: 'Third year', role: 'Head of Partnerships', note: '' }),
     } satisfies Record<AutomaticEmailKey, unknown>,
   }
 }

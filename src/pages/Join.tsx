@@ -2,6 +2,7 @@ import { Field, Form } from '../components/Form'
 import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
 import { PageIntro } from '../components/PageIntro'
 import { PrivacyNote } from '../components/PrivacyNote'
+import { Select } from '../components/Select'
 import ui from '../components/ui.module.css'
 import { JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS } from '../content/join'
 import { api } from '../lib/api'
@@ -59,24 +60,10 @@ export function Join() {
                 />
               </Field>
               <Field label="Year">
-                <select className={inputClass} name="year" required defaultValue="">
-                  <option value="" disabled>
-                    Pick one
-                  </option>
-                  {YEARS.map((year) => (
-                    <option key={year}>{year}</option>
-                  ))}
-                </select>
+                <Select name="year" options={YEARS} required />
               </Field>
               <Field label="Track">
-                <select className={inputClass} name="track" required defaultValue="">
-                  <option value="" disabled>
-                    Pick one
-                  </option>
-                  {TRACKS.map((track) => (
-                    <option key={track}>{track}</option>
-                  ))}
-                </select>
+                <Select name="track" options={TRACKS} required />
               </Field>
             </Form>
             <PrivacyNote text={JOIN_FORM.privacy} className={styles.privacy} />
