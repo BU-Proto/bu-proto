@@ -92,3 +92,27 @@
     max-width: 320px;
   }
 }
+
+/* The paste fallback, when the site turns the Worker away. */
+.paste {
+  display: grid;
+  gap: 12px;
+}
+
+.pasteLead {
+  margin: 0;
+}
+
+.steps {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-soft);
+}
+
+.source {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  resize: vertical;
+}

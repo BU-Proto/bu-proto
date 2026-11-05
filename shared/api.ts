@@ -765,7 +765,8 @@ export type EventImportSource = (typeof EVENT_IMPORT_SOURCES)[number]
  * POST /api/admin/event-import/lookup { url } → EventImportPreview
  * POST /api/admin/event-import/import { url } → 201 { item: ProtoEvent }, an unpublished draft
  * `url` is a public event page (lu.ma/…, eventbrite.com/e/…, or any page with schema.org Event
- * JSON-LD). Import reads the page again rather than trusting the preview. A page with no event
+ * JSON-LD), and `html` optionally its source pasted by the admin. Import reads the page (or the
+ * same pasted source) again rather than trusting the preview. A page with no event
  * answers 400; a title and date that already exist answer 409 on import.
  */
 export const eventImportInput = z.object({
@@ -781,8 +782,16 @@ export const eventImportInput = z.object({
         return false
       }
     }, 'Paste a full https:// link.'),
+  /**
+   * The page's source, pasted from the admin's own browser, for when the site turns the Worker
+   * away (Luma rate-limits Cloudflare's shared addresses). Read instead of fetching the link.
+   */
+  html: z.string().max(5_000_000, 'That page is too big to read.').optional(),
 })
 export type EventImportInput = z.input<typeof eventImportInput>
+
+/** The `issues` key an event-import error carries when the site turned the Worker away, so the portal can offer the paste. */
+export const EVENT_IMPORT_BLOCKED = 'blocked'
 
 export interface EventImportPreview {
   /** The page's address after redirects (lu.ma links land on luma.com). */

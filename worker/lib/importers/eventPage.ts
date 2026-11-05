@@ -372,6 +372,11 @@ export function parseEventPage(html: string, pageUrl: string): ParsedEventPage {
   const url = new URL(pageUrl)
   const source = sourceOf(url)
   const event = findEvent(html)
+  if (!event && source === 'luma') {
+    // Some Luma events (invite links) carry no JSON-LD; their page payload has the full event.
+    const fromPayload = lumaDataToEvent(dig(nextData(html), 'props', 'pageProps', 'initialData', 'data'))
+    if (fromPayload) return fromPayload
+  }
   if (!event) throw new Error('No event details on that page. It needs schema.org Event data, as Luma and Eventbrite pages have.')
 
   const title = clamp(cleanText(decodeEntities(str(event.name))), 120)
@@ -447,7 +452,14 @@ export async function fetchLumaEvent(pageUrl: string): Promise<ParsedEventPage |
     return null
   }
   const body: unknown = await response.json().catch(() => null)
-  const data = dig(body as Json, 'data')
+  return lumaDataToEvent(dig(body as Json, 'data'))
+}
+
+/**
+ * Luma's event data (the API's `data`, or the same object in a page's __NEXT_DATA__ under
+ * initialData) as a draft. Null when it isn't a dated, named event.
+ */
+function lumaDataToEvent(data: unknown): ParsedEventPage | null {
   const event = dig(data as Json, 'event')
   if (!isObject(data) || !isObject(event)) return null
 

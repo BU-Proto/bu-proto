@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import type { EventImportPreview, EventImportSource, ProtoEvent } from '../../../shared/api'
+import { EVENT_IMPORT_BLOCKED, type EventImportPreview, type EventImportSource, type ProtoEvent } from '../../../shared/api'
 import { ApiError, api } from '../../lib/api'
 import admin from '../admin.module.css'
 import { StatusLine, type StatusTone } from '../components/bits'
@@ -8,7 +8,9 @@ import { PageHeader } from '../components/PageHeader'
 import styles from './EventImport.module.css'
 
 // One event page to an event draft. Look up shows what the draft would be; importing makes it
-// unpublished and opens its editor. The Worker reads the page again for the import.
+// unpublished and opens its editor. The Worker reads the page again for the import. When the site
+// turns the Worker away (Luma rate-limits Cloudflare's shared addresses), the admin pastes the
+// page's source from their own browser instead, and both steps read that.
 
 const SOURCE_NAMES: Record<EventImportSource, string> = {
   luma: 'Luma',
@@ -29,20 +31,30 @@ export function Component() {
   const [preview, setPreview] = useState<EventImportPreview | null>(null)
   const [busy, setBusy] = useState<'lookup' | 'import' | null>(null)
   const [notice, setNotice] = useState<{ tone: StatusTone; text: string } | null>(null)
+  // Set once the site turned us away: then the page's source comes from the admin's browser.
+  const [blocked, setBlocked] = useState(false)
+  const [source, setSource] = useState('')
+  const pasted = blocked && source.trim() ? source : undefined
 
   const lookUp = async (event: FormEvent) => {
     event.preventDefault()
     const link = url.trim()
     if (!link) return setNotice({ tone: 'error', text: 'Paste an event link.' })
+    if (blocked && !pasted) return setNotice({ tone: 'error', text: 'Paste the page’s source first.' })
     setBusy('lookup')
     setPreview(null)
-    setNotice({ tone: 'info', text: 'Reading the event page…' })
+    setNotice({ tone: 'info', text: pasted ? 'Reading the pasted page…' : 'Reading the event page…' })
     try {
-      const data = await api<EventImportPreview>('/admin/event-import/lookup', { body: { url: link } })
+      const data = await api<EventImportPreview>('/admin/event-import/lookup', { body: { url: link, html: pasted } })
       setPreview(data)
       setNotice(null)
     } catch (error) {
-      setNotice({ tone: 'error', text: message(error) })
+      if (error instanceof ApiError && error.issues[EVENT_IMPORT_BLOCKED]) {
+        setBlocked(true)
+        setNotice({ tone: 'error', text: 'That site turned our server away. Paste the page below instead.' })
+      } else {
+        setNotice({ tone: 'error', text: message(error) })
+      }
     } finally {
       setBusy(null)
     }
@@ -53,7 +65,9 @@ export function Component() {
     setBusy('import')
     setNotice({ tone: 'info', text: 'Making the draft…' })
     try {
-      const { item } = await api<{ item: ProtoEvent }>('/admin/event-import/import', { body: { url: preview.url } })
+      const { item } = await api<{ item: ProtoEvent }>('/admin/event-import/import', {
+        body: { url: pasted ? url.trim() : preview.url, html: pasted },
+      })
       navigate(`/admin/events/${item.id}`)
     } catch (error) {
       setNotice({ tone: 'error', text: message(error) })
@@ -89,15 +103,49 @@ export function Component() {
             type="url"
             inputMode="url"
             value={url}
-            onChange={(change) => setUrl(change.target.value)}
+            onChange={(change) => {
+              setUrl(change.target.value)
+              // A new link starts over: it may not be blocked, and old pasted source isn't its page.
+              setBlocked(false)
+              setSource('')
+            }}
             placeholder="https://lu.ma/… or https://www.eventbrite.com/e/…"
             spellCheck={false}
             autoComplete="off"
           />
         </label>
+        {blocked && (
+          <div className={styles.paste}>
+            <p className={styles.pasteLead}>
+              The site won’t let our server read it, but your browser can. Copy the page’s source and paste it here:
+            </p>
+            <ol className={styles.steps}>
+              <li>
+                Open{' '}
+                <a className={admin.link} href={url.trim()} target="_blank" rel="noreferrer">
+                  the event page
+                </a>
+                .
+              </li>
+              <li>View its source: Ctrl+U, or Cmd+Option+U on a Mac.</li>
+              <li>Select everything (Ctrl+A or Cmd+A), copy it, and paste it below.</li>
+            </ol>
+            <label className={admin.field}>
+              <span className={admin.label}>Page source</span>
+              <textarea
+                className={`${admin.input} ${styles.source}`}
+                value={source}
+                onChange={(change) => setSource(change.target.value)}
+                rows={5}
+                spellCheck={false}
+                placeholder="<!DOCTYPE html>…"
+              />
+            </label>
+          </div>
+        )}
         <div className={styles.row}>
-          <button type="submit" className={admin.primary} disabled={busy !== null || !url.trim()}>
-            {busy === 'lookup' ? 'Looking up…' : 'Look up'}
+          <button type="submit" className={admin.primary} disabled={busy !== null || !url.trim() || (blocked && !pasted)}>
+            {busy === 'lookup' ? 'Looking up…' : blocked ? 'Read the pasted page' : 'Look up'}
           </button>
           <StatusLine tone={notice?.tone}>{notice?.text}</StatusLine>
         </div>

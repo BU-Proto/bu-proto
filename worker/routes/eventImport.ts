@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { RESOURCE_SPECS, eventImportInput, eventInput, type EventImportPreview } from '../../shared/api'
+import { EVENT_IMPORT_BLOCKED, RESOURCE_SPECS, eventImportInput, eventInput, type EventImportPreview } from '../../shared/api'
 import { inputToColumns, rowToItem, type DbRow } from '../lib/content'
 import { ApiError, readBody } from '../lib/http'
 import { fetchEventPage, fetchLumaEvent, parseEventPage, sourceOf } from '../lib/importers/eventPage'
@@ -12,18 +12,24 @@ import type { AppEnv } from '../types'
 const app = new Hono<AppEnv>()
 
 /** Fetch, parse and validate one page. Every failure is a 4xx with a message the admin can act on. */
-async function readEvent(url: string) {
-  // Luma first through its API: its pages turn Workers away with a 429. The page is the fallback.
-  const viaApi = sourceOf(new URL(url)) === 'luma' ? await fetchLumaEvent(url) : null
-  let page: { html: string; url: string } = { html: '', url }
+async function readEvent(url: string, pasted?: string) {
+  // Luma first through its API (its pages turn Workers away), then the page itself. Pasted source
+  // from the admin's browser skips both: it's for when the site turns us away.
+  const viaApi = !pasted && sourceOf(new URL(url)) === 'luma' ? await fetchLumaEvent(url) : null
+  let page: { html: string; url: string } = { html: pasted ?? '', url }
   let parsed: ReturnType<typeof parseEventPage>
   if (viaApi) {
     parsed = viaApi
   } else {
-    try {
-      page = await fetchEventPage(url)
-    } catch (error) {
-      throw new ApiError(502, error instanceof Error ? error.message : 'Could not read that page.')
+    if (!pasted) {
+      try {
+        page = await fetchEventPage(url)
+      } catch (error) {
+        const text = error instanceof Error ? error.message : 'Could not read that page.'
+        // Turned away: the portal offers to read the page from the admin's own browser instead.
+        const blocked = /turned the request away/.test(text)
+        throw new ApiError(502, text, blocked ? { [EVENT_IMPORT_BLOCKED]: text } : undefined)
+      }
     }
     try {
       parsed = parseEventPage(page.html, page.url)
@@ -49,15 +55,15 @@ async function existingEvent(db: D1Database, title: string, date: string): Promi
 }
 
 app.post('/api/admin/event-import/lookup', async (c) => {
-  const { url } = await readBody(c, eventImportInput)
-  const read = await readEvent(url)
+  const { url, html } = await readBody(c, eventImportInput)
+  const read = await readEvent(url, html)
   const preview: EventImportPreview = { ...read, existingEventId: await existingEvent(c.env.DB, read.event.title, read.event.date) }
   return c.json(preview)
 })
 
 app.post('/api/admin/event-import/import', async (c) => {
-  const { url } = await readBody(c, eventImportInput)
-  const { event } = await readEvent(url)
+  const { url, html } = await readBody(c, eventImportInput)
+  const { event } = await readEvent(url, html)
   const existing = await existingEvent(c.env.DB, event.title, event.date)
   if (existing !== null) throw new ApiError(409, `Already added as event ${existing}.`)
   const spec = RESOURCE_SPECS.events
