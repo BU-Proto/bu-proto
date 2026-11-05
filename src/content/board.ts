@@ -33,7 +33,7 @@ export const BOARD_FORMING = {
 export const OPEN_SEATS: readonly { role: Exclude<BoardSeat, 'Not sure yet'>; detail: string }[] = [
   {
     role: 'Head of Partnerships',
-    detail: 'External outreach: sponsors, partner groups, and companies and organisations outside BU.',
+    detail: 'Outside BU: sponsors, companies, and partner organisations and hackathons.',
   },
   {
     role: 'Head of the Fund',
@@ -41,11 +41,11 @@ export const OPEN_SEATS: readonly { role: Exclude<BoardSeat, 'Not sure yet'>; de
   },
   {
     role: 'Head of Community',
-    detail: 'Internal outreach: reaching BU students through clubs and department lists, and getting them to hack night.',
+    detail: 'Inside BU: our contact for Spark!, Innovate@BU, departments and other student groups, keeping those relationships going for every event we run together.',
   },
   {
     role: 'Head of Growth',
-    detail: 'Marketing and socials: Instagram, LinkedIn and the posters, getting Proto’s name out beyond the people who already come.',
+    detail: 'Runs our events and reaches more BU students: outreach, socials, posters and getting each event in front of the right people.',
   },
 ]
 
