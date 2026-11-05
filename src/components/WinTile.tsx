@@ -36,24 +36,21 @@ function TagLine({ text, inView }: { text: string; inView: boolean }) {
   useEffect(() => {
     const node = live.current
     if (!node) return
-    if (!inView) {
-      node.textContent = ''
-      return
-    }
-    if (reducedMotion()) {
-      node.textContent = text
-      return
-    }
+    // One text node rewritten in place: replacing it each frame would have Layout's watch on the
+    // page's content re-measure the field's text sixty times a second.
+    const words = document.createTextNode(inView && reducedMotion() ? text : '')
+    node.replaceChildren(words)
+    if (!inView || reducedMotion()) return
     const frame = { id: 0 }
     const start = performance.now()
     const tick = (now: number) => {
       const shown = Math.floor(DECODE_RATE * ((now - start) / 1000))
       const real = Math.max(0, shown - DECODE_NOISE)
       if (real >= text.length) {
-        node.textContent = text
+        words.data = text
         return
       }
-      node.textContent = text.slice(0, real) + noiseGlyphs(Math.min(DECODE_NOISE, text.length - real))
+      words.data = text.slice(0, real) + noiseGlyphs(Math.min(DECODE_NOISE, text.length - real))
       frame.id = requestAnimationFrame(tick)
     }
     frame.id = requestAnimationFrame(tick)

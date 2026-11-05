@@ -22,7 +22,12 @@ const WARP_PX = 3
 const BEND_SPEED = 2700
 const BEND_PX = 38
 const BEND_EASE_MS = 90
-const MAX_DPR = 2
+/** How long the canvas keeps drawing once the scroll or the cursor has stopped. */
+const WIND_DOWN_MS = 1000
+/** Lusion's own canvas runs at 1.5 on a 2x screen, and a full-screen canvas at 2 costs frames. */
+const MAX_DPR = 1.5
+/** How far off screen a cover still gets drawn, for what the bend and the swing can carry in. */
+const CULL_PX = 120
 const COLUMNS = 40
 const ROWS = 26
 
@@ -77,6 +82,10 @@ void main() {
   if (alpha <= 0.0) discard;
 
   vec2 local = vLocal - uShift;
+  if (uBlur < 0.01) {
+    color = vec4(picture(local).rgb * alpha, alpha);
+    return;
+  }
   local += uWarp * vec2(sin(local.y * 0.02 + uTime * 5.0), cos(local.x * 0.017 + uTime * 4.0));
   vec4 sum = picture(local) * 0.2;
   for (int i = 0; i < 8; i++) {
@@ -97,6 +106,7 @@ interface Tile {
   startedAt: number | null
   hoveredAt: number
   hovered: boolean
+  pointer: string
   scale: number
   x: number
   y: number
@@ -169,7 +179,7 @@ function planeGeometry() {
 
 /** Starts drawing the sheet's covers onto `canvas`, and returns the way to stop. */
 export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): () => void {
-  const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: true })
+  const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false })
   const program = gl && compile(gl)
   if (!gl || !program) return () => undefined
 
@@ -209,7 +219,8 @@ export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): ()
   gl.uniform1f(u.radius, RADIUS)
 
   const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
-  const state = { stopped: false, visible: false, lastAt: 0, scrollY: window.scrollY, speed: 0 }
+  // It only draws while something's moving: a still grid costs the GPU nothing.
+  const state = { stopped: false, visible: false, lastAt: 0, scrollY: window.scrollY, speed: 0, awakeUntil: 0, wake: true }
 
   const tiles: Tile[] = [...sheet.querySelectorAll<HTMLElement>('[data-side]')].map((media) => ({
     media,
@@ -221,6 +232,7 @@ export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): ()
     startedAt: null,
     hoveredAt: -Infinity,
     hovered: false,
+    pointer: '',
     scale: REST_SCALE,
     x: 0,
     y: 0,
@@ -230,7 +242,7 @@ export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): ()
     const box = tile.media.getBoundingClientRect()
     const photo = tile.media.querySelector('img')
     const art = tile.media.querySelector('pre')
-    const picture = photo ? await photoPicture(photo.currentSrc || photo.src) : art && (await asciiPicture(art, box, dpr))
+    const picture = photo ? await photoPicture(photo.currentSrc || photo.src) : art && (await asciiPicture(art, box, window.devicePixelRatio || 1))
     if (!picture || state.stopped) return
     try {
       const texture = gl.createTexture()
@@ -244,6 +256,7 @@ export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): ()
       tile.width = picture.width
       tile.height = picture.height
       tile.media.dataset.gl = ''
+      state.wake = true
     } catch {
       // A photo from a host that won't share its pixels stays a DOM picture.
     }
@@ -259,6 +272,12 @@ export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): ()
     state.speed += (moved - state.speed) * (1 - Math.exp(-elapsed / BEND_EASE_MS))
     if (!state.visible) return
 
+    const stayAwake = (ms: number) => {
+      state.awakeUntil = Math.max(state.awakeUntil, now + ms)
+    }
+    if (moved > 0 || state.wake) stayAwake(WIND_DOWN_MS)
+    state.wake = false
+
     const view = { width: window.innerWidth, height: window.innerHeight }
     const pixelWidth = Math.round(view.width * dpr)
     const pixelHeight = Math.round(view.height * dpr)
@@ -266,7 +285,24 @@ export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): ()
       canvas.width = pixelWidth
       canvas.height = pixelHeight
       gl.viewport(0, 0, pixelWidth, pixelHeight)
+      stayAwake(WIND_DOWN_MS)
     }
+
+    for (const tile of tiles) {
+      if (!tile.item.hasAttribute('data-in')) tile.startedAt = null
+      else if (tile.startedAt === null) {
+        tile.startedAt = now
+        stayAwake(SWING_MS)
+      }
+      const hovered = tile.media.matches(':hover')
+      if (hovered && !tile.hovered) tile.hoveredAt = now
+      const pointer = hovered ? `${tile.media.style.getPropertyValue('--mx')},${tile.media.style.getPropertyValue('--my')}` : ''
+      if (hovered !== tile.hovered || pointer !== tile.pointer) stayAwake(WIND_DOWN_MS)
+      tile.hovered = hovered
+      tile.pointer = pointer
+    }
+    if (now >= state.awakeUntil) return
+
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.uniform2f(u.view, view.width, view.height)
     gl.uniform1f(u.bend, BEND_PX * Math.min(1, state.speed / BEND_SPEED))
@@ -274,17 +310,11 @@ export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): ()
     const follow = 1 - Math.exp(-elapsed / EASE_MS)
 
     for (const tile of tiles) {
-      const entered = tile.item.hasAttribute('data-in')
-      if (!entered) tile.startedAt = null
-      else tile.startedAt ??= now
       if (!tile.texture || tile.startedAt === null) continue
-
       const box = tile.media.getBoundingClientRect()
-      if (box.bottom < -box.height || box.top > view.height + box.height) continue
+      if (box.bottom < -CULL_PX || box.top > view.height + CULL_PX) continue
 
-      const hovered = tile.media.matches(':hover')
-      if (hovered && !tile.hovered) tile.hoveredAt = now
-      tile.hovered = hovered
+      const { hovered } = tile
       tile.scale += ((hovered ? 1 : REST_SCALE) - tile.scale) * follow
       const style = tile.media.style
       tile.x += ((hovered ? Number(style.getPropertyValue('--mx')) * 10 : 0) - tile.x) * follow
@@ -312,7 +342,7 @@ export function mountWinStage(sheet: HTMLElement, canvas: HTMLCanvasElement): ()
 
   const observer = new IntersectionObserver(([entry]) => {
     state.visible = Boolean(entry?.isIntersecting)
-    if (!state.visible) gl.clear(gl.COLOR_BUFFER_BIT)
+    state.wake = true
   })
   observer.observe(sheet)
 

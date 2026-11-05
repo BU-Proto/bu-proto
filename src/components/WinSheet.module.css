@@ -31,6 +31,10 @@
   pointer-events: none;
 }
 
+.sheet:not([data-gl]) .stage {
+  display: none;
+}
+
 .sheet[data-gl] .head,
 .sheet[data-gl] .grid,
 .sheet[data-gl] .pillRow {
@@ -167,6 +171,7 @@
 
 .tag {
   position: relative;
+  contain: layout;
   margin: 1.5em 0 1em;
   font-size: clamp(10px, 0.9vw, 13px);
   line-height: 1.4;

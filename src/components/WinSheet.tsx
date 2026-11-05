@@ -85,7 +85,7 @@ function Sheet({ wins, children }: { wins: readonly Win[]; children: ReactNode }
   }, [tiles])
 
   return (
-    <div ref={sheet} className={styles.sheet}>
+    <div ref={sheet} className={styles.sheet} data-field-cover>
       {wins.length > 0 && <canvas key={tiles} ref={stage} className={styles.stage} aria-hidden="true" />}
       {children}
     </div>
