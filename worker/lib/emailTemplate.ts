@@ -1,9 +1,11 @@
 // Turns a portal email (plain text, written by an admin) into the HTML and text each recipient
 // gets. The layout is nested tables with inline styles, the only thing Gmail, Outlook and Apple
-// Mail all render the same. The <style> block only adds things a client may drop without harm:
-// the phone layout and dark mode.
+// Mail all render the same. The header, event card and footer carry the site's ASCII field as real
+// text (see emailArt.ts), so nothing hangs on images loading. The <style> block only adds things a
+// client may drop without harm: the phone layout and dark mode.
 
 import { EMAIL_VARIABLES } from '../../shared/api'
+import { artGround, artHtmlRows, artTextRows, rampRule, type ArtOptions } from './emailArt'
 
 /** One person an email goes to. Members have an unsubscribe token and a track; RSVPs and fund sign-ups don't. */
 export interface Recipient {
@@ -47,9 +49,6 @@ const PAGE = '#eef2f6'
 const RULE = '#e2e8ef'
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
 const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace"
-// The site's field, sampled from GRADIENT_COLORMAP: blue on the left (under the wordmark, so white
-// stays readable), the warm pink core, then teal. Navy shows wherever gradients don't.
-const FIELD = 'linear-gradient(118deg, #0576ad 0%, #0391c2 30%, #6f9fc0 52%, #d6a1ab 70%, #e7a29d 80%, #49a8c8 100%)'
 
 export function escapeHtml(value: string): string {
   return value
@@ -69,15 +68,6 @@ export function formatEventDate(day: string): string {
   const date = new Date(`${day}T00:00:00Z`)
   if (Number.isNaN(date.getTime())) return day
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
-}
-
-/** The pieces of the big date in the event block: 12, NOV, THU. Null for a day that doesn't parse. */
-function eventDateParts(day: string): { day: number; month: string; weekday: string } | null {
-  const date = new Date(`${day}T00:00:00Z`)
-  if (Number.isNaN(date.getTime())) return null
-  const part = (options: Intl.DateTimeFormatOptions) =>
-    date.toLocaleDateString('en-US', { ...options, timeZone: 'UTC' }).toUpperCase()
-  return { day: date.getUTCDate(), month: part({ month: 'short' }), weekday: part({ weekday: 'short' }) }
 }
 
 // ---- Variables ----------------------------------------------------------------------------------
@@ -164,9 +154,10 @@ function buttonLabel(url: string): string {
   return label.length > 38 ? `${label.slice(0, 37)}…` : label
 }
 
+
 /**
- * A pill button that survives Outlook: the colour sits on the cell, so Word's renderer, which
- * ignores padding on links, still draws the pill (as a rectangle) with mso-padding-alt.
+ * A button sized to its label. The colour sits on the cell, so Word's renderer, which ignores
+ * padding on links, still draws it with mso-padding-alt.
  */
 function button(url: string, label: string, tone: 'dark' | 'light'): string {
   const bg = tone === 'dark' ? NAVY : '#ffffff'
@@ -174,13 +165,13 @@ function button(url: string, label: string, tone: 'dark' | 'light'): string {
   const cls = tone === 'dark' ? ' class="pe-btn"' : ''
   const linkCls = tone === 'dark' ? ' class="pe-btn-a"' : ''
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate">
-<tr><td${cls} align="center" bgcolor="${bg}" style="border-radius:999px;background-color:${bg};mso-padding-alt:13px 24px">
-<a${linkCls} href="${escapeHtml(url)}" target="_blank" style="display:inline-block;padding:13px 24px;border-radius:999px;font-family:${FONT};font-size:15px;font-weight:500;line-height:20px;color:${fg};text-decoration:none;word-break:break-word;overflow-wrap:anywhere">${escapeHtml(label)}&nbsp;&nbsp;&rarr;</a>
+<tr><td${cls} align="center" bgcolor="${bg}" style="border-radius:6px;background-color:${bg};mso-padding-alt:12px 20px">
+<a${linkCls} href="${escapeHtml(url)}" target="_blank" style="display:inline-block;padding:12px 20px;border-radius:6px;font-family:${FONT};font-size:15px;font-weight:500;line-height:20px;color:${fg};text-decoration:none;word-break:break-word;overflow-wrap:anywhere">${escapeHtml(label)}</a>
 </td></tr>
 </table>`
 }
 
-const P_STYLE = `margin:0 0 18px 0;font-family:${FONT};font-size:16px;line-height:26px;color:${INK}`
+const P_STYLE = `margin:0 0 20px 0;font-family:${FONT};font-size:16px;line-height:27px;color:${INK}`
 
 /** The message as paragraphs: split on blank lines, single newlines become <br>. */
 function paragraphs(body: string): string[] {
@@ -191,20 +182,25 @@ function paragraphs(body: string): string[] {
     .map((paragraph) => paragraph.trim())
 }
 
+/** A first paragraph that reads as a title: one short line with no link. */
+function isHeadline(paragraph: string): boolean {
+  return !paragraph.includes('\n') && paragraph.length <= 72 && !/https?:\/\//.test(paragraph)
+}
+
 /**
  * Blank lines split paragraphs; single newlines become <br>. A paragraph that's only a URL becomes
- * a button. A short first line with no link ("Hi Ada,") is set large and light, like the site's
- * headings.
+ * a button. A short first line ("Welcome to BU Proto, Ada") becomes the email's headline, set
+ * large and tight like the site's headings.
  */
 function bodyHtml(body: string): string {
   return paragraphs(body)
     .map((paragraph, index) => {
       if (LONE_URL.test(paragraph)) {
-        return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 24px 0"><tr><td>${button(paragraph, buttonLabel(paragraph), 'dark')}</td></tr></table>`
+        return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 26px 0"><tr><td>${button(paragraph, buttonLabel(paragraph), 'dark')}</td></tr></table>`
       }
       const html = paragraph.split('\n').map(linkify).join('<br>')
-      if (index === 0 && !paragraph.includes('\n') && paragraph.length <= 60 && !/https?:\/\//.test(paragraph)) {
-        return `<p class="pe-ink pe-greet" style="margin:0 0 20px 0;font-family:${FONT};font-size:28px;font-weight:300;line-height:34px;letter-spacing:-0.5px;color:${INK}">${html}</p>`
+      if (index === 0 && isHeadline(paragraph)) {
+        return `<h1 class="pe-ink pe-head1" style="margin:0 0 22px 0;font-family:${FONT};font-size:34px;font-weight:400;line-height:40px;letter-spacing:-1px;color:${NAVY};mso-line-height-rule:exactly">${html}</h1>`
       }
       return `<p class="pe-ink" style="${P_STYLE}">${html}</p>`
     })
@@ -218,28 +214,76 @@ function preheaderText(body: string): string {
   return text.length > 140 ? `${text.slice(0, 139)}…` : text
 }
 
+// ---- ASCII art ----------------------------------------------------------------------------------
+
+/** Each kind of email gets its own field, the same every time. */
+const ART_SEED: Record<EmailReason['kind'], number> = { member: 1, event: 2, fund: 3, test: 4, admin: 5 }
+
+// Wide enough to fill the 600px card at 9px (a 0.6em cell is 5.4px); phones crop the right side.
+const ART_COLS = 110
+
+/**
+ * A block of art in a fixed-layout table, so its long rows can't widen the card: the cell clips
+ * them on phones. A <pre> keeps the spaces in every client, Outlook's Word renderer included.
+ */
+function artBlock(art: ArtOptions, padding: string, label?: string): string {
+  const a11y = label ? ` role="img" aria-label="${escapeHtml(label)}"` : ' aria-hidden="true"'
+  const ground = artGround(art.band ?? [0.3, 0.75])
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${NAVY}" style="width:100%;table-layout:fixed;background-color:${NAVY}">
+<tr><td bgcolor="${NAVY}" style="padding:${padding};background-color:${NAVY};background-image:${ground};overflow:hidden">
+<div style="width:100%;overflow:hidden">
+<pre${a11y} style="margin:0;padding:0;font-family:${MONO};font-size:9px;line-height:10px;mso-line-height-rule:exactly;letter-spacing:0;font-variant-ligatures:none;font-feature-settings:'liga' 0, 'calt' 0;white-space:pre;word-wrap:normal;overflow:hidden;color:#9fc3dc">${artHtmlRows(art).join('\n')}</pre>
+</div>
+</td></tr>
+</table>`
+}
+
+function headerArt(kind: EmailReason['kind']): string {
+  return artBlock({ cols: ART_COLS, rows: 15, seed: ART_SEED[kind], wordmark: { col: 4, row: 4 }, band: [0.1, 0.6] }, '14px 0 14px 4px', 'Proto')
+}
+
+function footerArt(kind: EmailReason['kind']): string {
+  return artBlock({ cols: ART_COLS, rows: 4, seed: ART_SEED[kind] + 20, band: [0.6, 1] }, '8px 0 8px 4px')
+}
+
+/** The plain-text header: a narrow strip of the field with the wordmark set into its middle row. */
+function textHeader(kind: EmailReason['kind']): string[] {
+  const rows = artTextRows({ cols: 56, rows: 3, seed: ART_SEED[kind] }).map((row) => row.padEnd(56))
+  rows[1] = `${rows[1].slice(0, 3)}  Proto_  ${rows[1].slice(12)}`
+  return rows.map((row) => row.trimEnd())
+}
+
 // ---- Event block --------------------------------------------------------------------------------
+
+/** The pieces of the big date in the event block: 12, November, Thursday. Null for a day that doesn't parse. */
+function eventDateParts(day: string): { day: number; month: string; weekday: string } | null {
+  const date = new Date(`${day}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return null
+  const part = (options: Intl.DateTimeFormatOptions) => date.toLocaleDateString('en-US', { ...options, timeZone: 'UTC' })
+  return { day: date.getUTCDate(), month: part({ month: 'long' }), weekday: part({ weekday: 'long' }) }
+}
 
 function eventHtml(event: EventDetails, origin: string): string {
   const parts = eventDateParts(event.date)
   const date = parts
-    ? `<div class="pe-day" style="font-family:${FONT};font-size:64px;font-weight:200;line-height:56px;letter-spacing:-3px;color:#ffffff">${parts.day}</div>
-<div style="padding-top:12px;font-family:${MONO};font-size:11px;line-height:16px;letter-spacing:1px;color:${MINT};white-space:nowrap">${parts.month}&nbsp;&middot;&nbsp;${parts.weekday}</div>`
-    : `<div style="font-family:${MONO};font-size:12px;line-height:18px;color:${MINT}">${escapeHtml(event.date)}</div>`
+    ? `<div class="pe-day" style="font-family:${FONT};font-size:60px;font-weight:200;line-height:56px;letter-spacing:-3px;color:#ffffff;mso-line-height-rule:exactly">${parts.day}</div>
+<div style="padding-top:10px;font-family:${FONT};font-size:14px;line-height:19px;color:#c9d6e2">${parts.month}<br><span style="color:${MINT}">${parts.weekday}</span></div>`
+    : `<div style="font-family:${FONT};font-size:15px;line-height:22px;color:#c9d6e2">${escapeHtml(event.date)}</div>`
   const meta = [event.time, event.place].filter((value) => value.trim()).map(escapeHtml)
-  return `<tr><td class="pe-px" style="padding:8px 44px 8px 44px">
-<table role="presentation" class="pe-eventbox" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${NAVY}" style="width:100%;border-collapse:separate;border:1px solid ${NAVY};border-radius:20px;background-color:${NAVY};background-image:linear-gradient(150deg, #0b3a5e 0%, ${NAVY} 62%)">
-<tr><td class="pe-event" style="padding:28px 28px 30px 28px">
+  const texture = { cols: ART_COLS, rows: 4, seed: 40, band: [0.4, 0.6] as [number, number] }
+  return `<tr><td class="pe-px" style="padding:6px 48px 10px 48px">
+<table role="presentation" class="pe-eventbox" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${NAVY}" style="width:100%;table-layout:fixed;border-collapse:separate;border-radius:14px;background-color:${NAVY};overflow:hidden">
+<tr><td style="border-radius:14px 14px 0 0;overflow:hidden">${artBlock(texture, '8px 0 8px 0')}</td></tr>
+<tr><td class="pe-event" bgcolor="${NAVY}" style="padding:16px 28px 30px 28px;background-color:${NAVY};border-radius:0 0 14px 14px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr>
-<td class="pe-date" width="92" valign="top" style="width:92px;padding:2px 20px 0 0">
+<td class="pe-date" width="104" valign="top" style="width:104px;padding:4px 20px 0 0">
 ${date}
 </td>
 <td class="pe-copy" valign="top" style="word-break:break-word">
-<div style="font-family:${MONO};font-size:11px;line-height:16px;letter-spacing:0.5px;color:${MINT}">&gt;&nbsp;you&#39;re going</div>
-<div style="padding-top:8px;font-family:${FONT};font-size:22px;font-weight:400;line-height:28px;letter-spacing:-0.4px;color:#ffffff">${escapeHtml(event.title)}</div>
-${meta.length ? `<div style="padding-top:6px;font-family:${FONT};font-size:15px;line-height:22px;color:#c9d6e2">${meta.join('<br>')}</div>` : ''}
-<div style="padding-top:20px">${button(`${origin}/events`, 'See the event', 'light')}</div>
+<div style="font-family:${FONT};font-size:23px;font-weight:400;line-height:29px;letter-spacing:-0.4px;color:#ffffff">${escapeHtml(event.title)}</div>
+${meta.length ? `<div style="padding-top:8px;font-family:${FONT};font-size:15px;line-height:23px;color:#c9d6e2">${meta.join('<br>')}</div>` : ''}
+<div style="padding-top:22px">${button(`${origin}/events`, 'See the event', 'light')}</div>
 </td>
 </tr>
 </table>
@@ -251,7 +295,7 @@ ${meta.length ? `<div style="padding-top:6px;font-family:${FONT};font-size:15px;
 function eventText(event: EventDetails, origin: string): string[] {
   const parts = eventDateParts(event.date)
   return [
-    parts ? `${parts.weekday} ${parts.month} ${parts.day}` : event.date,
+    parts ? `${parts.weekday}, ${parts.month} ${parts.day}` : event.date,
     event.title,
     ...[event.time, event.place].filter((value) => value.trim()),
     `See the event: ${origin}/events`,
@@ -275,41 +319,25 @@ function reasonText(reason: EmailReason): string {
   }
 }
 
-/** The small mono label in the header's corner, saying which list this came from. */
-function kindLabel(reason: EmailReason): string {
-  switch (reason.kind) {
-    case 'member':
-      return 'members'
-    case 'event':
-      return 'events'
-    case 'fund':
-      return 'the fund'
-    case 'test':
-      return 'test copy'
-    case 'admin':
-      return 'the portal'
-  }
-}
-
 const EMPTY_BODY = 'Your message goes here'
 
 // Dark mode for clients that honour it (Apple Mail, Outlook for Mac and iOS, some Android).
-// The navy header and event block never change. Clients that invert on their own (Gmail apps,
-// Outlook.com) leave the gradients alone, and the [data-ogsc]/[data-ogsb] rules steer Outlook.com.
+// The navy art, event block and footer never change. Clients that invert on their own (Gmail apps,
+// Outlook.com) leave the art's colours mostly alone, and the [data-ogsc]/[data-ogsb] rules steer Outlook.com.
 const STYLE = `<style>
 :root { color-scheme: light dark; supported-color-schemes: light dark; }
 body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
 table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
 a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
 @media screen and (max-width: 620px) {
-  .pe-outer { padding: 12px 10px 28px 10px !important; }
+  .pe-outer { padding: 10px 8px 28px 8px !important; }
   .pe-px { padding-left: 22px !important; padding-right: 22px !important; }
-  .pe-head { padding: 26px 22px 22px 22px !important; }
-  .pe-body { padding-top: 32px !important; }
-  .pe-greet { font-size: 24px !important; line-height: 30px !important; }
-  .pe-event { padding: 24px 20px 26px 20px !important; }
+  .pe-body { padding-top: 30px !important; }
+  .pe-head1 { font-size: 28px !important; line-height: 34px !important; letter-spacing: -0.6px !important; }
+  .pe-event { padding: 14px 20px 26px 20px !important; }
   .pe-date, .pe-copy { display: block !important; width: auto !important; }
-  .pe-date { padding: 0 0 20px 0 !important; }
+  .pe-date { padding: 0 0 18px 0 !important; }
+  .pe-footpad { padding-left: 22px !important; padding-right: 22px !important; }
   .pe-foot { padding-left: 14px !important; padding-right: 14px !important; }
   .pe-btn-a { padding: 12px 18px !important; font-size: 14px !important; }
 }
@@ -321,8 +349,7 @@ a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !im
   .pe-link { color: ${MINT} !important; }
   .pe-btn { background-color: #ffffff !important; }
   .pe-btn-a { color: ${NAVY} !important; }
-  .pe-rule { border-color: #1a3047 !important; }
-  .pe-eventbox { border-color: #23405c !important; }
+  .pe-eventbox { border: 1px solid #23405c !important; }
 }
 [data-ogsb] .pe-page { background-color: #020c17 !important; }
 [data-ogsb] .pe-card { background-color: #0b1d30 !important; }
@@ -355,17 +382,23 @@ export function renderEmail(input: {
   const contentHtml = body
     ? bodyHtml(body)
     : `<p class="pe-soft" style="${P_STYLE};color:${MUTED};font-style:italic">${EMPTY_BODY}</p>`
+  const site = origin.replace(/^https?:\/\//, '')
 
   const text = [
+    ...textHeader(reason.kind),
+    '',
     body || EMPTY_BODY,
-    ...(event ? ['', '· · ·', '', ...eventText(event, origin)] : []),
+    ...(event ? ['', rampRule(56), '', ...eventText(event, origin)] : []),
     '',
     '--',
+    'BU Proto, for anyone at BU who makes things.',
+    origin,
+    '',
     why,
     ...(unsubscribe ? [`Unsubscribe: ${unsubscribe}`] : []),
   ].join('\n')
 
-  // Zero-width fillers after the preview text, so the inbox doesn't pull in the header's words.
+  // Zero-width fillers after the preview text, so the inbox doesn't pull in the art's glyphs.
   const preheader = escapeHtml(preheaderText(body))
   const filler = '&#847;&zwnj;&nbsp;'.repeat(60)
   const footerLink = unsubscribe
@@ -388,7 +421,7 @@ export function renderEmail(input: {
 <!--<![endif]-->
 <!--[if mso]>
 <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-<style>td, div, p, a { font-family: Arial, sans-serif !important; }</style>
+<style>td, div, p, a, h1 { font-family: Arial, sans-serif !important; } pre { font-family: 'Courier New', monospace !important; }</style>
 <![endif]-->
 ${STYLE}
 </head>
@@ -397,28 +430,23 @@ ${STYLE}
 <table role="presentation" class="pe-page" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${PAGE}" style="width:100%;background-color:${PAGE}">
 <tr><td class="pe-outer" align="center" style="padding:32px 16px 40px 16px">
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
-<table role="presentation" class="pe-card" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;border-collapse:separate;background-color:#ffffff;border:1px solid ${RULE};border-radius:24px;overflow:hidden">
-<tr><td class="pe-head" bgcolor="${NAVY}" style="padding:30px 44px 26px 44px;background-color:${NAVY};background-image:${FIELD};border-radius:23px 23px 0 0">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr>
-<td valign="bottom" style="font-family:${FONT};font-size:34px;font-weight:300;line-height:36px;letter-spacing:-1px;color:#ffffff">Proto<span style="color:${MINT}">_</span></td>
-<td valign="bottom" align="right" style="font-family:${MONO};font-size:11px;line-height:16px;color:#ffffff;white-space:nowrap;padding-bottom:4px"><span style="color:${MINT}">&gt;</span>&nbsp;${kindLabel(reason)}</td>
-</tr>
-<tr><td colspan="2" style="padding-top:34px"><div style="height:14px;max-height:14px;overflow:hidden;font-family:${MONO};font-size:12px;line-height:14px;letter-spacing:5px;color:#d9ecf6">&#9675; &#9675; &gt; &#9675; _ &gt; &gt; &#9675; _ &#9675; &gt;</div></td></tr>
-</table>
+<table role="presentation" class="pe-card" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;table-layout:fixed;border-collapse:separate;background-color:#ffffff;border:1px solid ${RULE};border-radius:18px;overflow:hidden">
+<tr><td bgcolor="${NAVY}" style="padding:0;background-color:${NAVY};border-radius:17px 17px 0 0;overflow:hidden">
+${headerArt(reason.kind)}
 </td></tr>
-<tr><td class="pe-px pe-body" style="padding:40px 44px 14px 44px;word-break:break-word;overflow-wrap:anywhere">
+<tr><td class="pe-px pe-body" style="padding:44px 48px 12px 48px;word-break:break-word;overflow-wrap:anywhere">
 ${contentHtml}
 </td></tr>
 ${event ? eventHtml(event, origin) : ''}
-<tr><td class="pe-px" style="padding:14px 44px 0 44px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="pe-rule" style="border-top:1px solid ${RULE};font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>
-<tr><td class="pe-px" style="padding:18px 44px 32px 44px">
+<tr><td style="padding:28px 0 0 0;font-size:0;line-height:0">&nbsp;</td></tr>
+<tr><td bgcolor="${NAVY}" style="padding:0;background-color:${NAVY};overflow:hidden">
+${footerArt(reason.kind)}
+</td></tr>
+<tr><td class="pe-footpad" bgcolor="${NAVY}" style="padding:14px 48px 34px 48px;background-color:${NAVY};border-radius:0 0 17px 17px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr>
-<td class="pe-ink" valign="top" style="font-family:${FONT};font-size:14px;font-weight:500;line-height:20px;color:${INK}">BU Proto</td>
-<td class="pe-soft" valign="top" align="right" style="font-family:${MONO};font-size:11px;line-height:20px;color:${MUTED};white-space:nowrap">&#9675; &gt; _</td>
-</tr>
-<tr><td class="pe-soft" colspan="2" style="padding-top:4px;font-family:${FONT};font-size:13px;line-height:20px;color:${INK_SOFT}">For anyone at BU who makes things.</td></tr>
+<tr><td style="font-family:${FONT};font-size:22px;font-weight:300;line-height:28px;letter-spacing:-0.6px;color:#ffffff">Proto<span style="color:${MINT}">_</span></td></tr>
+<tr><td style="padding-top:6px;font-family:${FONT};font-size:14px;line-height:21px;color:#c9d6e2">For anyone at BU who makes things. Hack nights, hackathon trips and demo nights, all year.</td></tr>
+<tr><td style="padding-top:14px;font-family:${FONT};font-size:14px;line-height:21px"><a href="${escapeHtml(origin)}" target="_blank" style="color:#ffffff;text-decoration:underline">${escapeHtml(site)}</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/events" target="_blank" style="color:#ffffff;text-decoration:underline">Events</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/resources" target="_blank" style="color:#ffffff;text-decoration:underline">Playbook</a></td></tr>
 </table>
 </td></tr>
 </table>
