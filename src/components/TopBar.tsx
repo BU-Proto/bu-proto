@@ -1,11 +1,13 @@
 import { Link, NavLink } from 'react-router'
 import { BRAND, NAV_ITEMS } from '../content/site'
-import { IconLink } from './IconButton'
-import { ClockIcon } from './icons'
 import { MenuSheet } from './MenuSheet'
+import ui from './ui.module.css'
 import styles from './TopBar.module.css'
 
-/** Seal and name, the centered nav pill, and the round action buttons. */
+/**
+ * Seal and name, the centered nav pill, and Join on the right. On phones the pill doesn't fit, so
+ * the menu sheet takes Join's place and carries every page; the footer lists the rest on desktop.
+ */
 export function TopBar() {
   return (
     <header className={styles.top}>
@@ -24,10 +26,12 @@ export function TopBar() {
       </nav>
 
       <div className={styles.actions}>
-        <IconLink to="/events" label="Upcoming events" variant="solid">
-          <ClockIcon />
-        </IconLink>
-        <MenuSheet />
+        <Link className={`${ui.primary} ${styles.join}`} to="/join" data-fog-clear="box">
+          Join Proto
+        </Link>
+        <div className={styles.menu}>
+          <MenuSheet />
+        </div>
       </div>
     </header>
   )

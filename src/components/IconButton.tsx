@@ -1,5 +1,4 @@
 import type { ComponentProps } from 'react'
-import { Link } from 'react-router'
 import styles from './IconButton.module.css'
 
 type Variant = 'glass' | 'solid'
@@ -26,25 +25,5 @@ export function IconButton({ label, variant = 'glass', className, children, ...r
     >
       {children}
     </button>
-  )
-}
-
-interface IconLinkProps extends ComponentProps<typeof Link> {
-  label: string
-  variant?: Variant
-}
-
-/** The same round button, as a link to another page. */
-export function IconLink({ label, variant = 'glass', className, children, ...rest }: IconLinkProps) {
-  return (
-    <Link
-      aria-label={label}
-      title={label}
-      className={classesFor(variant, typeof className === 'string' ? className : undefined)}
-      data-fog-clear="box"
-      {...rest}
-    >
-      {children}
-    </Link>
   )
 }

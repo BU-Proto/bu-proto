@@ -76,13 +76,27 @@
 
 .actions {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-/* Five links don't fit beside the logo on narrow screens; the menu sheet has them all. */
+.join {
+  padding: 9px 16px;
+}
+
+.menu {
+  display: none;
+}
+
+/* Five links don't fit beside the logo on narrow screens; the menu sheet has them all, Join too. */
 @media (max-width: 760px) {
-  .nav {
+  .nav,
+  .join {
     display: none;
+  }
+
+  .menu {
+    display: contents;
   }
 }
 
