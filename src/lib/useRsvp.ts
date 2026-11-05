@@ -24,7 +24,7 @@ function rememberGoing(id: number) {
   }
 }
 
-export function useRsvp(event: { id: number; title: string }) {
+export function useRsvp(event: { id: number; title: string; registerUrl?: string | null }) {
   const [going, setGoing] = useState(() => rememberedGoing(event.id))
   const [open, setOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)

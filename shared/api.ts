@@ -59,6 +59,8 @@ export const eventInput = z.object({
   place: text(120),
   /** One or two lines for lists and cards. */
   text: optionalText(600),
+  /** The event's own registration page (Luma, Eventbrite…): when set, people register there, not here. */
+  registerUrl: optionalUrl,
   photo: optionalImage,
   /** The full write-up on the event's own page: plain text, blank lines between paragraphs. */
   description: optionalText(8000),
@@ -236,6 +238,13 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       { key: 'time', column: 'time', label: 'Time', type: 'text', hint: 'e.g. 7:00–10:00 PM' },
       { key: 'place', column: 'place', label: 'Place', type: 'text' },
       { key: 'text', column: 'text', label: 'Short description', type: 'textarea', hint: 'One or two lines for the events list and the home page.' },
+      {
+        key: 'registerUrl',
+        column: 'register_url',
+        label: 'Registration link',
+        type: 'url',
+        hint: 'A Luma, Eventbrite or other sign-up page. When set, the site sends people there instead of taking the RSVP itself.',
+      },
       { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'A full URL or a path under public/.' },
       { key: 'description', column: 'description', label: 'Full description', type: 'textarea', hint: 'For the event’s own page. Blank lines make paragraphs.' },
       { key: 'agenda', column: 'agenda', label: 'Schedule', type: 'list', hint: 'One line each, e.g. 7:00 Food, then 7:30 Kickoff.' },

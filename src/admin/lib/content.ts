@@ -205,7 +205,7 @@ export interface FieldSection {
 
 const SECTIONS: Partial<Record<ContentResource, SectionPlan[]>> = {
   events: [
-    { title: 'Basics', keys: ['title', 'kind', 'date', 'time', 'place', 'text'] },
+    { title: 'Basics', keys: ['title', 'kind', 'date', 'time', 'place', 'text', 'registerUrl'] },
     { title: 'Event page', hint: 'The write-up on the event’s own page.', keys: ['description', 'agenda', 'hosts'] },
     { title: 'Photos', keys: ['photo', 'gallery'] },
     { title: 'Publishing', keys: ['placeholder', 'published'] },
@@ -234,6 +234,7 @@ const SECTIONS: Partial<Record<ContentResource, SectionPlan[]>> = {
 const LAYOUT: Partial<Record<ContentResource, Record<string, FieldLayout>>> = {
   events: {
     place: { wide: true },
+    registerUrl: { wide: true },
     description: { rows: 8 },
     agenda: { rows: 6 },
   },

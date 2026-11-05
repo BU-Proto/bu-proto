@@ -35,6 +35,8 @@ export const EVENTS_EMPTY = {
 
 export const RSVP = {
   label: 'RSVP',
+  /** For an event with its own sign-up page: "Register on Luma". */
+  registerOn: (site: string | null) => (site ? `Register on ${site}` : 'Register'),
   going: 'You’re going ✓',
   formLabel: (title: string) => `RSVP for ${title}`,
   submit: 'Count me in',

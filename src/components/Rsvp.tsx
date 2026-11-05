@@ -11,10 +11,39 @@ import { PrivacyNote } from './PrivacyNote'
 import ui from './ui.module.css'
 import styles from './Rsvp.module.css'
 
+/** The site an outside sign-up page is on, by name, for the button: Luma, Eventbrite, or none. */
+function siteName(href: string): string | null {
+  try {
+    const host = new URL(href).hostname.replace(/^www\./, '')
+    if (host === 'lu.ma' || host === 'luma.com') return 'Luma'
+    if (/(^|\.)eventbrite\./.test(host)) return 'Eventbrite'
+  } catch {
+    // A malformed link still gets a plain "Register".
+  }
+  return null
+}
+
 /** `prominent` sets the RSVP as the main action, as on the event's own page; in a list it stays quiet. */
 export function RsvpButton({ rsvp, className, prominent }: { rsvp: RsvpState; className?: string; prominent?: boolean }) {
   const { going, open, setOpen, close, buttonRef, formId } = rsvp
   const extra = className ? ` ${className}` : ''
+  const registerUrl = rsvp.event.registerUrl
+  if (registerUrl) {
+    // The event has its own sign-up page: people register there, so we don't take the RSVP.
+    return (
+      <a
+        className={`${prominent ? ui.primary : ui.secondary}${extra}`}
+        href={registerUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-fog-clear="box"
+        data-fog-ignore
+      >
+        {RSVP.registerOn(siteName(registerUrl))} <span aria-hidden="true">↗</span>
+        <span className={ui.srOnly}> (opens in a new tab)</span>
+      </a>
+    )
+  }
   if (going) {
     // Already in: nothing left to do here, but it stays focusable so the change is announced.
     return (
@@ -42,7 +71,7 @@ export function RsvpButton({ rsvp, className, prominent }: { rsvp: RsvpState; cl
 /** The form itself, rendered only while it's open. `className` places it. */
 export function RsvpForm({ rsvp, className }: { rsvp: RsvpState; className?: string }) {
   const { event, going, open, close, submit, formId } = rsvp
-  if (!open || going) return null
+  if (!open || going || event.registerUrl) return null
 
   const onKeyDown = (keyEvent: KeyboardEvent) => {
     if (keyEvent.key !== 'Escape') return

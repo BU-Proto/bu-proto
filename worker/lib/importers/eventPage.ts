@@ -402,6 +402,7 @@ export function parseEventPage(html: string, pageUrl: string): ParsedEventPage {
       time: clamp(formatTime(start, end), 40),
       place: clamp(extras.place || placeOf(event) || 'To be announced', 120),
       text: summary ? summaryOf(summary) : '',
+      registerUrl: clamp(url.href, 2000),
       photo: extras.photo || imageOf(event, url.href) || '',
       description: clamp(description, 8000),
       agenda: [],
@@ -488,6 +489,8 @@ function lumaDataToEvent(data: unknown): ParsedEventPage | null {
       time: clamp(formatTime(start, end), 40),
       place: clamp(extras.place || 'To be announced', 120),
       text: description ? summaryOf(description) : '',
+      // Its own page on Luma, where people register. The slug is the event's public address.
+      registerUrl: str(event.url) ? `https://luma.com/${str(event.url)}` : '',
       photo: extras.photo || '',
       description: clamp(description, 8000),
       agenda: [],
