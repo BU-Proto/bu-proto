@@ -8,7 +8,7 @@ import { DEFAULT_FIELD_SETTINGS, type FieldSettings } from '../ascii-field'
 /** Solid grounds, for canvas-drawn edges and textures. Kept in step with the tokens in index.css. */
 export const GROUND = {
   harbor: '#061a2e',
-  paper: '#f1f0eb',
+  paper: '#f0f1fa',
   /** Frost, faint: the frozen glyph texture on harbor. */
   texture: 'rgba(246, 251, 255, 0.06)',
 } as const

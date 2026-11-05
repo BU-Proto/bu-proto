@@ -32,7 +32,6 @@ import { BRAND, SCHEDULE } from '../content/site'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
-import { useWheelEasing } from '../lib/smoothScroll'
 import { useRsvp } from '../lib/useRsvp'
 import { glyphTexture, rhythmColumn, type FigureShape } from '../lib/glyphArt'
 import { GROUND } from '../lib/pageGround'
@@ -159,7 +158,6 @@ export function Home() {
   const latest = newestWins(wins, 12)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   const revealRef = useReveal<HTMLDivElement>()
-  useWheelEasing()
 
   return (
     <>
