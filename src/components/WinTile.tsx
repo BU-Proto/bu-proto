@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import type { Win } from '../../shared/api'
 import { WIN_SHEET, WIN_SHOWCASE } from '../content/wins'
 import { asciiWord } from '../lib/glyphArt'
@@ -68,18 +69,16 @@ function TagLine({ text, inView }: { text: string; inView: boolean }) {
 }
 
 /** The project's name, each letter a column of copies that rolls into the one-line mask. */
-function RollingTitle({ text, arrow }: { text: string; arrow: boolean }) {
+function RollingTitle({ text }: { text: string }) {
   const chars = [...text]
   const letters = chars.filter((char) => char.trim()).length
   const seen = { count: 0 }
   return (
     <h3 className={styles.name} aria-label={text} style={{ '--n': chars.length } as CSSProperties}>
       <span className={styles.mask}>
-        {arrow && (
-          <span className={styles.arrow} aria-hidden="true">
-            {'>'}
-          </span>
-        )}
+        <span className={styles.arrow} aria-hidden="true">
+          {'>'}
+        </span>
         {chars.map((char, index) => {
           if (!char.trim()) return <span key={index} className={styles.space} aria-hidden="true" />
           const i = seen.count++
@@ -182,7 +181,7 @@ interface WinTileProps {
   eager?: boolean
 }
 
-/** One win: its cover, a decoding tag line and its name, opening its Devpost page when it has one. */
+/** One win: its cover, a decoding tag line and its name, opening its Devpost page or else its own page. */
 export function WinTile({ win, side, details = false, eager = false }: WinTileProps) {
   // Each tile plays as its top edge crosses the fold, so the motion is already under way as it arrives.
   const [ref, inView] = useInView<HTMLLIElement>('0px')
@@ -193,7 +192,7 @@ export function WinTile({ win, side, details = false, eager = false }: WinTilePr
         <Art win={win} alt={`${win.project} at ${hackathon}`} eager={eager} />
       </Media>
       <TagLine text={tagLine(win)} inView={inView} />
-      <RollingTitle text={win.project} arrow={Boolean(win.devpost)} />
+      <RollingTitle text={win.project} />
       {win.placeholder && (
         <p className={styles.sample}>
           <SampleTag />
@@ -211,7 +210,9 @@ export function WinTile({ win, side, details = false, eager = false }: WinTilePr
           {content}
         </a>
       ) : (
-        <div className={styles.tile}>{content}</div>
+        <Link className={styles.tile} data-link to={`/wins/${win.id}`}>
+          {content}
+        </Link>
       )}
     </li>
   )
