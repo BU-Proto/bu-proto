@@ -235,8 +235,13 @@
 .navRow {
   display: flex;
   align-items: stretch;
-  gap: 2px;
   border-radius: var(--radius-control);
+}
+
+/* The row is the hover surface, link and chevron together, so it lights in one piece at the same
+   width as the rows without a chevron and the sub-links under it. */
+.navRow:hover {
+  background: var(--hover);
 }
 
 .navLink {
@@ -259,10 +264,17 @@
   color: var(--ink-dim);
 }
 
-.navLink:hover,
-.subLink:hover,
-.disclosure:hover {
+.subLink:hover {
   background: var(--hover);
+  color: var(--ink);
+}
+
+.navLink:hover {
+  color: var(--ink);
+}
+
+/* Inside a lit row the chevron still says it's its own control: it brightens on its own. */
+.disclosure:hover {
   color: var(--ink);
 }
 
