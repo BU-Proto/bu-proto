@@ -15,13 +15,37 @@ const MAX_WHEEL_DELTA = 200
 const scrollLocked = () =>
   getComputedStyle(document.documentElement).overflowY === 'hidden' || getComputedStyle(document.body).overflowY === 'hidden'
 
+const frames = new Set<(time: number) => void>()
+const loop: { lenis: Lenis | null; id: number } = { lenis: null, id: 0 }
+
+function tick(time: number) {
+  loop.lenis?.raf(time)
+  frames.forEach((frame) => frame(time))
+  loop.id = loop.lenis || frames.size > 0 ? requestAnimationFrame(tick) : 0
+}
+
+const startLoop = () => {
+  if (!loop.id) loop.id = requestAnimationFrame(tick)
+}
+
+/**
+ * Runs `frame` every frame, right after the page has scrolled for that frame, so anything drawn
+ * from the page's position stays locked to it. Returns the way to stop.
+ */
+export function onFrame(frame: (time: number) => void) {
+  frames.add(frame)
+  startLoop()
+  return () => {
+    frames.delete(frame)
+  }
+}
+
 /** Eases the wheel and trackpad, and has same-page anchor links glide to their target. */
 export function useSmoothScroll() {
   useEffect(() => {
     if (reducedMotion()) return
     const lenis = new Lenis({
       lerp: LERP,
-      autoRaf: true,
       anchors: true,
       allowNestedScroll: true,
       stopInertiaOnNavigate: true,
@@ -31,6 +55,11 @@ export function useSmoothScroll() {
         return true
       },
     })
-    return () => lenis.destroy()
+    loop.lenis = lenis
+    startLoop()
+    return () => {
+      loop.lenis = null
+      lenis.destroy()
+    }
   }, [])
 }

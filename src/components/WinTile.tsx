@@ -208,7 +208,7 @@ export function WinTile({ win, side, details = false, eager = false }: WinTilePr
   )
 
   return (
-    <li ref={ref} className={styles.item} data-in={inView || undefined}>
+    <li ref={ref} className={styles.item} data-entrance data-in={inView || undefined}>
       {win.devpost ? (
         <a className={styles.tile} data-link href={win.devpost} target="_blank" rel="noreferrer">
           {content}

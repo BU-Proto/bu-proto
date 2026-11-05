@@ -1,71 +1,11 @@
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import type { Win } from '../../shared/api'
 import { WIN_SHEET, WINS_EMPTY } from '../content/wins'
 import { reducedMotion, useInView } from '../lib/useInView'
 import { WinTile } from './WinTile'
+import { mountWinStage } from './winStage'
 import styles from './WinSheet.module.css'
-
-/** Scroll speed, in px per second, at which the tiles are fully bent. */
-const BEND_SPEED = 2700
-/** How far a tile's outer edge spreads at full bend, as a share of its width, at the viewport's edge. */
-const BEND_SPREAD = 0.05
-/** How far a tile tips toward the viewer at full bend, at the viewport's edge. */
-const BEND_TILT = 8
-const BEND_EASE_MS = 90
-
-/**
- * Bends the tiles while the page moves: the faster the scroll, the more each one's outer edge
- * spreads, most near the top and bottom of the viewport. It settles flat when the scroll stops.
- */
-function useScrollBend() {
-  const ref = useRef<HTMLOListElement>(null)
-
-  useEffect(() => {
-    const grid = ref.current
-    if (!grid || reducedMotion() || !window.matchMedia('(hover: hover) and (min-width: 813px)').matches) return
-    const media = [...grid.querySelectorAll<HTMLElement>('[data-side]')]
-    const state = { frame: 0, y: window.scrollY, at: 0, speed: 0 }
-
-    const tick = (now: number) => {
-      const elapsed = Math.max(now - state.at, 1)
-      const speed = (Math.abs(window.scrollY - state.y) / elapsed) * 1000
-      state.y = window.scrollY
-      state.at = now
-      state.speed += (speed - state.speed) * (1 - Math.exp(-elapsed / BEND_EASE_MS))
-      const bend = Math.min(1, state.speed / BEND_SPEED)
-      const middle = window.innerHeight / 2
-      const settled = bend < 0.002
-
-      for (const item of media) {
-        if (settled) {
-          item.style.removeProperty('--spread')
-          item.style.removeProperty('--tilt')
-          continue
-        }
-        const box = item.getBoundingClientRect()
-        if (box.bottom < 0 || box.top > window.innerHeight) continue
-        const reach = Math.max(-1, Math.min(1, (box.top + box.height / 2 - middle) / middle))
-        item.style.setProperty('--spread', (1 + BEND_SPREAD * bend * reach * reach).toFixed(4))
-        item.style.setProperty('--tilt', `${(BEND_TILT * bend * reach).toFixed(3)}deg`)
-      }
-      state.frame = settled ? 0 : requestAnimationFrame(tick)
-    }
-
-    const wake = () => {
-      if (state.frame) return
-      state.at = performance.now()
-      state.frame = requestAnimationFrame(tick)
-    }
-    window.addEventListener('scroll', wake, { passive: true })
-    return () => {
-      window.removeEventListener('scroll', wake)
-      cancelAnimationFrame(state.frame)
-    }
-  }, [])
-
-  return ref
-}
 
 /** The heading, its characters tipping up out of the line, with the lede rising beside it. */
 function Head({ id }: { id: string }) {
@@ -114,9 +54,8 @@ function AllWins() {
 
 /** Two columns of tiles, one on phones. */
 export function WinGrid({ wins, details = false }: { wins: readonly Win[]; details?: boolean }) {
-  const ref = useScrollBend()
   return (
-    <ol ref={ref} className={styles.grid}>
+    <ol className={styles.grid}>
       {wins.map((win, index) => (
         <WinTile
           key={win.id}
@@ -130,10 +69,33 @@ export function WinGrid({ wins, details = false }: { wins: readonly Win[]; detai
   )
 }
 
+/**
+ * The light sheet, its covers drawn in WebGL behind the words. Only for a mouse: a touch scroll runs
+ * ahead of the page's frames, so a drawn cover would trail its own words.
+ */
+function Sheet({ wins, children }: { wins: readonly Win[]; children: ReactNode }) {
+  const sheet = useRef<HTMLDivElement>(null)
+  const stage = useRef<HTMLCanvasElement>(null)
+  const tiles = wins.map((win) => win.id).join()
+
+  useEffect(() => {
+    if (!sheet.current || !stage.current || reducedMotion()) return
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+    return mountWinStage(sheet.current, stage.current)
+  }, [tiles])
+
+  return (
+    <div ref={sheet} className={styles.sheet}>
+      {wins.length > 0 && <canvas key={tiles} ref={stage} className={styles.stage} aria-hidden="true" />}
+      {children}
+    </div>
+  )
+}
+
 /** The landing's latest wins, on their own light sheet, with the way through to the rest. */
 export function LatestWins({ wins, id }: { wins: readonly Win[]; id: string }) {
   return (
-    <div className={styles.sheet}>
+    <Sheet wins={wins}>
       <Head id={id} />
       {wins.length === 0 ? (
         <p className={styles.empty}>{WINS_EMPTY}</p>
@@ -143,15 +105,15 @@ export function LatestWins({ wins, id }: { wins: readonly Win[]; id: string }) {
           <AllWins />
         </>
       )}
-    </div>
+    </Sheet>
   )
 }
 
 /** Every win on the same sheet, for /wins, where the page's own intro does the heading's job. */
 export function WinSheet({ wins }: { wins: readonly Win[] }) {
   return (
-    <div className={styles.sheet}>
+    <Sheet wins={wins}>
       <WinGrid wins={wins} details />
-    </div>
+    </Sheet>
   )
 }
