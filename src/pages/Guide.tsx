@@ -9,7 +9,7 @@ import { GUIDE_DOCS } from '../content/guides'
 import { type Author, authorsOn, nameList } from '../content/guides/authors'
 import type { Block, GuideDoc, GuideImage, GuideLink, GuideSection, Rich, WinExample } from '../content/guides/types'
 import { winHref, winThumb } from '../content/guides/wins'
-import { GUIDE_PAGE, GUIDES, guidePath, RESOURCES_INTRO, type Guide as GuideEntry } from '../content/resources'
+import { GUIDE_PAGE, GUIDES, guidePath, PLAYBOOK_HREF, PLAYBOOK_INTRO, type Guide as GuideEntry } from '../content/resources'
 import styles from './Guide.module.css'
 
 /** Site routes go through the router; anything else stays a plain anchor. */
@@ -317,7 +317,7 @@ function UpNext({ index }: { index: number }) {
   const next = WRITTEN[last ? 0 : index + 1]
   const previous = WRITTEN[index - 1]
   if (!next || next.slug === WRITTEN[index]?.slug) return null
-  const href = guidePath(next) ?? '/resources'
+  const href = guidePath(next) ?? PLAYBOOK_HREF
   const { image } = next.lead
   return (
     <section className={styles.upNext} aria-labelledby="up-next">
@@ -337,14 +337,14 @@ function UpNext({ index }: { index: number }) {
       </Link>
       <nav className={styles.moreGuides} aria-label={GUIDE_PAGE.navLabel}>
         {previous ? (
-          <Link className={styles.moreLink} to={guidePath(previous) ?? '/resources'} data-fog-clear>
+          <Link className={styles.moreLink} to={guidePath(previous) ?? PLAYBOOK_HREF} data-fog-clear>
             <span aria-hidden="true">← </span>
             {GUIDE_PAGE.previous}: {previous.title}
           </Link>
         ) : (
           <span />
         )}
-        <Link className={styles.moreLink} to="/resources" data-fog-clear>
+        <Link className={styles.moreLink} to={PLAYBOOK_HREF} data-fog-clear>
           {GUIDE_PAGE.all}
         </Link>
       </nav>
@@ -418,7 +418,7 @@ function GuideMissing() {
         <p className={ui.introLede} data-fog-clear>
           {copy.text}
         </p>
-        <Link className={ui.primary} to="/resources" data-fog-clear="box">
+        <Link className={ui.primary} to={PLAYBOOK_HREF} data-fog-clear="box">
           {copy.back}
         </Link>
       </section>
@@ -456,7 +456,7 @@ export function Guide() {
       <title>{`${entry.title} · ${BRAND.full}`}</title>
       <DetailOpener photo={image.src} alt={image.alt}>
         <p className={styles.kicker} data-fog-clear>
-          <Link to="/resources">{RESOURCES_INTRO.title}</Link>
+          <Link to={PLAYBOOK_HREF}>{PLAYBOOK_INTRO.title}</Link>
           <span className={styles.kickerCount}>
             {GUIDE_PAGE.guideOf(index + 1, WRITTEN.length)}
           </span>

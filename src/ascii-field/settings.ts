@@ -1,3 +1,5 @@
+import type { ShapeName } from './shapes'
+
 /** Character ramps for the background field, from empty to dense. */
 export const RAMPS = {
   classic: ' .:-=+*#%@',
@@ -50,6 +52,8 @@ export interface FieldSettings {
   drift: number
   ramp: RampName
   trailColor: TrailColor
+  /** Which shape the gradient's light takes (see shapes.ts). */
+  shape: ShapeName
 }
 
 export const DEFAULT_FIELD_SETTINGS: FieldSettings = {
@@ -63,6 +67,7 @@ export const DEFAULT_FIELD_SETTINGS: FieldSettings = {
   drift: 1,
   ramp: 'fine',
   trailColor: 'white',
+  shape: 'bloom',
 }
 
 export const MONO_FAMILY = '"JetBrains Mono"'

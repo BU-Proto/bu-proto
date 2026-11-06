@@ -25,6 +25,7 @@
 }
 
 .line b {
+  color: var(--hue);
   font-size: clamp(64px, 9vw, 132px);
   font-weight: 200;
   letter-spacing: -0.05em;

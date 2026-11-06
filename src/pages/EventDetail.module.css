@@ -9,6 +9,7 @@
 }
 
 .day {
+  color: var(--hue);
   font-size: clamp(88px, 11vw, 160px);
   font-weight: 200;
   letter-spacing: -0.06em;
@@ -30,7 +31,7 @@
 }
 
 .kind {
-  color: var(--accent);
+  color: var(--hue);
   font-weight: 500;
 }
 

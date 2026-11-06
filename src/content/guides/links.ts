@@ -15,8 +15,11 @@ export const SLUGS = {
   breakdowns: 'winning-projects',
 } as const
 
+/** The playbook's own page, under the resources hub. Each guide is a page below it. */
+export const PLAYBOOK_HREF = '/resources/playbook'
+
 export function guideHref(slug: string): string {
-  return `/resources/${slug}`
+  return `${PLAYBOOK_HREF}/${slug}`
 }
 
 export function guideLink(slug: string, label: string): GuideLink {

@@ -1,8 +1,54 @@
+/* A screen tall, so the footer stays out of sight until the page arrives. */
+.pending {
+  min-height: calc(100vh - 160px);
+  min-height: calc(100dvh - 160px);
+  align-content: start;
+}
+
 .loading {
   margin: 0;
-  color: var(--ink-soft);
-  font-size: 14px;
+  padding-top: clamp(12px, 4vh, 40px);
+}
+
+/* The trail's three glyphs, lighting up one after another. */
+.glyphs {
+  display: inline-flex;
+  gap: 0.35em;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  line-height: 1;
   text-shadow: var(--on-field-shadow);
+}
+
+.glyphs > span {
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glyphs > span {
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  .glyphs > span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .glyphs > span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+  }
+
+  30% {
+    opacity: 1;
+  }
 }
 
 .error {

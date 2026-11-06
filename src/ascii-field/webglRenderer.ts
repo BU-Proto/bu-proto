@@ -2,11 +2,10 @@ import { driftPose, swayPhases } from './ambient'
 import { gradientPixels } from './gradient'
 import type { FieldFrame, FieldGeometry, FieldRenderer, GlyphAtlas } from './renderer'
 import { FIELD, TRAIL_COLORS } from './settings'
+import { shapeMap, type ShapeName } from './shapes'
 
 /** A number as a GLSL float literal. */
 const glsl = (n: number) => (Number.isInteger(n) ? n.toFixed(1) : String(n))
-
-const GRADIENT = gradientPixels()
 
 // One triangle that covers the viewport; no vertex buffers needed.
 const VERTEX_SHADER = `#version 300 es
@@ -55,14 +54,14 @@ uniform float uTrailBase;
 uniform vec3 uTrailColor;
 uniform float uBaseColor;
 uniform float uContrast;
+uniform vec2 uMapSize;
 
 out vec4 fragColor;
 
-const vec2 MAP_SIZE = vec2(${glsl(GRADIENT.width)}, ${glsl(GRADIENT.height)});
 const vec3 BASE = vec3(${FIELD.BASE_RGB.map((c) => glsl(c / 255)).join(', ')});
 
 vec3 gradient(vec2 uv) {
-  vec2 st = (clamp(uv, 0.0, 1.0) * (MAP_SIZE - 1.0) + 0.5) / MAP_SIZE;
+  vec2 st = (clamp(uv, 0.0, 1.0) * (uMapSize - 1.0) + 0.5) / uMapSize;
   return texture(uGradient, st).rgb;
 }
 
@@ -179,6 +178,7 @@ const UNIFORMS = [
   'uTrailColor',
   'uBaseColor',
   'uContrast',
+  'uMapSize',
 ] as const
 
 type UniformName = (typeof UNIFORMS)[number]
@@ -248,6 +248,8 @@ export class WebGLFieldRenderer implements FieldRenderer {
   private geometry: FieldGeometry | null = null
   private atlas: GlyphAtlas | null = null
   private trailColor = ''
+  /** The shape whose colors are in the gradient texture. */
+  private shape: ShapeName | '' = ''
   /** The cells texture was (re)allocated and holds nothing yet. */
   private cellsStale = true
 
@@ -342,6 +344,14 @@ export class WebGLFieldRenderer implements FieldRenderer {
       }
       gl.uniform2f(u.uWarpScale, warp.scaleX, warp.scaleY)
     }
+    if (settings.shape !== this.shape) {
+      this.shape = settings.shape
+      const map = gradientPixels(shapeMap(settings.shape))
+      gl.activeTexture(gl.TEXTURE0 + UNIT_GRADIENT)
+      gl.bindTexture(gl.TEXTURE_2D, state.gradient)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, map.width, map.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, map.data)
+      gl.uniform2f(u.uMapSize, map.width, map.height)
+    }
     if (settings.trailColor !== this.trailColor) {
       this.trailColor = settings.trailColor
       gl.uniform3f(u.uTrailColor, ...hexToUnit(TRAIL_COLORS[settings.trailColor]))
@@ -392,7 +402,6 @@ export class WebGLFieldRenderer implements FieldRenderer {
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false)
 
     const gradient = texture(gl, UNIT_GRADIENT, gl.LINEAR)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, GRADIENT.width, GRADIENT.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, GRADIENT.data)
     const atlas = texture(gl, UNIT_ATLAS, gl.LINEAR)
     const cells = texture(gl, UNIT_CELLS, gl.NEAREST)
     const warp = texture(gl, UNIT_WARP, gl.LINEAR)
@@ -406,6 +415,7 @@ export class WebGLFieldRenderer implements FieldRenderer {
     gl.uniform1i(uniforms.uWarp, UNIT_WARP)
     gl.uniform2f(uniforms.uWarpSize, 1, 1)
     this.trailColor = ''
+    this.shape = ''
     return { program, vao, gradient, atlas, cells, warp, warpCols: 1, warpRows: 1, uniforms }
   }
 

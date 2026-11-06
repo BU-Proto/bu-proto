@@ -449,7 +449,7 @@ ${event ? eventHtml(event, origin) : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="font-family:${FONT};font-size:22px;font-weight:300;line-height:28px;letter-spacing:-0.6px;color:#ffffff">Proto<span style="color:${MINT}">_</span></td></tr>
 <tr><td style="padding-top:6px;font-family:${FONT};font-size:14px;line-height:21px;color:#c9d6e2">For anyone at BU who makes things. Hack nights, hackathon trips and demo nights, all year.</td></tr>
-<tr><td style="padding-top:14px;font-family:${FONT};font-size:14px;line-height:21px"><a href="${escapeHtml(origin)}" target="_blank" style="color:#ffffff;text-decoration:underline">${escapeHtml(site)}</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/events" target="_blank" style="color:#ffffff;text-decoration:underline">Events</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/resources" target="_blank" style="color:#ffffff;text-decoration:underline">Playbook</a></td></tr>
+<tr><td style="padding-top:14px;font-family:${FONT};font-size:14px;line-height:21px"><a href="${escapeHtml(origin)}" target="_blank" style="color:#ffffff;text-decoration:underline">${escapeHtml(site)}</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/events" target="_blank" style="color:#ffffff;text-decoration:underline">Events</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/resources/playbook" target="_blank" style="color:#ffffff;text-decoration:underline">Playbook</a></td></tr>
 </table>
 </td></tr>
 </table>

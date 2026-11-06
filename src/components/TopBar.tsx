@@ -1,12 +1,14 @@
 import { Link, NavLink } from 'react-router'
 import { BRAND, NAV_ITEMS } from '../content/site'
 import { MenuSheet } from './MenuSheet'
+import { NavMenu } from './NavMenu'
 import ui from './ui.module.css'
 import styles from './TopBar.module.css'
 
 /**
- * Seal and name, the centered nav pill, and Join on the right. On phones the pill doesn't fit, so
- * the menu sheet takes Join's place and carries every page; the footer lists the rest on desktop.
+ * Seal and name, the centered nav pill, and Join on the right. A pill item with pages under it
+ * (About) opens them in a small menu. On phones the pill doesn't fit, so the menu sheet takes
+ * Join's place and carries every page; the footer lists the rest on desktop.
  */
 export function TopBar() {
   return (
@@ -18,11 +20,15 @@ export function TopBar() {
       </Link>
 
       <nav className={styles.nav} aria-label="Primary">
-        {NAV_ITEMS.filter((item) => item.inPill).map((item) => (
-          <NavLink key={item.to} to={item.to} data-fog-clear="box">
-            {item.label}
-          </NavLink>
-        ))}
+        {NAV_ITEMS.filter((item) => item.inPill).map((item) =>
+          item.children ? (
+            <NavMenu key={item.to} item={item} />
+          ) : (
+            <NavLink key={item.to} to={item.to} data-fog-clear="box">
+              {item.label}
+            </NavLink>
+          ),
+        )}
       </nav>
 
       <div className={styles.actions}>

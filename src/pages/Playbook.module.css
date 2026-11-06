@@ -1,0 +1,279 @@
+/* ---- The lead guide: its photo large, the title and byline beside it on the field ---- */
+
+.featured {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: end;
+  gap: clamp(24px, 4vw, 56px);
+}
+
+.featuredImage {
+  display: block;
+  overflow: hidden;
+  border-radius: 26px;
+  box-shadow: 0 30px 80px -40px rgb(var(--harbor-rgb) / 0.7);
+}
+
+.featuredImage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.featuredText {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  padding-bottom: 6px;
+  text-shadow: var(--on-field-shadow);
+}
+
+.featuredLabel {
+  margin: 0;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.featuredTitle {
+  margin: 0;
+  font-size: clamp(36px, 4.6vw, 64px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.featuredTitle a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 8px;
+}
+
+.featuredTitle a:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.featuredLine {
+  max-width: 40ch;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.read {
+  margin-top: 6px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .featured:has(a:hover) .featuredImage img {
+    transform: scale(1.025);
+  }
+}
+
+/* ---- The rest, each with its picture ---- */
+
+.book {
+  padding: clamp(24px, 3vw, 40px) clamp(20px, 4vw, 44px) clamp(22px, 3vw, 36px);
+}
+
+/* The next few, a picture over each title, across the top of the glass. */
+.tier {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 28px clamp(20px, 3vw, 36px);
+  margin: 0;
+  padding: 0 0 clamp(20px, 3vw, 30px);
+  list-style: none;
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.22);
+}
+
+.card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.cardImage {
+  display: block;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.cardImage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cardTitle {
+  font-size: clamp(21px, 2vw, 26px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+a.card:hover .cardTitle {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+a.card:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 4px;
+  border-radius: 16px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a.card:hover .cardImage img {
+    transform: scale(1.03);
+  }
+}
+
+.toc {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(24px, 4vw, 48px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  height: 100%;
+  padding: 20px 0;
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
+}
+
+.thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  border-radius: 12px;
+  object-fit: cover;
+  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.entryText {
+  display: grid;
+  gap: 4px;
+}
+
+.title {
+  font-size: clamp(19px, 1.8vw, 23px);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.line {
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+a.entry:hover .title {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+a.entry:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a.entry:hover .thumb {
+    transform: translateY(-2px);
+  }
+}
+
+/* ---- Still being written: quiet, no pictures ---- */
+
+.soon {
+  display: grid;
+  gap: 10px;
+  padding-top: 26px;
+}
+
+.soonTitle {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.soonList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px clamp(20px, 3vw, 36px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.soonList li {
+  display: grid;
+  gap: 2px;
+}
+
+.soonName {
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+
+.soonList .line {
+  color: var(--ink-dim);
+  font-size: 13.5px;
+}
+
+@media (max-width: 860px) {
+  .featured {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .toc {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .soonList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .entry {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px 0;
+  }
+
+  .featuredImage {
+    border-radius: 18px;
+  }
+
+  /* Stacked on a phone, so the pictures go wider and shorter to keep the list moving. */
+  .cardImage img {
+    aspect-ratio: 16 / 9;
+  }
+}

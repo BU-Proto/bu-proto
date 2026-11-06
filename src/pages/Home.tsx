@@ -1,5 +1,5 @@
-import { useMemo, type CSSProperties } from 'react'
-import { Link, useLoaderData } from 'react-router'
+import { useEffect, useMemo, type CSSProperties, type RefObject } from 'react'
+import { Link, useLoaderData, useOutletContext } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { newestWins } from '../components/accolade'
 import { GlyphEdge } from '../components/GlyphEdge'
@@ -16,6 +16,7 @@ import { ScheduleCard } from '../components/ScheduleCard'
 import ui from '../components/ui.module.css'
 import { LatestWins } from '../components/WinSheet'
 import { WinTally } from '../components/WinTally'
+import type { LayoutOutlet } from '../components/Layout'
 import {
   FUND_NOTE,
   HOME_EMPTY,
@@ -27,7 +28,7 @@ import {
   TRACKS,
   TRACKS_INTRO,
 } from '../content/home'
-import { NEXT_EVENT } from '../content/events'
+import { KIND_HUE, NEXT_EVENT } from '../content/events'
 import { BRAND, SCHEDULE } from '../content/site'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
@@ -64,6 +65,7 @@ function beatIndex(week: number): number {
 }
 
 const beatOf = (week: number) => BEATS[beatIndex(week)]?.name
+const hueOf = (week: number) => RHYTHM[beatIndex(week)]?.hue
 
 function weekArt(week: number): string {
   const beat = BEATS[beatIndex(week)]
@@ -84,7 +86,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
   const rsvp = useRsvp(event)
   const { day, monthLong, weekdayLong } = dateParts(event.date)
   return (
-    <article className={styles.event}>
+    <article className={styles.event} data-hue={KIND_HUE[event.kind]}>
       <p className={styles.date} data-reveal="rise">
         <span className={styles.dateDay}>{day}</span>
         <span className={styles.dateRest}>
@@ -146,6 +148,40 @@ function NoEvent() {
  * which takes on a frozen texture of the field partway down and fills back up with the live field
  * for the ask. Each section has one job: the ways in, the rhythm and its next beat, the record.
  */
+/**
+ * The field rises back up for the ask in a shape of its own: dawn, light coming up from the foot
+ * of the page. It changes over halfway down the harbor stretch between the hero and the ask, where
+ * the field is out of sight, so neither the hero nor the ask ever sees it switch.
+ */
+function useClosingShape(harborRef: RefObject<HTMLElement | null>) {
+  const { setFieldShape } = useOutletContext<LayoutOutlet>()
+  useEffect(() => {
+    const state: { frame: number; closing: boolean | null } = { frame: 0, closing: null }
+    const check = () => {
+      state.frame = 0
+      const harbor = harborRef.current
+      if (!harbor) return
+      const box = harbor.getBoundingClientRect()
+      const next = box.top + box.height / 2 < window.innerHeight / 2
+      if (next === state.closing) return
+      state.closing = next
+      setFieldShape(next ? 'dawn' : null)
+    }
+    const schedule = () => {
+      if (!state.frame) state.frame = requestAnimationFrame(check)
+    }
+    check()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => {
+      cancelAnimationFrame(state.frame)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+      setFieldShape(null)
+    }
+  }, [harborRef, setFieldShape])
+}
+
 export function Home() {
   const { events, hackathons, wins } = useLoaderData<HomeData>()
   const nextEvent = events
@@ -157,7 +193,9 @@ export function Home() {
     .slice(0, 3)
   const latest = newestWins(wins, 12)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
+  const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   const revealRef = useReveal<HTMLDivElement>()
+  useClosingShape(revealRef)
 
   return (
     <>
@@ -182,7 +220,13 @@ export function Home() {
 
             <ol className={styles.trackList}>
               {TRACKS.map((track, index) => (
-                <li key={track.name} className={styles.track} style={{ '--step': index } as CSSProperties}>
+                <li
+                  key={track.name}
+                  className={styles.track}
+                  data-hue={track.hue}
+                  data-shape={FIGURES[track.glyph] ?? 'ring'}
+                  style={{ '--step': index } as CSSProperties}
+                >
                   <AsciiFigure
                     shape={FIGURES[track.glyph] ?? 'ring'}
                     className={styles.figure}
@@ -209,7 +253,12 @@ export function Home() {
           the record. The field comes back by degrees: plain harbor, its texture, then the field. */}
       <div
         className={`${styles.bleed} ${styles.ink} ${styles.inkTextured}`}
-        style={{ '--texture': texture ? `url(${texture})` : 'none' } as CSSProperties}
+        style={
+          {
+            '--texture': texture ? `url(${texture})` : 'none',
+            '--texture-mask': textureMask ? `url(${textureMask})` : 'none',
+          } as CSSProperties
+        }
       >
         <section className={`${styles.column} ${styles.rhythm}`} aria-labelledby="rhythm">
           <header className={styles.sectionHead}>
@@ -229,6 +278,7 @@ export function Home() {
                   key={week}
                   className={styles.week}
                   data-beat={beatOf(week)}
+                  data-hue={hueOf(week)}
                   data-reveal="column"
                   style={after((week - 1) * 45)}
                 >
@@ -249,6 +299,7 @@ export function Home() {
               <li
                 key={beat.what}
                 className={styles.beat}
+                data-hue={beat.hue}
                 data-later={beat.later || undefined}
                 data-reveal="rise"
                 style={after(row * 90)}
@@ -297,7 +348,7 @@ export function Home() {
               )}
             </section>
 
-            <section className={styles.applyBy} aria-labelledby="apply-by">
+            <section className={styles.applyBy} data-hue="iris" aria-labelledby="apply-by">
               <div className={styles.nextHead} data-reveal="rise">
                 <h3 id="apply-by" className={styles.subTitle}>
                   {NEXT_UP.applyBy}
@@ -351,7 +402,7 @@ export function Home() {
         </section>
 
         {/* The record: the running tally, then the newest wins on their own light sheet. */}
-        <section className={styles.wins} aria-labelledby="latest-wins">
+        <section className={styles.wins} data-hue="rose" aria-labelledby="latest-wins">
           <div className={styles.column}>
             <WinTally wins={wins} />
           </div>

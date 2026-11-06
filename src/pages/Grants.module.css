@@ -1,14 +1,45 @@
 /*
- * The fund's coming-soon page. The field over the intro, then solid harbor to the end: one
- * ground, no bands, no rules, no boxes. Sections are told apart by space and by how each one
- * sets its sentences: the plan read down a margin, the steps walking down, the form as a sentence
- * with blanks. Mint marks only what's yours to do: the last step and the blank you're filling.
+ * The fund's coming-soon page. One ground the whole way down: the field over the intro, then
+ * harbor, lit from behind by soft pools of the field's own colours. The pools have no edges and
+ * overlap, so the light shifts down the page while the ground never changes. No bands, no rules,
+ * no boxes. The colour that carries meaning is on the route: each stop has its own, read along
+ * the field's gradient, and the last one is mint, the site's colour for what's yours to do.
  */
 
 .page {
+  /* The field's light, from the palette in index.css. Light tones are for text and the route's
+     glyphs; the -deep ones (as rgb channels) only ever light the ground. */
+  --tone-sky: var(--sky, #7cc7f4);
+  --tone-iris: var(--iris, #ab9dff);
+  --tone-rose: var(--rose, #f4a2c0);
+  --glow-sky: var(--sky-deep-rgb, 26 143 192);
+  --glow-iris: var(--iris-deep-rgb, 122 110 224);
+  --glow-rose: var(--rose-deep-rgb, 194 64 122);
+  --glow-lagoon: var(--lagoon-rgb, 63 184 208);
+  --ring: 28px;
+
   width: min(1180px, 100%);
   margin-inline: auto;
   padding: clamp(28px, 6vh, 64px) 0 clamp(72px, 12vh, 120px);
+}
+
+/* Every section can hang a light pool behind itself without lifting it over the page. */
+.plan,
+.route,
+.ignite,
+.interest {
+  position: relative;
+  isolation: isolate;
+}
+
+.plan::before,
+.route::before,
+.ignite::before,
+.interest::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
 }
 
 .subtitle {
@@ -52,98 +83,74 @@
   font-weight: 500;
 }
 
-/* ---- The plan: one sentence down the page, its small print in the margin ---------------------- */
+/* ---- The plan: one line, and the two things people ask first ---------------------------------- */
 
-/* Starts where the field has drained, so the sentence stands on solid harbor. */
+/* Starts where the field has drained, so the line stands on harbor. */
 .plan {
   display: grid;
-  /* Every line of the sentence on the same pitch, however long its note runs. */
-  grid-auto-rows: 1fr;
-  padding: clamp(120px, 20vh, 210px) 0 0;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+  align-items: start;
+  gap: 40px clamp(32px, 5vw, 72px);
+  padding-top: clamp(120px, 20vh, 200px);
 }
 
-/* The note hangs off the end of its phrase, so the sentence keeps a ragged, written edge. */
-.gloss {
-  display: flex;
-  align-items: baseline;
-  gap: 4px clamp(20px, 2.6vw, 36px);
+/* Blue into violet, the top of the field's gradient, picking up where the field leaves off. */
+.plan::before {
+  inset: -10% auto -30% -18%;
+  width: min(1100px, 120vw);
+  background:
+    radial-gradient(closest-side at 38% 50%, rgb(var(--glow-iris) / 0.3), transparent),
+    radial-gradient(closest-side at 72% 34%, rgb(var(--glow-sky) / 0.26), transparent);
 }
 
-.gloss .words {
-  flex: none;
+.planLead {
+  display: grid;
+  gap: 18px;
 }
 
-.words {
+.headline {
+  max-width: 17ch;
   margin: 0;
-  font-size: clamp(34px, 4.8vw, 62px);
+  font-size: clamp(32px, 4.3vw, 54px);
   font-weight: 300;
   letter-spacing: -0.035em;
   line-height: 1.08;
   font-variant-numeric: tabular-nums;
+  text-wrap: balance;
 }
 
-.note {
+.caveat {
   max-width: 44ch;
   margin: 0;
   color: var(--ink-soft);
   font-size: 15px;
   line-height: 1.5;
-  text-wrap: pretty;
 }
 
-/* ---- How it'll work: four steps, each a little further down the route ------------------------- */
-
-.how {
+.facts {
   display: grid;
-  gap: clamp(36px, 6vh, 56px);
-  padding-top: clamp(110px, 16vh, 170px);
-}
-
-.steps {
-  --drop: clamp(0px, 4vw, 56px);
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 32px clamp(24px, 3.4vw, 48px);
+  gap: 26px;
+  padding-top: 0.5em;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.step {
+.fact {
   display: grid;
-  align-content: start;
-  gap: 10px;
+  gap: 6px;
 }
 
-.step:nth-child(2) {
-  margin-top: var(--drop);
-}
-
-.step:nth-child(3) {
-  margin-top: calc(var(--drop) * 2);
-}
-
-.step:nth-child(4) {
-  margin-top: calc(var(--drop) * 3);
-}
-
-.stepNo {
-  color: var(--ink-dim);
-  font-size: 17px;
-  font-variant-numeric: tabular-nums;
-}
-
-.stepTitle {
+.factTitle {
   margin: 0;
-  font-size: clamp(24px, 2.4vw, 32px);
-  font-weight: 300;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
-  text-wrap: balance;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
-.stepText {
-  max-width: 30ch;
+.factText {
+  max-width: 36ch;
   margin: 0;
   color: var(--ink-soft);
   font-size: 15px;
@@ -151,269 +158,430 @@
   text-wrap: pretty;
 }
 
-/* Where the route ends: the one thing asked back. */
-.step:last-child .stepNo,
-.step:last-child .stepTitle {
-  color: var(--mint);
+/* ---- How it'll work: a strip map in the field's characters ------------------------------------ */
+
+.route {
+  display: grid;
+  gap: clamp(44px, 7vh, 64px);
+  padding-top: clamp(100px, 15vh, 160px);
 }
 
-/* ---- Next to Ignite: its terms small and quiet, the plan's answer large ----------------------- */
-
-.ignite {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  gap: 40px clamp(32px, 6vw, 96px);
-  padding-top: clamp(120px, 18vh, 190px);
+.map {
+  --gap: clamp(24px, 3.4vw, 48px);
+  position: relative;
 }
 
-.pairs {
+/* The line's light on the ground: its own gradient, spread wide and soft along it. */
+.map::before {
+  content: '';
+  position: absolute;
+  z-index: -2;
+  top: calc(var(--ring) / 2 - 170px);
+  right: -12%;
+  left: -12%;
+  height: 340px;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--glow-sky)),
+    rgb(var(--glow-iris)) 35%,
+    rgb(var(--glow-rose)) 60%,
+    rgb(var(--mint-rgb) / 0.6) 85%
+  );
+  opacity: 0.32;
+  -webkit-mask-image: radial-gradient(closest-side, #000, transparent);
+  mask-image: radial-gradient(closest-side, #000, transparent);
+  pointer-events: none;
+}
+
+/* The line: rails of glyphs, coloured along the field's gradient from the first stop to the last,
+   then running on and fading out past it, since it isn't meant to be a one-trip line. */
+.track {
+  position: absolute;
+  top: calc(var(--ring) / 2);
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    var(--tone-sky) 0%,
+    var(--tone-iris) 26%,
+    var(--tone-rose) 52%,
+    var(--mint) 78%,
+    var(--mint) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+  white-space: pre;
+  -webkit-mask-image: linear-gradient(90deg, #000 84%, transparent);
+  mask-image: linear-gradient(90deg, #000 84%, transparent);
+  filter: drop-shadow(0 0 12px rgb(var(--glow-iris) / 0.9));
+  user-select: none;
+}
+
+.trackRow {
+  display: block;
+}
+
+.stops {
   display: grid;
-  gap: clamp(28px, 4.4vh, 40px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px var(--gap);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.pair {
+.stop {
+  position: relative;
   display: grid;
-  gap: 6px;
+  align-content: start;
+  gap: 10px;
 }
 
-.was {
+/* Each stop lights the ground around it in its own colour; side by side they run together into
+   one long glow under the line. */
+.stop::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: calc(var(--ring) / 2 - 190px);
+  left: calc(var(--ring) / 2 - 260px);
+  width: 520px;
+  height: 380px;
+  background: radial-gradient(closest-side, rgb(var(--glow) / 0.36), transparent);
+  pointer-events: none;
+}
+
+/* A station: a ring in the stop's colour, with harbor around it so the rails stop short of it. */
+.ring {
+  width: var(--ring);
+  height: var(--ring);
+  margin-bottom: 22px;
+  border: 4px solid var(--tone);
+  border-radius: 50%;
+  background: var(--harbor);
+  box-shadow:
+    0 0 0 7px var(--harbor),
+    0 0 28px 8px rgb(var(--glow) / 0.75);
+}
+
+.stopTitle {
   margin: 0;
-  color: var(--ink-dim);
-  font-size: 15px;
-}
-
-.will {
-  margin: 0;
-  font-size: clamp(24px, 2.6vw, 34px);
-  font-weight: 300;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
-}
-
-/* ---- The interest list: the ask as a sentence with blanks ------------------------------------- */
-
-.interest {
-  display: grid;
-  gap: clamp(32px, 5vh, 48px);
-  padding-top: clamp(120px, 18vh, 190px);
-  scroll-margin-top: 24px;
-}
-
-/* One column, so the sentence gets the width; doubled to beat the Form's own two-column grid. */
-.form.form {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
-}
-
-.sentence {
-  max-width: 30em;
-  margin: 0;
-  font-size: clamp(24px, 3vw, 38px);
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  line-height: 1.5;
-}
-
-/* A blank and its caption under it, sitting on the sentence's baseline. */
-.sentence label,
-.details label {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 100%;
-  vertical-align: baseline;
-}
-
-/* The Field's own markup is label first, then control, then any complaint: reorder it so the
-   control comes first and the caption hangs under it. */
-.sentence label > span:first-child,
-.details label > span:first-child {
-  order: 1;
-  color: var(--ink-dim);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0;
-  line-height: 1.3;
-}
-
-.sentence label > span:not(:first-child),
-.details label > span:not(:first-child) {
-  order: 2;
-  font-size: 13px;
-  letter-spacing: 0;
-  line-height: 1.3;
-}
-
-.details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px clamp(20px, 3vw, 36px);
-}
-
-/* Navy, the inputs' colour, with a firmer line along the bottom where the writing goes. */
-.blank {
-  min-width: 7ch;
-  max-width: 100%;
-  min-height: 44px;
-  padding: 0.12em 0.4em;
-  border: 0;
-  border-bottom: 2px solid var(--rule-strong);
-  border-radius: 10px 10px 3px 3px;
-  background: var(--navy);
-  color: var(--ink);
+  color: var(--tone);
+  font-size: clamp(24px, 2.4vw, 32px);
   font-weight: 400;
-  line-height: 1.25;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
 }
 
-/* Blanks in the sentence grow with the answer, where the browser can. */
-.sentence .blank {
-  field-sizing: content;
-}
-
-/* The dropdown blank's wrapper is a span too, but it's the answer, not a caption: keep it in the
-   sentence's type and in the answer's place, above its caption. */
-.sentence label > span:has(> .blank[role='combobox']),
-.details label > span:has(> .blank[role='combobox']) {
-  display: inline-block;
-  order: 0;
-  font-size: inherit;
-  letter-spacing: inherit;
-  line-height: inherit;
-}
-
-.details label > span:has(> .blank[role='combobox']) {
-  display: block;
-  font-size: 17px;
-}
-
-/* The same width as the text blanks beside it (17em at their 17px). */
-.details label:has([role='combobox']) {
-  width: min(289px, 100%);
-}
-
-.sentence .blank[role='combobox'] {
-  display: inline-flex;
-  width: auto;
-}
-
-.details .blank {
-  width: min(17em, 100%);
-  font-size: 17px;
-}
-
-/* Fainter than an answer, so an example never passes for one already filled in. */
-.blank::placeholder {
-  color: rgb(var(--frost-rgb) / 0.46);
-}
-
-.blank:hover {
-  border-bottom-color: rgb(var(--frost-rgb) / 0.55);
-}
-
-.blank:focus-visible {
-  outline: none;
-  border-bottom-color: var(--mint);
-  box-shadow: 0 0 0 3px rgb(var(--mint-rgb) / 0.22);
-}
-
-.blank:user-invalid,
-.blank[aria-invalid='true'] {
-  border-bottom-color: var(--coral);
-}
-
-select.blank {
-  appearance: none;
-  padding-right: 1.4em;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
-    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
-  background-position:
-    calc(100% - 0.75em) 55%,
-    calc(100% - 0.5em) 55%;
-  background-size: 0.25em 0.25em;
-  background-repeat: no-repeat;
-}
-
-/* The unpicked placeholder reads as a prompt, like the inputs' placeholders. */
-select.blank:has(option[value='']:checked) {
-  color: rgb(var(--frost-rgb) / 0.46);
-}
-
-select.blank option {
-  background: var(--navy);
-  color: var(--ink);
+.stopText {
+  max-width: 28ch;
+  margin: 0;
+  color: var(--ink-soft);
   font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 
-.privacy {
-  margin: -16px 0 0;
+/* The page's one motion: the line runs out from the first stop, and each station comes on as the
+   line reaches it. Under reduced motion it's simply there. */
+@media (prefers-reduced-motion: no-preference) {
+  .track {
+    transition: clip-path 1500ms cubic-bezier(0.45, 0.05, 0.25, 1);
+  }
+
+  .map:not([data-drawn]) .track {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .ring {
+    transition:
+      transform 480ms cubic-bezier(0.2, 1.5, 0.4, 1),
+      opacity 240ms ease;
+    transition-delay: calc(120ms + var(--i) * 330ms);
+  }
+
+  .map:not([data-drawn]) .ring {
+    transform: scale(0.3);
+    opacity: 0;
+  }
 }
 
-/* Once sent, the Form's thanks takes the sentence's place, so it lines up with the page's left
-   edge instead of centring in the empty width. The privacy line goes with the form. */
-.interest > [role='status'] {
-  justify-items: start;
-  padding: 0;
+/* ---- Next to Ignite: side by side, the plan's column in colour -------------------------------- */
+
+.ignite {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  gap: 40px clamp(32px, 6vw, 96px);
+  padding-top: clamp(110px, 16vh, 170px);
+}
+
+/* Teal, over to the right, behind the plan's column. */
+.ignite::before {
+  top: 0;
+  right: -22%;
+  bottom: -30%;
+  width: min(900px, 100vw);
+  background: radial-gradient(closest-side, rgb(var(--glow-lagoon) / 0.2), transparent);
+}
+
+.compare {
+  align-self: start;
+  width: 100%;
+  border-collapse: collapse;
   text-align: left;
 }
 
-.interest:has(> [role='status']) .privacy {
+.compare th,
+.compare td {
+  padding: 0 28px 22px 0;
+  vertical-align: baseline;
+}
+
+.compare thead th {
+  padding-bottom: 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.colIgnite {
+  color: var(--ink-dim);
+}
+
+.colProto {
+  color: var(--ink);
+}
+
+.topic {
+  color: var(--ink-dim);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.was {
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.will {
+  color: var(--ink);
+  font-size: clamp(20px, 2vw, 25px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* ---- The interest list ------------------------------------------------------------------------ */
+
+.interest {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 40px clamp(32px, 6vw, 96px);
+  padding-top: clamp(110px, 16vh, 170px);
+  scroll-margin-top: 24px;
+}
+
+/* Mint and blue under the form, the warmest light on the page, where the page ends. */
+.interest::before {
+  top: 8%;
+  right: -16%;
+  bottom: -40%;
+  left: 8%;
+  background:
+    radial-gradient(closest-side at 62% 52%, rgb(var(--mint-rgb) / 0.14), transparent),
+    radial-gradient(closest-side at 26% 66%, rgb(var(--glow-sky) / 0.26), transparent);
+}
+
+.formWrap {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.form {
+  gap: 20px;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 14px;
+  border: 1px solid rgb(var(--frost-rgb) / 0.24);
+  border-radius: 12px;
+  background: rgb(var(--harbor-rgb) / 0.62);
+  color: var(--ink);
+  /* 16px keeps phones from zooming in on focus. */
+  font-size: 16px;
+}
+
+.input::placeholder {
+  color: rgb(var(--frost-rgb) / 0.5);
+}
+
+.input:hover {
+  border-color: rgb(var(--frost-rgb) / 0.45);
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px rgb(var(--mint-rgb) / 0.24);
+}
+
+.input:user-invalid,
+.input[aria-invalid='true'] {
+  border-color: var(--coral);
+}
+
+/* The submit is the one thing on the page that's yours to do, so it's mint. */
+.form button[type='submit'] {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: var(--harbor);
+  font-size: 14px;
+}
+
+.privacy {
+  margin: 0;
+}
+
+/* Once sent, the thanks takes the form's place: keep it on the form's left edge, not centred. */
+.formWrap > [role='status'] {
+  justify-items: start;
+  padding: 8px 0 0;
+  text-align: left;
+}
+
+.formWrap:has(> [role='status']) .privacy {
   display: none;
 }
 
 /* ---- Small screens ---------------------------------------------------------------------------- */
 
-@media (max-width: 860px) {
-  .steps {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* Two by two, the drop runs down each column instead. */
-  .step:nth-child(n) {
-    margin-top: 0;
-  }
-
-  .step:nth-child(even) {
-    margin-top: 32px;
-  }
-
-  .ignite {
+@media (max-width: 960px) {
+  .plan,
+  .ignite,
+  .interest {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plan {
+    align-items: start;
+  }
+}
+
+/* The strip map turns to run down the page, the stops stacked beside it. */
+@media (max-width: 720px) {
+  .stops {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    padding-left: calc(var(--ring) + 24px);
+  }
+
+  .track {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    left: calc(var(--ring) / 2);
+    transform: translateX(-50%);
+    background: linear-gradient(
+      180deg,
+      var(--tone-sky) 0%,
+      var(--tone-iris) 30%,
+      var(--tone-rose) 58%,
+      var(--mint) 86%,
+      var(--mint) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    /* Upright glyphs advance a full em each; pull them in so the rails close up. */
+    letter-spacing: -0.42em;
+    line-height: 0.75;
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+    -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent);
+    mask-image: linear-gradient(180deg, #000 90%, transparent);
+  }
+
+  .ring {
+    position: absolute;
+    top: 2px;
+    left: calc(-1 * (var(--ring) + 24px));
+    margin: 0;
+  }
+
+  .map::before {
+    top: -60px;
+    right: auto;
+    bottom: -60px;
+    left: calc(var(--ring) / 2 - 150px);
+    width: 300px;
+    height: auto;
+    background: linear-gradient(
+      180deg,
+      rgb(var(--glow-sky)),
+      rgb(var(--glow-iris)) 35%,
+      rgb(var(--glow-rose)) 60%,
+      rgb(var(--mint-rgb) / 0.6) 85%
+    );
+  }
+
+  .stop::before {
+    top: -150px;
+    left: -200px;
+    width: 400px;
+    height: 300px;
+  }
+}
+
+@media (max-width: 720px) and (prefers-reduced-motion: no-preference) {
+  .map:not([data-drawn]) .track {
+    clip-path: inset(0 0 100% 0);
   }
 }
 
 @media (max-width: 640px) {
-  /* The note drops under its phrase, so the sentence still reads straight down. */
-  .gloss {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .plan {
-    grid-auto-rows: auto;
-    gap: 22px;
-  }
-
-  .steps {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .step:nth-child(even) {
-    margin-top: 0;
-  }
-
-  .details {
+  /* Each difference stacks: what it's about, then the two answers side by side under the heads. */
+  .compare,
+  .compare thead,
+  .compare tbody {
     display: grid;
   }
 
-  .details label {
-    display: flex;
+  .compare tbody {
+    gap: 24px;
   }
 
-  .details .blank {
-    width: 100%;
+  .compare tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px 20px;
+  }
+
+  .compare thead td {
+    display: none;
+  }
+
+  .compare th,
+  .compare td {
+    padding: 0;
+  }
+
+  .compare thead th {
+    padding-bottom: 14px;
+  }
+
+  .topic {
+    grid-column: 1 / -1;
   }
 }

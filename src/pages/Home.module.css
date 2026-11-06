@@ -47,7 +47,27 @@
 /* The first harbor band. The drain strip hangs above it, partly under the hero's last lines (the
    hero paints over it), so the field is already thinning by the time the copy ends. */
 .afterHero {
+  isolation: isolate;
   margin-top: 170px;
+}
+
+/* The field's light caught in the harbor just under the drain, its colours where they were above:
+   cerulean to the left, the raspberry core, the teal edge. It rises from nothing at the seam, so
+   the drain still ends in plain harbor, and is gone before Start. */
+.afterHero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: min(clamp(560px, 90vh, 900px), 100%);
+  background:
+    radial-gradient(40% 60% at 14% 28%, rgb(var(--sky-deep-rgb) / 0.28), transparent 72%),
+    radial-gradient(42% 64% at 44% 32%, rgb(var(--rose-deep-rgb) / 0.26), transparent 72%),
+    radial-gradient(36% 56% at 66% 24%, rgb(var(--iris-deep-rgb) / 0.22), transparent 72%),
+    radial-gradient(34% 56% at 92% 30%, rgb(var(--lagoon-rgb) / 0.2), transparent 72%);
+  -webkit-mask-image: linear-gradient(transparent, #000 34%, #000 52%, transparent);
+  mask-image: linear-gradient(transparent, #000 34%, #000 52%, transparent);
+  pointer-events: none;
 }
 
 /* The three ways in walk down and to the right, a step per track: Start, then Build, then Launch. */
@@ -96,14 +116,23 @@
   gap: clamp(20px, 3.2vw, 56px);
   margin-left: calc(var(--step) * clamp(0px, 9vw, 132px));
   padding: clamp(22px, 4vh, 40px) 0;
-  border-top: 1px solid var(--rule);
+  /* The rule takes the track's colour, faintly, so each step reads as its own. */
+  border-top: 1px solid rgb(var(--hue-rgb) / 0.3);
 }
 
-/* The figure in frost on harbor: the field's characters, with its colour left behind above. */
+/* The figure in its track's colour, lit from inside: a pool of the deep tone behind the glyphs,
+   gone by the figure's own edges, and the glyphs glowing a little, like the field's. */
 .figure {
   --figure-size: clamp(6px, 0.84vw, 11px);
-  color: var(--ink-soft);
+  color: var(--hue);
   font-weight: 500;
+  background: radial-gradient(closest-side, rgb(var(--hue-deep-rgb) / 0.34), rgb(var(--hue-deep-rgb) / 0));
+  text-shadow: 0 0 10px rgb(var(--hue-deep-rgb) / 0.9);
+}
+
+/* The underscore sits on the baseline, so its light lies low and flat under it, not mid-air. */
+.track[data-shape='bar'] .figure {
+  background: radial-gradient(54% 30% at 50% 84%, rgb(var(--hue-deep-rgb) / 0.4), rgb(var(--hue-deep-rgb) / 0));
 }
 
 .trackCopy {
@@ -177,19 +206,15 @@
   line-height: 1;
   text-align: center;
   overflow: hidden;
-  color: var(--ink-dim);
+  color: rgb(var(--hue-rgb) / 0.66);
 }
 
-/* The field's characters in frost, the trips in the accent: something bigger, and what the fund
-   is for. */
+/* Each beat in its colour, warmer as the night gets bigger: hack nights a cool sky, the trips
+   iris, demo night the rose of the field's core. The bigger nights glow. */
 .week[data-beat='trip'],
-.swatch[data-beat='trip'] {
-  color: var(--accent);
-}
-
-.week[data-beat='demo'],
-.swatch[data-beat='demo'] {
-  color: var(--ink);
+.week[data-beat='demo'] {
+  color: var(--hue);
+  text-shadow: 0 0 8px rgb(var(--hue-deep-rgb) / 0.85);
 }
 
 .axis {
@@ -226,14 +251,15 @@
 .swatch {
   justify-self: start;
   margin-bottom: 12px;
-  color: var(--ink-dim);
+  color: var(--hue);
+  text-shadow: 0 0 8px rgb(var(--hue-deep-rgb) / 0.85);
   font-size: 11px;
   line-height: 1;
 }
 
 .when {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--hue);
   font-size: 14px;
 }
 
@@ -256,6 +282,11 @@
 
 .beat[data-later] {
   opacity: 0.62;
+}
+
+/* Faded, rose would drop under AA; its "not yet" line keeps to ink, and the swatch keeps the hue. */
+.beat[data-later] .when {
+  color: var(--ink);
 }
 
 /* ---- Next up and Apply by: the rhythm's next real beats --------------------------------------- */
@@ -295,6 +326,8 @@
 
 /* The day large, the month, weekday and how soon stacked beside its foot. */
 .date {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: flex-end;
   gap: clamp(16px, 2vw, 24px);
@@ -302,7 +335,21 @@
   margin: 12px 0 clamp(14px, 2.4vh, 24px);
 }
 
+/* The numeral in its night's colour, standing in that colour's light. */
+.date::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -60%;
+  left: -18%;
+  width: clamp(280px, 30vw, 420px);
+  aspect-ratio: 1.3;
+  background: radial-gradient(closest-side, rgb(var(--hue-deep-rgb, var(--iris-deep-rgb)) / 0.26), transparent);
+  pointer-events: none;
+}
+
 .dateDay {
+  color: var(--hue, var(--ink));
   font-size: clamp(96px, 11vw, 152px);
   font-weight: 200;
   letter-spacing: -0.06em;
@@ -349,7 +396,7 @@
 }
 
 .kind {
-  color: var(--accent);
+  color: var(--hue, var(--accent));
   font-weight: 500;
 }
 
@@ -428,7 +475,7 @@
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  color: var(--accent);
+  color: var(--hue);
   font-size: 40px;
   font-weight: 300;
   letter-spacing: -0.03em;
@@ -489,23 +536,64 @@
 }
 
 /* The frozen field texture, eased in over the rhythm's title so it never starts on a line. Behind
-   the content (the band isolates it), above the ink. */
+   the content (the band isolates it), above the ink. Its glyphs are cut from the field's own sweep,
+   so the field freezes with its colour still in it, faint enough that copy reads over any of it. */
 .inkTextured::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--texture) 0 0 / 595px 400px;
-  -webkit-mask-image: linear-gradient(transparent, #000 480px);
-  mask-image: linear-gradient(transparent, #000 480px);
+  background: var(--field-sweep);
+  opacity: 0.3;
+  -webkit-mask-image: var(--texture-mask), linear-gradient(transparent, #000 480px);
+  mask-image: var(--texture-mask), linear-gradient(transparent, #000 480px);
+  -webkit-mask-size: 595px 400px, 100% 100%;
+  mask-size: 595px 400px, 100% 100%;
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  pointer-events: none;
+}
+
+/* Where the band fills back up with the field, the field's light rises into the harbor first:
+   teal and iris, the colours waiting below. Nothing at the seam itself, so the strip still starts
+   from plain harbor. */
+.inkTextured::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: auto 0 0;
+  height: min(clamp(420px, 70vh, 720px), 100%);
+  background:
+    radial-gradient(46% 70% at 30% 70%, rgb(var(--iris-deep-rgb) / 0.18), transparent 72%),
+    radial-gradient(46% 70% at 74% 72%, rgb(var(--lagoon-rgb) / 0.16), transparent 72%);
+  -webkit-mask-image: linear-gradient(transparent, #000 50%, transparent);
+  mask-image: linear-gradient(transparent, #000 50%, transparent);
   pointer-events: none;
 }
 
 /* The record: the tally large, the newest wins logged under it. */
 .wins {
+  position: relative;
   display: grid;
   gap: clamp(28px, 5vh, 48px);
   padding: 0 0 clamp(64px, 10vh, 120px);
+}
+
+/* The tally stands in the warm light of the field's core: the record is the peak. */
+.wins::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: clamp(-160px, -14vh, -80px);
+  left: -12%;
+  width: min(1100px, 110%);
+  height: clamp(420px, 60vh, 600px);
+  background:
+    radial-gradient(closest-side at 30% 50%, rgb(var(--rose-deep-rgb) / 0.26), transparent),
+    radial-gradient(closest-side at 62% 54%, rgb(var(--iris-deep-rgb) / 0.16), transparent);
+  pointer-events: none;
 }
 
 /* ---- Join, back on the field ---------------------------------------------------------------- */

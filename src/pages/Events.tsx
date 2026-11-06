@@ -5,7 +5,7 @@ import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { EVENT_COVERS, type CoverPhoto } from '../content/covers'
-import { EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, HACK_NIGHT, NEXT_EVENT } from '../content/events'
+import { EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, HACK_NIGHT, KIND_HUE, NEXT_EVENT } from '../content/events'
 import { dateParts, daysUntil, formatMonth } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useRsvp } from '../lib/useRsvp'
@@ -69,7 +69,7 @@ export function Events() {
 function HackNight({ next }: { next: ProtoEvent | undefined }) {
   const date = next && dateParts(next.date)
   return (
-    <aside className={styles.rhythm} aria-label={HACK_NIGHT.title}>
+    <aside className={styles.rhythm} data-hue={KIND_HUE['Hack night']} aria-label={HACK_NIGHT.title}>
       <p className={styles.rhythmTitle} data-fog-clear>
         {HACK_NIGHT.title}
       </p>
@@ -113,7 +113,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
   const stock = EVENT_COVERS[event.kind] ?? HACK_NIGHT_COVER
 
   return (
-    <article className={styles.lead} aria-labelledby="next-event">
+    <article className={styles.lead} data-hue={KIND_HUE[event.kind]} aria-labelledby="next-event">
       {event.photo ? <Cover src={event.photo} alt="" /> : <Cover src={stock.src} alt={stock.alt} credit={stock} />}
 
       <div className={styles.leadBody}>
@@ -182,7 +182,7 @@ function EventRow({ event }: { event: ProtoEvent }) {
   const { day, weekday } = dateParts(event.date)
 
   return (
-    <li className={styles.event}>
+    <li className={styles.event} data-hue={KIND_HUE[event.kind]}>
       <time className={styles.rowDate} dateTime={event.date} data-fog-clear>
         <span className={styles.rowDay}>{day}</span>
         <span className={styles.rowWeekday}>{weekday}</span>

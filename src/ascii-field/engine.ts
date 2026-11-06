@@ -2,6 +2,7 @@ import { driftPose, swayPhases, swayU, swayV } from './ambient'
 import { FluidField } from './fluid'
 import { sampleGradient } from './gradient'
 import { createValueNoise } from './noise'
+import { shapeMap } from './shapes'
 import {
   createFieldRenderer,
   drawGlyphAtlas,
@@ -483,6 +484,7 @@ export class AsciiFieldEngine {
     const { amount, ribShift, flow } = driftPose(time, this.settings.drift)
     const ribK = TAU / geometry.ribPeriod
     const { ribbing } = this.settings
+    const map = shapeMap(this.settings.shape)
     const steps = RAMPS[this.settings.ramp].length - 1
     const toGlyph = steps / (FIELD.DENSITY_HI - FIELD.DENSITY_LO)
     const ribBase = 1 - ribbing * 0.08
@@ -500,7 +502,7 @@ export class AsciiFieldEngine {
       const waveY = rowY[j] * FIELD.DRIFT_SCALE
       for (let i = 0; i < cols; i++) {
         const k = j * cols + i
-        sampleGradient(colU[i] + sway, v + colSway[i], rgb)
+        sampleGradient(map, colU[i] + sway, v + colSway[i], rgb)
         const r = rgb[0]
         const g = rgb[1]
         const b = rgb[2]

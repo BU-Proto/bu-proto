@@ -14,19 +14,62 @@ export interface NavItem {
   to: string
   /** Shown in the centered pill; everything is always in the menu sheet. */
   inPill?: boolean
+  /**
+   * Pages grouped under this item. In the pill it becomes a button that opens them as a menu; in
+   * the menu sheet they're listed under it. Each has a short line saying what's there.
+   */
+  children?: readonly NavChild[]
+}
+
+export interface NavChild {
+  label: string
+  to: string
+  line: string
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', to: '/' },
+  {
+    label: 'About',
+    to: '/about',
+    inPill: true,
+    children: [
+      { label: 'What we offer', to: '/about#offer', line: 'Hack nights, trips and the playbook' },
+      { label: 'The board', to: '/board', line: 'Who runs Proto, and the open seats' },
+    ],
+  },
   { label: 'Hackathons', to: '/hackathons', inPill: true },
   { label: 'Grants', to: '/grants', inPill: true },
   { label: 'Wins', to: '/wins', inPill: true },
-  { label: 'Resources', to: '/resources', inPill: true },
+  {
+    label: 'Resources',
+    to: '/resources',
+    inPill: true,
+    children: [
+      { label: 'The playbook', to: '/resources/playbook', line: 'Our guides to hackathons, start to finish' },
+      { label: 'Spark!', to: '/resources/spark', line: 'BU’s lab for building things, with mentors' },
+      { label: 'Innovate@BU', to: '/resources/innovate', line: 'Funding and mentors to launch a venture' },
+    ],
+  },
   { label: 'Events', to: '/events', inPill: true },
   { label: 'Track Record', to: '/track-record' },
-  { label: 'Board', to: '/board' },
   { label: 'Join', to: '/join' },
 ]
+
+/** Whether the page at `pathname` is one of an item's own pages (a child's hash doesn't count). */
+export const navItemHolds = (item: NavItem, pathname: string) =>
+  [item, ...(item.children ?? [])].some((child) => child.to.split('#')[0] === pathname)
+
+/** The name of the section a path is in (Events for /events/12), for a page still loading. */
+export function sectionName(pathname: string): string | undefined {
+  const section = `/${pathname.split('/')[1] ?? ''}`
+  for (const item of NAV_ITEMS) {
+    if (item.to === pathname || item.to === section) return item.label
+    const child = item.children?.find((c) => c.to === pathname || c.to === section)
+    if (child) return child.label
+  }
+  return undefined
+}
 
 export interface ScheduleSlot {
   day: string
@@ -65,9 +108,12 @@ export const FOOTER = {
     {
       title: 'Explore',
       links: [
+        { label: 'About Proto', to: '/about' },
+        { label: 'The board', to: '/board' },
         { label: 'Events', to: '/events' },
         { label: 'Hackathons', to: '/hackathons' },
-        { label: 'Playbook', to: '/resources' },
+        { label: 'Playbook', to: '/resources/playbook' },
+        { label: 'Resources', to: '/resources' },
       ],
     },
     {
@@ -75,7 +121,6 @@ export const FOOTER = {
       links: [
         { label: 'Wins', to: '/wins' },
         { label: 'Track record', to: '/track-record' },
-        { label: 'Board', to: '/board' },
       ],
     },
     {

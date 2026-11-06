@@ -1,7 +1,7 @@
 // Copy for the home page. The next event, deadlines and wins are content in D1 (edited in the
 // portal at /admin); the copy around them lives here.
 
-import type { Link, TrackName } from './types'
+import type { Hue, Link, TrackName } from './types'
 
 export const HERO_COPY = {
   headline: 'Proto is the home base for building things at BU',
@@ -24,6 +24,8 @@ export interface Track {
   name: TrackName
   /** One of the trail's own glyphs, drawn large behind the card. */
   glyph: string
+  /** Down the stair the light warms, as it does across the field: Start sky, Launch rose. */
+  hue: Hue
   who: string
   offers: readonly string[]
 }
@@ -37,6 +39,7 @@ export const TRACKS: readonly Track[] = [
   {
     name: 'Start',
     glyph: '○',
+    hue: 'sky',
     who: 'Any CS student, no projects yet.',
     offers: [
       'Beginner workshops',
@@ -47,12 +50,14 @@ export const TRACKS: readonly Track[] = [
   {
     name: 'Build',
     glyph: '>',
+    hue: 'iris',
     who: 'Hackathon regulars and side-project people.',
     offers: ['Team matching', 'Group trips to HackMIT, PennApps and more'],
   },
   {
     name: 'Launch',
     glyph: '_',
+    hue: 'rose',
     who: 'Student founders.',
     offers: ['Founder talks', 'A path into BU’s startup programs, Spark! and Innovate@BU'],
   },
@@ -66,6 +71,8 @@ export interface Beat {
   later?: boolean
   /** The weeks of a typical semester it lands on, for the score on the home page. */
   weeks: readonly number[]
+  /** The bigger the night, the warmer its colour in the score and the key. */
+  hue: Hue
 }
 
 export const RHYTHM_INTRO = {
@@ -74,10 +81,10 @@ export const RHYTHM_INTRO = {
 } as const
 
 export const RHYTHM: readonly Beat[] = [
-  { when: 'Weekly', what: 'Hack night', detail: 'Open to everyone, with food.', weeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] },
-  { when: 'About monthly', what: 'Hackathon trip', detail: 'We go as a group.', weeks: [4, 8, 12] },
-  { when: 'Each semester', what: 'Demo night', detail: 'Anyone can show anything.', weeks: [14] },
-  { when: 'Year two', what: 'Our own hackathon', detail: 'A BU hackathon, run by us.', later: true, weeks: [] },
+  { when: 'Weekly', what: 'Hack night', detail: 'Open to everyone, with food.', weeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], hue: 'sky' },
+  { when: 'About monthly', what: 'Hackathon trip', detail: 'We go as a group.', weeks: [4, 8, 12], hue: 'iris' },
+  { when: 'Each semester', what: 'Demo night', detail: 'Anyone can show anything.', weeks: [14], hue: 'rose' },
+  { when: 'Year two', what: 'Our own hackathon', detail: 'A BU hackathon, run by us.', later: true, weeks: [], hue: 'rose' },
 ]
 
 /** The score's columns: a semester, roughly week by week. */

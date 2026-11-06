@@ -42,7 +42,7 @@
   backdrop-filter: blur(14px) saturate(130%);
 }
 
-.nav a {
+.nav > a {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -54,14 +54,14 @@
   text-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.3);
 }
 
-.nav a[aria-current='page'] {
+.nav > a[aria-current='page'] {
   background: rgb(var(--frost-rgb) / 0.08);
   color: var(--ink);
 }
 
 
 .logo:focus-visible,
-.nav a:focus-visible {
+.nav > a:focus-visible {
   outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
@@ -80,8 +80,9 @@
   display: none;
 }
 
-/* Five links don't fit beside the logo on narrow screens; the menu sheet has them all, Join too. */
-@media (max-width: 760px) {
+/* The pill doesn't fit between the logo and Join on narrow screens; the menu sheet has every
+   page, Join too. */
+@media (max-width: 800px) {
   .nav,
   .join {
     display: none;

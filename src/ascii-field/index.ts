@@ -9,3 +9,4 @@ export {
   type RampName,
   type TrailColor,
 } from './settings'
+export { SHAPES, SHAPE_LABELS, type ShapeName } from './shapes'

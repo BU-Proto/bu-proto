@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Outlet, ScrollRestoration, useLocation } from 'react-router'
-import { AsciiField, type AsciiFieldHandle } from '../ascii-field'
+import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router'
+import { AsciiField, SHAPES, type AsciiFieldHandle, type ShapeName } from '../ascii-field'
 import { glyphTexture } from '../lib/glyphArt'
 import { GROUND, GROUNDS, groundFor, lightFilter, type GroundName } from '../lib/pageGround'
 import { useSmoothScroll } from '../lib/smoothScroll'
@@ -31,8 +31,17 @@ export function Layout() {
   const shown = reducedMotion() ? target : trailing
   const dimmed = shown !== target
   const ground = GROUNDS[shown]
+  // A page can ask for another shape for a stretch of it (the landing does, for its last word).
+  const [pageShape, setPageShape] = useState<ShapeName | null>(null)
+  const shape = useShapePreview() ?? pageShape
+  const field = useMemo(() => (shape ? { ...ground.field, shape } : ground.field), [ground.field, shape])
+  const outlet = useMemo<LayoutOutlet>(() => ({ setFieldShape: setPageShape }), [])
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   useSmoothScroll()
+  const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
+  // Moving to a page that loads data keeps the old page up until the data lands; a line along
+  // the top says the click registered.
+  const navigating = useNavigation().state === 'loading'
 
   useEffect(() => {
     if (trailing === target) return
@@ -93,26 +102,46 @@ export function Layout() {
         data-dimmed={dimmed || undefined}
         style={{ filter: lightFilter(ground.light) }}
       >
-        <AsciiField ref={fieldRef} settings={ground.field} className={styles.field} />
+        <AsciiField ref={fieldRef} settings={field} className={styles.field} />
       </div>
       <div ref={shellRef} className={styles.shell} data-ground={shown}>
         {/* Below the header the field drains into harbor, solid or veiled (see pageGround). */}
         <div
           className={styles.ground}
           data-reach={GROUNDS[target].reach}
-          style={{ '--texture': texture ? `url(${texture})` : 'none' } as CSSProperties}
+          style={
+            {
+              '--texture': texture ? `url(${texture})` : 'none',
+              '--texture-mask': textureMask ? `url(${textureMask})` : 'none',
+            } as CSSProperties
+          }
           aria-hidden="true"
         >
           <GlyphEdge color={GROUND.harbor} mode="drain" rows={28} cell={10} />
           <span className={styles.groundTexture} />
         </div>
+        <span className={styles.progress} data-active={navigating || undefined} aria-hidden="true" />
         <TopBar />
         <main className={styles.main}>
-          <Outlet />
+          <Outlet context={outlet} />
         </main>
         <Footer />
       </div>
       <ScrollRestoration />
     </>
   )
+}
+
+/** What Layout hands its pages (read with useOutletContext). */
+export interface LayoutOutlet {
+  /** Show the field in another shape, or null for the page's own. Reset it when leaving. */
+  setFieldShape: (shape: ShapeName | null) => void
+}
+
+/** In development, `?shape=ripple` (any name in SHAPES) shows that shape on every page. */
+function useShapePreview(): ShapeName | null {
+  const { search } = useLocation()
+  if (!import.meta.env.DEV) return null
+  const name = new URLSearchParams(search).get('shape')
+  return SHAPES.find((shape) => shape === name) ?? null
 }

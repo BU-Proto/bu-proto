@@ -1,6 +1,7 @@
 import { swayPhases, swayU, swayV, tintLift } from './ambient'
 import { sampleGradient } from './gradient'
 import type { FieldFrame, FieldGeometry, FieldRenderer, GlyphAtlas } from './renderer'
+import { shapeMap } from './shapes'
 import { FIELD, TRAIL_COLORS, type TrailColor } from './settings'
 
 function context2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
@@ -76,12 +77,13 @@ export class CanvasFieldRenderer implements FieldRenderer {
     const color = colorImage.data
     const tint = tintImage.data
     const [phaseX, phaseY] = swayPhases(time)
+    const map = shapeMap(settings.shape)
     for (let j = 0; j < rows; j++) {
       const cy = (j + 0.5) * cellH
       const du = swayU(cy, phaseX)
       for (let i = 0; i < cols; i++) {
         const cx = (i + 0.5) * cellW
-        sampleGradient(cx / width + du, cy / height + swayV(cx, phaseY), rgb)
+        sampleGradient(map, cx / width + du, cy / height + swayV(cx, phaseY), rgb)
         const o = (j * cols + i) * 4
         const lift = tintLift((0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255, settings.glyphContrast)
         for (let c = 0; c < 3; c++) {

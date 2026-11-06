@@ -1,14 +1,26 @@
 import { Link, useLocation, useRouteError } from 'react-router'
-import { BRAND, ROUTE_STATES } from '../content/site'
+import { BRAND, ROUTE_STATES, sectionName } from '../content/site'
 import ui from './ui.module.css'
 import styles from './RouteStates.module.css'
 
-/** A page's HydrateFallback: Layout and the field are already up, so just a quiet line. */
+/**
+ * A page's HydrateFallback: Layout and the field are already up, so the page holds a screen's
+ * height (Layout hides the footer meanwhile, so it doesn't jump up and back down) and shows the
+ * trail's three glyphs pulsing where the page's title will land.
+ */
 export function PageLoading() {
+  const { pathname } = useLocation()
+  const section = sectionName(pathname)
   return (
-    <div className={ui.page}>
-      <p className={styles.loading} role="status" data-fog-clear>
-        {ROUTE_STATES.loading}
+    <div className={`${ui.page} ${styles.pending}`} data-route-loading>
+      <title>{section ? `${section} · ${BRAND.full}` : BRAND.full}</title>
+      <p className={styles.loading} role="status">
+        <span className={styles.glyphs} aria-hidden="true">
+          <span>○</span>
+          <span>&gt;</span>
+          <span>_</span>
+        </span>
+        <span className={ui.srOnly}>{ROUTE_STATES.loading}</span>
       </p>
     </div>
   )

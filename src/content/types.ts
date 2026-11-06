@@ -23,3 +23,9 @@ export interface PageIntro {
 }
 
 export type TrackName = 'Start' | 'Build' | 'Launch'
+
+/**
+ * One of the field's named colours (see index.css), by size: sky for the everyday, iris for the
+ * bigger, rose for the biggest. Set as data-hue on whatever carries it.
+ */
+export type Hue = 'sky' | 'iris' | 'rose'

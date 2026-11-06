@@ -8,7 +8,7 @@ import { FLOWCAST, HEAR_ME_OUT, NOOGIE, STALK_MARKET, winImage } from './wins'
 export const TEAM: GuideDoc = {
   slug: SLUGS.team,
   standfirst:
-    'The team decides more of the weekend than the idea does. Every one of the eight wins we were on mixed BU students with people from other schools. Here’s how we form a team, split the work and get people who met an hour ago shipping by the first evening.',
+    'The team decides more of the weekend than the idea does. Most of our wins came from teams that mixed BU students with people we met that weekend. Here’s how we form a team, split the work and get people who met an hour ago shipping by the first evening.',
   sections: [
     {
       id: 'size',

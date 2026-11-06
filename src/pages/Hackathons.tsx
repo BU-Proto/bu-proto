@@ -129,7 +129,8 @@ export function Hackathons() {
   }
 
   return (
-    <div className={ui.page}>
+    // The trips are the month's beat, so the page is in iris (see the palette in index.css).
+    <div className={ui.page} data-hue="iris">
       <PageIntro intro={HACKATHONS_INTRO} />
 
       {months.size === 0 && (

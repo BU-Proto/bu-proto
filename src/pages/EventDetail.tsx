@@ -18,7 +18,7 @@ import detail from '../components/DetailPage.module.css'
 import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import ui from '../components/ui.module.css'
 import { EVENT_COVERS } from '../content/covers'
-import { EVENT_DETAIL, EVENT_NOT_FOUND } from '../content/events'
+import { EVENT_DETAIL, EVENT_NOT_FOUND, KIND_HUE } from '../content/events'
 import { BRAND } from '../content/site'
 import { eventToIcs, icsFileName } from '../lib/calendar'
 import type { EventPageData } from '../lib/content'
@@ -122,7 +122,7 @@ function Opener({ event, past }: { event: ProtoEvent; past: boolean }) {
       hugeName={false}
     >
       {/* The date set the way the home page sets the next event's: the day huge, the rest beside it. */}
-      <p className={styles.date} data-fog-clear>
+      <p className={styles.date} data-hue={KIND_HUE[event.kind]} data-fog-clear>
         <span className={styles.day}>{day}</span>
         <span className={styles.monthWeek}>
           {monthLong}
@@ -138,7 +138,7 @@ function Opener({ event, past }: { event: ProtoEvent; past: boolean }) {
         </p>
       )}
       {/* Kind, time and place, set apart by space and tone rather than separators. */}
-      <p className={`${detail.note} ${styles.meta}`} data-fog-clear>
+      <p className={`${detail.note} ${styles.meta}`} data-hue={KIND_HUE[event.kind]} data-fog-clear>
         {kindAddsInfo(event.kind, event.title) && <span className={styles.kind}>{event.kind}</span>}
         <span className={styles.time}>{event.time}</span>
         <span>{event.place}</span>
