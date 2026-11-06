@@ -484,7 +484,7 @@ export class AsciiFieldEngine {
     const { amount, ribShift, flow } = driftPose(time, this.settings.drift)
     const ribK = TAU / geometry.ribPeriod
     const { ribbing } = this.settings
-    const map = shapeMap(this.settings.shape)
+    const map = shapeMap(this.settings.shape, time)
     const steps = RAMPS[this.settings.ramp].length - 1
     const toGlyph = steps / (FIELD.DENSITY_HI - FIELD.DENSITY_LO)
     const ribBase = 1 - ribbing * 0.08
