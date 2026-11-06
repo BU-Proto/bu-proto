@@ -1,5 +1,5 @@
-import { useMemo, type CSSProperties } from 'react'
-import { Link, useLoaderData } from 'react-router'
+import { useEffect, useMemo, type CSSProperties, type RefObject } from 'react'
+import { Link, useLoaderData, useOutletContext } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { newestWins } from '../components/accolade'
 import { GlyphEdge } from '../components/GlyphEdge'
@@ -16,6 +16,7 @@ import { ScheduleCard } from '../components/ScheduleCard'
 import ui from '../components/ui.module.css'
 import { WinLog } from '../components/WinLog'
 import { WinTally } from '../components/WinTally'
+import type { LayoutOutlet } from '../components/Layout'
 import {
   FUND_NOTE,
   HOME_EMPTY,
@@ -150,6 +151,40 @@ function NoEvent() {
  * which takes on a frozen texture of the field partway down and fills back up with the live field
  * for the ask. Each section has one job: the ways in, the rhythm and its next beat, the record.
  */
+/**
+ * The field rises back up for the ask in a shape of its own: dawn, light coming up from the foot
+ * of the page. It changes over halfway down the harbor stretch between the hero and the ask, where
+ * the field is out of sight, so neither the hero nor the ask ever sees it switch.
+ */
+function useClosingShape(harborRef: RefObject<HTMLElement | null>) {
+  const { setFieldShape } = useOutletContext<LayoutOutlet>()
+  useEffect(() => {
+    const state: { frame: number; closing: boolean | null } = { frame: 0, closing: null }
+    const check = () => {
+      state.frame = 0
+      const harbor = harborRef.current
+      if (!harbor) return
+      const box = harbor.getBoundingClientRect()
+      const next = box.top + box.height / 2 < window.innerHeight / 2
+      if (next === state.closing) return
+      state.closing = next
+      setFieldShape(next ? 'dawn' : null)
+    }
+    const schedule = () => {
+      if (!state.frame) state.frame = requestAnimationFrame(check)
+    }
+    check()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => {
+      cancelAnimationFrame(state.frame)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+      setFieldShape(null)
+    }
+  }, [harborRef, setFieldShape])
+}
+
 export function Home() {
   const { events, hackathons, wins } = useLoaderData<HomeData>()
   const nextEvent = events
@@ -164,6 +199,7 @@ export function Home() {
   const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   const revealRef = useReveal<HTMLDivElement>()
   useWheelEasing()
+  useClosingShape(revealRef)
 
   return (
     <>

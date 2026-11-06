@@ -1,32 +1,21 @@
-import { GRADIENT_COLORMAP } from './colormap'
+import type { GradientMap } from './shapes'
 
-const { width: MW, height: MH, rows } = GRADIENT_COLORMAP
-
-const MAP = new Float32Array(MW * MH * 3)
-rows.forEach((row, j) => {
-  for (let i = 0; i < MW; i++) {
-    const o = (j * MW + i) * 3
-    const s = i * 6
-    MAP[o] = parseInt(row.slice(s, s + 2), 16)
-    MAP[o + 1] = parseInt(row.slice(s + 2, s + 4), 16)
-    MAP[o + 2] = parseInt(row.slice(s + 4, s + 6), 16)
-  }
-})
-
-/** The colormap as RGBA bytes (width × height, row-major), for uploading as a texture. */
-export function gradientPixels(): { width: number; height: number; data: Uint8Array } {
-  const data = new Uint8Array(MW * MH * 4)
-  for (let k = 0; k < MW * MH; k++) {
-    data[k * 4] = MAP[k * 3]
-    data[k * 4 + 1] = MAP[k * 3 + 1]
-    data[k * 4 + 2] = MAP[k * 3 + 2]
+/** A shape's colors as RGBA bytes (width × height, row-major), for uploading as a texture. */
+export function gradientPixels(map: GradientMap): { width: number; height: number; data: Uint8Array } {
+  const { width, height, data: rgb } = map
+  const data = new Uint8Array(width * height * 4)
+  for (let k = 0; k < width * height; k++) {
+    data[k * 4] = rgb[k * 3]
+    data[k * 4 + 1] = rgb[k * 3 + 1]
+    data[k * 4 + 2] = rgb[k * 3 + 2]
     data[k * 4 + 3] = 255
   }
-  return { width: MW, height: MH, data }
+  return { width, height, data }
 }
 
-/** Bilinearly sample the gradient at normalized (u, v), writing RGB (0–255) into `out`. */
-export function sampleGradient(u: number, v: number, out: Float32Array): void {
+/** Bilinearly sample a shape at normalized (u, v), writing RGB (0–255) into `out`. */
+export function sampleGradient(map: GradientMap, u: number, v: number, out: Float32Array): void {
+  const { width: MW, height: MH, data: MAP } = map
   u = u < 0 ? 0 : u > 1 ? 1 : u
   v = v < 0 ? 0 : v > 1 ? 1 : v
   const x = u * (MW - 1)

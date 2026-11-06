@@ -1,7 +1,8 @@
 // Which ground each page stands on. The ASCII field stays mounted behind every page; each kind of
 // page tunes it differently (ramp, glyph size, ribbing, wash, how far down it reaches), so moving
 // around the site feels like moving between rooms of the same building. The rooms share one light:
-// the field's own gradient is never hue-shifted, so every page is in the site's one palette.
+// the field's own gradient is never hue-shifted, so every page is in the site's one palette. Each
+// room catches that light in its own shape (see ascii-field/shapes.ts); the landing keeps the bloom.
 
 import { DEFAULT_FIELD_SETTINGS, type FieldSettings } from '../ascii-field'
 
@@ -49,28 +50,28 @@ export const GROUNDS: Record<GroundName, PageGround> = {
   // Events: the trail's own sparse ramp in bigger cells, the ribs pronounced.
   events: {
     name: 'events',
-    field: field({ ramp: 'codex', cellSize: 11, ribbing: 0.6, glyphContrast: 0.5, baseColor: 0.75, drift: 0.8 }),
+    field: field({ shape: 'ripple', ramp: 'codex', cellSize: 11, ribbing: 0.6, glyphContrast: 0.5, baseColor: 0.75, drift: 0.8 }),
     light: [1, 0.95],
     reach: 'veil',
   },
   // Hackathons: chunky block shades, like a departures board.
   hackathons: {
     name: 'hackathons',
-    field: field({ ramp: 'blocks', cellSize: 12, ribbing: 0.3, glyphContrast: 0.4, baseColor: 0.75, drift: 0.7 }),
+    field: field({ shape: 'strata', ramp: 'blocks', cellSize: 12, ribbing: 0.3, glyphContrast: 0.4, baseColor: 0.75, drift: 0.7 }),
     light: [1, 0.95],
     reach: 'veil',
   },
   // Wins and the track record: the classic ramp in fine cells, deep fluting, a little dimmer.
   record: {
     name: 'record',
-    field: field({ ramp: 'classic', cellSize: 8, ribbing: 0.8, glyphContrast: 0.55, baseColor: 0.6, drift: 0.6 }),
+    field: field({ shape: 'rays', ramp: 'classic', cellSize: 8, ribbing: 0.8, glyphContrast: 0.55, baseColor: 0.6, drift: 0.6 }),
     light: [0.9, 0.85],
     reach: 'veil',
   },
   // Resources and guides: long reading, so the field quiets down and only frames the header.
   reading: {
     name: 'reading',
-    field: field({ cellSize: 8, baseColor: 0.55, glyphContrast: 0.35, ribbing: 0.25, drift: 0.4 }),
+    field: field({ shape: 'aurora', cellSize: 8, baseColor: 0.55, glyphContrast: 0.35, ribbing: 0.25, drift: 0.4 }),
     light: [0.7, 0.9],
     reach: 'top',
   },
@@ -78,7 +79,7 @@ export const GROUNDS: Record<GroundName, PageGround> = {
   // form stands on solid harbor.
   membership: {
     name: 'membership',
-    field: field({ ramp: 'classic', cellSize: 10, baseColor: 0.6, glyphContrast: 0.45, ribbing: 0.5, drift: 0.5 }),
+    field: field({ shape: 'eclipse', ramp: 'classic', cellSize: 10, baseColor: 0.6, glyphContrast: 0.45, ribbing: 0.5, drift: 0.5 }),
     light: [1, 0.95],
     reach: 'top',
   },
