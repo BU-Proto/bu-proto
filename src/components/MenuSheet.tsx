@@ -50,11 +50,17 @@ export function MenuSheet() {
             <ol className={styles.list}>
               {NAV_ITEMS.map((item) =>
                 item.children ? (
-                  // A group: its name, then its pages set smaller under it.
+                  // A group: its name (a link to its own page), then its pages set smaller under it.
                   <li key={item.to} className={styles.group}>
-                    <span id={`group-${item.label}`} className={styles.groupName}>
+                    <Link
+                      id={`group-${item.label}`}
+                      to={item.to}
+                      className={styles.groupName}
+                      aria-current={pathname === item.to ? 'page' : undefined}
+                      onClick={close}
+                    >
                       {item.label}
-                    </span>
+                    </Link>
                     <ul className={styles.children} aria-labelledby={`group-${item.label}`}>
                       {item.children.map((child) => {
                         const [path, anchor] = child.to.split('#')

@@ -34,7 +34,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: '/about',
     inPill: true,
     children: [
-      { label: 'About Proto', to: '/about', line: 'What Proto is and why it exists' },
       { label: 'What we offer', to: '/about#offer', line: 'Hack nights, trips and the playbook' },
       { label: 'The board', to: '/board', line: 'Who runs Proto, and the open seats' },
     ],
@@ -47,7 +46,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: '/resources',
     inPill: true,
     children: [
-      { label: 'All resources', to: '/resources', line: 'The playbook, and where to go at BU' },
       { label: 'The playbook', to: '/resources/playbook', line: 'Our guides to hackathons, start to finish' },
       { label: 'Spark!', to: '/resources/spark', line: 'BU’s lab for building things, with mentors' },
       { label: 'Innovate@BU', to: '/resources/innovate', line: 'Funding and mentors to launch a venture' },
@@ -60,7 +58,18 @@ export const NAV_ITEMS: readonly NavItem[] = [
 
 /** Whether the page at `pathname` is one of an item's own pages (a child's hash doesn't count). */
 export const navItemHolds = (item: NavItem, pathname: string) =>
-  (item.children ?? [item]).some((child) => child.to.split('#')[0] === pathname)
+  [item, ...(item.children ?? [])].some((child) => child.to.split('#')[0] === pathname)
+
+/** The name of the section a path is in (Events for /events/12), for a page still loading. */
+export function sectionName(pathname: string): string | undefined {
+  const section = `/${pathname.split('/')[1] ?? ''}`
+  for (const item of NAV_ITEMS) {
+    if (item.to === pathname || item.to === section) return item.label
+    const child = item.children?.find((c) => c.to === pathname || c.to === section)
+    if (child) return child.label
+  }
+  return undefined
+}
 
 export interface ScheduleSlot {
   day: string

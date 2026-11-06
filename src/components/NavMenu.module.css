@@ -5,25 +5,38 @@
   display: flex;
 }
 
-/* Set like the pill's links beside it, with a chevron that turns over while it's open. */
+/* Set like the pill's links beside it: the name is a link to the section's page, and the chevron
+   beside it, which turns over while the list is open, is its own small button. */
 .trigger {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 11px 7px 13px;
-  border: 0;
   border-radius: 999px;
-  background: none;
   color: var(--ink-soft, rgb(246 251 255 / 0.78));
   font-size: 13px;
   white-space: nowrap;
   text-shadow: 0 1px 2px rgb(var(--harbor-rgb, 6 26 46) / 0.3);
-  cursor: pointer;
 }
 
 .trigger:hover,
-.trigger[aria-expanded='true'] {
+.trigger[data-open] {
   color: var(--ink, #f6fbff);
+}
+
+.label {
+  padding: 7px 2px 7px 13px;
+  border-radius: 999px 0 0 999px;
+  color: inherit;
+}
+
+.toggle {
+  display: grid;
+  place-items: center;
+  padding: 7px 11px 7px 3px;
+  border: 0;
+  border-radius: 0 999px 999px 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 /* On any of its pages it reads as the current section, the way a current link does. */
@@ -32,7 +45,8 @@
   color: var(--ink, #f6fbff);
 }
 
-.trigger:focus-visible {
+.label:focus-visible,
+.toggle:focus-visible {
   outline: 2px solid var(--frost, #f6fbff);
   outline-offset: 2px;
 }
@@ -43,7 +57,7 @@
   opacity: 0.8;
 }
 
-.trigger[aria-expanded='true'] .chevron {
+.toggle[aria-expanded='true'] .chevron {
   transform: rotate(180deg);
 }
 

@@ -8,9 +8,12 @@ import styles from './NavMenu.module.css'
 const CLOSE_DELAY = 180
 
 /**
- * A pill item with pages under it: a disclosure button that opens a short list of links. With a
- * mouse it opens on hover and closes shortly after the pointer leaves. Click or Enter opens it; the arrow keys, Home and End move through the links, Tab moves on as usual,
- * and Escape, a click outside or focus leaving it closes it. Not a role="menu": these are links.
+ * A pill item with pages under it. Its name is a link to its own page, like the pill's other
+ * links; beside it a chevron button opens a short list of the pages under it. With a mouse the
+ * list opens on hover over either and closes shortly after the pointer leaves. Clicking the chevron
+ * or ArrowDown/ArrowUp on either opens it; the arrow keys, Home and End move through the links, Tab
+ * moves on as usual, and Escape, a click outside or focus leaving it closes it. Not a role="menu":
+ * these are links.
  */
 export function NavMenu({ item }: { item: NavItem }) {
   const { pathname, key } = useLocation()
@@ -99,24 +102,33 @@ export function NavMenu({ item }: { item: NavItem }) {
         if (open && !rootRef.current?.contains(event.relatedTarget as Node | null)) setOpen(false)
       }}
     >
-      <button
-        ref={buttonRef}
-        type="button"
-        className={styles.trigger}
-        aria-expanded={open}
-        aria-controls={id}
-        data-current={current || undefined}
-        data-fog-clear="box"
-        // A mouse click while hovering keeps it open; a keyboard click (detail 0) or a tap toggles.
-        onClick={(event) => setOpen(event.detail > 0 && hovering.current ? true : !open)}
-        onKeyDown={onButtonKey}
-      >
-        {item.label}
-        {current && <span className={styles.srOnly}>, current section</span>}
-        <svg className={styles.chevron} viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-          <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+      <div className={styles.trigger} data-open={open || undefined} data-current={current || undefined} data-fog-clear="box">
+        <Link
+          className={styles.label}
+          to={item.to}
+          aria-current={pathname === item.to ? 'page' : undefined}
+          onClick={() => setOpen(false)}
+          onKeyDown={onButtonKey}
+        >
+          {item.label}
+          {current && <span className={styles.srOnly}>, current section</span>}
+        </Link>
+        <button
+          ref={buttonRef}
+          type="button"
+          className={styles.toggle}
+          aria-label={`More in ${item.label}`}
+          aria-expanded={open}
+          aria-controls={id}
+          // A mouse click while hovering keeps it open; a keyboard click (detail 0) or a tap toggles.
+          onClick={(event) => setOpen(event.detail > 0 && hovering.current ? true : !open)}
+          onKeyDown={onButtonKey}
+        >
+          <svg className={styles.chevron} viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
 
       <div id={id} className={styles.panel} hidden={!open} data-fog-ignore>
         <ul ref={listRef} className={styles.list} onKeyDown={onListKey}>

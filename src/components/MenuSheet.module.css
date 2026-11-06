@@ -91,10 +91,13 @@
 }
 
 .link:hover,
-.link[aria-current='page'] {
+.link[aria-current='page'],
+.groupName:hover,
+.groupName[aria-current='page'] {
   color: var(--ink);
 }
 
+.groupName:focus-visible,
 .link:focus-visible {
   outline: 2px solid var(--frost);
   outline-offset: -2px;
