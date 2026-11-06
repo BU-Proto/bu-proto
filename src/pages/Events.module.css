@@ -71,27 +71,6 @@
   overflow: hidden;
 }
 
-/*
- * A stock campus photo (the one with a credit) in the field's light: the building in greys, then
- * the field's sweep laid over it as colour only, so its shadows go harbor and its stone takes the
- * cerulean, lilac and raspberry. The event's own photos are left as they were taken.
- */
-.cover:has(.credit) img {
-  filter: grayscale(1) contrast(1.08) brightness(0.9);
-}
-
-.cover:has(.credit)::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--field-sweep);
-  mix-blend-mode: color;
-  opacity: 0.85;
-  -webkit-mask-image: linear-gradient(to right, #000 70%, transparent);
-  mask-image: linear-gradient(to right, #000 70%, transparent);
-  pointer-events: none;
-}
-
 .cover img {
   position: absolute;
   inset: 0;
@@ -410,8 +389,7 @@
     aspect-ratio: 16 / 10;
   }
 
-  .cover img,
-  .cover:has(.credit)::after {
+  .cover img {
     -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
     mask-image: linear-gradient(to bottom, #000 70%, transparent);
   }

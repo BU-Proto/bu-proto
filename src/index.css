@@ -33,10 +33,6 @@
   --coral: #ffb4a8;
   --coral-rgb: 255 180 168;
 
-  /* Two samples of the field's gradient, for imagery tinted to match it (the campus photo). */
-  --field-blue: #6f9bff;
-  --field-violet: #a48af0;
-
   /*
    * The field's own light, as named colours: read across the field from its cerulean edge,
    * through the lilac, to the raspberry core. They mean one thing everywhere, size: the further
