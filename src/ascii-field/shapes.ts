@@ -5,10 +5,11 @@ import { GRADIENT_COLORMAP, type Colormap } from './colormap'
  * design; the others are painted here from the same pigments (picked out of that gradient), so
  * every shape is in the site's one palette and only the silhouette changes.
  */
-export const SHAPES = ['bloom', 'eclipse', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
+export const SHAPES = ['tides', 'bloom', 'eclipse', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
 export type ShapeName = (typeof SHAPES)[number]
 
 export const SHAPE_LABELS: Record<ShapeName, string> = {
+  tides: 'Tides',
   bloom: 'Bloom',
   eclipse: 'Eclipse',
   ripple: 'Ripple',
@@ -38,7 +39,18 @@ const P = {
   haze: hex('cec1be'),
   peach: hex('f8928a'),
   rose: hex('da346f'),
+  /** The site's frost and navy: the highlights on the tides' currents, and the deeper ground
+      between them. */
+  frost: hex('f6fbff'),
+  navy: hex('0b2a46'),
 } as const
+
+/** A pale ice blue between the frost and the field's sky, for the tides' brightest currents. */
+const ICE: RGB = [
+  P.frost[0] + (P.sky[0] - P.frost[0]) * 0.45,
+  P.frost[1] + (P.sky[1] - P.frost[1]) * 0.45,
+  P.frost[2] + (P.sky[2] - P.frost[2]) * 0.45,
+]
 
 /** Painted shapes are drawn on a 16:10 canvas, the hero's own proportion. */
 const PW = 96
@@ -60,6 +72,10 @@ function ramp(stops: readonly RGB[], t: number): RGB {
   return mixRGB(stops[i], stops[i + 1], x - i)
 }
 
+/** The hero's ground: deep blue at the left, sky through the middle, lagoon at the right. */
+const groundAt = (x: number, y: number): RGB =>
+  x < 0.8 ? mixRGB(P.deep, P.sky, smooth(0, 0.8, x + 0.15 * y)) : mixRGB(P.sky, P.lagoon, smooth(0.8, 1.6, x))
+
 /**
  * Paint a shape: `paint` gets x in 0–1.6 (so circles stay round), y in 0–1, and the ground color
  * there, and returns the color.
@@ -70,9 +86,7 @@ function painted(paint: (x: number, y: number, ground: RGB) => RGB): GradientMap
     for (let i = 0; i < PW; i++) {
       const x = (i / (PW - 1)) * ASPECT
       const y = j / (PH - 1)
-      // The hero's ground: deep blue at the left, sky through the middle, lagoon at the right.
-      const ground = x < 0.8 ? mixRGB(P.deep, P.sky, smooth(0, 0.8, x + 0.15 * y)) : mixRGB(P.sky, P.lagoon, smooth(0.8, 1.6, x))
-      const c = paint(x, y, ground)
+      const c = paint(x, y, groundAt(x, y))
       const o = (j * PW + i) * 3
       data[o] = c[0]
       data[o + 1] = c[1]
@@ -99,7 +113,201 @@ function fromColormap({ width, height, rows }: Colormap): GradientMap {
   return { width, height, data }
 }
 
-const PAINTERS: Record<ShapeName, () => GradientMap> = {
+/** Light for the tides' currents: from the upper left and front, like a studio render. */
+type Vec3 = readonly [number, number, number]
+const unit = (x: number, y: number, z: number): Vec3 => {
+  const l = Math.hypot(x, y, z) || 1
+  return [x / l, y / l, z / l]
+}
+const LIGHT = unit(-0.45, -0.7, 0.6)
+const HALF = unit(LIGHT[0], LIGHT[1], LIGHT[2] + 1)
+const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+/**
+ * A surface of color `base` facing `n`: its shadow side is a deeper shade of its own color (never
+ * black, so the glyphs keep covering it, and never mixed with another hue, so a pink current
+ * doesn't shade to purple), its lit side is its own color, with a frost highlight on top.
+ */
+function lit(base: RGB, n: Vec3, gloss: number, shine: number): RGB {
+  const diffuse = clamp01(dot(n, LIGHT))
+  const spec = Math.pow(clamp01(dot(n, HALF)), gloss)
+  const shade: RGB = [base[0] * 0.68, base[1] * 0.68, base[2] * 0.68]
+  return over(mixRGB(shade, base, 0.2 + 0.8 * diffuse), P.frost, spec * shine)
+}
+
+/** Gaussian blur in place (separable, edges clamped), sigma in map pixels. */
+function soften(map: GradientMap, sigma: number, scratch: Float32Array = new Float32Array(map.data.length)): GradientMap {
+  const { width: W, height: H, data } = map
+  const r = Math.ceil(sigma * 2.5)
+  const kernel = new Float32Array(2 * r + 1)
+  let sum = 0
+  for (let i = -r; i <= r; i++) sum += kernel[i + r] = Math.exp(-(i * i) / (2 * sigma * sigma))
+  for (let i = 0; i < kernel.length; i++) kernel[i] /= sum
+  const pass = (from: Float32Array, to: Float32Array, horizontal: boolean) => {
+    for (let j = 0; j < H; j++) {
+      for (let i = 0; i < W; i++) {
+        let r0 = 0
+        let g0 = 0
+        let b0 = 0
+        for (let o = -r; o <= r; o++) {
+          const ii = horizontal ? Math.min(W - 1, Math.max(0, i + o)) : i
+          const jj = horizontal ? j : Math.min(H - 1, Math.max(0, j + o))
+          const at = (jj * W + ii) * 3
+          const w = kernel[o + r]
+          r0 += from[at] * w
+          g0 += from[at + 1] * w
+          b0 += from[at + 2] * w
+        }
+        const out = (j * W + i) * 3
+        to[out] = r0
+        to[out + 1] = g0
+        to[out + 2] = b0
+      }
+    }
+  }
+  pass(data, scratch, true)
+  pass(scratch, data, false)
+  return map
+}
+
+/**
+ * The tides: four currents of light, bundled tight at the left edge and spreading wide as they
+ * cross to the right. Each is a glossy tube with a soft glow of its own color and a faint shadow,
+ * in the field's own colors: two in ice and the field's blues, two in its warm pinks and peach,
+ * over a ground sunk toward navy so each current stands out as its own shape. The lower ones pass
+ * in front where they overlap in the bundle.
+ *
+ * The currents stay where they are; only their width moves. Each one ripples up and down in place,
+ * swelling at some points as it settles at others, in a pattern exactly two ripples to the
+ * screen's width, so the swelling and the settling always cancel out and each current shows the
+ * same amount of its color: the balance of color on screen never changes.
+ */
+const CURRENTS = [
+  // Colors run from the right edge (first) to the bundle (last). Each current blends within its
+  // own family, and the warm ones only through peach, never straight from pink into blue.
+  { base: 0.06, tones: [P.sky, ICE, P.lagoon] },
+  { base: 0.22, tones: [P.rose, P.peach, P.rose] },
+  { base: 0.38, tones: [P.peach, P.rose, P.peach] },
+  { base: 0.54, tones: [P.lagoon, ICE, P.sky] },
+].map(({ base, tones }, k) => ({ base, tones, R: 0.09 + 0.012 * k }))
+
+/**
+ * The ripples: how far they swell and settle a current (a share of its radius), how long one
+ * swell takes (seconds), and their spacing, two whole ripples across the screen so their effect on
+ * a current's area always cancels.
+ */
+const RIPPLE = 0.28
+const RIPPLE_PERIOD = 10
+const RIPPLE_K = (2 * 2 * Math.PI) / ASPECT
+
+/** Painted finer than the other shapes, so the currents' highlights stay crisp, and softened a little. */
+const TIDES_W = 128
+const TIDES_H = 80
+const TIDES_SOFTEN = 1.5
+
+/**
+ * Where current `k` runs at `u` (measured from the right edge, 0, to the left, 1.6, so the bundle
+ * sits on the left). It never moves: a gentle curve, the same for every current at a given u.
+ */
+function currentY(k: number, u: number): number {
+  const { base } = CURRENTS[k]
+  const pull = smooth(-0.1, 1.75, u)
+  const meet = 0.3 + (k - 1.5) * 0.045
+  const wave = 0.035 * Math.sin(2.4 * u) * (1 - pull)
+  const roll = 0.028 * Math.sin(1.2 * u) * (0.35 + 0.65 * (1 - pull))
+  return base + (meet - base) * pull + wave + roll
+}
+
+/** What doesn't move under the tides: the ground sunk toward navy, with a soft lagoon glow over the bundle. */
+let tidesGround: Float32Array | null = null
+/** The tides' buffers, repainted in place. */
+let tidesData: Float32Array | null = null
+let tidesScratch: Float32Array | null = null
+
+function paintTides(time: number): GradientMap {
+  const W = TIDES_W
+  const H = TIDES_H
+  const n = CURRENTS.length
+  if (!tidesGround) {
+    tidesGround = new Float32Array(W * H * 3)
+    for (let j = 0; j < H; j++) {
+      for (let i = 0; i < W; i++) {
+        const x = (i / (W - 1)) * ASPECT
+        const y = j / (H - 1)
+        let c = over(over(groundAt(x, y), P.deep, 0.6), P.navy, 0.32)
+        c = over(c, P.lagoon, smooth(1.5, 0, Math.hypot(x - 0.4, y - 0.3)) * 0.2)
+        tidesGround.set(c, (j * W + i) * 3)
+      }
+    }
+    tidesData = new Float32Array(W * H * 3)
+    tidesScratch = new Float32Array(W * H * 3)
+  }
+  const data = tidesData as Float32Array
+  const swell = (time * 2 * Math.PI) / RIPPLE_PERIOD
+
+  // Each column's slice of each current: its center, which way is "across" it, its radius and color.
+  const centers = new Float32Array(W * n)
+  const acrossX = new Float32Array(W * n)
+  const acrossY = new Float32Array(W * n)
+  const radii = new Float32Array(W * n)
+  const tones: RGB[] = new Array(W * n)
+  for (let i = 0; i < W; i++) {
+    const u = ASPECT - (i / (W - 1)) * ASPECT
+    const along = clamp01((u + 0.15) / 1.9)
+    for (let k = 0; k < n; k++) {
+      const o = i * n + k
+      const slope = (currentY(k, u - 0.002) - currentY(k, u + 0.002)) / 0.004
+      const len = Math.sqrt(1 + slope * slope)
+      centers[o] = currentY(k, u)
+      acrossX[o] = -slope / len
+      acrossY[o] = 1 / len
+      // The current's width ripples up and down in place: its ripples sit still along it and swell
+      // and settle in turn. Neighbouring currents swell in opposite turns, so as one swells the next
+      // settles and the two warm ones never grow together.
+      radii[o] = CURRENTS[k].R * (1 + RIPPLE * Math.sin(RIPPLE_K * u + k * 1.1) * Math.sin(swell + k * Math.PI))
+      tones[o] = ramp(CURRENTS[k].tones, along)
+    }
+  }
+
+  const offsets = new Float32Array(n)
+  for (let j = 0; j < H; j++) {
+    const y = j / (H - 1)
+    for (let i = 0; i < W; i++) {
+      const p = (j * W + i) * 3
+      const ground = tidesGround
+      let c: RGB = [ground[p], ground[p + 1], ground[p + 2]]
+      // First every current's glow and shadow, then the currents themselves, the lower ones in front.
+      for (let k = 0; k < n; k++) {
+        const o = i * n + k
+        const d = (y - centers[o]) * acrossY[o]
+        offsets[k] = d
+        const dist = Math.abs(d)
+        c = over(c, P.navy, gauss((dist - radii[o] - 0.03) / 0.06) * 0.3)
+        c = over(c, tones[o], gauss(dist / (radii[o] * 2.3)) * 0.4)
+      }
+      for (let k = 0; k < n; k++) {
+        const o = i * n + k
+        const across = Math.abs(offsets[k]) / radii[o]
+        if (across >= 1.06) continue
+        const t = Math.min(1, across)
+        const side = Math.sign(offsets[k]) * t
+        const normal = unit(acrossX[o] * side, acrossY[o] * side, Math.sqrt(1 - t * t))
+        let col = lit(tones[o], normal, 50, 0.6)
+        col = over(col, P.lagoon, Math.pow(1 - normal[2], 3) * 0.3)
+        c = over(c, col, smooth(1.06, 0.88, across) * 0.95)
+      }
+      data[p] = c[0]
+      data[p + 1] = c[1]
+      data[p + 2] = c[2]
+    }
+  }
+  return soften({ width: W, height: H, data }, TIDES_SOFTEN, tidesScratch as Float32Array)
+}
+
+const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
+  // Currents of light flowing across the top of the landing (see paintTides).
+  tides: paintTides,
+
   bloom: () => fromColormap(GRADIENT_COLORMAP),
 
   // A ring of warm light around a dark disc, high on the right: the corona of an eclipse, lit
@@ -229,14 +437,25 @@ const PAINTERS: Record<ShapeName, () => GradientMap> = {
     }),
 }
 
-const cache = new Map<ShapeName, GradientMap>()
+/** Shapes that move on their own, and how many times a second they're repainted. */
+const MOVING: Partial<Record<ShapeName, number>> = { tides: 12 }
 
-/** The colors of a shape, painted the first time it's asked for. */
-export function shapeMap(name: ShapeName): GradientMap {
-  let map = cache.get(name)
-  if (!map) {
-    map = PAINTERS[name]()
-    cache.set(name, map)
-  }
+const cache = new Map<ShapeName, GradientMap>()
+/** For a moving shape: which repaint its cached map is. */
+const steps = new Map<ShapeName, number>()
+
+/**
+ * The colors of a shape at `time` (seconds; 0 is the still pose). A still shape is painted the
+ * first time it's asked for. A moving one is repainted a few times a second (into the same
+ * buffer), and each repaint comes back as a new object, so a renderer can tell it has changed.
+ */
+export function shapeMap(name: ShapeName, time = 0): GradientMap {
+  const cached = cache.get(name)
+  const rate = MOVING[name]
+  const step = rate ? Math.floor(time * rate) : 0
+  if (cached && steps.get(name) === step) return cached
+  const map = PAINTERS[name](rate ? step / rate : 0)
+  cache.set(name, map)
+  steps.set(name, step)
   return map
 }

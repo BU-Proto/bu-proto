@@ -77,7 +77,7 @@ export class CanvasFieldRenderer implements FieldRenderer {
     const color = colorImage.data
     const tint = tintImage.data
     const [phaseX, phaseY] = swayPhases(time)
-    const map = shapeMap(settings.shape)
+    const map = shapeMap(settings.shape, time)
     for (let j = 0; j < rows; j++) {
       const cy = (j + 0.5) * cellH
       const du = swayU(cy, phaseX)

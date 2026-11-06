@@ -2,7 +2,7 @@ import { driftPose, swayPhases } from './ambient'
 import { gradientPixels } from './gradient'
 import type { FieldFrame, FieldGeometry, FieldRenderer, GlyphAtlas } from './renderer'
 import { FIELD, TRAIL_COLORS } from './settings'
-import { shapeMap, type ShapeName } from './shapes'
+import { shapeMap, type GradientMap } from './shapes'
 
 /** A number as a GLSL float literal. */
 const glsl = (n: number) => (Number.isInteger(n) ? n.toFixed(1) : String(n))
@@ -248,8 +248,8 @@ export class WebGLFieldRenderer implements FieldRenderer {
   private geometry: FieldGeometry | null = null
   private atlas: GlyphAtlas | null = null
   private trailColor = ''
-  /** The shape whose colors are in the gradient texture. */
-  private shape: ShapeName | '' = ''
+  /** The shape colors in the gradient texture (a moving shape hands back a new map as it moves). */
+  private map: GradientMap | null = null
   /** The cells texture was (re)allocated and holds nothing yet. */
   private cellsStale = true
 
@@ -344,9 +344,10 @@ export class WebGLFieldRenderer implements FieldRenderer {
       }
       gl.uniform2f(u.uWarpScale, warp.scaleX, warp.scaleY)
     }
-    if (settings.shape !== this.shape) {
-      this.shape = settings.shape
-      const map = gradientPixels(shapeMap(settings.shape))
+    const shape = shapeMap(settings.shape, frame.time)
+    if (shape !== this.map) {
+      this.map = shape
+      const map = gradientPixels(shape)
       gl.activeTexture(gl.TEXTURE0 + UNIT_GRADIENT)
       gl.bindTexture(gl.TEXTURE_2D, state.gradient)
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, map.width, map.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, map.data)
@@ -415,7 +416,7 @@ export class WebGLFieldRenderer implements FieldRenderer {
     gl.uniform1i(uniforms.uWarp, UNIT_WARP)
     gl.uniform2f(uniforms.uWarpSize, 1, 1)
     this.trailColor = ''
-    this.shape = ''
+    this.map = null
     return { program, vao, gradient, atlas, cells, warp, warpCols: 1, warpRows: 1, uniforms }
   }
 
