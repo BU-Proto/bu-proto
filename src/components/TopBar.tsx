@@ -23,7 +23,7 @@ export function TopBar() {
 
   return (
     <header ref={bar} className={styles.top}>
-      <Glass radius={23} bezel={21} bend={44} />
+      <Glass radius={23} bezel={18} bend={36} />
       <Link className={styles.logo} to="/">
         <ProtoMark size={18} />
         {BRAND.short}
