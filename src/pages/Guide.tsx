@@ -3,6 +3,9 @@ import { Link, useLocation, useParams } from 'react-router'
 import { AuthorName, AuthorPhoto, Byline } from '../components/Byline'
 import { DetailOpener, DetailPage } from '../components/DetailPage'
 import { Graphic } from '../components/guide/Graphics'
+import { MaskLines } from '../components/motion/MaskLines'
+import motion from '../components/motion/motion.module.css'
+import { useReveal } from '../components/motion/useReveal'
 import ui from '../components/ui.module.css'
 import { BRAND } from '../content/site'
 import { GUIDE_DOCS } from '../content/guides'
@@ -16,13 +19,13 @@ import styles from './Guide.module.css'
 function TextLink({ link }: { link: GuideLink }) {
   if (link.href.startsWith('/')) {
     return (
-      <Link className={styles.link} to={link.href}>
+      <Link className={`${ui.textLink} ${styles.link}`} to={link.href}>
         {link.label}
       </Link>
     )
   }
   return (
-    <a className={styles.link} href={link.href}>
+    <a className={`${ui.textLink} ${styles.link}`} href={link.href}>
       {link.label}
     </a>
   )
@@ -39,7 +42,7 @@ function RichText({ text }: { text: Rich }) {
 
 function Items({ items }: { items: readonly Rich[] }) {
   return items.map((item, index) => (
-    <li key={index} data-fog-clear>
+    <li key={index}>
       <RichText text={item} />
     </li>
   ))
@@ -70,9 +73,9 @@ function Credit({ image }: { image: GuideImage }) {
 
 function Figure({ image, caption, shape = 'wide' }: { image: GuideImage; caption: Rich; shape?: 'wide' | 'tall' }) {
   return (
-    <figure className={shape === 'tall' ? styles.tall : styles.wide}>
+    <figure className={shape === 'tall' ? styles.tall : styles.wide} data-reveal>
       <img src={image.src} alt={image.alt} loading="lazy" decoding="async" />
-      <figcaption className={styles.figcaption} data-fog-clear>
+      <figcaption className={styles.figcaption}>
         <span>
           <RichText text={caption} />
         </span>
@@ -89,13 +92,13 @@ function Example({ example, authors, card = false }: { example: WinExample; auth
   const { win, text } = example
   const on = authorsOn(win, authors)
   return (
-    <aside className={card ? styles.exampleCard : styles.example} aria-label={`${GUIDE_PAGE.exampleLabel}: ${win.project}`}>
+    <aside className={card ? styles.exampleCard : styles.example} data-reveal aria-label={`${GUIDE_PAGE.exampleLabel}: ${win.project}`}>
       {/* The name links to the win too; the picture is a bigger target for the same place. */}
       <Link className={styles.exampleThumb} to={winHref(win)} tabIndex={-1} aria-hidden="true">
         <img src={winThumb(win.cover)} alt="" loading="lazy" width={333} height={222} />
       </Link>
-      <div className={styles.exampleBody} data-fog-clear>
-        <p className={styles.exampleLabel}>{GUIDE_PAGE.exampleLabel}</p>
+      <div className={styles.exampleBody}>
+        <p className={ui.mono}>{GUIDE_PAGE.exampleLabel}</p>
         <p className={styles.exampleHead}>
           <Link className={styles.exampleName} to={winHref(win)}>
             {win.project}
@@ -130,7 +133,7 @@ function isParagraph(block: Block): block is Rich {
 function BlockView({ block, authors }: { block: Block; authors: readonly Author[] }) {
   if (isParagraph(block)) {
     return (
-      <p className={styles.para} data-fog-clear>
+      <p className={styles.para}>
         <RichText text={block} />
       </p>
     )
@@ -151,8 +154,8 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
   }
   if ('callout' in block) {
     return (
-      <div className={styles.callout} data-fog-clear>
-        <p className={styles.calloutLabel}>{block.label ?? GUIDE_PAGE.ruleOfThumb}</p>
+      <div className={styles.callout} data-reveal>
+        <p className={ui.darkLabel}>{block.label ?? GUIDE_PAGE.ruleOfThumb}</p>
         <p className={styles.calloutText}>
           <RichText text={block.callout} />
         </p>
@@ -162,7 +165,7 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
   if ('pull' in block) {
     // The line is already in the text around it, so it's read once, there.
     return (
-      <p className={styles.pull} aria-hidden="true" data-fog-clear>
+      <p className={styles.pull} aria-hidden="true" data-reveal>
         {block.pull}
       </p>
     )
@@ -170,10 +173,10 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
   if ('checklist' in block) {
     return (
       <div className={styles.checklist}>
-        <h3 className={styles.checklistTitle} data-fog-clear>
+        <h3 className={styles.checklistTitle}>
           <svg className={styles.checkMark} width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-            <circle cx="11" cy="11" r="11" fill="currentColor" />
-            <path d="M6.5 11.5l3 3 6-6.5" fill="none" stroke="var(--navy)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            <rect width="22" height="22" fill="currentColor" />
+            <path d="M6.5 11.5l3 3 6-6.5" fill="none" stroke="var(--c-paper)" strokeWidth="2.2" strokeLinecap="square" />
           </svg>
           {block.title}
         </h3>
@@ -187,7 +190,7 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
   if ('figure' in block) return <Figure image={block.figure} caption={block.caption} shape={block.shape} />
   if ('graphic' in block) {
     return (
-      <div className={styles.graphicSlot}>
+      <div className={styles.graphicSlot} data-reveal>
         <Graphic name={block.graphic} />
       </div>
     )
@@ -196,8 +199,8 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
     <dl className={styles.facts}>
       {block.facts.map((fact) => (
         <div key={fact.term} className={styles.fact}>
-          <dt data-fog-clear>{fact.term}</dt>
-          <dd data-fog-clear>
+          <dt>{fact.term}</dt>
+          <dd>
             <RichText text={fact.detail} />
           </dd>
         </div>
@@ -242,14 +245,14 @@ function SectionBody({ section, authors }: { section: GuideSection; authors: rea
 function AuthorNote({ authors }: { authors: readonly Author[] }) {
   return (
     <section id="authors" className={styles.authors} aria-labelledby="authors-title">
-      <h2 id="authors-title" className={styles.authorsTitle} data-fog-clear>
+      <h2 id="authors-title" className={`${ui.mono} ${styles.authorsTitle}`}>
         {GUIDE_PAGE.authorsTitle}
       </h2>
       <ul className={styles.authorList}>
         {authors.map((author) => (
           <li key={author.href} className={styles.author}>
             <AuthorPhoto author={author} size="large" />
-            <div className={styles.authorText} data-fog-clear>
+            <div className={styles.authorText}>
               <p className={styles.authorName}>
                 <AuthorName author={author} />
               </p>
@@ -259,7 +262,7 @@ function AuthorNote({ authors }: { authors: readonly Author[] }) {
                 {author.wins.map((win, index) => (
                   <Fragment key={win.id}>
                     {index > 0 && '; '}
-                    <Link className={styles.link} to={winHref(win)}>
+                    <Link className={`${ui.textLink} ${styles.link}`} to={winHref(win)}>
                       {win.project}
                     </Link>
                     , {win.prize} at {win.event}
@@ -321,12 +324,12 @@ function UpNext({ index }: { index: number }) {
   const { image } = next.lead
   return (
     <section className={styles.upNext} aria-labelledby="up-next">
-      <Link className={`${ui.panelDeep} ${styles.nextCard}`} to={href}>
+      <Link className={`${ui.dark} ${styles.nextCard}`} to={href}>
         <span className={styles.nextImage}>
           <img src={image.src} alt="" loading="lazy" decoding="async" />
         </span>
-        <span className={styles.nextText} data-fog-clear>
-          <span id="up-next" className={styles.nextLabel}>
+        <span className={styles.nextText}>
+          <span id="up-next" className={ui.darkLabel}>
             {last ? GUIDE_PAGE.backToStart : GUIDE_PAGE.upNext}
           </span>
           <span className={styles.nextTitle}>{next.title}</span>
@@ -337,14 +340,14 @@ function UpNext({ index }: { index: number }) {
       </Link>
       <nav className={styles.moreGuides} aria-label={GUIDE_PAGE.navLabel}>
         {previous ? (
-          <Link className={styles.moreLink} to={guidePath(previous) ?? PLAYBOOK_HREF} data-fog-clear>
+          <Link className={`${ui.textLink} ${styles.moreLink}`} to={guidePath(previous) ?? PLAYBOOK_HREF}>
             <span aria-hidden="true">← </span>
             {GUIDE_PAGE.previous}: {previous.title}
           </Link>
         ) : (
           <span />
         )}
-        <Link className={styles.moreLink} to={PLAYBOOK_HREF} data-fog-clear>
+        <Link className={`${ui.textLink} ${styles.moreLink}`} to={PLAYBOOK_HREF}>
           {GUIDE_PAGE.all}
         </Link>
       </nav>
@@ -412,13 +415,13 @@ function GuideMissing() {
     <div className={ui.page}>
       <title>{`${copy.title} · ${BRAND.full}`}</title>
       <section className={styles.missing}>
-        <h1 className={ui.introTitle} data-fog-clear>
+        <h1 className={ui.introTitle}>
           {copy.title}
         </h1>
-        <p className={ui.introLede} data-fog-clear>
+        <p className={ui.introLede}>
           {copy.text}
         </p>
-        <Link className={ui.primary} to={PLAYBOOK_HREF} data-fog-clear="box">
+        <Link className={ui.primary} to={PLAYBOOK_HREF}>
           {copy.back}
         </Link>
       </section>
@@ -428,8 +431,8 @@ function GuideMissing() {
 
 /**
  * One playbook guide, set like a magazine piece: the lead photo under the title and byline, then
- * the contents on the field beside the text on deep glass, with pictures and diagrams running
- * wider than the text, the authors' note, and the next guide.
+ * the contents beside the text on the harbor ground, with pictures and diagrams running wider than the
+ * text, the authors' note, and the next guide.
  */
 export function Guide() {
   const { slug = '' } = useParams()
@@ -445,6 +448,7 @@ export function Guide() {
   const ids = doc ? [...doc.sections.map((section) => section.id), 'authors'] : []
   const active = useActiveSection(ids)
   const [contentsOpen, setContentsOpen] = useContentsOpen()
+  const reveal = useReveal<HTMLDivElement>()
 
   const index = WRITTEN.findIndex((guide) => guide.slug === slug)
   const entry = WRITTEN[index]
@@ -455,45 +459,45 @@ export function Guide() {
     <DetailPage>
       <title>{`${entry.title} · ${BRAND.full}`}</title>
       <DetailOpener photo={image.src} alt={image.alt}>
-        <p className={styles.kicker} data-fog-clear>
+        <p className={`${ui.mono} ${styles.kicker}`}>
           <Link to={PLAYBOOK_HREF}>{PLAYBOOK_INTRO.title}</Link>
           <span className={styles.kickerCount}>
             {GUIDE_PAGE.guideOf(index + 1, WRITTEN.length)}
           </span>
         </p>
-        <h1 id="guide-title" className={styles.title} data-fog-clear>
-          {entry.title}
+        <h1 id="guide-title" className={styles.title}>
+          <MaskLines text={entry.title} delay={100} />
         </h1>
-        <p className={styles.lede} data-fog-clear>
+        <p className={styles.lede}>
           {entry.line}
         </p>
         <div className={styles.byline}>
           <Byline authors={authors} updated={updated} copy={GUIDE_PAGE} />
         </div>
-        <p className={styles.leadCredit} data-fog-clear>
+        <p className={styles.leadCredit}>
           <Credit image={image} />
         </p>
       </DetailOpener>
 
-      <div className={styles.layout}>
+      <div ref={reveal} className={`${motion.reveal} ${styles.layout}`}>
         <nav className={styles.contents} aria-labelledby="contents">
           <details className={styles.contentsFold} open={contentsOpen} onToggle={(event) => setContentsOpen(event.currentTarget.open)}>
-            <summary className={styles.contentsSummary} data-fog-clear>
-              <h2 id="contents" className={styles.contentsTitle}>
+            <summary className={styles.contentsSummary}>
+              <h2 id="contents" className={`${ui.mono} ${styles.contentsTitle}`}>
                 {GUIDE_PAGE.contentsLabel}
               </h2>
-              <span className={styles.contentsCount}>{GUIDE_PAGE.sections(doc.sections.length)}</span>
+              <span className={`${ui.mono} ${styles.contentsCount}`}>{GUIDE_PAGE.sections(doc.sections.length)}</span>
             </summary>
             <ol className={styles.contentsList}>
               {doc.sections.map((section) => (
                 <li key={section.id}>
-                  <a href={`#${section.id}`} aria-current={active === section.id ? 'true' : undefined} data-fog-clear>
+                  <a href={`#${section.id}`} aria-current={active === section.id ? 'true' : undefined}>
                     {section.title}
                   </a>
                 </li>
               ))}
               <li>
-                <a href="#authors" aria-current={active === 'authors' ? 'true' : undefined} data-fog-clear>
+                <a href="#authors" aria-current={active === 'authors' ? 'true' : undefined}>
                   {GUIDE_PAGE.authorsTitle}
                 </a>
               </li>
@@ -501,14 +505,15 @@ export function Guide() {
           </details>
         </nav>
 
-        <article className={`${ui.panelDeep} ${styles.doc}`} aria-labelledby="guide-title">
-          <p className={styles.standfirst} data-fog-clear>
+        <article className={styles.doc} aria-labelledby="guide-title">
+          <p className={styles.standfirst} data-reveal>
             <RichText text={doc.standfirst} />
           </p>
           {doc.sections.map((section) => (
             <section key={section.id} id={section.id} className={styles.section} aria-labelledby={`${section.id}-title`}>
-              <h2 id={`${section.id}-title`} className={styles.heading} data-fog-clear>
-                {section.title}
+              <span className={styles.rule} data-reveal="rule" aria-hidden="true" />
+              <h2 id={`${section.id}-title`} className={`${ui.h2} ${styles.heading}`}>
+                <MaskLines text={section.title} />
               </h2>
               <SectionBody section={section} authors={authors} />
             </section>

@@ -16,7 +16,7 @@ const pct = (part: number, whole: number) => `${(part / whole) * 100}%`
 function Frame({ title, caption, children }: { title: string; caption: string; children: ReactNode }) {
   const id = useId()
   return (
-    <figure className={styles.graphic} aria-labelledby={id} data-fog-clear>
+    <figure className={styles.graphic} aria-labelledby={id}>
       <p id={id} className={styles.title}>
         {title}
       </p>
