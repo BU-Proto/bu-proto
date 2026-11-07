@@ -33,8 +33,9 @@
   min-height: 46px;
   padding: 11px 14px;
   border: 1px solid var(--c-line);
-  border-radius: 0;
-  background: var(--c-paper);
+  /* Rounded like the buttons; a surface can set its own fill (the join sheet's glass does). */
+  border-radius: 14px;
+  background: var(--field-fill, var(--c-paper));
   color: var(--c-ink);
   font-family: var(--font-display);
   font-size: 15px;

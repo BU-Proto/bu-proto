@@ -58,7 +58,7 @@ export interface HeroBloom {
  * Shapes the picture keeps steady instead of folding, and how much (1 = barely stirred): the tides'
  * lines stay straight, and the summit's mountains keep their outline and size, breathing only a little.
  */
-const STEADY: Partial<Record<ShapeName, number>> = { tides: 1, summit: 0.82 }
+const STEADY: Partial<Record<ShapeName, number>> = { tides: 1, summit: 0.82, beacon: 0.88 }
 
 export function createHeroBloom(canvas: HTMLCanvasElement, shape: ShapeName, onLost: () => void, onReady: () => void): HeroBloom | null {
   const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: 'high-performance' })

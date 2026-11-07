@@ -6,7 +6,7 @@ import { PALETTE_V2 } from './palettePreview'
  * design; the others are painted here from the same pigments (picked out of that gradient), so
  * every shape is in the site's one palette and only the silhouette changes.
  */
-export const SHAPES = ['summit', 'tides', 'bloom', 'eclipse', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
+export const SHAPES = ['summit', 'tides', 'bloom', 'eclipse', 'ripple', 'aurora', 'rays', 'strata', 'dawn', 'beacon'] as const
 export type ShapeName = (typeof SHAPES)[number]
 
 export const SHAPE_LABELS: Record<ShapeName, string> = {
@@ -19,6 +19,7 @@ export const SHAPE_LABELS: Record<ShapeName, string> = {
   rays: 'Rays',
   strata: 'Strata',
   dawn: 'Dawn',
+  beacon: 'Beacon',
 }
 
 /** A grid of RGB colors (0–255), row-major, top to bottom. Sampled bilinearly over the viewport. */
@@ -60,6 +61,9 @@ const SUMMIT_PEAKS: readonly { at: number; height: number; width: number; glow: 
   { at: 0.6, height: 0.56, width: 0.15, glow: 1, tones: [[237, 99, 125], [218, 52, 111], [122, 92, 236], [4, 106, 168]] },
   { at: 0.86, height: 0.3, width: 0.13, glow: 0.8, tones: [[242, 120, 128], [218, 52, 111], [96, 90, 220], [4, 106, 168]] },
 ]
+
+/** How fast the beacon's rings roll outward (ring spacings a second): one every 12 seconds or so. */
+const BEACON_SPEED = 0.085
 
 /** Painted shapes are drawn on a 16:10 canvas, the hero's own proportion. */
 const PW = 96
@@ -483,6 +487,24 @@ const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
       return c
     }),
 
+  // The join page's light: a beacon rising from under the bottom edge, a rose and peach core with a
+  // violet halo, sending wide soft rings of light out across the page that cool to blue as they go.
+  // The rings roll slowly outward and the core breathes, so it reads as a call going out.
+  beacon: (time) =>
+    painted((x, y, ground) => {
+      const d = Math.hypot(x - ASPECT / 2, (y - 0.98) * 1.1)
+      const breath = 1 + 0.06 * Math.sin(time * 0.5)
+      const spread = smooth(1.9, 0.25, d)
+      let c = over(ground, P.deep, smooth(0.5, 0, y) * 0.25)
+      c = over(c, VIOLET, smooth(1.3, 0.25, d) * 0.55)
+      const wave = 0.5 + 0.5 * Math.cos(2 * Math.PI * (d / 0.3 - time * BEACON_SPEED))
+      const tone = ramp([P.peach, P.rose, VIOLET, P.sky], smooth(0.3, 1.5, d))
+      c = over(c, tone, Math.pow(wave, 2) * spread * 0.85)
+      c = over(c, P.rose, smooth(0.62 * breath, 0.18, d) * 0.85)
+      c = over(c, P.peach, smooth(0.38 * breath, 0.04, d) * 0.85)
+      return over(c, P.haze, smooth(0.2 * breath, 0, d) * 0.6)
+    }),
+
   // A sun coming up from under the bottom edge: a wide iris sky, a peach glow, a rose rim and a
   // pale core breaking the horizon, with faint shafts fanning up from it. For the end of a page.
   dawn: () =>
@@ -505,7 +527,7 @@ const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
 }
 
 /** Shapes that move on their own, and how many times a second they're repainted. */
-const MOVING: Partial<Record<ShapeName, number>> = { tides: 12, summit: 12 }
+const MOVING: Partial<Record<ShapeName, number>> = { tides: 12, summit: 12, beacon: 12 }
 
 const cache = new Map<ShapeName, GradientMap>()
 /** For a moving shape: which repaint its cached map is. */
