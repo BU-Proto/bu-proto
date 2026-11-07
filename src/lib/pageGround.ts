@@ -2,7 +2,7 @@
 // page tunes it differently (ramp, glyph size, ribbing, wash, how far down it reaches), so moving
 // around the site feels like moving between rooms of the same building. The rooms share one light:
 // the field's own gradient is never hue-shifted, so every page is in the site's one palette. Each
-// room catches that light in its own shape (see ascii-field/shapes.ts); the landing's is its tides.
+// room catches that light in its own shape (see ascii-field/shapes.ts); the landing's is the bloom.
 
 import { DEFAULT_FIELD_SETTINGS, type FieldSettings } from '../ascii-field'
 
@@ -39,11 +39,11 @@ export interface PageGround {
 const field = (overrides: Partial<FieldSettings>): FieldSettings => ({ ...DEFAULT_FIELD_SETTINGS, ...overrides })
 
 export const GROUNDS: Record<GroundName, PageGround> = {
-  // The landing: currents of light bundled on the left and spreading across the top, the hero's
-  // words below them. Slower waves, softer glyphs, shallower ribs, in slightly bigger cells.
+  // The landing: the original blue-to-pink bloom, the hero's words below it. Slower waves, softer
+  // glyphs, shallower ribs, in slightly bigger cells.
   home: {
     name: 'home',
-    field: field({ shape: 'tides', cellSize: 10, baseColor: 0.82, glyphContrast: 0.42, ribbing: 0.3, drift: 0.55 }),
+    field: field({ shape: 'bloom', cellSize: 10, baseColor: 0.82, glyphContrast: 0.42, ribbing: 0.3, drift: 0.55 }),
     light: [1, 1],
     reach: 'full',
   },

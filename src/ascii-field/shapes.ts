@@ -1,4 +1,5 @@
 import { GRADIENT_COLORMAP, type Colormap } from './colormap'
+import { PALETTE_V2 } from './palettePreview'
 
 /**
  * The shapes the field's light can take. `bloom` is the hero gradient sampled from the reference
@@ -35,7 +36,7 @@ const P = {
   deep: hex('046aa8'),
   sky: hex('039ac8'),
   lagoon: hex('00a4d0'),
-  iris: hex('8488b5'),
+  iris: hex(PALETTE_V2 ? '857fd7' : '8488b5'),
   haze: hex('cec1be'),
   peach: hex('f8928a'),
   rose: hex('da346f'),
