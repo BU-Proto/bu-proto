@@ -1,4 +1,4 @@
-/* See Glass.tsx. A surface sets --glass-frost and --glass-shadow to suit its size. */
+/* See Glass.tsx. A surface can set --glass-blur, --glass-tone and --glass-shadow to suit its size. */
 
 .glass {
   position: absolute;
@@ -34,7 +34,7 @@
 }
 
 [data-refract] > .clear {
-  backdrop-filter: blur(0.6px) saturate(1.9) contrast(0.75) brightness(0.52);
+  backdrop-filter: blur(0.6px) var(--glass-tone, saturate(1.9) contrast(0.75) brightness(0.52));
 }
 
 /*
@@ -43,14 +43,13 @@
  * labels at 4.5:1 over pure white.
  */
 .frost {
-  --glass-frost-default: blur(4px) saturate(1.9) contrast(0.75) brightness(0.52);
-  -webkit-backdrop-filter: var(--glass-frost, var(--glass-frost-default));
-  backdrop-filter: var(--glass-frost, var(--glass-frost-default));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 4px)) var(--glass-tone, saturate(1.9) contrast(0.75) brightness(0.52));
+  backdrop-filter: blur(var(--glass-blur, 4px)) var(--glass-tone, saturate(1.9) contrast(0.75) brightness(0.52));
 }
 
 [data-refract] > .frost {
   mask: var(--core) center / 100% 100% no-repeat;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(var(--glass-blur, 4px));
 }
 
 /* Only ever handed its filter in Chromium. It comes up over the frost once its map has decoded. */

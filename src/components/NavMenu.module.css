@@ -54,7 +54,8 @@
 /* Hangs from the tab, a little clear of it so the two never read as glass on glass, under its own
    trigger. Larger glass runs darker, for the text it carries. */
 .panel {
-  --glass-frost: blur(18px) saturate(1.8) contrast(0.5) brightness(0.42);
+  --glass-blur: 16px;
+  --glass-tone: saturate(1.8) contrast(0.5) brightness(0.42);
   --glass-shadow: 0 18px 50px rgb(0 0 0 / 0.5);
   position: absolute;
   top: calc(100% + 8px);
