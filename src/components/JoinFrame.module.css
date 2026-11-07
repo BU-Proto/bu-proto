@@ -35,7 +35,8 @@
 .title {
   position: relative;
   margin: 0;
-  font-size: clamp(40px, 6.6vw, 104px);
+  /* It measures 8.25em, so this fills the column at every width and never wraps. */
+  font-size: min(104px, calc((100vw - var(--gutter) * 2) / 8.3), 15vh);
   font-weight: 500;
   letter-spacing: -0.03em;
   line-height: 1;
