@@ -21,7 +21,8 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  /* The spare height sits mostly above the ring and some below, so the cluster lifts on tall screens. */
+  grid-template-rows: auto 3fr auto auto 2fr;
   width: min(100%, 980px);
   margin: 0 auto;
   padding: clamp(76px, 11vh, 110px) var(--gutter) 0;
@@ -59,6 +60,7 @@
 }
 
 .stage {
+  grid-row: 3;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: end;
@@ -130,6 +132,7 @@
 }
 
 .lede {
+  grid-row: 4;
   max-width: 52ch;
   margin: clamp(10px, 2vh, 20px) auto 0;
   color: var(--c-body);
@@ -242,6 +245,7 @@
 
   .note {
     position: static;
+    grid-row: 5;
     justify-self: center;
     margin-top: 20px;
     text-align: center;
