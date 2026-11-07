@@ -11,6 +11,15 @@ interface GlassProps {
   bend: number
 }
 
+/** Blue bends further than red, and this much keeps the fringe to a pixel or two at the very rim. */
+const DISPERSION = 0.08
+
+const CHANNELS = [
+  { name: 'red', spread: 1 - DISPERSION, matrix: '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0' },
+  { name: 'green', spread: 1, matrix: '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0' },
+  { name: 'blue', spread: 1 + DISPERSION, matrix: '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0' },
+]
+
 interface Built extends GlassMaps {
   width: number
   height: number
@@ -86,7 +95,26 @@ export function Glass({ radius, bezel, bend }: GlassProps) {
             colorInterpolationFilters="sRGB"
           >
             <feImage href={built.map} x="0" y="0" width={built.width} height={built.height} preserveAspectRatio="none" result="map" />
-            <feDisplacementMap in="SourceGraphic" in2="map" scale={bend} xChannelSelector="R" yChannelSelector="G" />
+            {CHANNELS.flatMap((channel) => [
+              <feDisplacementMap
+                key={`${channel.name}-bent`}
+                in="SourceGraphic"
+                in2="map"
+                scale={bend * channel.spread}
+                xChannelSelector="R"
+                yChannelSelector="G"
+                result={`${channel.name}-bent`}
+              />,
+              <feColorMatrix
+                key={channel.name}
+                in={`${channel.name}-bent`}
+                type="matrix"
+                values={channel.matrix}
+                result={channel.name}
+              />,
+            ])}
+            <feBlend in="red" in2="green" mode="screen" result="warm" />
+            <feBlend in="warm" in2="blue" mode="screen" />
           </filter>
         </svg>
       )}
