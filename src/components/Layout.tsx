@@ -1,12 +1,13 @@
-import { Outlet, ScrollRestoration, useNavigation } from 'react-router'
+import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router'
 import { useSmoothScroll } from '../lib/smoothScroll'
 import { Footer } from './Footer'
 import { TopBar } from './TopBar'
 import styles from './Layout.module.css'
 
-/** Every public page, on the one dark ground: the fixed top tab, the page and the footer. */
+/** Every public page, on the one dark ground: the fixed top tab, the page and, except on the landing, the footer. */
 export function Layout() {
   useSmoothScroll()
+  const { pathname } = useLocation()
   // Moving to a page that loads data keeps the old page up until the data lands; a line along
   // the top says the click registered.
   const navigating = useNavigation().state === 'loading'
@@ -19,7 +20,8 @@ export function Layout() {
         <main className={styles.main}>
           <Outlet />
         </main>
-        <Footer />
+        {/* The landing ends on its own join frame, which carries the footer's links. */}
+        {pathname !== '/' && <Footer />}
       </div>
       <ScrollRestoration />
     </>

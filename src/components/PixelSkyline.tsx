@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { HEAT_PALETTE, skylineFrame } from '../lib/pixelGrid'
 import { usePixelCanvas } from './usePixelCanvas'
 
-/** The low pixel skyline along the foot of every page. Its columns change height slowly. */
+/** The low skyline of glyphs along the foot of a page. Its columns change height slowly. */
 export function PixelSkyline({ className }: { className?: string }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   usePixelCanvas(canvas, {

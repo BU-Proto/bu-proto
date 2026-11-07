@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Link } from 'react-router'
 import { JOIN_CTA } from '../content/home'
+import { CONTACT_EMAIL, LEGAL_LINKS } from '../content/legal'
+import { BRAND, FOOTER } from '../content/site'
 import { createEdgeLight } from '../lib/edgeLight'
 import { onFrame } from '../lib/smoothScroll'
 import { reducedMotion } from '../lib/useInView'
 import { AsciiFigure } from './motion/AsciiFigure'
 import { MaskLines } from './motion/MaskLines'
+import { PixelSkyline } from './PixelSkyline'
+import { ProtoMark } from './ProtoMark'
 import ui from './ui.module.css'
 import styles from './JoinFrame.module.css'
 
@@ -86,7 +90,7 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
   return <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
 }
 
-/** The landing's ask: one screen, framed in moving light, with the trail's ring at its centre. */
+/** The landing's last screen: the ask, framed in moving light, then the site's links and the skyline. */
 export function JoinFrame() {
   const section = useRef<HTMLElement>(null)
   return (
@@ -112,7 +116,7 @@ export function JoinFrame() {
           </div>
 
           <div className={styles.ring}>
-            <AsciiFigure shape="ring" rows={26} className={styles.figure} />
+            <AsciiFigure shape="ring" rows={22} className={styles.figure} />
             <Link className={`${ui.btn} ${styles.cta}`} to={JOIN_CTA.cta.href}>
               {JOIN_CTA.cta.label}
             </Link>
@@ -133,6 +137,39 @@ export function JoinFrame() {
           ))}
         </p>
       </div>
+
+      <footer className={styles.foot}>
+        <div className={styles.footRow}>
+          <p className={styles.brand}>
+            <ProtoMark size={16} />
+            {BRAND.full}
+          </p>
+          <nav aria-label="Footer">
+            <ul className={styles.links}>
+              {FOOTER.groups
+                .flatMap((group) => group.links)
+                .filter((item, index, all) => all.findIndex((other) => other.to === item.to) === index)
+                .map((item) => (
+                  <li key={item.to}>
+                    <Link to={item.to}>{item.label}</Link>
+                  </li>
+                ))}
+              {LEGAL_LINKS.map((item) => (
+                <li key={item.href}>
+                  <Link to={item.href}>{item.label}</Link>
+                </li>
+              ))}
+              <li>
+                <a className={styles.email} href={`mailto:${CONTACT_EMAIL}`}>
+                  {CONTACT_EMAIL}
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <p className={styles.small}>{FOOTER.note}</p>
+        <PixelSkyline className={styles.skyline} />
+      </footer>
     </section>
   )
 }
