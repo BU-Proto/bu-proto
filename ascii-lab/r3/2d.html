@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>2d Partitive, Cheap</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Performance pass on r2/7e. Same look: nine-stop ladder, nine glyphs, two pure inks per cell, Bayer tie-break,
+   quiet harbor ground, one mint live cell. What changed, all of it per-frame cost:
+   1. Glyphs are blitted from a pre-baked sprite sheet (8 inks x 9 glyphs, integer device pixels) instead of
+      fillText with save/translate/scale per cell. Flat tiles are batched per ink. No string work in the loop.
+   2. Glyph pick and Bayer are lookup tables. Cell loop allocates nothing.
+   3. Subject is sampled at 15 Hz (the drift's own rate); in between, the canvas is untouched, so the compositor
+      has nothing to do. A sampled frame is the only cost spike, and it is measured.
+   4. Governor: rolling cost of sample+draw. Over budget for a while -> coarser grid (fewer columns), then, if it
+      still cannot keep up, a single still frame. Hidden tab pauses. Reduced motion draws one still frame.
+   Add ?perf to the URL for a cost readout (also logged to the console every 2 s). */
+(function () {
+  'use strict';
+  var Pal = LabPalette, S = LabSubjects;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d', { alpha: false });
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var showPerf = /[?&]perf\b/.test(location.search);
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+  var NAMES = ['harbor', 'raised', 'raisedHi', 'cerulean', 'irisDeep', 'raspberry', 'rose', 'peach', 'frost'];
+  var LADDER = NAMES.map(function (k) { return Pal.toCss(Pal.resolve(k)); });
+  var mintC = Pal.toCss(Pal.resolve('mint'));
+  var N = LADDER.length - 1, SET = ' .:+x*o%#';
+  var STEP_MS = 1000 / 15, BUDGET_MS = 10;
+  var W, H, dpr, cell, cols, rows, buf, GL = [], LUT = new Uint8Array(257);
+  var sheet, NG, colsTarget = 120, still = reduced, last = 0, raf = 0, hidden = false;
+  var ema = 0, sEma = 0, dEma = 0, slow = 0, frames = 0, lastLog = 0, hud = null, tier = 0;
+  var gi, ks, ci, bucket = [], bn = [], BAY16 = new Float32Array(16);
+  var BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  for (var b0 = 0; b0 < 16; b0++) BAY16[b0] = ((BAY[b0] + 0.5) / 16 - 0.5) * 0.1;
+
+  function buildGlyphs() {
+    var s = 32, c = document.createElement('canvas'); c.width = c.height = s;
+    var g = c.getContext('2d', { willReadFrequently: true }), out = [];
+    for (var i = 0; i < SET.length; i++) {
+      g.clearRect(0, 0, s, s); g.fillStyle = '#fff'; g.font = '700 ' + s + 'px ' + FONT;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      if (SET[i] !== ' ') g.fillText(SET[i], s / 2, s / 2 + s * 0.04);
+      var d = g.getImageData(0, 0, s, s).data, a = 0;
+      for (var k = 3; k < d.length; k += 4) a += d[k];
+      out.push({ ch: SET[i], cov: a / 255 / (s * s) });
+    }
+    out.sort(function (p, q) { return p.cov - q.cov; });
+    var mx = out[out.length - 1].cov;
+    for (var j = 0; j < out.length; j++) out[j].cov /= mx * 1.02;
+    out.push({ ch: '#', cov: 1, block: true });
+    GL = out;
+    /* f in [0,1] -> glyph index, 256 steps: -1 none, -2 block */
+    for (var q = 0; q <= 256; q++) {
+      var f = q / 256, best = 0, bd = 9;
+      for (var m = 0; m < GL.length; m++) { var dd = Math.abs(GL[m].cov - f); if (dd < bd) { bd = dd; best = m; } }
+      LUT[q] = best;
+    }
+  }
+  /* Sprite sheet: row = ink (ladder 1..8), column = glyph (non-space, non-block), one extra column = mint on harbor. */
+  function buildSheet() {
+    var gl = [], i;
+    for (i = 0; i < GL.length; i++) if (GL[i].ch !== ' ' && !GL[i].block) gl.push(i);
+    NG = gl.length;
+    sheet = document.createElement('canvas'); sheet.width = (NG + 1) * cell; sheet.height = N * cell;
+    var g = sheet.getContext('2d');
+    var fs = cell * 1.05, sx = cell / (fs * 0.6);
+    g.font = '700 ' + fs + 'px ' + FONT; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (var r = 0; r < N; r++) for (var c = 0; c < NG; c++) {
+      g.save(); g.translate(c * cell + cell / 2, r * cell + cell / 2 + cell * 0.04); g.scale(sx, 1);
+      g.fillStyle = LADDER[r + 1]; g.fillText(GL[gl[c]].ch, 0, 0); g.restore();
+    }
+    g.fillStyle = LADDER[0]; g.fillRect(NG * cell, 0, cell, cell);
+    g.save(); g.translate(NG * cell + cell / 2, cell / 2 + cell * 0.04); g.scale(sx, 1);
+    g.fillStyle = mintC; g.fillText('*', 0, 0); g.restore();
+    /* glyph index -> sheet column */
+    GL.forEach(function (o, k) { o.col = gl.indexOf(k); });
+  }
+  function resize() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    var css = Math.max(9, Math.ceil(Math.max(W, H) / colsTarget));
+    cell = Math.max(8, Math.round(css * dpr));
+    cols = Math.ceil(cv.width / cell); rows = Math.ceil(cv.height / cell);
+    buf = S.create(cols, rows, 1);
+    gi = new Uint8Array(cols * rows); ks = new Uint8Array(cols * rows); ci = new Int32Array(cols * rows);
+    for (var k = 0; k <= N; k++) { bucket[k] = new Int32Array(cols * rows); bn[k] = 0; }
+    buildSheet();
+  }
+
+  function sample(t) {
+    var t0 = performance.now();
+    S.fill('mushroom', buf, t);
+    sEma += (performance.now() - t0 - sEma) * 0.1;
+  }
+  function draw(t) {
+    var t0 = performance.now(), L8 = buf.lum, HI = buf.hint, ED = buf.edge, n = cols * rows, x, y, i;
+    for (var k = 0; k <= N; k++) bn[k] = 0;
+    var nc = 0, liveIdx = -1;
+    for (var q = 0; q < n; q += 3) if (ED[q] > 0.75 && L8[q] > 0.5) ci[nc++] = q;
+    if (nc) liveIdx = ci[Math.floor(t * 0.5) % nc];
+    gi.fill(0);
+    for (y = 0; y < rows; y++) {
+      for (x = 0; x < cols; x++) {
+        i = y * cols + x;
+        var L = L8[i], tone = L * 1.08; if (tone > 1) tone = 1;
+        var s = Math.pow(tone, 1.45) * (0.64 + 0.46 * HI[i]);
+        if (s > 1) s = 1;
+        if (L < 0.16) { var r0 = L / 0.16; s *= r0 * r0; }
+        var p = s * N, k = p | 0; if (k > N - 1) k = N - 1;
+        var f = p - k + BAY16[((y & 3) << 2) | (x & 3)];
+        if (f < 0) f = 0; else if (f > 1) f = 1;
+        ks[i] = k;
+        if (k > 0) bucket[k][bn[k]++] = i;
+        if (i === liveIdx || f < 0.06) continue;
+        var g = LUT[(f * 256) | 0], o = GL[g];
+        if (o.ch === ' ') continue;
+        gi[i] = o.block ? 1 : o.col + 2;
+      }
+    }
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.fillStyle = LADDER[0]; cx.fillRect(0, 0, cv.width, cv.height);
+    for (k = 1; k <= N; k++) {
+      var list = bucket[k], m = bn[k]; if (!m) continue;
+      cx.fillStyle = LADDER[k];
+      for (var a = 0; a < m; a++) { i = list[a]; cx.fillRect((i % cols) * cell, ((i / cols) | 0) * cell, cell, cell); }
+    }
+    /* blocks next (ink = neighbour), then sprites */
+    for (i = 0; i < n; i++) {
+      var c = gi[i]; if (!c) continue;
+      var px = (i % cols) * cell, py = ((i / cols) | 0) * cell, row = ks[i];
+      if (c === 1) { cx.fillStyle = LADDER[row + 1]; cx.fillRect(px, py, cell, cell); }
+      else cx.drawImage(sheet, (c - 2) * cell, row * cell, cell, cell, px, py, cell, cell);
+    }
+    if (liveIdx >= 0) cx.drawImage(sheet, NG * cell, 0, cell, cell, (liveIdx % cols) * cell, ((liveIdx / cols) | 0) * cell, cell, cell);
+    dEma += (performance.now() - t0 - dEma) * 0.1;
+  }
+  function render(tm) {
+    var t0 = performance.now();
+    var t = still ? 6 : tm / 1000 * 0.4;
+    sample(t); draw(t);
+    var c = performance.now() - t0; ema += (c - ema) * 0.15; frames++;
+    return c;
+  }
+  /* Governor: only judges real sampled frames. 3 slow seconds -> coarser; coarser twice and still slow -> still. */
+  function govern(c) {
+    if (frames < 8) return;
+    if (ema > BUDGET_MS) slow++; else slow = Math.max(0, slow - 1);
+    if (slow > 30) {
+      slow = 0; ema = 0;
+      if (tier < 2) { tier++; colsTarget = tier === 1 ? 90 : 64; resize(); }
+      else { still = true; }
+    }
+  }
+  function loop(tm) {
+    raf = requestAnimationFrame(loop);
+    if (hidden || still) return;
+    if (tm - last < STEP_MS - 2) return;     /* between samples nothing is touched */
+    last = tm; govern(render(tm));
+    report(tm);
+  }
+  function report(tm) {
+    if (!showPerf) return;
+    if (!hud) {
+      hud = document.createElement('div');
+      hud.style.cssText = 'position:fixed;left:8px;bottom:8px;font:11px ' + FONT + ';color:#9df0a8;background:#061a2e;padding:4px 6px;opacity:.9';
+      document.body.appendChild(hud);
+    }
+    hud.textContent = 'cost ' + ema.toFixed(2) + 'ms (sample ' + sEma.toFixed(2) + ' draw ' + dEma.toFixed(2) + ')  ' + cols + 'x' + rows + (still ? '  STILL' : '');
+    if (tm - lastLog > 2000) { lastLog = tm; console.log('[2d] ' + hud.textContent); }
+  }
+  document.addEventListener('visibilitychange', function () { hidden = document.hidden; });
+  buildGlyphs(); resize();
+  window.addEventListener('resize', function () { resize(); render(performance.now()); });
+  if (reduced) render(0); else { render(performance.now()); raf = requestAnimationFrame(loop); }
+})();
+</script>
+</body>
+</html>
