@@ -59,7 +59,7 @@
 .logo {
   display: flex;
   align-items: center;
-  height: 44px;
+  height: 60px;
 }
 
 .logo a {
@@ -72,6 +72,8 @@
 }
 
 .logo img {
+  /* Capped both ways, so a wide wordmark and a round seal carry the same weight. */
+  max-width: 128px;
   max-height: 100%;
   width: auto;
   filter: brightness(0) invert(1);
