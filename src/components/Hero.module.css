@@ -1,44 +1,143 @@
-/* One screen tall, all picture. */
-.hero {
-  position: relative;
-  min-height: 100vh;
-  min-height: 100svh;
-  /* The bloom in plain CSS, for the moment before its shaders are ready, and without WebGL2. */
-  background:
-    radial-gradient(34% 44% at 56% 44%, rgb(194 64 122 / 0.85), transparent 72%),
-    radial-gradient(56% 62% at 30% 34%, rgb(26 143 192 / 0.7), transparent 72%),
-    radial-gradient(52% 60% at 84% 34%, rgb(26 143 192 / 0.6), transparent 72%);
+/*
+ * The field and the black that rises over it sit under the page (Layout's shell is their stacking
+ * context, so -1 lands between its transparent ground and the page). The fade starts low on the first
+ * screen and is solid a third of a screen below it.
+ */
+.field,
+.fieldZone,
+.ground {
+  --fade-from: 92svh;
+  --fade-to: 130svh;
 }
 
-/* Runs past the hero's foot and lands exactly on the page's ground, so the fold is never an edge. */
-.bloom {
+.field {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Where the field shows, top of the page to where the black is solid. */
+.fieldZone {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 125%;
-  opacity: 0;
+  height: var(--fade-to);
   pointer-events: none;
-  transition: opacity 0.7s ease;
 }
 
-.bloom[data-ready] {
-  opacity: 1;
-}
-
-/* Heard, not seen. */
-.heading {
+/* The page's black from where it's solid to the foot, with the fade hanging off its top edge. */
+.ground {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+  z-index: -1;
+  top: var(--fade-to);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--c-paper);
+  pointer-events: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .bloom {
-    transition: none;
+.ground::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 100%;
+  height: calc(var(--fade-to) - var(--fade-from));
+  /* Eased, so the field dims gently at first and there's no hard line where the fade begins. */
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0),
+    rgb(0 0 0 / 0.2) 30%,
+    rgb(0 0 0 / 0.55) 60%,
+    rgb(0 0 0 / 0.86) 85%,
+    var(--c-paper)
+  );
+}
+
+/*
+ * One screen tall under the top bar. The copy sits low and left in the page column, set at the
+ * same scale as the section titles below it, and leaves the top of the screen to the field.
+ */
+.hero {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  gap: 20px;
+  width: 100%;
+  max-width: calc(var(--maxw) + var(--gutter) * 2);
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  min-height: calc(100dvh - 80px);
+  padding: 96px var(--gutter) clamp(24px, 5vh, 48px);
+  text-shadow: var(--on-field-shadow);
+}
+
+/*
+ * A low pool of harbor under the copy, so the words stand on something calmer than the brightest
+ * part of the field without boxing them. It's wider than the text and fades out well before the
+ * edges, so it reads as the field dimming rather than a panel.
+ */
+.hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: -30%;
+  right: -10%;
+  bottom: -12%;
+  height: 90%;
+  /* closest-side keeps the whole ellipse inside the box, so it never meets an edge and leaves a line. */
+  background: radial-gradient(closest-side at 42% 62%, rgb(var(--harbor-rgb) / 0.55), rgb(var(--harbor-rgb) / 0));
+  pointer-events: none;
+}
+
+.headline {
+  max-width: 19ch;
+  margin: 0;
+  font-size: clamp(42px, 6.4vw, 84px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  text-wrap: balance;
+  text-shadow: 0 2px 34px rgb(var(--harbor-rgb) / 0.45);
+}
+
+.lede {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 24px;
+  margin-top: 8px;
+}
+
+.primary {
+  padding: 13px 22px;
+  font-size: 15px;
+}
+
+@media (max-width: 640px) {
+  .headline {
+    font-size: clamp(38px, 11vw, 56px);
+  }
+
+  .lede {
+    font-size: 16px;
   }
 }

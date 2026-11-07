@@ -5,7 +5,7 @@
   gap: 6px;
   padding: 4px 8px;
   background: var(--c-line-2);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--r-chip);
   color: var(--c-body);
   font-family: var(--font-mono);
   font-size: 10px;

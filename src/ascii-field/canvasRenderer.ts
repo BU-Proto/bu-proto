@@ -38,11 +38,14 @@ export class CanvasFieldRenderer implements FieldRenderer {
   private geometry: FieldGeometry | null = null
   private atlas: GlyphAtlas | null = null
   private trailColor: TrailColor | null = null
+  /** Draw only the trail's glyphs, on transparent. */
+  private readonly trailOnly: boolean
 
-  constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, onDestroy?: () => void) {
+  constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, onDestroy?: () => void, trailOnly = false) {
     this.canvas = canvas
     this.ctx = ctx
     this.onDestroy = onDestroy
+    this.trailOnly = trailOnly
   }
 
   setGeometry(geometry: FieldGeometry, atlas: GlyphAtlas): void {
@@ -72,6 +75,14 @@ export class CanvasFieldRenderer implements FieldRenderer {
     const { cols, rows, cellW, cellH, cellPxW, cellPxH, width, height, pixelWidth, pixelHeight } = geometry
     const { cells, settings, time } = frame
     if (settings.trailColor !== this.trailColor) this.paintTrailGlyphs(settings.trailColor)
+
+    if (this.trailOnly) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.clearRect(0, 0, pixelWidth, pixelHeight)
+      this.drawTrail(cells, cols, rows)
+      return
+    }
 
     // Each cell's color: its own place on the gradient, gently swaying.
     const color = colorImage.data
@@ -134,7 +145,15 @@ export class CanvasFieldRenderer implements FieldRenderer {
     ctx.globalCompositeOperation = 'source-over'
 
     // 4. The trail's glyphs, in the cells whose characters stepped aside for them.
-    current = 1
+    this.drawTrail(cells, cols, rows)
+  }
+
+  private drawTrail(cells: Uint8Array, cols: number, rows: number): void {
+    const { ctx, geometry, atlas } = this
+    if (!geometry || !atlas) return
+    const { cellPxW, cellPxH } = geometry
+    const { slotW, pad } = atlas
+    let current = 1
     for (let j = 0; j < rows; j++) {
       for (let i = 0; i < cols; i++) {
         const o = (j * cols + i) * 4

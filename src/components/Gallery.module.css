@@ -76,14 +76,16 @@
   height: 42px;
   padding: 0;
   border: 0;
+  border-radius: var(--r-control);
   background: var(--c-ink);
-  clip-path: var(--px-corners);
   color: var(--c-paper);
   font-size: 16px;
   opacity: 0;
   transform: translateY(-50%);
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .strip:hover .stripControl,
@@ -91,8 +93,9 @@
   opacity: 1;
 }
 
+/* The buttons' one hover: a lift's soft light, never a colour change. */
 .stripControl:hover {
-  background: var(--c-blue);
+  box-shadow: var(--c-lift);
 }
 
 /* The corners cut a normal outline away, so focus is drawn inside the button. */
@@ -184,15 +187,17 @@
   height: 48px;
   padding: 0;
   border: 0;
+  border-radius: var(--r-control);
   background: var(--c-ink);
-  clip-path: var(--px-corners);
   color: var(--c-paper);
   font-size: 18px;
   cursor: pointer;
+  transition: box-shadow 0.2s ease;
 }
 
+/* The buttons' one hover: a lift's soft light, never a colour change. */
 .control:hover {
-  background: var(--c-blue);
+  box-shadow: var(--c-lift);
 }
 
 .control:focus-visible {

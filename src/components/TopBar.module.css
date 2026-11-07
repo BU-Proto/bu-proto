@@ -1,97 +1,96 @@
 .top {
-  position: fixed;
+  /* Over the top of the page and scrolling away with it, taking no room: the pages leave their own
+     space for it. Above the page and its trail, for covers that run up under the bar. */
+  position: absolute;
   z-index: 50;
-  top: 0;
+  top: max(18px, env(safe-area-inset-top, 0px));
   right: 0;
+  left: 0;
   display: flex;
-  align-items: stretch;
-  height: calc(var(--cell) * 3 + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
-  border-bottom: 1px solid var(--c-line);
-  border-left: 1px solid var(--c-line);
-  background: var(--c-paper);
-  color: var(--c-ink);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.13em;
-  line-height: 1;
-  text-transform: uppercase;
-  transition: border-color 0.2s ease;
-}
-
-.top:hover {
-  border-color: var(--c-ink);
+  /* The same column as every page, so the logo lines up with the titles below it. */
+  width: calc(100% - var(--gutter) * 2);
+  max-width: var(--maxw);
+  margin: 0 auto;
+  color: var(--ink);
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 18px;
+  font-size: 16px;
   font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.logo img {
+  display: block;
+  width: 24px;
+  height: 24px;
 }
 
 .nav {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
-  align-items: stretch;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid rgb(var(--frost-rgb) / 0.12);
+  border-radius: var(--r-bar);
+  background: var(--pill);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
 }
 
 .nav > a {
   display: flex;
   align-items: center;
-  padding: 0 11px;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: var(--r-control);
+  color: var(--ink-soft);
+  font-size: 13px;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.3);
 }
 
-.nav > a:hover {
-  color: var(--c-blue);
-}
-
-/* The page you're on is underlined by a thick rule along the tab's foot. */
 .nav > a[aria-current='page'] {
-  box-shadow: inset 0 -2px 0 var(--c-ink);
+  background: rgb(var(--frost-rgb) / 0.08);
+  color: var(--ink);
+}
+
+
+.logo:focus-visible,
+.nav > a:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .join {
-  display: flex;
-  align-items: center;
-  margin-left: 7px;
-  padding: 0 18px;
-  position: relative;
-  isolation: isolate;
-  background: var(--c-ink);
-  color: var(--c-paper);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.join::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: var(--c-sheen);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.join:hover::after {
-  opacity: 1;
-}
-
-.logo:focus-visible,
-.nav > a:focus-visible,
-.join:focus-visible {
-  outline: 2px solid var(--c-blue);
-  outline-offset: -2px;
+  /* Set like the bar's links, not the page's big buttons, so it sits level with the bar. */
+  padding: 9px 16px;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .menu {
   display: none;
 }
 
-/* The items don't fit on narrow screens; the menu sheet has every page, Join too. */
-@media (max-width: 900px) {
+/* The pill doesn't fit between the logo and Join on narrow screens; the menu sheet has every
+   page, Join too. */
+@media (max-width: 800px) {
   .nav,
   .join {
     display: none;
@@ -101,3 +100,4 @@
     display: contents;
   }
 }
+

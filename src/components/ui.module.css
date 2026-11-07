@@ -230,7 +230,7 @@
   gap: 8px;
   padding: 16px 36px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-control);
   background: var(--c-ink);
   color: var(--c-paper);
   font-family: var(--font-display);
@@ -241,37 +241,22 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
+    box-shadow 0.2s ease,
     transform 0.2s var(--ease-out);
 }
 
+/* The one hover every button shares (see --c-lift): it lifts; its colours stay put. */
 .btn:not(:disabled):hover,
-.primary:not(:disabled):hover {
+.primary:not(:disabled):hover,
+.secondary:not(:disabled, [aria-disabled='true']):hover {
+  box-shadow: var(--c-lift);
   transform: translateY(-2px);
 }
 
-/* The hero's gradient rises through a filled button under the cursor. */
 .btn,
 .primary {
   position: relative;
   isolation: isolate;
-}
-
-.btn::after,
-.primary::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--c-sheen);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.btn:not(:disabled):hover::after,
-.primary:not(:disabled):hover::after {
-  opacity: 1;
 }
 
 /* The outline button: a dark face inset by a pixel, so the edge reads as a hairline. */
@@ -281,23 +266,21 @@
   color: var(--c-ink);
 }
 
+.secondary {
+  /* Shows as the frost edge around the glass below. */
+  background: var(--c-glass-edge-strong);
+}
+
+/* The old glass button's fill, inside the new shape. */
 .secondary::before {
   content: '';
   position: absolute;
   z-index: -1;
   inset: 1px;
-  border-radius: 9px;
-  background: var(--c-paper);
-  transition: background-color 0.2s ease;
-}
-
-.secondary:not(:disabled, [aria-disabled='true']):hover {
-  color: var(--c-paper);
-  transform: translateY(-2px);
-}
-
-.secondary:not(:disabled, [aria-disabled='true']):hover::before {
-  background: var(--c-ink);
+  border-radius: calc(var(--r-control) - 1px);
+  background: var(--c-glass);
+  -webkit-backdrop-filter: var(--c-glass-blur);
+  backdrop-filter: var(--c-glass-blur);
 }
 
 .btn:disabled,
@@ -427,7 +410,7 @@
   width: 22px;
   height: 22px;
   background: var(--c-navy);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--r-chip);
   color: var(--c-paper);
   font-family: var(--font-mono);
   font-size: 9px;
@@ -440,7 +423,7 @@
   display: inline-block;
   padding: 7px 13px;
   background: var(--c-ink);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--r-chip);
   color: var(--c-paper);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -481,7 +464,7 @@
   margin-left: 0.5em;
   padding: 3px 6px;
   background: var(--c-gold);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--r-chip);
   color: var(--c-paper);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -516,21 +499,40 @@
 
 /* ---- Panels ---- */
 
-/* A ruled sheet for anything that has to be read or filled in. No shadow, no radius. */
+/* A ruled sheet for anything that has to be read or filled in, in the old glass. No radius. */
 .panel,
 .panelDeep {
   position: relative;
   padding: clamp(18px, 2.6vw, 28px);
-  border: 1px solid var(--c-line);
-  background: var(--c-paper);
+  border: 1px solid var(--c-glass-edge);
+  background: var(--c-glass);
+  -webkit-backdrop-filter: var(--c-glass-blur);
+  backdrop-filter: var(--c-glass-blur);
+  box-shadow: var(--c-glass-lip);
 }
 
-/* The dark panel, nearly full width, the only rounded thing on a page. Labels in `darkLabel`. */
+/* Fully opaque, for dense text and tables. */
+.panelDeep {
+  background: var(--c-glass-strong);
+}
+
+/*
+ * The dark panel, nearly full width, the only rounded thing on a page. Labels in `darkLabel`. It's
+ * the old glass sheet on the new corners: the field's light reaching its top edge, cerulean in one
+ * corner and raspberry in the other, both gone well before the text.
+ */
 .dark {
   margin: 0 8px;
   padding: clamp(26px, 4vw, 54px);
+  border: 1px solid var(--c-glass-edge);
   border-radius: var(--radius);
-  background: var(--c-raised);
+  background:
+    radial-gradient(60% 50% at 0% 0%, rgb(var(--sky-deep-rgb) / 0.16), transparent 70%),
+    radial-gradient(50% 44% at 100% 0%, rgb(var(--rose-deep-rgb) / 0.12), transparent 70%),
+    var(--c-glass);
+  -webkit-backdrop-filter: var(--c-glass-blur);
+  backdrop-filter: var(--c-glass-blur);
+  box-shadow: var(--c-glass-lip);
   color: var(--c-ink);
 }
 

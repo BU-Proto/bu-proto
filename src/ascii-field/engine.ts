@@ -7,6 +7,7 @@ import {
   createFieldRenderer,
   drawGlyphAtlas,
   type FieldGeometry,
+  type FieldLayer,
   type FieldRenderer,
   type GlyphAtlas,
   type WarpField,
@@ -96,6 +97,13 @@ function sampleNodes(
  * a Canvas 2D renderer draws the same field with the glyphs picked on the CPU and held in
  * place. The engine owns its DOM listeners and animation loop; call `destroy()` to release them.
  */
+export interface FieldEngineOptions {
+  /** `trail` draws only the cursor trail, on a transparent canvas laid over other art. */
+  layer?: FieldLayer
+  /** The elements the trail steps back from (default: those marked data-fog-clear). */
+  clearSelector?: string
+}
+
 export class AsciiFieldEngine {
   private readonly renderer: FieldRenderer
   /** Off-screen canvases for measuring the mono face and drawing the glyph atlas. */
@@ -108,6 +116,9 @@ export class AsciiFieldEngine {
 
   private settings: FieldSettings
   private reduceMotion: boolean
+  private readonly layer: FieldLayer
+  /** The elements the trail steps back from. */
+  private readonly clearSelector: string
 
   // Grid.
   private geometry: FieldGeometry | null = null
@@ -160,9 +171,11 @@ export class AsciiFieldEngine {
   private resizeTimer = 0
   private clearFrame = 0
 
-  constructor(canvas: HTMLCanvasElement, settings: FieldSettings) {
+  constructor(canvas: HTMLCanvasElement, settings: FieldSettings, options: FieldEngineOptions = {}) {
     this.settings = settings
-    this.renderer = createFieldRenderer(canvas, this.onRendererRestored)
+    this.layer = options.layer ?? 'field'
+    this.clearSelector = options.clearSelector ?? CLEAR_SELECTOR
+    this.renderer = createFieldRenderer(canvas, this.onRendererRestored, this.layer)
     const measureCtx = document.createElement('canvas').getContext('2d')
     if (!measureCtx) throw new Error('Canvas 2D is not supported in this browser')
     this.measureCtx = measureCtx
@@ -214,7 +227,7 @@ export class AsciiFieldEngine {
   /** Re-measure the elements marked `data-fog-clear` (call after showing or hiding them). */
   refreshClearMask(): void {
     if (!this.booted || this.destroyed) return
-    const elements = document.querySelectorAll(CLEAR_SELECTOR)
+    const elements = document.querySelectorAll(this.clearSelector)
     if (this.clearObserver) {
       this.clearObserver.disconnect()
       for (const element of elements) this.clearObserver.observe(element)
@@ -399,7 +412,11 @@ export class AsciiFieldEngine {
     const warping = this.renderer.canWarp && this.updateWarp()
     let cellsChanged = this.paintFog(warping) || this.calmChanged
     this.calmChanged = false
-    if (!this.renderer.picksGlyphs) {
+    if (this.layer === 'trail') {
+      // Only the trail is drawn here: with no fog on screen and none just gone, the last frame
+      // (cleared) still stands, so skip the draw.
+      if (!cellsChanged && !this.fogRect) return
+    } else if (!this.renderer.picksGlyphs) {
       this.pickGlyphs(time)
       cellsChanged = true
     }
@@ -698,7 +715,7 @@ export class AsciiFieldEngine {
     this.clearFrame = requestAnimationFrame(() => {
       this.clearFrame = 0
       if (!this.booted || this.destroyed || this.covered()) return
-      this.measureClearMask(document.querySelectorAll(CLEAR_SELECTOR))
+      this.measureClearMask(document.querySelectorAll(this.clearSelector))
     })
   }
 }

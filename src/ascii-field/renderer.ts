@@ -2,6 +2,9 @@ import { CanvasFieldRenderer } from './canvasRenderer'
 import { FOG_GLYPHS, MONO_STACK, type FieldSettings } from './settings'
 import { WebGLFieldRenderer } from './webglRenderer'
 
+/** `field` draws the whole field; `trail` draws only the cursor trail, on a transparent canvas. */
+export type FieldLayer = 'field' | 'trail'
+
 /** The character grid laid over the viewport. */
 export interface FieldGeometry {
   /** Viewport, CSS px. */
@@ -126,10 +129,13 @@ export function drawGlyphAtlas(
  * Draw with WebGL2 where it's available: the GPU paints every pixel each frame, so the whole
  * field can stay in motion at full frame rate. Otherwise fall back to Canvas 2D.
  * `onRestored` runs when a lost WebGL context comes back, so a still frame can be redrawn.
+ * The `trail` layer draws only the cursor trail's glyphs, on a transparent canvas, to lay over
+ * art that isn't the field.
  */
-export function createFieldRenderer(canvas: HTMLCanvasElement, onRestored: () => void): FieldRenderer {
+export function createFieldRenderer(canvas: HTMLCanvasElement, onRestored: () => void, layer: FieldLayer = 'field'): FieldRenderer {
+  const trailOnly = layer === 'trail'
   const gl = canvas.getContext('webgl2', {
-    alpha: false,
+    alpha: trailOnly,
     antialias: false,
     depth: false,
     stencil: false,
@@ -138,21 +144,26 @@ export function createFieldRenderer(canvas: HTMLCanvasElement, onRestored: () =>
   })
   if (gl) {
     try {
-      return new WebGLFieldRenderer(canvas, gl, onRestored)
+      return new WebGLFieldRenderer(canvas, gl, onRestored, trailOnly)
     } catch (error) {
       console.warn('[ascii-field] WebGL2 setup failed; drawing with Canvas 2D instead.', error)
     }
   }
   const ctx = gl ? null : canvas.getContext('2d')
-  if (ctx) return new CanvasFieldRenderer(canvas, ctx)
+  if (ctx) return new CanvasFieldRenderer(canvas, ctx, undefined, trailOnly)
   // The canvas is held by a WebGL context that couldn't be set up: draw on a twin laid over it.
   const twin = canvas.cloneNode(false) as HTMLCanvasElement
   const twinCtx = twin.getContext('2d')
   if (!twinCtx) throw new Error('Canvas 2D is not supported in this browser')
   canvas.after(twin)
   canvas.style.visibility = 'hidden'
-  return new CanvasFieldRenderer(twin, twinCtx, () => {
-    twin.remove()
-    canvas.style.visibility = ''
-  })
+  return new CanvasFieldRenderer(
+    twin,
+    twinCtx,
+    () => {
+      twin.remove()
+      canvas.style.visibility = ''
+    },
+    trailOnly,
+  )
 }

@@ -19,7 +19,7 @@
   width: 36px;
   height: 36px;
   background: var(--c-line-2);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--r-chip);
   object-fit: cover;
 }
 

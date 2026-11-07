@@ -1,4 +1,5 @@
 export { AsciiField, type AsciiFieldHandle } from './AsciiField'
+export type { FieldEngineOptions } from './engine'
 export {
   DEFAULT_FIELD_SETTINGS,
   RAMPS,

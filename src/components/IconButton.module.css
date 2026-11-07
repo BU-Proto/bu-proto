@@ -1,0 +1,42 @@
+.button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--r-control);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+}
+
+.button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.button {
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s var(--ease-out);
+}
+
+/* The buttons' one hover: a lift, never a colour change. */
+.button:hover {
+  box-shadow: var(--c-lift);
+  transform: translateY(-2px);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 2px;
+}
+
+.solid,
+.solid:hover {
+  border-color: var(--frost);
+  background: var(--frost);
+  color: var(--on-light);
+}

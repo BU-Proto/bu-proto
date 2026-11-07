@@ -122,6 +122,12 @@
   --cell: 14px;
   --gutter: 56px;
   --maxw: 1176px;
+  /* One set of corners, nested: a control's corner, the bar that holds controls 5px in, menus and
+     tiles, and the big panels. Circles stay circles. */
+  --r-chip: 5px;
+  --r-control: 10px;
+  --r-bar: 15px;
+  --r-card: 16px;
   --radius: 26px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   /* Stair-stepped corners, for clip-path. */
@@ -236,6 +242,18 @@ html:has([data-site='public']) {
   --paper-ink: var(--c-ink);
   /* What a button turns into under the cursor: the hero's gradient, in its light tones. */
   --c-sheen: linear-gradient(100deg, var(--c-sky-300), var(--c-iris-300) 55%, var(--c-rose-300));
+  /* The old site's glass, worn by the new shapes: navy-tinted and blurred, with a frost edge, so the
+     field shows through it softly and plain black reads as a deep navy pane. */
+  --c-glass: rgb(var(--navy-rgb) / 0.62);
+  --c-glass-strong: rgb(var(--navy-rgb) / 0.8);
+  --c-glass-edge: rgb(var(--frost-rgb) / 0.16);
+  --c-glass-edge-strong: rgb(var(--frost-rgb) / 0.36);
+  --c-glass-blur: blur(14px) saturate(130%);
+  /* The old glass sheet's top edge catching the light. */
+  --c-glass-lip: inset 0 1px 0 rgb(var(--frost-rgb) / 0.1);
+  /* Every button's hover, whatever its colour: it lifts a little over a soft light. It never
+     changes colour. */
+  --c-lift: 0 12px 28px -14px rgb(var(--frost-rgb) / 0.35);
 
   background: var(--c-paper);
 }

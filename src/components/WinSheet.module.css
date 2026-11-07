@@ -113,7 +113,7 @@
   display: block;
   container-type: inline-size;
   color: inherit;
-  border-radius: 16px;
+  border-radius: var(--r-card);
 }
 
 .tile[data-link]:focus-visible {
@@ -133,7 +133,7 @@
   inset: 0;
   container-type: inline-size;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: var(--r-card);
   background: var(--c-raised);
   clip-path: inset(0 round 16px);
 }
@@ -272,7 +272,7 @@
   height: 3.375em;
   padding: 1em 1.5em 1em 1.625em;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--r-control);
   background: var(--c-ink);
   color: var(--c-paper);
   font-size: clamp(0.875rem, 1vw, 1.75rem);
@@ -454,17 +454,16 @@
     transition: transform 0.4s cubic-bezier(0.4, 0, 0, 1);
   }
 
-  .pill:is(:hover, :focus-visible) {
-    background: var(--mint);
-    color: var(--navy);
+  .pill {
     transition:
-      background-color 0.5s var(--ease-lusion) 0.3s,
-      color 0.5s var(--ease-lusion);
+      box-shadow 0.2s ease,
+      transform 0.2s var(--ease-out);
   }
 
-  .pill:is(:hover, :focus-visible) .pillDot {
-    background: var(--mint);
-    transform: translateX(4em) scale(32);
+  /* The buttons' one hover (a lift, never a colour change); the label still makes way for the arrow. */
+  .pill:is(:hover, :focus-visible) {
+    box-shadow: var(--c-lift);
+    transform: translateY(-2px);
   }
 
   .pill:is(:hover, :focus-visible) .pillLabel {
@@ -521,7 +520,6 @@
 
 @media (hover: hover) and (prefers-reduced-motion: reduce) {
   .pill:is(:hover, :focus-visible) {
-    background: var(--mint);
-    color: var(--navy);
+    box-shadow: var(--c-lift);
   }
 }
