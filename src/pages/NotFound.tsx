@@ -19,7 +19,7 @@ export function NotFound() {
         <ul className={styles.links}>
           {PAGES.map((item) => (
             <li key={item.to}>
-              <Link className={styles.link} to={item.to} data-fog-clear>
+              <Link className={styles.link} to={item.to}>
                 <span className={styles.label}>{item.label}</span>
                 <span className={styles.route} aria-hidden="true">
                   {item.to}

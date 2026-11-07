@@ -35,7 +35,7 @@ function BlockView({ block }: { block: Block }) {
     return (
       <ul className={styles.list}>
         {block.list.map((item, index) => (
-          <li key={index} data-fog-clear>
+          <li key={index}>
             <RichText text={item} />
           </li>
         ))}
@@ -43,31 +43,31 @@ function BlockView({ block }: { block: Block }) {
     )
   }
   return (
-    <p data-fog-clear>
+    <p>
       <RichText text={block} />
     </p>
   )
 }
 
-/** Privacy and Terms: a contents list on the field beside the long text on deep glass. */
+/** Privacy and Terms: a sticky contents list beside the long text. */
 export function LegalPage({ doc }: { doc: LegalDoc }) {
   return (
     <div className={ui.page}>
       <PageIntro intro={doc.intro}>
-        <p className={styles.effective} data-fog-clear>
+        <p className={styles.effective}>
           Effective {EFFECTIVE_DATE}
         </p>
       </PageIntro>
 
       <div className={styles.layout}>
         <nav className={styles.contents} aria-labelledby="contents">
-          <h2 id="contents" className={styles.contentsTitle} data-fog-clear>
+          <h2 id="contents" className={styles.contentsTitle}>
             {doc.contentsLabel}
           </h2>
           <ol className={styles.contentsList}>
             {doc.sections.map((section) => (
               <li key={section.id}>
-                <a href={`#${section.id}`} data-fog-clear>
+                <a href={`#${section.id}`}>
                   {section.title}
                 </a>
               </li>
@@ -75,10 +75,10 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
           </ol>
         </nav>
 
-        <article className={`${ui.panelDeep} ${styles.doc}`}>
+        <article className={styles.doc}>
           {doc.sections.map((section) => (
             <section key={section.id} id={section.id} className={styles.section} aria-labelledby={`${section.id}-title`}>
-              <h2 id={`${section.id}-title`} className={styles.heading} data-fog-clear>
+              <h2 id={`${section.id}-title`} className={styles.heading}>
                 {section.title}
               </h2>
               {section.body.map((block, index) => (
@@ -86,7 +86,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
               ))}
             </section>
           ))}
-          <p className={styles.other} data-fog-clear>
+          <p className={styles.other}>
             <TextLink link={doc.other} /> <span aria-hidden="true">→</span>
           </p>
         </article>
