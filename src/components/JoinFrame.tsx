@@ -63,25 +63,13 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
       state.visible = !document.hidden
       sync()
     }
-    const onMove = (event: PointerEvent) => {
-      if (event.pointerType === 'touch' || !state.onScreen) return
-      const rect = surface.getBoundingClientRect()
-      light.point(event.clientX - rect.left, event.clientY - rect.top)
-    }
-    const onOut = (event: PointerEvent) => {
-      if (!event.relatedTarget) light.point(null, 0)
-    }
     document.addEventListener('visibilitychange', onVisibility)
-    window.addEventListener('pointermove', onMove, { capture: true, passive: true })
-    window.addEventListener('pointerout', onOut, { passive: true })
 
     return () => {
       state.stop?.()
       sizes.disconnect()
       screen.disconnect()
       document.removeEventListener('visibilitychange', onVisibility)
-      window.removeEventListener('pointermove', onMove, { capture: true })
-      window.removeEventListener('pointerout', onOut)
       light.destroy()
     }
   }, [section])
