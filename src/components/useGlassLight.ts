@@ -27,7 +27,16 @@ export function useGlassLight(surface: RefObject<HTMLElement | null>) {
       light.power += (light.goalPower - light.power) * EASE
       paint()
       const settled = Math.abs(light.goalX - light.x) < 0.2 && Math.abs(light.goalY - light.y) < 0.2 && Math.abs(light.goalPower - light.power) < 0.002
-      light.frame = settled ? 0 : requestAnimationFrame(tick)
+      if (!settled) {
+        light.frame = requestAnimationFrame(tick)
+        return
+      }
+      // Land exactly, so a light that has gone out stays out and far moves stop waking the loop.
+      light.x = light.goalX
+      light.y = light.goalY
+      light.power = light.goalPower
+      paint()
+      light.frame = 0
     }
 
     const onMove = (event: PointerEvent) => {
