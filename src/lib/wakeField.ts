@@ -89,11 +89,13 @@ void main() {
   vec2 px = vec2(vUv.x, 1. - vUv.y) * uRes;
   float S = max(texture(uDye, vUv).r, 0.);
   vec2 V = texture(uVel, vUv).xy * .0025;
+  float speed = min(length(V), 1.);
 
-  /* the letters bend a little under the wake, and each colour bends a different amount */
-  vec2 bend = V * S * 14. * uDpr;
-  float c = letters(px + bend, 0.), cA = letters(px + bend * 1.5, 0.), cB = letters(px + bend * .5, 0.);
-  float soft = letters(px + bend, 3.2);
+  /* the letters hold still; only a hairline of colour splits along their edges where the film is */
+  float c = letters(px, 0.);
+  vec2 split = (speed > .001 ? normalize(V) : vec2(1., 0.)) * 1.6 * uDpr * smoothstep(.0, .3, S);
+  float cA = letters(px + split, 0.), cB = letters(px - split, 0.);
+  float soft = letters(px, 3.2);
 
   /* at rest: the faintest fill and a hairline, slightly warmer on one side of the screen */
   float line = 1. - abs(c * 2. - 1.);
