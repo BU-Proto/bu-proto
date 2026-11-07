@@ -150,6 +150,89 @@
   color: var(--c-body);
 }
 
+/* A night's photo, raised in the empty half beside its row. Only for a pointer that can hover. */
+.photos {
+  display: none;
+}
+
+@media (hover: hover) and (min-width: 761px) {
+  .photos {
+    position: absolute;
+    z-index: 2;
+    display: block;
+    inset: 0;
+    pointer-events: none;
+  }
+}
+
+.photo[data-hue='sky'] {
+  --tint: var(--c-sky-200);
+}
+
+.photo[data-hue='iris'] {
+  --tint: var(--c-iris-200);
+}
+
+.photo[data-hue='rose'] {
+  --tint: var(--c-rose-200);
+}
+
+/* A duotone in the night's own hue: the photo's whites go to the tint, its blacks to a dark of the hue. */
+.photo {
+  position: absolute;
+  top: 0;
+  right: calc(50% + clamp(16px, 2.5vw, 40px));
+  overflow: hidden;
+  background: var(--tint);
+  clip-path: inset(8% 0);
+  isolation: isolate;
+  opacity: 0;
+  transition: opacity 0.2s ease, clip-path 0.2s ease;
+}
+
+.photo::before,
+.photo::after {
+  position: absolute;
+  content: '';
+  inset: 0;
+}
+
+.photo::after {
+  background: color-mix(in srgb, rgb(var(--hue-deep-rgb)) 45%, #000);
+  mix-blend-mode: lighten;
+}
+
+/* Over everything, so the mid-tones hold the electric hue instead of washing out to grey. */
+.photo::before {
+  z-index: 1;
+  background: var(--hue);
+  mix-blend-mode: color;
+}
+
+.photo img {
+  display: block;
+  /* Both limits with both sizes auto keep the photo's shape: a cover is often a flyer, too full to crop. */
+  width: auto;
+  max-width: clamp(220px, 26vw, 420px);
+  height: auto;
+  max-height: 62vh;
+  filter: grayscale(1) contrast(1.1);
+  mix-blend-mode: multiply;
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.photo[data-raised] {
+  clip-path: inset(0);
+  opacity: 1;
+  transition: opacity 0.25s ease, clip-path 0.55s var(--ease-lusion);
+}
+
+.photo[data-raised] img {
+  transform: none;
+  transition: transform 0.55s var(--ease-lusion);
+}
+
 @keyframes glint {
   from {
     color: var(--c-sky-300);
@@ -191,7 +274,17 @@
     animation: none;
   }
 
-  .night {
+  .night,
+  .photo,
+  .photo[data-raised],
+  .photo img,
+  .photo[data-raised] img {
     transition: none;
+  }
+
+  .photo,
+  .photo img {
+    clip-path: none;
+    transform: none;
   }
 }
