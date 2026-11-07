@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lab Kit Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; color: #f6fbff; font: 12px/1.3 ui-monospace, "SF Mono", Menlo, monospace; }
+  main { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; padding: 14px; height: 100vh; box-sizing: border-box; }
+  .left, .right { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .grow { flex: 1; min-height: 0; position: relative; }
+  .grow canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .cell canvas { width: 100%; aspect-ratio: 8/5; display: block; image-rendering: pixelated; background: #0b2a46; }
+  #arc { width: 100%; height: 22px; display: block; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chips span { width: 26px; height: 26px; display: block; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; height: auto; } .grow { height: 60vh; flex: none; } }
+</style>
+</head>
+<body>
+<main>
+  <section class="left">
+    <div>mushroom, canvas 2D glyphs over the soft render</div>
+    <div class="grow"><canvas id="ascii"></canvas></div>
+  </section>
+  <section class="right">
+    <div id="gl-label">mushroom buffer through WebGL2 and arc LUT</div>
+    <div class="grow"><canvas id="gl"></canvas></div>
+    <div class="grid" id="grid"></div>
+    <canvas id="arc" width="512" height="22"></canvas>
+    <div class="chips" id="chips"></div>
+  </section>
+</main>
+<script src="palette.js"></script>
+<script src="subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.LabSubjects, Pal = window.LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* arc strip and swatches */
+  var ax = document.getElementById('arc').getContext('2d');
+  for (var i = 0; i < 512; i++) { ax.fillStyle = Pal.toCss(Pal.arc(i / 511)); ax.fillRect(i, 0, 1, 22); }
+  Object.keys(Pal.colors).forEach(function (k) {
+    var el = document.createElement('span'); el.style.background = Pal.colors[k]; el.title = k;
+    document.getElementById('chips').appendChild(el);
+  });
+
+  /* colour for a sample: arc hue, dark end sinks into harbor, top end blows out to frost */
+  var harbor = Pal.resolve('harbor'), frost = Pal.resolve('frost');
+  function shadeInto(data, j, lum, hint) {
+    var c = Pal.arc(hint);
+    var d = Math.min(1, lum * 1.9), w = Math.max(0, lum - 0.72) / 0.28;
+    for (var k = 0; k < 3; k++) {
+      var v = harbor[k] + (c[k] - harbor[k]) * d;
+      data[j + k] = (v + (frost[k] - v) * w) * 255;
+    }
+    data[j + 3] = 255;
+  }
+
+  /* small subject tiles */
+  var tiles = S.names.filter(function (n) { return n !== 'mushroom'; }).map(function (name) {
+    var box = document.createElement('div'), cv = document.createElement('canvas'), lab = document.createElement('div');
+    box.className = 'cell'; cv.width = 128; cv.height = 80; lab.textContent = name;
+    box.appendChild(cv); box.appendChild(lab); document.getElementById('grid').appendChild(box);
+    var cx = cv.getContext('2d');
+    return { name: name, cx: cx, buf: S.create(128, 80), img: cx.createImageData(128, 80) };
+  });
+
+  /* big ASCII panel */
+  var RAMP = ' .,:;/|+x*#';
+  var CW = 7, CH = 12, cvA = document.getElementById('ascii'), cxA = cvA.getContext('2d');
+  var rect = cvA.getBoundingClientRect();
+  cvA.width = rect.width; cvA.height = rect.height;
+  var cols = Math.floor(cvA.width / CW), rows = Math.floor(cvA.height / CH);
+  var big = S.create(cols, rows, CW / CH);
+  var under = document.createElement('canvas'); under.width = cols; under.height = rows;
+  var cxU = under.getContext('2d'), imgU = cxU.createImageData(cols, rows);
+  var inks = Pal.cssLut(64);
+  cxA.font = '11px ui-monospace, Menlo, monospace'; cxA.textBaseline = 'top';
+
+  /* WebGL2 panel: buffer texture + arc LUT */
+  var cvG = document.getElementById('gl'), r2 = cvG.getBoundingClientRect();
+  cvG.width = r2.width; cvG.height = r2.height;
+  var gl = cvG.getContext('webgl2'), glBuf = S.create(240, 150), glBytes = null, drawGL = null;
+  if (gl) {
+    var vs = '#version 300 es\nout vec2 uv;void main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;uv=vec2(p.x,1.-p.y);gl_Position=vec4(p*2.-1.,0,1);}';
+    var fs = '#version 300 es\nprecision highp float;in vec2 uv;out vec4 o;uniform sampler2D buf,ramp;' +
+      'void main(){vec4 s=texture(buf,uv);vec3 c=texture(ramp,vec2(s.g,.5)).rgb;' +
+      'vec3 g=vec3(.024,.102,.18);c=mix(g,c,min(1.,s.r*1.9));c=mix(c,vec3(.965,.984,1.),smoothstep(.72,1.,s.r));o=vec4(c,1);}';
+    var mk = function (type, src) { var sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh)); return sh; };
+    var pr = gl.createProgram(); gl.attachShader(pr, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, mk(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr); gl.useProgram(pr);
+    var mkTex = function (unit, w, h, data, filter) {
+      var tx = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tx);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    };
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    mkTex(0, 240, 150, null, gl.LINEAR); mkTex(1, 256, 1, Pal.lut(256), gl.LINEAR);
+    gl.uniform1i(gl.getUniformLocation(pr, 'buf'), 0); gl.uniform1i(gl.getUniformLocation(pr, 'ramp'), 1);
+    gl.activeTexture(gl.TEXTURE0);
+    drawGL = function (t) {
+      S.fill('mushroom', glBuf, t); glBytes = S.toRGBA(glBuf, glBytes);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 240, 150, gl.RGBA, gl.UNSIGNED_BYTE, glBytes);
+      gl.viewport(0, 0, cvG.width, cvG.height); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+  } else {
+    document.getElementById('gl-label').textContent = 'WebGL2 unavailable';
+  }
+
+  function draw(t) {
+    tiles.forEach(function (tl) {
+      S.fill(tl.name, tl.buf, t);
+      for (var i = 0, n = 128 * 80; i < n; i++) shadeInto(tl.img.data, i * 4, tl.buf.lum[i], tl.buf.hint[i]);
+      tl.cx.putImageData(tl.img, 0, 0);
+    });
+
+    S.fill('mushroom', big, t);
+    for (var i = 0, n = cols * rows; i < n; i++) shadeInto(imgU.data, i * 4, big.lum[i], big.hint[i]);
+    cxU.putImageData(imgU, 0, 0);
+    cxA.imageSmoothingEnabled = true;
+    cxA.drawImage(under, 0, 0, cols * CW, rows * CH);
+    for (var y = 0, k = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++, k++) {
+        var l = big.lum[k], e = big.edge[k], g = Math.min(1, l * 0.8 + e * 0.5);
+        var ch = RAMP.charAt(Math.floor(g * (RAMP.length - 0.001)));
+        if (ch === ' ') continue;
+        if (l > 0.88) { cxA.fillStyle = '#f6fbff'; cxA.fillRect(x * CW, y * CH, CW, CH - 1); continue; }
+        cxA.fillStyle = l > 0.6 ? '#f6fbff' : inks[Math.floor(big.hint[k] * 63)];
+        cxA.fillText(ch, x * CW, y * CH);
+      }
+    }
+    if (drawGL) drawGL(t);
+  }
+
+  if (still) { draw(4); return; }
+  (function loop(ms) { draw((ms || 0) / 1000 + 4); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>
