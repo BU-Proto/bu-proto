@@ -22,6 +22,8 @@ const RIM_INSET = 1.1
 const RIM_WIDTH = 1.1
 /** Glass catches more light at a glancing angle, so the very edge glows faintly. */
 const EDGE_GLOW = 0.14
+/** The lower lip of the glass is thicker than the upper one, since the light comes from above. */
+const LIP_TOP = 0.7
 /** Between these distances in from the rim, in CSS px, the clear edge turns to frost. */
 const CLEAR_TO = 5
 const FROST_FROM = 15
@@ -100,7 +102,9 @@ export function glassMaps(width: number, height: number, radius: number, bezel: 
         inset = radius - qx
       }
 
-      const bend = BEND[Math.round(clamp(inset / bezel, 0, 1) * STEPS)]
+      const below = (1 + ny) / 2
+      const lip = bezel * (LIP_TOP + (1 - LIP_TOP) * below)
+      const bend = BEND[Math.round(clamp(inset / lip, 0, 1) * STEPS)]
       const at = (row * columns + column) * 4
       map.data[at] = 128 - nx * bend * 127
       map.data[at + 1] = 128 - ny * bend * 127
