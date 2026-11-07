@@ -1,0 +1,189 @@
+/* Hairlines run the full width; the words sit behind everything and the ledger in the right half. */
+.section {
+  position: relative;
+  min-height: 120vh;
+  padding-bottom: clamp(72px, 12vh, 140px);
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  height: 100vh;
+  height: 100svh;
+  margin-bottom: -100vh;
+  margin-bottom: -100svh;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.body {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(96px, 16vh, 180px);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 0 var(--gutter) clamp(20px, 3vh, 32px);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(44px, 5.2vw, 76px);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.count {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 0;
+}
+
+.icon {
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 2vw, 28px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  animation: glint 7s ease-in-out infinite alternate;
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 2vw, 28px);
+  font-weight: 400;
+}
+
+.group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 16px var(--gutter);
+  border-top: 1px solid var(--c-line);
+}
+
+.kind {
+  display: flex;
+  grid-column: 2;
+  gap: 12px;
+  grid-row: 1;
+  align-self: start;
+  width: 40%;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.8;
+}
+
+.glyph {
+  color: var(--hue);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.nights {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  padding: 0 0 0 40%;
+  list-style: none;
+}
+
+.night {
+  display: grid;
+  grid-template-columns: 7ch minmax(0, 1fr);
+  gap: 20px;
+  color: var(--c-ink);
+  font-size: 16px;
+  line-height: 1.8;
+  transition: color 0.25s ease, transform 0.35s var(--ease-lusion);
+}
+
+.date {
+  color: var(--c-body);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.night:hover {
+  color: var(--hue);
+  transform: translateX(8px);
+}
+
+.night:focus-visible {
+  outline: 2px solid var(--hue);
+  outline-offset: 3px;
+}
+
+/* A night that's been: still there, and crossed off. */
+.night[data-past],
+.night[data-past] .date {
+  color: var(--c-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.empty {
+  margin: 0;
+  padding: 24px var(--gutter) 24px 50%;
+  border-top: 1px solid var(--c-line);
+  color: var(--c-body);
+}
+
+@keyframes glint {
+  from {
+    color: var(--c-sky-300);
+  }
+
+  50% {
+    color: var(--c-iris-300);
+  }
+
+  to {
+    color: var(--c-rose-300);
+  }
+}
+
+@media (max-width: 760px) {
+  .head,
+  .group {
+    grid-template-columns: 1fr;
+  }
+
+  .kind {
+    grid-column: 1;
+    width: auto;
+  }
+
+  .nights {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 4px 0 0;
+  }
+
+  .empty {
+    padding-left: var(--gutter);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon {
+    animation: none;
+  }
+
+  .night {
+    transition: none;
+  }
+}
