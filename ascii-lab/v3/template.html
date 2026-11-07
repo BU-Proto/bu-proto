@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero Options</title>
+<style>
+  :root { color-scheme: dark; --ground: #061a2e; --ink: #f6fbff; --line: rgb(246 251 255 / .28); --focus: #9df0a8; }
+  html, body { margin: 0; height: 100%; background: var(--ground); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  nav { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 2; display: flex; gap: 2px; max-width: calc(100vw - 32px);
+    padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: rgb(6 26 46 / .72); backdrop-filter: blur(14px); overflow-x: auto; }
+  button { flex: none; padding: 9px 12px; border: 0; border-radius: 7px; background: none; color: var(--ink); font: 500 12px/1 ui-monospace, Menlo, monospace; cursor: pointer; opacity: .66; }
+  button:hover { opacity: 1; }
+  button[aria-pressed='true'] { background: var(--ink); color: var(--ground); opacity: 1; }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  body.clean nav { display: none; }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="An animated blue-to-pink gradient drawn in glyphs" role="img"></canvas>
+<nav id="n" aria-label="Options"></nav>
+<script>
+(function () {
+  'use strict';
+  var ROWS = __ROWS__;
+  var NAMES = ['Current', 'Drift', 'Caustic', 'Silk', 'Focus', 'Swell'];
+  var cv = document.getElementById('c'), nav = document.getElementById('n');
+  var gl = cv.getContext('webgl2', { antialias: false, alpha: false });
+  var params = new URLSearchParams(location.search);
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (params.has('clean')) document.body.classList.add('clean');
+  if (!gl) { document.body.style.background = 'linear-gradient(135deg, #1a8fc0, #ab9dff 45%, #c2407a 58%, #7cc7f4)'; cv.remove(); nav.remove(); return; }
+
+  var VS = '#version 300 es\nout vec2 vUv; void main(){ vec2 p = vec2((gl_VertexID<<1)&2, gl_VertexID&2); vUv = p; gl_Position = vec4(p*2.-1., 0., 1.); }';
+  var FS = `#version 300 es
+  precision highp float;
+  in vec2 vUv; out vec4 o;
+  uniform sampler2D uMap;
+  uniform vec2 uRes, uPtr;
+  uniform float uT, uNear, uDpr;
+  uniform int uMode;
+  const vec3 FROST = vec3(.965,.984,1.), MINT = vec3(.616,.941,.659);
+  const float CONTRAST = 1.6, CUTOFF = .218;
+
+  float h(vec2 p){ p = fract(p*vec2(233.34,851.73)); p += dot(p,p+23.45); return fract(p.x*p.y); }
+  float vn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+    return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+
+  vec3 smoothMap(vec2 uv){
+    vec2 size=vec2(textureSize(uMap,0)), st=uv*size-.5, i=floor(st), f=st-i;
+    vec2 w0=(1.-f)*(1.-f)*(1.-f)/6., w1=(4.-6.*f*f+3.*f*f*f)/6., w2=(1.+3.*f+3.*f*f-3.*f*f*f)/6., w3=f*f*f/6.;
+    vec2 g0=w0+w1, g1=w2+w3, p0=(i-.5+w1/g0+.5)/size, p1=(i+1.5+w3/g1+.5)/size;
+    return (texture(uMap,vec2(p0.x,p0.y)).rgb*g0.x+texture(uMap,vec2(p1.x,p0.y)).rgb*g1.x)*g0.y
+         + (texture(uMap,vec2(p0.x,p1.y)).rgb*g0.x+texture(uMap,vec2(p1.x,p1.y)).rgb*g1.x)*g1.y;
+  }
+  /* the old bloom on its side, drawn out into a ribbon; only long sine waves move it */
+  vec3 grad(vec2 uv, float t){
+    vec2 d=(uv-.5)*vec2(min(uRes.x/uRes.y,1.6)/1.6,1.);
+    const float C=.77,S=.64;
+    vec2 q=vec2(.5,.56)+vec2(C*d.x+S*d.y,(-S*d.x+C*d.y)*.62);
+    q+=.022*vec2(sin(q.y*4.1+t*.11)+.6*sin(q.y*2.3-t*.07+1.),sin(q.x*3.3-t*.09)+.6*sin(q.x*1.7+t*.06+2.));
+    return smoothMap(clamp(q,.02,.98));
+  }
+  /* travelling light, 0 to 1: this is the only place white comes from, so white always moves */
+  float lightAt(vec2 uv, float t){
+    vec2 p=uv*vec2(uRes.x/uRes.y,1.);
+    float l;
+    if(uMode==2) { vec2 w=p*2.4+vec2(1.3,.4); w+=.8*sin(w.yx*1.3+vec2(t*.21,-t*.17)); w+=.45*sin(w.yx*2.3-vec2(t*.13,t*.19)); float v=abs(sin(w.x)+sin(w.y)); l=pow(1.-clamp(v*.72,0.,1.),4.)*.95; }
+    else {
+      float bend=sin(p.y*2.2-t*.17)*.34+sin(p.x*1.5+t*.13)*.22;
+      float a=.5+.5*sin((p.x*.77-p.y*.64)*6.5-t*.62+bend*4.);
+      float b=.5+.5*sin((p.x*.64+p.y*.77)*3.1+t*.37-bend*3.);
+      l=pow(a,5.)*(.3+.9*b);
+    }
+    vec2 toPtr=(uv-uPtr)*vec2(uRes.x/uRes.y,1.);
+    return clamp(l+exp(-dot(toPtr,toPtr)*13.)*uNear*.75,0.,1.);
+  }
+
+  float bar(vec2 p,vec2 a,vec2 b,float w,float aa){ vec2 pa=p-a,ba=b-a; float k=clamp(dot(pa,ba)/dot(ba,ba),0.,1.); return 1.-smoothstep(w-aa,w+aa,length(pa-ba*k)); }
+  float dia(vec2 p,float r,float aa){ return 1.-smoothstep(r-aa,r+aa,abs(p.x)+abs(p.y)); }
+  float dotm(vec2 p,float aa){ return 1.-smoothstep(.05-aa,.05+aa,length(p)); }
+  float mark(int ramp,int s,vec2 q,float aa){
+    if(s==3&&ramp!=1) return dotm(q,aa);
+    if(ramp==0){ float c=s==0?.6:(s==1?.4:.24); return smoothstep(c+aa*5.,c-aa*5.,fract(q.y*5.)); }
+    if(ramp==1){ if(s==0) return 1.-smoothstep(.15-aa,.15+aa,abs(q.x)); float w=s==1?.085:.032;
+      float l=1.-smoothstep(w-aa,w+aa,abs(q.x)); return s==3?l*step(fract(q.y*3.+.5),.62):l; }
+    if(ramp==2){ if(s==1) return bar(q,vec2(-.16,.3),vec2(.16,-.3),.04,aa); return bar(q,vec2(-.3,.5),vec2(.3,-.5),s==0?.05:.026,aa); }
+    if(ramp==3){ if(s==2) return max(bar(q,vec2(0,-.2),vec2(0,.2),.03,aa),bar(q,vec2(-.2,0),vec2(.2,0),.03,aa));
+      float w=s==0?.1:.06, r=s==0?.28:.5; return max(bar(q,vec2(0,-r),vec2(0,r),w,aa),bar(q,vec2(-.3,0),vec2(.3,0),w,aa)); }
+    if(ramp==4){ if(s==1) return dia(q,.3,aa); float ring=dia(q,.3,aa)-dia(q,.2,aa); return s==0?max(ring,dia(q,.1,aa)):ring; }
+    if(s==0) return 1.-smoothstep(.04-aa,.04+aa,abs(length(q)-.2));
+    if(s==1) return max(bar(q,vec2(-.16,-.22),vec2(.16,0),.04,aa),bar(q,vec2(.16,0),vec2(-.16,.22),.04,aa));
+    return bar(q,vec2(-.26,.34),vec2(.26,.34),.04,aa);
+  }
+  int rampAt(vec2 id){
+    if(h(id+.71)>.68) return int(floor(h(id+.29)*6.));
+    float across=floor(id.x/6.);
+    vec2 macro=vec2(across,floor((id.y+h(vec2(across,2.))*5.)/5.));
+    bool rows=h(macro+.4)>.76;
+    float lane=rows?id.y:id.x, along=rows?id.x:id.y;
+    float run=floor((along+h(vec2(lane,5.))*7.)/(2.+floor(h(vec2(lane,9.))*4.)));
+    return int(floor(h(vec2(lane,run)+(rows?.17:.63))*6.));
+  }
+  /* one sheet of type over the gradient; returns ink and coverage */
+  vec4 sheet(vec2 p, vec2 cell, float t, float blur, vec2 colourAt){
+    vec2 id=floor(p/cell);
+    vec2 q=(fract(p/cell)-.5)*vec2(cell.x/cell.y,1.);
+    vec3 c=grad(colourAt,t);
+    vec3 adj=clamp((c-.5)*CONTRAST+.5,0.,1.);
+    float d=dot(adj,vec3(.299,.587,.114));
+    vec2 wave=id*3.5/max(uRes.x/cell.x,uRes.y/cell.y);
+    float r=t*.14;
+    float u=.65*vn(wave+vec2(r,-.6*r))+.35*vn(2.1*wave+vec2(-.8*r,r));
+    float l=lightAt(colourAt,t);
+    float lift=1.+.34*(u-.5)*2.+l*.55;
+    float weight=clamp((d*lift-CUTOFF)/(1.-CUTOFF)+(h(id+.13)-.5)*.2+l*.34,0.,1.);
+    float aa=1.1/cell.y+blur;
+    float g;
+    if(uMode==5){
+      /* one mark only, its size carrying the light */
+      float sz=.035+.27*sqrt(clamp(weight*.82+l*.5,0.,1.));
+      g=dia(q,sz,aa);
+    } else {
+      float place=(1.-weight)*3.99; int s=int(floor(place)); float th=smoothstep(.3,.7,fract(place));
+      int ramp=rampAt(id);
+      g=clamp(mark(ramp,s,q,aa),0.,1.)*(1.-th);
+      if(s<3) g+=clamp(mark(ramp,s+1,q,aa),0.,1.)*th;
+    }
+    g*=d<CUTOFF?0.:mix(.56,.96,smoothstep(.1,.75,weight));
+    vec3 ink=mix(min(adj*lift,vec3(1.)),FROST,smoothstep(.42,.86,l));
+    return vec4(ink,g);
+  }
+  void main(){
+    vec2 px=vec2(vUv.x,1.-vUv.y)*uRes, uv=vec2(vUv.x,1.-vUv.y);
+    float t=uT, ch=12.*uDpr; vec2 cell=vec2(round(ch*.6),round(ch));
+    vec3 col=grad(uv,t);
+    /* the light lifts the ground as well as the type, softly, so it reads as light and not as ink */
+    float l=lightAt(uv,t);
+    col+=col*l*.2;
+    vec4 a;
+    if(uMode==1){
+      float c=floor(px.x/cell.x);
+      vec2 p=px; p.y-=cell.y*(.4+1.5*h(vec2(c,4.)))*t;
+      vec2 at=vec2((c+.5)*cell.x,(floor(p.y/cell.y)+.5)*cell.y+cell.y*(.4+1.5*h(vec2(c,4.)))*t)/uRes;
+      a=sheet(p,cell,t,0.,at);
+    } else if(uMode==3){
+      vec2 p=px+vec2(sin(px.y/uDpr*.0062+t*.16)+.5*sin(px.y/uDpr*.013-t*.11),cos(px.x/uDpr*.0048-t*.13)+.5*cos(px.x/uDpr*.011+t*.09))*30.*uDpr;
+      a=sheet(p,cell,t,0.,uv);
+    } else if(uMode==4){
+      vec2 fp=uv*vec2(uRes.x/uRes.y,1.);
+      float focus=abs(sin(dot(fp,vec2(.77,-.64))*1.7-t*.14));
+      vec4 far=sheet(px+vec2(0.,t*3.*uDpr),cell*.8,t,.2,uv);
+      col=mix(col,far.rgb,far.a*.5);
+      vec2 big=cell*1.5; vec2 cc=(floor(px/big)+.5)*big/uRes;
+      a=sheet(px-vec2(0.,t*5.*uDpr),big,t,smoothstep(.15,.9,focus)*.34,cc);
+      a.a*=mix(1.,.7,focus);
+    } else {
+      vec2 cc=(floor(px/cell)+.5)*cell/uRes;
+      a=sheet(px,cell,t,0.,cc);
+    }
+    col=mix(col,a.rgb,a.a);
+    /* triangular dither, so no gradient on any screen falls into steps */
+    col+=(h(px*.37+fract(t))+h(px*.71+fract(t*1.3))-1.)*1.5/255.;
+    o=vec4(col,1.);
+  }`;
+  function sh(t, s) { var x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; }
+  var prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
+  gl.useProgram(prog); gl.bindVertexArray(gl.createVertexArray());
+  var U = {}; ['uMap','uRes','uPtr','uT','uNear','uDpr','uMode'].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
+  var W = ROWS[0].length / 6, H = ROWS.length, data = new Uint8Array(W * H * 4);
+  ROWS.forEach(function (row, j) { for (var i = 0; i < W; i++) for (var c = 0; c < 3; c++) data[(j * W + i) * 4 + c] = parseInt(row.substr(i * 6 + c * 2, 2), 16); });
+  for (var k = 3; k < data.length; k += 4) data[k] = 255;
+  gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.uniform1i(U.uMap, 0);
+
+  var mode = Math.max(0, Math.min(5, (parseInt(params.get('o') || '1', 10) || 1) - 1)), dpr = 1;
+  var ptr = { x: .5, y: .5, gx: .5, gy: .5, near: 0, goal: 0 };
+  var fixed = params.has('t') ? parseFloat(params.get('t')) : null;
+  var btns = NAMES.map(function (name, i) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = (i + 1) + ' ' + name;
+    b.addEventListener('click', function () { pick(i); }); nav.appendChild(b); return b;
+  });
+  function pick(i) { mode = i; btns.forEach(function (b, j) { b.setAttribute('aria-pressed', String(j === i)); }); draw(performance.now()); }
+  function size() { dpr = Math.min(1.5, devicePixelRatio || 1); cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr); gl.viewport(0, 0, cv.width, cv.height); }
+  var start = performance.now();
+  function draw(now) {
+    ptr.x += (ptr.gx - ptr.x) * .06; ptr.y += (ptr.gy - ptr.y) * .06; ptr.near += (ptr.goal - ptr.near) * .06;
+    gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform2f(U.uPtr, ptr.x, ptr.y); gl.uniform1f(U.uNear, ptr.near);
+    gl.uniform1f(U.uT, fixed !== null ? fixed : reduce ? 9 : (now - start) / 1000 + 9); gl.uniform1f(U.uDpr, dpr); gl.uniform1i(U.uMode, mode);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function loop(now) { requestAnimationFrame(loop); if (!document.hidden) draw(now); }
+  addEventListener('resize', function () { size(); draw(performance.now()); });
+  addEventListener('keydown', function (e) { var n = parseInt(e.key, 10); if (n >= 1 && n <= 6) pick(n - 1); });
+  addEventListener('pointermove', function (e) { if (e.pointerType === 'touch') return; ptr.gx = e.clientX / innerWidth; ptr.gy = e.clientY / innerHeight; ptr.goal = 1; }, { passive: true });
+  document.addEventListener('pointerleave', function () { ptr.goal = 0; });
+  size(); pick(mode);
+  if (!reduce && fixed === null) requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
