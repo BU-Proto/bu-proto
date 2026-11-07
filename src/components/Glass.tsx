@@ -28,8 +28,9 @@ interface Built extends GlassMaps {
 /**
  * A surface of liquid glass, filling its positioned parent from behind the content. Bottom to top:
  * frost, which blurs the page and compresses its brightness so labels hold their contrast over
- * anything; the lens, which bends the view at the rim; and the rim of light. Each is its own layer:
- * the frost is there at once, and stays if the lens can't run.
+ * anything; the lens, which bends the view at the rim; and the rim of light. Where the lens runs, the
+ * frost pulls back from the rim over a clear layer, so what bends there stays sharp. Each is its own
+ * layer: the frost is there at once, and stays if the lens can't run.
  *
  * Nothing above this in the tree may set `filter`, `opacity`, `mask`, `clip-path` or `backdrop-filter`:
  * any of them would stop the glass seeing the page.
@@ -52,6 +53,7 @@ export function Glass({ radius, bezel, bend }: GlassProps) {
       if (!width || !height) return
       const maps = glassMaps(width, height, radius, bezel)
       surface.style.setProperty('--rim', `url("${maps.rim}")`)
+      surface.style.setProperty('--core', `url("${maps.core}")`)
       if (!refract) return
       // Decoded first: a filter whose image isn't ready shifts the whole view instead of bending it.
       const image = new Image()
@@ -80,7 +82,8 @@ export function Glass({ radius, bezel, bend }: GlassProps) {
   }, [radius, bezel])
 
   return (
-    <span ref={root} className={styles.glass} aria-hidden="true">
+    <span ref={root} className={styles.glass} data-refract={ready || undefined} aria-hidden="true">
+      <span className={styles.clear} />
       <span className={styles.frost} />
       {built && (
         <svg className={styles.defs} width="0" height="0">
