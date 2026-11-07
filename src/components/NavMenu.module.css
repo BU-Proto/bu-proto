@@ -33,8 +33,9 @@
 
 .label:focus-visible,
 .toggle:focus-visible {
-  outline: 2px solid var(--c-blue);
-  outline-offset: -2px;
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+  border-radius: 19px;
 }
 
 .chevron {
