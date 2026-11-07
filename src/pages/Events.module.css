@@ -1,170 +1,173 @@
 /*
- * The events page: the intro with hack night's weekly beat beside it, the next event set large
- * with its photo, then everything after it as one ruled agenda, month by month.
+ * The events page: the intro with hack night's weekly beat ruled under it, the next event set
+ * large beside its photo, then everything after it as one ruled agenda, month by month.
  */
 .page {
-  gap: clamp(32px, 5vh, 56px);
+  gap: calc(var(--cell) * 7);
 }
 
-/* ---- Head: the intro, and the weekly beat on the right ---------------------------------- */
+/* ---- Head: the intro, then the weekly beat, on the intro's columns ---- */
 
 .head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
-  gap: 24px 48px;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--cell) * 3);
 }
 
 .rhythm {
   display: grid;
   gap: 6px;
-  padding-top: 14px;
-  /* Hack night's own colour, the rule over it the same sky as its columns on the landing. */
-  border-top: 1px solid rgb(var(--hue-rgb) / 0.6);
+  padding-top: var(--cell);
+  border-top: 1px solid var(--c-line);
 }
 
 .rhythm p {
   margin: 0;
-  text-shadow: var(--on-field-shadow);
   text-wrap: pretty;
 }
 
 .rhythmTitle {
-  color: var(--hue);
-  font-size: 17px;
+  color: var(--c-ink);
+  font-size: 15px;
   font-weight: 500;
-  letter-spacing: -0.01em;
 }
 
-/* A touch brighter than the usual soft ink: this sits on the brightest part of the field. */
 .rhythmText {
-  color: rgb(var(--frost-rgb) / 0.9);
+  color: var(--c-body);
+  font-size: 14.5px;
+  line-height: 1.5;
 }
 
 .rhythmText a {
-  color: var(--ink);
+  color: var(--c-ink);
 }
 
-/* ---- The next event, and the empty state in the same frame ----------------------------- */
+@media (min-width: 900px) {
+  .rhythm {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    column-gap: calc(var(--cell) * 3);
+  }
+
+  .rhythmText {
+    grid-column: 2;
+  }
+
+  .rhythmTitle {
+    grid-row: 1 / span 2;
+  }
+}
+
+/* ---- The next event, and the empty state in the same frame ---- */
 
 .lead {
-  position: relative;
-  isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  min-height: clamp(440px, 56vh, 560px);
-  overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: 26px;
-  /* The sheet lit from its far corner in the night's colour, the light the photo fades into. */
-  background:
-    radial-gradient(70% 80% at 100% 0%, rgb(var(--hue-deep-rgb) / 0.26), transparent 70%),
-    radial-gradient(60% 70% at 70% 100%, rgb(var(--rose-deep-rgb) / 0.12), transparent 70%),
-    var(--navy);
-  box-shadow: 0 40px 90px -50px rgb(var(--harbor-rgb) / 0.9);
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+  gap: calc(var(--cell) * 4);
+  align-items: start;
 }
 
 .cover {
-  position: relative;
-  isolation: isolate;
   margin: 0;
-  overflow: hidden;
 }
 
 .cover img {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
-  /* The photo dissolves into the sheet rather than meeting it on a seam. */
-  -webkit-mask-image: linear-gradient(to right, #000 70%, transparent);
-  mask-image: linear-gradient(to right, #000 70%, transparent);
 }
 
 .credit {
-  position: absolute;
-  z-index: 1;
-  left: 18px;
-  bottom: 14px;
-  max-width: calc(100% - 36px);
-  margin: 0;
-  color: rgb(var(--frost-rgb) / 0.86);
+  margin: 8px 0 0;
+  color: var(--c-muted);
   font-size: 11.5px;
-  text-shadow: 0 1px 3px rgb(var(--harbor-rgb) / 0.9), 0 0 14px rgb(var(--harbor-rgb) / 0.7);
 }
 
 .credit a {
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.4);
+  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 2px;
+  padding-bottom: 2px;
+  transition: background-size 0.45s var(--ease-out);
 }
 
-.credit a:hover {
-  border-bottom-color: currentColor;
+.credit a:hover,
+.credit a:focus-visible {
+  background-size: 100% 2px;
 }
 
 .leadBody {
-  position: relative;
   display: grid;
-  align-content: center;
   justify-items: start;
   gap: 10px;
-  padding: clamp(28px, 4vw, 52px) clamp(24px, 3.6vw, 48px);
 }
 
 .date {
   display: flex;
   align-items: flex-end;
   gap: 18px;
-  margin: 0 0 14px;
+  margin: 0 0 var(--cell);
 }
 
 .day {
-  color: var(--hue);
-  font-size: clamp(96px, 10vw, 144px);
-  font-weight: 200;
-  letter-spacing: -0.06em;
+  color: var(--c-ink);
+  font-size: clamp(88px, 10vw, 144px);
+  font-weight: 400;
+  letter-spacing: -0.05em;
   line-height: 0.8;
   font-variant-numeric: tabular-nums;
 }
 
 .dateRest {
-  padding-bottom: 0.1em;
-  font-size: 15px;
-  line-height: 1.4;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  line-height: 1.6;
+  text-transform: uppercase;
 }
 
 .countdown {
-  color: var(--accent);
+  color: var(--c-blue);
   font-weight: 500;
 }
 
 .leadTitle {
   margin: 0;
-  font-size: clamp(28px, 3.1vw, 40px);
+  font-size: clamp(26px, 3.4vw, 46px);
   font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  letter-spacing: -0.02em;
+  line-height: 1.06;
   text-wrap: balance;
 }
 
-.leadTitle a:hover {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 5px;
+.leadTitle a,
+.rowLink {
+  padding-bottom: 3px;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 3px;
+  transition: background-size 0.45s var(--ease-out);
+}
+
+.leadTitle a:hover,
+.leadTitle a:focus-visible {
+  background-size: 100% 3px;
 }
 
 .leadTitle a:focus-visible {
-  outline: 2px solid var(--frost);
+  outline: 2px solid var(--c-blue);
   outline-offset: 3px;
-  border-radius: 4px;
 }
 
 .leadText {
   max-width: 46ch;
   margin: 4px 0 0;
-  color: var(--ink-soft);
-  font-size: 15px;
-  line-height: 1.55;
+  color: var(--c-body);
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.62;
   text-wrap: pretty;
 }
 
@@ -173,35 +176,23 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 14px 22px;
-  margin-top: 16px;
+  margin-top: var(--cell);
 }
 
-/* The form opens in the sheet, under the button that opened it. */
+/* The form opens under the button that opened it. */
 .leadRsvp {
   justify-self: stretch;
   margin-top: 10px;
   padding-top: 20px;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--c-line);
 }
 
-.emptyTitle {
-  margin: 0;
-  font-size: clamp(30px, 3.4vw, 44px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  text-wrap: balance;
-}
-
-/* ---- The rest: one ruled agenda, the month in the margin ------------------------------- */
+/* ---- The rest: one ruled agenda, the month in the margin ---- */
 
 .later {
   display: grid;
-  gap: 18px;
-}
-
-.sheet {
-  padding-block: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--cell) * 3);
 }
 
 .month {
@@ -209,20 +200,25 @@
   grid-template-columns: 150px minmax(0, 1fr);
   gap: 0 24px;
   align-items: start;
+  border-top: 1px solid var(--c-line);
 }
 
-.month + .month {
-  border-top: 1px solid var(--rule-strong);
+.month:last-child {
+  border-bottom: 1px solid var(--c-line);
 }
 
+/* Sticky, clear of the fixed tab. */
 .monthName {
   position: sticky;
-  top: 84px;
+  top: calc(var(--cell) * 4);
   margin: 0;
   padding: 24px 0;
-  color: var(--ink-soft);
-  font-size: 15px;
-  font-weight: 500;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .list {
@@ -242,10 +238,10 @@
 }
 
 .event + .event {
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--c-line);
 }
 
-/* The day is what the list is scanned by: set large and light, the weekday under it. */
+/* The day is what the list is scanned by: set large, the weekday under it. */
 .rowDate {
   display: grid;
   justify-items: start;
@@ -254,17 +250,19 @@
 }
 
 .rowDay {
-  color: var(--hue);
+  color: var(--c-ink);
   font-size: 34px;
-  font-weight: 300;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 
 .rowWeekday {
   margin-top: 6px;
-  color: var(--ink-dim);
-  font-size: 13px;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .body {
@@ -285,25 +283,23 @@
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 1.1em;
+  align-items: center;
+  gap: 4px 1.1em;
   margin: 0;
-  color: var(--ink);
+  color: var(--c-ink);
   font-size: 14px;
 }
 
-.kind {
-  color: var(--hue);
-  font-weight: 500;
-}
-
 .place {
-  color: var(--ink-soft);
+  color: var(--c-body);
 }
 
 .text {
   max-width: 62ch;
   margin: 2px 0 0;
-  color: var(--ink-soft);
+  color: var(--c-body);
+  font-size: 15px;
+  line-height: 1.5;
   text-wrap: pretty;
 }
 
@@ -320,20 +316,21 @@
 }
 
 .event:has(.rowLink:focus-visible) {
-  outline: 2px solid var(--frost);
+  outline: 2px solid var(--c-blue);
   outline-offset: 4px;
-  border-radius: 12px;
 }
 
-.event:has(.rowLink:hover) .title a {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
+.event:has(.rowLink:hover) .rowLink,
+.event:has(.rowLink:focus-visible) .rowLink {
+  background-size: 100% 3px;
 }
 
-.above {
+/* The row's RSVP: above the link, and smaller than a page's main button. */
+.event .above {
   position: relative;
   z-index: 2;
+  padding: 11px 22px;
+  font-size: 14px;
 }
 
 /* The RSVP form opens under its own event, lined up with the event's text. */
@@ -342,25 +339,21 @@
   z-index: 2;
   grid-column: 2 / -1;
   padding: 18px 0 4px;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--c-line);
 }
 
-/* The page's one unprompted motion: the lead's photo settles in as the page opens. */
 @media (prefers-reduced-motion: no-preference) {
-  .cover img {
-    animation: settle 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
   .rsvp,
   .leadRsvp {
-    animation: open 200ms ease-out;
+    animation: open 0.24s steps(4);
   }
 }
 
-@keyframes settle {
-  from {
-    opacity: 0;
-    transform: scale(1.05);
+@media (prefers-reduced-motion: reduce) {
+  .credit a,
+  .leadTitle a,
+  .rowLink {
+    transition: none;
   }
 }
 
@@ -372,30 +365,13 @@
 }
 
 @media (max-width: 900px) {
-  .head {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .rhythm {
-    max-width: 46ch;
-  }
-
   .lead {
     grid-template-columns: minmax(0, 1fr);
-    min-height: 0;
-  }
-
-  .cover {
-    aspect-ratio: 16 / 10;
+    gap: calc(var(--cell) * 2);
   }
 
   .cover img {
-    -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
-    mask-image: linear-gradient(to bottom, #000 70%, transparent);
-  }
-
-  .leadBody {
-    padding-top: 8px;
+    aspect-ratio: 16 / 10;
   }
 
   .month {
@@ -406,17 +382,9 @@
     position: static;
     padding: 20px 0 0;
   }
-
-  .month + .month {
-    margin-top: 8px;
-  }
 }
 
 @media (max-width: 560px) {
-  .day {
-    font-size: 96px;
-  }
-
   .event {
     grid-template-columns: 44px minmax(0, 1fr);
     gap: 12px 14px;
@@ -426,7 +394,7 @@
     font-size: 30px;
   }
 
-  .event > button {
+  .event .above {
     grid-column: 2;
     justify-self: start;
   }
