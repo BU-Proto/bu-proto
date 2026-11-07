@@ -91,3 +91,43 @@
   opacity: 1;
   transition-duration: 0.08s;
 }
+
+/* Asked for less: the same shape, solid, with no filters left running. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .clear {
+    background: rgb(14 13 20 / 0.97);
+  }
+
+  .frost,
+  .lens,
+  .glow,
+  .sheen {
+    display: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .clear {
+    background: #000;
+    box-shadow: 0 0 0 1px #fff;
+  }
+
+  .rim {
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .clear {
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .frost,
+  .lens,
+  .glow,
+  .rim,
+  .sheen {
+    display: none;
+  }
+}
