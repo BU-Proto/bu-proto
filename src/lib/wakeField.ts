@@ -335,6 +335,8 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
     awakeUntil: 0,
     scroll: 0, drawnScroll: NaN, skew: 0, startedAt: 0, lastAt: 0,
     drawnAt: 0, glareLit: false,
+    // A resize clears the canvas, so the next frame must draw whatever else it finds.
+    cleared: true,
   }
 
   const onContextLost = (event: Event) => {
@@ -352,6 +354,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       canvas.height = Math.round(height * box.dpr)
       fluid.resize(width, height)
       state.drawnScroll = NaN
+      state.cleared = true
     },
     point(x, y) {
       if (x === null) {
@@ -380,7 +383,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       const glare = still ? GLARE_STILL : (((now - state.startedAt) / 1000) % GLARE_CYCLE_S) / GLARE_CROSS_S
       // While the glare crosses, draw at its own pace; once it's past, one more frame clears it.
       const glareDue = !still && (glare < 1 ? now - state.drawnAt >= GLARE_FRAME_MS : state.glareLit)
-      if (!awake && !glareDue && state.scroll === state.drawnScroll) return false
+      if (!awake && !glareDue && !state.cleared && state.scroll === state.drawnScroll) return false
       const elapsed = state.lastAt ? Math.min(now - state.lastAt, 100) / 1000 : FRAME_WAKE
       state.lastAt = now
       const delta = Number.isNaN(state.drawnScroll) ? 0 : state.scroll - state.drawnScroll
@@ -390,7 +393,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
 
       const stepped = fluid.advance(elapsed, [state.lastX, state.lastY], [state.x, state.y], state.moved)
       // Nothing's changed between fluid steps on a 120Hz screen, so there's nothing new to draw.
-      if (!stepped && delta === 0 && !glareDue) return true
+      if (!stepped && delta === 0 && !glareDue && !state.cleared) return true
       if (stepped) {
         state.lastX = state.x
         state.lastY = state.y
@@ -423,6 +426,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       gl.uniform1f(P.uGlare, glare)
       state.drawnAt = now
       state.glareLit = !still && glare < 1
+      state.cleared = false
       gl.uniform1f(P.uDpr, px)
       gl.uniform1f(P.uCount, words.length)
       gl.uniform1fv(P.uWidths, new Float32Array([...atlas.widths, ...Array<number>(8).fill(1)].slice(0, 8)))
