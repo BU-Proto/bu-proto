@@ -12,7 +12,7 @@ export function hash(x: number, y: number): number {
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
 
-export type FigureShape = 'ring' | 'chevron' | 'bar'
+export type FigureShape = 'ring' | 'halo' | 'chevron' | 'bar'
 
 /** Distance from (x, y) to the segment a–b. */
 function segment(x: number, y: number, ax: number, ay: number, bx: number, by: number): number {
@@ -30,6 +30,8 @@ function segment(x: number, y: number, ax: number, ay: number, bx: number, by: n
  */
 function shapeDistance(shape: FigureShape, x: number, y: number): number {
   if (shape === 'ring') return Math.abs(Math.hypot(x, y) - 0.64) - 0.2
+  // A slimmer ring, with an opening wide enough to hold a button.
+  if (shape === 'halo') return Math.abs(Math.hypot(x, y) - 0.76) - 0.08
   if (shape === 'chevron') {
     return Math.min(segment(x, y, -0.42, -0.66, 0.42, 0), segment(x, y, 0.42, 0, -0.42, 0.66)) - 0.18
   }
@@ -38,6 +40,12 @@ function shapeDistance(shape: FigureShape, x: number, y: number): number {
   const qy = Math.abs(y - 0.775) - 0.065
   return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0)
 }
+
+/** How a figure's glow thins out past its stroke. The halo's stops inside its grid, so it stays round. */
+const glowOf = (shape: FigureShape) => (shape === 'halo' ? 3.4 : 2.2)
+
+/** Off the halo's band it's empty, cell by cell: no glyph is cut in half at the opening, and the outside stays round. */
+const offHalo = (shape: FigureShape, x: number, y: number) => shape === 'halo' && (Math.hypot(x, y) < 0.6 || Math.hypot(x, y) > 0.98)
 
 /**
  * One of the trail's glyphs (○ > _) rendered large in the fine ramp, as rows of text: dense in
@@ -53,9 +61,13 @@ export function asciiFigure(shape: FigureShape, rows = 22, aspect = 0.6): string
     for (let i = 0; i < cols; i++) {
       const x = ((i + 0.5) / cols) * 2 - 1
       const y = ((j + 0.5) / rows) * 2 - 1
+      if (offHalo(shape, x, y)) {
+        line += ' '
+        continue
+      }
       const d = shapeDistance(shape, x, y)
       // Inside: denser toward the stroke's middle. Outside: a glow that thins out fast.
-      const body = d < 0 ? 0.8 + clamp01(-d / 0.1) * 0.2 : Math.max(0, 0.55 - d * 2.2)
+      const body = d < 0 ? 0.8 + clamp01(-d / 0.1) * 0.2 : Math.max(0, 0.55 - d * glowOf(shape))
       const rib = 0.86 + 0.14 * Math.cos(i * 1.15)
       const grain = (hash(i, j) - 0.5) * 0.22
       const v = clamp01(body * rib + (body > 0.02 ? grain : 0))
@@ -80,7 +92,7 @@ export function asciiFigureAt(shape: FigureShape, time: number, rows = 22, aspec
       let x = ((i + 0.5) / cols) * 2 - 1
       let y = ((j + 0.5) / rows) * 2 - 1
       let light: number
-      if (shape === 'ring') {
+      if (shape === 'ring' || shape === 'halo') {
         const breath = 1 + 0.045 * Math.sin(time * 0.9)
         x /= breath
         y /= breath
@@ -91,8 +103,12 @@ export function asciiFigureAt(shape: FigureShape, time: number, rows = 22, aspec
       } else {
         light = Math.exp(-(((x - Math.sin(time * 0.7) * 0.9) / 0.4) ** 2))
       }
+      if (offHalo(shape, x, y)) {
+        out += ' '
+        continue
+      }
       const d = shapeDistance(shape, x, y)
-      const body = d < 0 ? 0.62 + clamp01(-d / 0.1) * 0.2 : Math.max(0, 0.46 - d * 2.2)
+      const body = d < 0 ? 0.62 + clamp01(-d / 0.1) * 0.2 : Math.max(0, 0.46 - d * glowOf(shape))
       const blink = shape === 'bar' ? 0.72 + 0.28 * Math.sin(time * 2.4) ** 2 : 1
       const rib = 0.86 + 0.14 * Math.cos(i * 1.15 + time * 0.4)
       // Each cell also breathes on its own clock, so the surface is never quite still.
