@@ -184,6 +184,15 @@
   }
 }
 
+/* Asked for less: a solid sheet, with no filter left running. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  .sheet {
+    background: var(--c-paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 @keyframes slide-in {
   from {
     transform: translateX(100%);
