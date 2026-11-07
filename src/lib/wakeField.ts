@@ -3,6 +3,8 @@
 // words only catch colour where the wake crosses them, as a thin film would: bright inside the letter,
 // a split of colour along its edges, and just a dark oily sheen on the ground around it.
 
+import { createFluid } from './fluidField'
+
 export const VERTEX = `#version 300 es
 out vec2 vUv;
 void main() {
@@ -57,7 +59,7 @@ const WORDS = `#version 300 es
 precision highp float;
 in vec2 vUv;
 out vec4 o;
-uniform sampler2D uAtlas, uWake;
+uniform sampler2D uAtlas, uDye, uVel;
 uniform vec2 uRes;
 uniform float uPitch, uRow, uScroll, uShift, uSkew, uT, uDpr, uCount;
 uniform float uWidths[8];
@@ -85,9 +87,8 @@ ${FILM}
 
 void main() {
   vec2 px = vec2(vUv.x, 1. - vUv.y) * uRes;
-  vec4 w = texture(uWake, vUv);
-  vec2 V = (w.rg - .5) * 2.;
-  float S = w.b;
+  float S = max(texture(uDye, vUv).r, 0.);
+  vec2 V = texture(uVel, vUv).xy * .0025;
 
   /* the letters bend a little under the wake, and each colour bends a different amount */
   vec2 bend = V * S * 14. * uDpr;
@@ -115,7 +116,7 @@ const SIM_HEIGHT = 200
 const POINTER_POWER = 0.9
 const MAX_DPR = 1.5
 /** How long to keep drawing after the last move, while the wake dies. */
-const SETTLE_MS = 900
+const SETTLE_MS = 1800
 const FRAME_WAKE = 1 / 60
 const SKEW_PER_PX = 0.9
 const SHIFT_PER_PX = 0.16
@@ -267,15 +268,16 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
   const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false })
   if (!gl) return null
   let picture: WebGLProgram
-  let wake: ReturnType<typeof createWakeBuffer>
+  let fluid: ReturnType<typeof createFluid>
   try {
     picture = program(gl, WORDS)
     gl.bindVertexArray(gl.createVertexArray())
-    wake = createWakeBuffer(gl)
+    fluid = createFluid(gl)
   } catch {
     return null
   }
-  const P = location(gl, picture, ['uAtlas', 'uWake', 'uRes', 'uPitch', 'uRow', 'uScroll', 'uShift', 'uSkew', 'uT', 'uDpr', 'uCount', 'uWidths'])
+  if (!fluid) return null
+  const P = location(gl, picture, ['uAtlas', 'uDye', 'uVel', 'uRes', 'uPitch', 'uRow', 'uScroll', 'uShift', 'uSkew', 'uT', 'uDpr', 'uCount', 'uWidths'])
 
   const atlasSize = Math.min(4096, gl.getParameter(gl.MAX_TEXTURE_SIZE) as number)
   const atlas = drawAtlas(words, atlasSize)
@@ -311,7 +313,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       box.dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
       canvas.width = Math.round(width * box.dpr)
       canvas.height = Math.round(height * box.dpr)
-      wake.resize(width, height)
+      fluid.resize(width, height)
       state.drawnScroll = NaN
     },
     point(x, y) {
@@ -346,10 +348,12 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       const aim = Math.max(-MAX_SKEW, Math.min(MAX_SKEW, delta * SKEW_PER_PX))
       state.skew += (aim - state.skew) * 0.12
 
-      wake.advance(elapsed, [state.lastX, state.lastY], [state.x, state.y], state.moved)
-      state.lastX = state.x
-      state.lastY = state.y
-      state.moved = false
+      const stepped = fluid.advance(elapsed, [state.lastX, state.lastY], [state.x, state.y], state.moved)
+      if (stepped) {
+        state.lastX = state.x
+        state.lastY = state.y
+        state.moved = false
+      }
 
       const px = box.dpr
       const pitch = Math.max(box.height * 0.42, 220) * px
@@ -362,8 +366,11 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
       gl.uniform1i(P.uAtlas, 0)
       gl.activeTexture(gl.TEXTURE1)
-      gl.bindTexture(gl.TEXTURE_2D, wake.texture)
-      gl.uniform1i(P.uWake, 1)
+      gl.bindTexture(gl.TEXTURE_2D, fluid.dye)
+      gl.uniform1i(P.uDye, 1)
+      gl.activeTexture(gl.TEXTURE2)
+      gl.bindTexture(gl.TEXTURE_2D, fluid.velocity)
+      gl.uniform1i(P.uVel, 2)
       gl.uniform2f(P.uRes, canvas.width, canvas.height)
       gl.uniform1f(P.uPitch, pitch)
       gl.uniform1f(P.uRow, pitch * 0.96)
@@ -380,7 +387,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
     },
     destroy() {
       canvas.removeEventListener('webglcontextlost', onContextLost)
-      wake.destroy()
+      fluid.destroy()
       gl.deleteProgram(picture)
       gl.deleteTexture(atlasTexture)
     },
