@@ -34,8 +34,9 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
 
     const power = () => {
       if (still) return 1
-      const top = box.getBoundingClientRect().top / window.innerHeight
-      const t = Math.max(0, 1 - Math.abs(top) / POWER_RANGE)
+      const rect = box.getBoundingClientRect()
+      const off = Math.max(0, rect.top, window.innerHeight - rect.bottom) / window.innerHeight
+      const t = Math.max(0, 1 - off / POWER_RANGE)
       return t * t * (3 - 2 * t)
     }
     const draw = (now: number) => light.frame(now, power())
