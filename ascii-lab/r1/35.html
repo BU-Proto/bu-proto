@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>35 Tides, glyph bloom</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Pal = window.LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+  var RAMP = ' .,:-=+*x%#@';           /* by coverage; the last few are the "densest" glyphs */
+  var NB = 28;                          /* colour buckets along the arc */
+  var CW, CH, W, H, dpr, cols, rows, atlas, glow, ground, started = performance.now();
+  var T = new Float32Array(1), D, Tt, bucketCss = [];
+
+  function clamp(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function sm(a, b, x) { x = clamp((x - a) / (b - a)); return x * x * (3 - 2 * x); }
+
+  /* arc bucket colour, with frost / peach core mixed in for hot buckets */
+  function bucketRgb(i) {
+    var t = i / (NB - 1);
+    return Pal.arc(t);
+  }
+
+  function build() {
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    CW = Math.max(8, Math.round(W / 150)); CH = Math.round(CW * 1.8);
+    cols = Math.ceil(W / CW) + 1; rows = Math.ceil(H / CH) + 1;
+    D = new Float32Array(cols * rows); Tt = new Float32Array(cols * rows);
+    /* glyph atlas: one row per colour bucket, one column per ramp glyph */
+    var n = RAMP.length, cwp = Math.round(CW * dpr), chp = Math.round(CH * dpr);
+    atlas = document.createElement('canvas');
+    atlas.width = cwp * n; atlas.height = chp * (NB + 1);
+    var a = atlas.getContext('2d');
+    a.font = 'bold ' + Math.round(chp * 0.78) + 'px ' + FONT;
+    a.textAlign = 'center'; a.textBaseline = 'middle';
+    for (var b = 0; b <= NB; b++) {
+      a.fillStyle = b === NB ? '#f6fbff' : Pal.toCss(bucketRgb(b));
+      for (var i = 1; i < n; i++) a.fillText(RAMP[i], i * cwp + cwp / 2, b * chp + chp / 2 + 1);
+    }
+    atlas.cwp = cwp; atlas.chp = chp;
+    /* glow sprites, one per bucket: soft core, long tail */
+    glow = [];
+    for (b = 0; b < NB; b++) {
+      var g = document.createElement('canvas'); g.width = g.height = 128;
+      var x = g.getContext('2d'), c = bucketRgb(b);
+      /* the light is the glyph's colour pushed one step round the arc: it leans warmer than its source */
+      var lc = Pal.arc(clamp(b / (NB - 1) + 0.10));
+      var gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+      gr.addColorStop(0, Pal.toCss(lc, 0.55)); gr.addColorStop(0.25, Pal.toCss(lc, 0.22));
+      gr.addColorStop(0.6, Pal.toCss(lc, 0.06)); gr.addColorStop(1, Pal.toCss(lc, 0));
+      x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+      glow.push(g);
+    }
+    ground = cx.createLinearGradient(0, 0, 0, H * dpr);
+    ground.addColorStop(0, '#061a2e'); ground.addColorStop(0.6, '#0a2640'); ground.addColorStop(1, '#061a2e');
+    draw(still ? 6.2 : (performance.now() - started) / 1000);
+  }
+
+  /* tide height field: warped travelling swells; crest = where sin passes its peak */
+  function field(t) {
+    var asp = cols * CW / (rows * CH), i = 0;
+    for (var r = 0; r < rows; r++) {
+      var v = r / rows;
+      for (var c = 0; c < cols; c++, i++) {
+        var u = c / cols;
+        var x = u * asp * 3.4, y = v * 3.4;
+        var wx = x + 0.28 * Math.sin(y * 2.3 + t * 0.35) + 0.12 * Math.sin(y * 5.1 - t * 0.5);
+        var h = Math.sin(wx * 2.6 + y * 2.2 - t * 0.55) * 0.55
+              + Math.sin(wx * 1.5 - y * 2.9 + t * 0.4 + 1.3) * 0.28
+              + Math.sin(y * 7.0 + wx * 0.8 - t * 0.9) * 0.12;
+        /* swell envelope: tide rises toward the lower right, thins to dashes top left */
+        var env = 0.45 + 0.55 * sm(-0.1, 1.0, u * 0.55 + v * 0.65 + 0.12 * Math.sin(t * 0.2 + x));
+        var crest = Math.pow(clamp(h * 0.55 + 0.5), 2.0);
+        var d = clamp(crest * env * 1.25);
+        D[i] = d;
+        /* hue: position on the arc, pink-leaning; crests and the envelope pull it toward rose and peach */
+        Tt[i] = clamp(0.02 + 0.55 * sm(0.0, 1.0, u * 0.7 + 0.5 * v - 0.2 + 0.25 * h) + 0.25 * crest);
+      }
+    }
+  }
+
+  function draw(t) {
+    field(t);
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.globalCompositeOperation = 'source-over';
+    cx.globalAlpha = 1;
+    cx.fillStyle = ground; cx.fillRect(0, 0, cv.width, cv.height);
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    /* pass 1: bloom. Only the densest glyphs emit. Light sinks: stretched down and pooled, like caustics. */
+    cx.globalCompositeOperation = 'lighter';
+    var i, r, c, d, b, k;
+    for (r = 0; r < rows; r++) {
+      for (c = 0; c < cols; c++) {
+        i = r * cols + c; d = D[i];
+        if (d < 0.66) continue;
+        k = sm(0.66, 0.98, d);
+        b = Math.round(Tt[i] * (NB - 1));
+        var rad = CW * (3 + 5 * k);
+        cx.globalAlpha = 0.03 + 0.07 * k * k;
+        /* two taps: a tight halo on the glyph and a long tail sinking below it */
+        cx.drawImage(glow[b], c * CW + CW / 2 - rad, r * CH + CH / 2 - rad * 0.7, rad * 2, rad * 1.4);
+        cx.globalAlpha = 0.02 + 0.04 * k;
+        cx.drawImage(glow[b], c * CW + CW / 2 - rad * 0.8, r * CH + CH / 2 + CH * 0.5, rad * 1.6, rad * 4.2);
+      }
+    }
+
+    /* pass 2: glyphs. Sparse marks everywhere else carry the shape; the dense ones sit white-hot in their own light. */
+    cx.globalCompositeOperation = 'source-over'; cx.globalAlpha = 1;
+    var n = RAMP.length, cwp = atlas.cwp, chp = atlas.chp;
+    for (r = 0; r < rows; r++) {
+      for (c = 0; c < cols; c++) {
+        i = r * cols + c; d = D[i];
+        var gi = Math.floor(d * (n - 0.01));
+        if (gi < 1) continue;
+        b = Math.round(Tt[i] * (NB - 1));
+        /* hottest glyphs go frost: blow-out at the very crest */
+        if (d > 0.95) { b = NB; }
+        else if (d > 0.86) { b = Math.min(NB - 1, b + 3); }
+        cx.drawImage(atlas, gi * cwp, b * chp, cwp, chp, c * CW, r * CH, CW, CH);
+      }
+    }
+  }
+
+  function loop() { draw((performance.now() - started) / 1000); requestAnimationFrame(loop); }
+  window.addEventListener('resize', build);
+  build();
+  if (!still) requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

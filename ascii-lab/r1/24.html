@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/24 Field, quadtree of glyphs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+/* Size is colour, literally. A light field is cut into a quadtree: calm light stays in big cells,
+   contours of the field shatter into tiny ones. Cell size picks the arc stop (small = sky, medium = iris,
+   big = rose); the field's own height adds a little warmth, so the peach core sits where the light peaks.
+   Glyph per leaf: coverage ramp in calm cells, line glyphs on contours. Frost blocks blow out the peaks. */
+(function () {
+  'use strict';
+  var P = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d', { alpha: false });
+  var BASE = 6, LEVELS = 5;                       /* finest cell 6px, coarsest 96px */
+  var RAMP = ' .:-=+*#%', LINES = '/|\\x+';
+  var NB = 40;                                    /* colour bins along the arc */
+  var GLY = RAMP + LINES, AT = 64;
+  var harbor = P.resolve('harbor'), frost = P.resolve('frost');
+  var atlas, gw, gh, W, H, dpr, F, B, mn = [], mx = [], mnF = [], mxF = [], dims = [];
+  var mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+
+  function css(c) { return P.toCss(c); }
+  function buildAtlas() {
+    atlas = document.createElement('canvas');
+    atlas.width = GLY.length * AT; atlas.height = (NB + 2) * AT;
+    var a = atlas.getContext('2d');
+    a.textAlign = 'center'; a.textBaseline = 'middle';
+    a.font = '700 ' + Math.round(AT * 0.92) + 'px ui-monospace, Menlo, Consolas, monospace';
+    for (var r = 0; r < NB + 2; r++) {
+      a.fillStyle = r < NB ? css(P.arc(r / (NB - 1) * 0.92)) : (r === NB ? css(frost) : css(P.resolve('raised')));
+      for (var g = 0; g < GLY.length; g++) {
+        a.save(); a.translate(g * AT + AT / 2, r * AT + AT / 2 + 2); a.scale(1.55, 1);
+        a.fillText(GLY[g], 0, 0); a.restore();
+      }
+    }
+  }
+
+  /* the light: three drifting sources, warped, summed to a height field */
+  function field(x, y, t, m) {
+    var wx = x + 0.18 * Math.sin(y * 3.1 + t * 0.5), wy = y + 0.18 * Math.cos(x * 2.7 - t * 0.4);
+    var v = 0, i, sx, sy, d;
+    for (i = 0; i < 3; i++) {
+      sx = 0.5 + 0.38 * Math.sin(t * (0.21 + i * 0.07) + i * 2.1);
+      sy = 0.5 + 0.30 * Math.cos(t * (0.17 + i * 0.05) + i * 1.3);
+      if (i === 0) { sx += (m.x - 0.5) * 0.5; sy += (m.y - 0.5) * 0.5; }
+      d = Math.sqrt((wx - sx) * (wx - sx) + (wy - sy) * (wy - sy));
+      v += Math.cos(d * 11 - t * 0.9 - i) * Math.exp(-d * 1.6);
+    }
+    return v;
+  }
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    var top = BASE << (LEVELS - 1);
+    gw = Math.ceil(W / top) * (1 << (LEVELS - 1)); gh = Math.ceil(H / top) * (1 << (LEVELS - 1));
+    F = new Float32Array(gw * gh); B = new Float32Array(gw * gh);
+    mn = []; mx = []; mnF = []; mxF = []; dims = [];
+    for (var k = 0; k < LEVELS; k++) {
+      var w = gw >> k, h = gh >> k; dims.push([w, h]);
+      mn.push(new Float32Array(w * h)); mx.push(new Float32Array(w * h));
+      mnF.push(new Float32Array(w * h)); mxF.push(new Float32Array(w * h));
+    }
+  }
+
+  function sstep(a, b, x) { x = x < a ? 0 : x > b ? 1 : (x - a) / (b - a); return x * x * (3 - 2 * x); }
+
+  function frame(t) {
+    var x, y, k, i = 0, asp = W / H;
+    mouse.x += (mouse.tx - mouse.x) * 0.05; mouse.y += (mouse.ty - mouse.y) * 0.05;
+    for (y = 0; y < gh; y++) for (x = 0; x < gw; x++, i++) {
+      var u = (x + 0.5) * BASE / W, v = (y + 0.5) * BASE / H;
+      var f = field((u - 0.5) * asp * 0.7 + 0.5, v, t, mouse);
+      F[i] = f;
+      var q = f * 2.2, fr = q - Math.floor(q);
+      B[i] = sstep(0.0, 0.07, fr) * (1 - sstep(0.07, 0.14, fr));   /* thin contour bands */
+    }
+    /* min/max pyramids for the contour band and the smooth height */
+    mn[0].set(B); mx[0].set(B); mnF[0].set(F); mxF[0].set(F);
+    for (k = 1; k < LEVELS; k++) {
+      var w = dims[k][0], h = dims[k][1], pw = dims[k - 1][0];
+      for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+        var a = (2 * y) * pw + 2 * x, b2 = a + 1, c = a + pw, d = c + 1, o = y * w + x;
+        mn[k][o] = Math.min(mn[k - 1][a], mn[k - 1][b2], mn[k - 1][c], mn[k - 1][d]);
+        mx[k][o] = Math.max(mx[k - 1][a], mx[k - 1][b2], mx[k - 1][c], mx[k - 1][d]);
+        mnF[k][o] = Math.min(mnF[k - 1][a], mnF[k - 1][b2], mnF[k - 1][c], mnF[k - 1][d]);
+        mxF[k][o] = Math.max(mxF[k - 1][a], mxF[k - 1][b2], mxF[k - 1][c], mxF[k - 1][d]);
+      }
+    }
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = css(harbor); cx.fillRect(0, 0, W, H);
+    var topK = LEVELS - 1;
+    for (y = 0; y < dims[topK][1]; y++) for (x = 0; x < dims[topK][0]; x++) leaf(topK, x, y, t);
+    /* mint: one live cell riding the finest contour, nearest the pointer */
+    var mxp = Math.floor(((0.5 + 0.35 * Math.sin(t * 0.4)) * W) / BASE), myp = Math.floor(((0.5 + 0.3 * Math.cos(t * 0.31)) * H) / BASE);
+    cx.fillStyle = css(P.resolve('mint')); cx.fillRect(mxp * BASE, myp * BASE, BASE, BASE);
+  }
+
+  function leaf(k, x, y, t) {
+    var o = y * dims[k][0] + x;
+    var rb = mx[k][o] - mn[k][o], rf = mxF[k][o] - mnF[k][o];
+    if (k > 0 && (rb > 0.5 || rf > 0.16 * (1 + k * 0.15) || (k > 3 && rf > 0.1))) {
+      var k2 = k - 1;
+      leaf(k2, 2 * x, 2 * y, t); leaf(k2, 2 * x + 1, 2 * y, t);
+      leaf(k2, 2 * x, 2 * y + 1, t); leaf(k2, 2 * x + 1, 2 * y + 1, t);
+      return;
+    }
+    var s = BASE << k, px = x * s, py = y * s;
+    if (px >= W || py >= H) return;
+    var f = (mxF[k][o] + mnF[k][o]) * 0.5;               /* height of light here, about -1..1.4 */
+    var h = sstep(-0.35, 1.1, f);                         /* 0 dark, 1 peak */
+    var size = k / (LEVELS - 1);                          /* 0 small .. 1 big */
+    var tt = Math.min(0.97, 0.04 + size * 0.62 + h * 0.3);
+    var edge = rb > 0.15;
+    /* gradient light beneath the glyph: a quiet wash of the same stop */
+    var wash = P.mix(harbor, P.arc(tt), 0.1 + 0.3 * h * (0.5 + size * 0.5));
+    cx.fillStyle = css(wash); cx.fillRect(px + 0.5, py + 0.5, s - 1, s - 1);
+    var gi, row = Math.round(tt / 0.92 * (NB - 1)); if (row > NB - 1) row = NB - 1;
+    if (h > 0.93 && k <= 2) row = NB;                      /* blow-out to frost */
+    if (edge) gi = RAMP.length + (((x * 7 + y * 13) % 3) + (h > 0.5 ? 2 : 0)) % LINES.length;
+    else gi = Math.max(1, Math.min(RAMP.length - 1, Math.round(h * (RAMP.length - 1) * 0.9 + 0.8)));
+    if (h < 0.12 && !edge) { if (k < 2) return; row = NB + 1; }  /* deep shadow: raised ticks only */
+    cx.drawImage(atlas, gi * AT, row * AT, AT, AT, px, py, s, s);
+  }
+
+  var t0 = performance.now(), raf = 0;
+  function loop(now) { frame((now - t0) / 1000 + 6); raf = requestAnimationFrame(loop); }
+  function start() {
+    cancelAnimationFrame(raf); setup();
+    if (still) frame(9); else raf = requestAnimationFrame(loop);
+  }
+  buildAtlas(); start();
+  addEventListener('resize', start);
+  addEventListener('pointermove', function (e) { mouse.tx = e.clientX / innerWidth; mouse.ty = e.clientY / innerHeight; });
+})();
+</script>
+</body>
+</html>

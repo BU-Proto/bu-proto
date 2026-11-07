@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/40 Field, negative space</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #u { image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<canvas id="u"></canvas><canvas id="g"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+/* Negative space. The gradient is the ground: rose-led, flat per cell, pooling across the whole screen.
+   Glyphs are not drawn on it, they are cut out of it. Giant +, /, x, #, %, * are holes in the light; harbor
+   shows through. Size is colour: where the field is sky the holes are small, iris medium, rose huge.
+   The cut-outs harbor a small live glyph of the same arc, so the light that was removed is kept inside. */
+(function () {
+  'use strict';
+  var P = LabPalette, still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var harbor = P.resolve('harbor'), frost = P.resolve('frost'), raised = P.resolve('raised');
+  var uc = document.getElementById('u'), gc = document.getElementById('g');
+  var ux = uc.getContext('2d'), gx = gc.getContext('2d');
+  var mk = document.createElement('canvas'), mx = mk.getContext('2d', { willReadFrequently: true });
+  var sm = document.createElement('canvas'), sx = sm.getContext('2d', { willReadFrequently: true });
+  var cols, rows, cw, ch, dpr, uimg, atlas, W, H;
+  var NB = 28, GL = '.:-=+x/|*#%', SHAPES = '+/x#%*';
+  var MONO = 'ui-monospace, "SF Mono", Menlo, monospace';
+
+  function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function hash(a, b) { var h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
+
+  /* field t in 0..1 along the arc, domain warped, leaning to the pink end */
+  function field(x, y, t) {
+    var wx = x + 0.35 * Math.sin(y * 2.1 + t * 0.35) + 0.2 * Math.sin(y * 4.3 - t * 0.5);
+    var wy = y + 0.35 * Math.sin(x * 1.7 - t * 0.3) + 0.2 * Math.cos(x * 3.9 + t * 0.4);
+    var v = 0.5 + 0.28 * Math.sin(wx * 2.3 + wy * 1.1 + t * 0.2) + 0.2 * Math.sin(wy * 3.1 - wx * 1.4 - t * 0.25) + 0.1 * Math.sin((wx + wy) * 5.2);
+    v = (v - 0.5) * 1.5 + 0.5 + (y - 0.5) * 0.3 - (0.5 - x) * 0.25 - 0.02;     /* sky sits top-left, rose pools low-right */
+    return Math.max(0, Math.min(1, v));
+  }
+
+  var GC = [], UC = [];       /* per bin: ground colour, glyph colour for inside holes */
+  (function () {
+    for (var b = 0; b < NB; b++) {
+      var t = b / (NB - 1), a = P.arc(t);
+      UC.push(a);
+      GC.push(t > 0.55 ? lerp3(a, P.resolve('raspberry'), 0.12) : lerp3(a, frost, 0.06));
+    }
+  })();
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    cw = Math.max(9, Math.round(W / 150)); ch = Math.round(cw * 1.8);
+    cols = Math.ceil(W / cw); rows = Math.ceil(H / ch);
+    gc.width = cols * cw * dpr; gc.height = rows * ch * dpr;
+    gc.style.width = cols * cw + 'px'; gc.style.height = rows * ch + 'px';
+    uc.width = cols; uc.height = rows; uc.style.width = cols * cw + 'px'; uc.style.height = rows * ch + 'px';
+    uimg = ux.createImageData(cols, rows);
+    mk.width = Math.round(cols * cw / 2); mk.height = Math.round(rows * ch / 2);
+    sm.width = cols; sm.height = rows;
+    var pw = Math.round(cw * dpr), ph = Math.round(ch * dpr);
+    atlas = document.createElement('canvas'); atlas.width = pw * GL.length; atlas.height = ph * NB * 2;
+    var ax = atlas.getContext('2d');
+    ax.font = '700 ' + Math.round(ch * 0.78 * dpr) + 'px ' + MONO;
+    ax.textAlign = 'center'; ax.textBaseline = 'middle';
+    for (var k = 0; k < NB * 2; k++) {
+      var c = k < NB ? lerp3(GC[k], harbor, 0.5) : lerp3(UC[k - NB], frost, 0.1);   /* rows 0..NB: ground ticks, NB..: hole glyphs */
+      ax.fillStyle = P.toCss(c);
+      for (var q = 0; q < GL.length; q++) ax.fillText(GL[q], q * pw + pw / 2, k * ph + ph / 2 + 1);
+    }
+    atlas.pw = pw; atlas.ph = ph;
+  }
+
+  /* the cut-out layer: three lattices, kept by arc position at the lattice point (size is colour) */
+  function drawMask(t) {
+    var w = mk.width, h = mk.height, s = 0.5;
+    mx.setTransform(1, 0, 0, 1, 0, 0);
+    mx.fillStyle = '#000'; mx.fillRect(0, 0, w, h);
+    mx.fillStyle = '#fff'; mx.textAlign = 'center'; mx.textBaseline = 'middle';
+    var unit = Math.max(W, H * 1.4);
+    var levels = [{ size: unit * 0.46, lo: 0.62, hi: 9 }, { size: unit * 0.23, lo: 0.36, hi: 0.62 }, { size: unit * 0.115, lo: -1, hi: 0.36 }];
+    for (var li = 0; li < 3; li++) {
+      var L = levels[li], sz = L.size, stepX = sz * 0.78, stepY = sz * 0.78;
+      var drift = (t * (li === 0 ? 3 : li === 1 ? 6 : 10)) % stepX;
+      mx.font = '800 ' + Math.round(sz * s) + 'px ' + MONO;
+      var nr = Math.ceil(H / stepY) + 2, nc = Math.ceil(W / stepX) + 3;
+      for (var r = -1; r < nr; r++) {
+        for (var c = -2; c < nc; c++) {
+          var px = c * stepX + (r & 1 ? stepX * 0.5 : 0) - drift + (hash(c, r + li * 91) - 0.5) * stepX * 0.25;
+          var py = r * stepY + (hash(r, c + li * 17) - 0.5) * stepY * 0.25;
+          var ft = field(px / W, py / H, t);
+          if (ft < L.lo || ft >= L.hi) continue;
+          var ch1 = SHAPES[Math.floor(hash(c + li * 7, r * 3 + li) * SHAPES.length)];
+          mx.fillText(ch1, px * s, py * s + sz * s * 0.04);
+        }
+      }
+    }
+  }
+
+  function frame(t) {
+    drawMask(t);
+    sx.imageSmoothingEnabled = true; sx.imageSmoothingQuality = 'high';
+    sx.drawImage(mk, 0, 0, cols, rows);
+    var m = sx.getImageData(0, 0, cols, rows).data, d = uimg.data;
+    var pw = atlas.pw, ph = atlas.ph, cwp = cw * dpr, chp = ch * dpr;
+    gx.clearRect(0, 0, gc.width, gc.height);
+    var k = 0;
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++, k++) {
+        var cov = m[k * 4] / 255, j = k * 4;
+        var ft = field((x + 0.5) / cols, (y + 0.5) / rows, t);
+        var b = Math.min(NB - 1, Math.floor(ft * NB));
+        var g = GC[b], base;
+        if (cov > 0.55) {
+          /* hole: harbor, a touch raised toward the rim so the cut has depth */
+          base = lerp3(harbor, raised, Math.min(1, (cov - 0.55) * 1.2) * 0.0 + 0.0);
+          d[j] = base[0] * 255; d[j + 1] = base[1] * 255; d[j + 2] = base[2] * 255; d[j + 3] = 255;
+          var hh = hash(x, y);
+          var depth = (cov - 0.55) / 0.45;            /* 0 at the rim, 1 deep inside */
+          var gi = depth < 0.35 ? (hh < 0.55 ? 1 : 0) : 1 + Math.floor(hh * hh * 10);
+          if (depth > 0.15 && hh < 0.22 + depth * 0.45) gx.drawImage(atlas, Math.min(gi, GL.length - 1) * pw, (NB + b) * ph, pw, ph, x * cwp, y * chp, cwp, chp);
+        } else {
+          var u = g;
+          /* rim cells burn lighter: the light piles at the cut */
+          if (cov > 0.2) u = lerp3(g, frost, (cov - 0.2) * 0.9);
+          /* the ground thins to harbor flecks where the field is cool and small */
+          d[j] = u[0] * 255; d[j + 1] = u[1] * 255; d[j + 2] = u[2] * 255; d[j + 3] = 255;
+          var h2 = hash(x * 3 + 1, y * 7 + 2);
+          if (cov < 0.2 && h2 < 0.16) gx.drawImage(atlas, (h2 < 0.08 ? 1 : 3) * pw, b * ph, pw, ph, x * cwp, y * chp, cwp, chp);
+        }
+      }
+    }
+    ux.putImageData(uimg, 0, 0);
+  }
+
+  var T0 = 6;
+  function boot() { setup(); frame(T0); }
+  boot();
+  addEventListener('resize', function () { setup(); frame(T0); });
+  if (!still) (function loop(ms) { frame((ms || 0) / 1000 + T0); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

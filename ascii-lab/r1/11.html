@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tides, dissolving runs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #061a2e; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Pal = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var harbor = Pal.resolve('harbor'), frost = Pal.resolve('frost'), mint = Pal.resolve('mint');
+  var W, H, dpr, CH, R, rows, UW;
+
+  function hash(a, b) { var h = Math.imul(a * 374761393 + b * 668265263 + 1013904223, 1274126177); h ^= h >>> 13; h = Math.imul(h, 1103515245); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+  function sstep(a, b, x) { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); }
+  function mixc(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function css(c) { return 'rgb(' + (c[0] * 255 | 0) + ',' + (c[1] * 255 | 0) + ',' + (c[2] * 255 | 0) + ')'; }
+
+  /* each row is cut into runs of 1-6 units, fixed by hash: the stretched cells */
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    CH = Math.max(7, Math.round(H / 62));
+    R = Math.ceil(H / CH);
+    UW = Math.max(5, Math.round(CH * 0.9));
+    rows = [];
+    for (var r = 0; r < R; r++) {
+      var runs = [], x = -Math.floor(hash(r, 7) * UW * 3);
+      while (x < W) {
+        var k = hash(r, x | 0 + 3), len = 1 + Math.floor(Math.pow(hash(r * 3 + 1, (x | 0) + 11), 1.7) * 6);
+        var w = len * UW;
+        runs.push({ x: x, w: w, h: hash(r + 91, len * 31 + (x | 0)), h2: hash((x | 0) + 5, r + 17) });
+        x += w;
+      }
+      rows.push(runs);
+    }
+  }
+
+  var LAY = [
+    { base: 0.24, hw: 0.034, t0: 0.02, t1: 0.46, sp: 0.30 },
+    { base: 0.52, hw: 0.046, t0: 0.30, t1: 0.74, sp: 0.23 },
+    { base: 0.82, hw: 0.062, t0: 0.55, t1: 1.00, sp: 0.19 }
+  ];
+
+  function draw(t) {
+    var g = cx.createLinearGradient(0, 0, W * 0.6, H);
+    g.addColorStop(0, '#061a2e'); g.addColorStop(1, '#0a2640');
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+
+    var mintRow = Math.floor(R * (0.25 + 0.5 * ((t * 0.04) % 1)));
+    for (var r = 0; r < R; r++) {
+      var v = (r + 0.5) / R, runs = rows[r], y = r * CH;
+      /* diagonal shore plus a lapping swell that differs per row */
+      var cs = [];
+      for (var k = 0; k < 3; k++) {
+        var L = LAY[k];
+        cs[k] = L.base - 0.30 * (v - 0.45)
+          + 0.07 * Math.sin(v * 5.0 + t * L.sp * 1.6 + k * 2.1)
+          + 0.03 * Math.sin(v * 17.0 - t * 0.9 + k)
+          + 0.05 * Math.sin(t * L.sp + k * 1.7);
+      }
+      for (var i = 0; i < runs.length; i++) {
+        var ru = runs[i], u = (ru.x + ru.w * 0.5) / W, a = 0, kk = 0, e = 9, pos = 0;
+        for (k = 0; k < 3; k++) {
+          var L2 = LAY[k], d = Math.abs(u - cs[k]), ek = (d - L2.hw) / (0.07 + L2.hw * 1.2);
+          if (ek < e) { e = ek; kk = k; pos = (u - cs[k]) / L2.hw; }
+        }
+        a = 1 - sstep(0, 1.5, e);
+        a *= 0.55 + 0.45 * sstep(0.0, 0.12, u) * (1 - sstep(0.93, 1.0, u));
+        if (ru.h > a + 0.03) continue;
+        var sh = Math.min(1, a * 1.7), body = Math.pow(sh, 1.4);
+        var hh = Math.max(1.5, 1.5 + (CH - 3 - 1.5) * body);
+        var ww = ru.w * (0.28 + 0.72 * sh) - (sh > 0.6 ? 2 : 0);
+        var L3 = LAY[kk];
+        /* colour: depth down the screen and which wash it is; pink-leaning */
+        var tt = L3.t0 + (L3.t1 - L3.t0) * Math.min(1, Math.max(0, 0.5 + 0.5 * pos)) * 0.7 + 0.3 * v;
+        tt = Math.min(1, Math.max(0, tt + (ru.h2 - 0.5) * 0.08));
+        var c = Pal.arc(tt);
+        /* foam on the leading edge, blow-out blocks at the hot core */
+        var foam = Math.exp(-Math.pow((pos - 1) / 0.28, 2)) * (0.55 + 0.45 * ru.h2);
+        if (kk === 2 && body > 0.9 && ru.h2 > 0.93) foam = Math.max(foam, 0.9);
+        c = mixc(c, frost, Math.min(0.95, foam * sh));
+        c = mixc(harbor, c, 0.55 + 0.45 * sh);
+        cx.fillStyle = css(c);
+        var yy = y + (CH - hh) * 0.5;
+        cx.fillRect(ru.x + (ru.w - ww) * 0.5, yy, Math.max(2, ww), hh);
+      }
+      if (r === mintRow) {
+        var mu = cs[1] + LAY[1].hw + 0.012;
+        cx.fillStyle = css(mint);
+        cx.fillRect(mu * W, y + CH * 0.35, UW * 1.6, Math.max(2, CH * 0.3));
+      }
+    }
+  }
+
+  function frame(ms) { draw(ms / 1000); requestAnimationFrame(frame); }
+  function go() {
+    setup();
+    if (still) draw(6); else requestAnimationFrame(frame);
+  }
+  addEventListener('resize', function () { setup(); if (still) draw(6); });
+  go();
+})();
+</script>
+</body>
+</html>

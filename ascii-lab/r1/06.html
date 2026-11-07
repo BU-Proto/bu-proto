@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/06 Gill Rim</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.LabSubjects, Pal = window.LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c');
+  var gl = cv.getContext('webgl2', { antialias: false });
+  if (!gl) { document.body.style.background = '#0b2a46'; return; }
+
+  /* source: our own procedural mushroom, rendered once at 560x350 and cropped tight in the shader */
+  var BW = 560, BH = 350, buf = S.create(BW, BH, 1);
+  S.fill('mushroom', buf, 4);
+  var bytes = S.toRGBA(buf);
+
+  var vs = '#version 300 es\nvoid main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;gl_Position=vec4(p*2.-1.,0,1);}';
+  var fs = [
+  '#version 300 es','precision highp float;out vec4 o;',
+  'uniform sampler2D buf,ramp;uniform vec2 res;uniform float t,cw,ch;uniform vec4 crop;',
+  'const vec3 HARBOR=vec3(.024,.102,.18),RAISED=vec3(.043,.165,.275),FROST=vec3(.965,.984,1.),MINT=vec3(.616,.941,.659);',
+  'const vec2 BS=vec2(560.,350.);',
+  'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}',
+  'vec2 toBuf(vec2 q){return crop.xy+(q-.5)*crop.zw;}',  /* q: 0-1 screen, y down */
+  'vec3 arcc(float h){return texture(ramp,vec2(clamp(h,0.,1.),.5)).rgb;}',
+  'vec3 shade(float l,float h){vec3 c=arcc(h);c=mix(HARBOR,c,min(1.,.12+l*2.4));return mix(c,FROST,smoothstep(.74,1.,l));}',
+  /* distance to a segment, cell coords centred, in cell-height units */
+  'float seg(vec2 p,vec2 a,vec2 b){vec2 pa=p-a,ba=b-a;float k=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);return length(pa-ba*k);}',
+  'vec4 samp(vec2 q){vec2 b=toBuf(q);return texture(buf,b);}',
+  /* light that breathes along the gills: a slow travelling swell on lum and hue */
+  'vec2 swell(vec2 q,vec4 s){float w=sin(q.x*9.+q.y*5.-t*.55)*.5+sin(q.x*4.-q.y*7.+t*.33)*.5;return vec2(s.r+w*.05*(.4+s.r),s.g+w*.045+(q.x-.5)*.42-(q.y-.5)*.1-.06);}',
+  'void main(){',
+  ' vec2 fc=vec2(gl_FragCoord.x,res.y-gl_FragCoord.y);vec2 q=fc/res;',
+  ' vec4 su=samp(q);vec2 uh=swell(q,su);',
+  /* soft image beneath, kept dim so the glyph pass carries the structure */
+  ' vec3 base=shade(uh.x,uh.y)*.78;',
+  ' vec2 cs=vec2(cw,ch);vec2 cell=floor(fc/cs);vec2 f=fract(fc/cs);vec2 cq=(cell+.5)*cs/res;',
+  ' vec4 s0=samp(cq);vec2 lh=swell(cq,s0);float l=lh.x,hh=lh.y,e=s0.b;',
+  ' vec2 px=cs/res;',
+  ' float lx=samp(cq+vec2(px.x,0.)).r-samp(cq-vec2(px.x,0.)).r;float ly=samp(cq+vec2(0.,px.y)).r-samp(cq-vec2(0.,px.y)).r;',
+  ' float g=length(vec2(lx,ly));',
+  /* line runs perpendicular to the gradient; quantise to | / - \\ */
+  ' float ang=atan(ly,lx)+1.5708;float qa=floor(mod(ang/3.14159265+.125,1.)*4.);',
+  ' vec2 dir=qa<.5?vec2(1.,0.):qa<1.5?vec2(1.,-1.):qa<2.5?vec2(0.,1.):vec2(1.,1.);dir=normalize(dir*vec2(cs.y/cs.x>0.?1.:1.,1.));',
+  ' vec2 p=(f-.5)*vec2(cs.x/cs.y,1.);',
+  ' float rnd=h21(cell+floor(t*.5*h21(cell.yx)));float rn2=h21(cell*1.7+3.);',
+  ' vec3 col=base;float a=0.;vec3 ink=col;',
+  ' float tone=clamp(l,0.,1.);',
+  ' float lineW=.07+.06*clamp(e*2.,0.,1.);',
+  ' float dl=seg(p,-dir*.42*vec2(1.,1.),dir*.42);',
+  ' vec3 comp=arcc(1.-hh);',
+  /* highlights: frost strokes, blowing out to blocks */
+  ' if(tone>.5){',
+  '   float dens=smoothstep(.5,.8,tone);',
+  '   if(tone>.86&&rn2<.7){vec2 ap=abs(p);float bx=step(ap.x,.4)*step(ap.y,.44);a=bx;ink=FROST;}',
+  '   else if(rn2<.25+dens*.7){',
+  '     float k=rnd>.84?1.:0.;float d=dl;',
+  '     if(k>.5){d=min(seg(p,vec2(-.3,-.3),vec2(.3,.3)),seg(p,vec2(-.3,.3),vec2(.3,-.3)));}',
+  '     else if(rn2<.07){d=abs(abs(p.x)*1.1+abs(p.y)-.34);}',
+  '     a=smoothstep(lineW+.02,lineW-.01,d);ink=mix(comp,FROST,.35+.65*dens);',
+  '   }',
+  /* mid tones: sparse marks, hue carried by the arc complement */
+  ' } else if(tone>.26){',
+  '   if(rn2<.16+e*.5){float d=dl;a=smoothstep(lineW+.01,lineW-.01,d)*.9;ink=mix(comp,arcc(hh),.4)*1.05;}',
+  /* shadow: harbor ticks, short and vertical */
+  ' } else {',
+  '   if(rn2<.34){float d=seg(p,vec2(0.,-.2),vec2(0.,.2));a=smoothstep(.07,.04,d)*.9;ink=HARBOR;}',
+  ' }',
+  ' col=mix(col,ink,a);',
+  /* live cell: one mint block running along the brightest rim */
+  ' vec2 live=floor(vec2(res.x/cw*(.5+.3*sin(t*.21)),res.y/ch*(.46+.22*cos(t*.17))));',
+  ' if(cell==live){vec2 ap=abs(p);col=mix(col,MINT,step(ap.x,.36)*step(ap.y,.4));}',
+  /* edge settle into harbor */
+  ' vec2 d2=(q-.5)*vec2(1.,.9);float vg=smoothstep(.36,.78,length(d2));col=mix(col,HARBOR,vg*.55);',
+  ' o=vec4(col,1.);}'
+  ].join('\n');
+
+  function mk(type, src) {
+    var sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+    return sh;
+  }
+  var pr = gl.createProgram();
+  gl.attachShader(pr, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, mk(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  function tex(unit, w, h, data) {
+    var tx = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tx);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  tex(0, BW, BH, bytes); tex(1, 256, 1, Pal.lut(256));
+  var U = function (n) { return gl.getUniformLocation(pr, n); };
+  gl.uniform1i(U('buf'), 0); gl.uniform1i(U('ramp'), 1);
+
+  /* crop window centred on the gill plate and rim, in buffer uv */
+  var CX = 0.5, CY = 0.49, CW_ = 0.34;
+  var params = new URLSearchParams(location.search);
+  if (params.get('cx')) CX = +params.get('cx');
+  if (params.get('cy')) CY = +params.get('cy');
+  if (params.get('w')) CW_ = +params.get('w');
+
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+    gl.viewport(0, 0, cv.width, cv.height);
+    var cell = Math.max(10, Math.round(Math.min(innerWidth, innerHeight) / 52)) * dpr;
+    gl.uniform2f(U('res'), cv.width, cv.height);
+    gl.uniform1f(U('cw'), cell * 0.6); gl.uniform1f(U('ch'), cell);
+    var hU = CW_ * BW * (cv.height / cv.width) / BH;
+    gl.uniform4f(U('crop'), CX, CY, CW_, hU);
+  }
+  addEventListener('resize', resize); resize();
+
+  function draw(t) { gl.uniform1f(U('t'), t); gl.drawArrays(gl.TRIANGLES, 0, 3); }
+  if (still) { draw(6); return; }
+  (function loop(ms) { draw(ms / 1000 + 6); requestAnimationFrame(loop); })(0);
+})();
+</script>
+</body>
+</html>

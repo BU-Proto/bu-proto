@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>R1-02 Gill Rim, Complement Grid</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #061a2e; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Gill rim, complement grid.
+   Under layer: the mushroom posterised into flat grid-cell bands, tone-banded through the pink-led arc.
+   Over layer: one glyph per cell, hue = arc reflection (t' = 1 - t) of the cell beneath, so rose sits under
+   sky glyphs and sky under rose. Polarity flips with tone: harbor ticks in shadow, hue glyphs in the mids,
+   frost strokes following the gill edges in the highlights, frost blocks where light blows out.
+   The "gill-depth" shimmer slides the arc along the gills (colour moves, the grid never does). */
+(function () {
+  'use strict';
+  var S = window.LabSubjects, Pal = window.LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var harbor = Pal.resolve('harbor'), raised = Pal.resolve('raised'), frost = Pal.resolve('frost');
+  var mint = Pal.colors.mint;
+
+  var WIN_H = 1.05, CENTER = [0.5, 0.12];     /* world window: tight on gill plate and rim */
+  var SS = 2, BANDS = 7, HUEQ = 9;
+  var GL_DARK = ' .·:', GL_MID = ':+=*#%';
+  var cols, rows, cw, ch, dpr, buf, bw, bh, ox, oy, lastFill = -1, mintCell = -1;
+  var coolArc = [], tonedUnder = {};
+
+  function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function css(c) { return Pal.toCss(c); }
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = window.innerWidth, H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    cw = Math.max(9, Math.round(W / 150)); ch = Math.round(cw * 1.75);
+    cols = Math.ceil(W / cw); rows = Math.ceil(H / ch);
+    var va = cols * (cw / ch) / rows, s = Math.max(1, 1.48 / va);
+    bh = Math.min(560, Math.round(rows * SS * 2 * s / WIN_H)); bw = Math.round(bh * cols / rows);
+    /* cellAspect: buffer pixel width/height in world terms so the crop is undistorted */
+    buf = S.create(bw, bh, 1 / (bw / bh) * (cols * cw) / (rows * ch));
+    var asp = bw * buf.cellAspect / bh, ss = Math.max(1, 1.48 / asp);
+    ox = Math.round(((CENTER[0] / (asp * ss) + 1) / 2) * bw - cols * SS / 2);
+    oy = Math.round(((1 - CENTER[1] / ss) / 2) * bh - rows * SS / 2);
+    lastFill = -1;
+  }
+
+  /* colour for the under cell: tone band picks depth, hint picks position on the arc, quantised */
+  var RAISEDHI = Pal.resolve('raisedHi');
+  function deepRail(h) { return h < 0.5 ? Pal.mix('cerulean', 'irisDeep', h * 2) : Pal.mix('irisDeep', 'raspberry', (h - 0.5) * 2); }
+  /* gradient map: ground, then a deep rail, then the light arc, then frost */
+  function underColor(band, hq) {
+    switch (band) {
+      case 0: return harbor;
+      case 1: return raised;
+      case 2: return lerp3(RAISEDHI, deepRail(hq), 0.45);
+      case 3: return deepRail(hq);
+      case 4: return lerp3(deepRail(hq), Pal.arc(hq), 0.6);
+      case 5: return Pal.arc(hq);
+      default: return lerp3(Pal.arc(hq), frost, 0.28);
+    }
+  }
+
+  var lum, hint, edge;
+  function frame(t) {
+    var W = cv.width, H = cv.height;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = '#061a2e'; cx.fillRect(0, 0, W / dpr, H / dpr);
+    var ms = Math.floor(t * 8);
+    if (ms !== lastFill) { S.fill('mushroom', buf, t); lastFill = ms; }
+    var L = buf.lum, Hn = buf.hint, E = buf.edge, M = buf.mask;
+    var fs = Math.round(ch * 0.82);
+    cx.font = fs + 'px ui-monospace, "SF Mono", Menlo, monospace'; cx.textBaseline = 'middle'; cx.textAlign = 'center';
+    var bxs = SS, bys = SS;   /* buffer pixels per cell; sample at centre */
+    var shim = 0.07 * Math.sin(t * 0.5);
+    var bestE = 0, best = -1;
+    function at(c, r, arr) {
+      var x = Math.min(bw - 1, Math.max(0, Math.round(ox + (c + 0.5) * bxs)));
+      var y = Math.min(bh - 1, Math.max(0, Math.round(oy + (r + 0.5) * bys)));
+      return arr[y * bw + x];
+    }
+    var cl = new Array(rows * cols), cells = [];
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var l = at(c, r, L), h = at(c, r, Hn), e = at(c, r, E);
+        /* lean pink: bend hint toward the rose end, then ripple along the arc */
+        h = Math.pow(h, 0.78) + shim * (0.4 + l) + 0.03 * Math.sin(c * 0.21 + r * 0.33 + t * 0.4) * l;
+        h = Math.max(0, Math.min(1, h));
+        var hq = Math.round(h * HUEQ) / HUEQ;
+        var band = Math.max(0, Math.min(BANDS - 1, Math.floor(l * BANDS * 1.02)));
+        var px = c * cw, py = r * ch;
+        var uc = underColor(band, hq);
+        cx.fillStyle = css(uc); cx.fillRect(px, py, cw + 0.6, ch + 0.6);
+
+        /* gradient direction on lum, central difference at cell step */
+        var gx = at(c + 1, r, L) - at(c - 1, r, L), gy = at(c, r + 1, L) - at(c, r - 1, L);
+        var gm = Math.sqrt(gx * gx + gy * gy), cxc = px + cw / 2, cyc = py + ch / 2;
+        var gl = null, ink = null;
+        var comp = Pal.arc(1 - hq);                      /* arc reflection */
+        if (l > 0.9) {                                   /* blow-out: frost block, inset on the grid */
+          cx.fillStyle = css(lerp3(Pal.resolve('frost'), Pal.arc(0.7), 0.06));
+          cx.fillRect(px + 1, py + 1, cw - 1, ch - 1); continue;
+        }
+        if (l > 0.55 && (e > 0.22 || gm > 0.07)) {       /* bright pass: line glyphs follow the edge */
+          var ang = Math.atan2(gy, gx) + Math.PI / 2, a = ((ang % Math.PI) + Math.PI) % Math.PI / Math.PI;
+          gl = a < 0.125 || a >= 0.875 ? '─' : a < 0.375 ? '╱' : a < 0.625 ? '│' : '╲';
+          if (gm < 0.12) gl = e > 0.5 ? '+' : 'x';
+          ink = lerp3(frost, comp, 0.18);
+        } else if (l < 0.3) {                             /* shadow: dark ticks cut into the ground */
+          var gi = Math.floor(l / 0.3 * GL_DARK.length * 1.3);
+          gl = GL_DARK.charAt(Math.min(GL_DARK.length - 1, gi));
+          if (gl === ' ') continue;
+          ink = lerp3(comp, harbor, 0.0); ink = lerp3(ink, frost, 0.2);
+        } else {                                          /* mids: complement glyphs, density follows tone */
+          var m = at(c, r, M);
+          if (m < 0.5) {                                  /* ground dissolves into sparse stretched dashes */
+            var hs = ((c * 73856093) ^ (r * 19349663)) >>> 0, rr = (hs % 1000) / 1000;
+            if (rr > 0.16 + l * 0.5) continue;
+            gl = rr < 0.05 ? '+' : '\u2500'; ink = lerp3(Pal.arc(1 - hq), frost, 0.12);
+          } else {
+            var gi2 = Math.floor((l - 0.3) / 0.7 * GL_MID.length * 1.2);
+            gl = GL_MID.charAt(Math.min(GL_MID.length - 1, gi2));
+            ink = band >= 4 ? lerp3(deepRail(1 - hq), harbor, 0.5) : lerp3(Pal.arc(1 - hq), frost, 0.3);
+          }
+        }
+        cx.fillStyle = css(ink); cx.fillText(gl, cxc, cyc + 1);
+        if (e * l > bestE && c > cols * 0.55) { bestE = e * l; best = r * cols + c; }
+      }
+    }
+    /* mint: one live cell on the brightest rim */
+    if (best >= 0 && Math.floor(t * 1.5) % 2 === 0) {
+      var mr = Math.floor(best / cols), mc = best % cols;
+      cx.fillStyle = mint; cx.fillRect(mc * cw + 1, mr * ch + 1, cw - 1, ch - 1);
+    }
+  }
+
+  setup();
+  var t0 = 4;
+  if (still) frame(t0);
+  else (function loop(ms) { frame(t0 + ms / 1000); requestAnimationFrame(loop); })(0);
+  var rt = 0;
+  window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { setup(); if (still) frame(t0); }, 80); });
+})();
+</script>
+</body>
+</html>
