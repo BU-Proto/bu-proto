@@ -1,6 +1,6 @@
-// A screen edge lit from behind: a tight, saturated line of light around a rounded frame, hottest in
-// the corners, that throws a long faint tint into the dark and slowly travels around the frame. The
-// colour is the same film as the cursor's wake. It's dithered, since nearly all of it is dark.
+// A screen edge lit from behind: a tight, saturated line of light around a rounded frame that throws
+// a long faint tint into the dark and slowly travels around the frame. It tops out at the film's own
+// colour, the same film as the cursor's wake. It's dithered, since nearly all of it is dark.
 
 import { FILM, program } from './wakeField'
 
@@ -27,11 +27,10 @@ void main() {
 
   float near = uNear * exp(-dot((px - uPointer) / uDpr, (px - uPointer) / uDpr) / 90000.);
   float edge = max(d, 0.);
-  float corner = smoothstep(.72, .98, length(c / half_) / 1.414);
-  float line = exp(-edge / 9.) * (.8 + corner * .6) + exp(-edge / 30.) * .34;
-  float wash = exp(-edge / 240.) * .085 + exp(-edge / 90.) * .05;
-  vec3 col = hue * (line * (1. + near * .9) + wash + near * .1);
-  col = mix(col, vec3(1.), clamp(exp(-edge / 4.) * corner * 1.1, 0., .82));
+  float line = exp(-edge / 9.) * 1.1 + exp(-edge / 30.) * .21;
+  float wash = exp(-edge / 240.) * .056 + exp(-edge / 90.) * .032;
+  /* However bright it gets, the light tops out at the film's own colour instead of clipping to white. */
+  vec3 col = hue * (1. - exp(-(line * (1. + near * .9) + wash + near * .06) * 1.6));
   col *= uPower;
   col += (h(px * .37 + fract(uT)) + h(px * .71 + fract(uT * 1.3)) - 1.) * 2. / 255.;
   o = vec4(clamp(col, 0., 1.), 1.);
