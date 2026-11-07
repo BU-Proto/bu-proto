@@ -114,7 +114,17 @@ export function Glass({ radius, bezel, bend }: GlassProps) {
               />,
             ])}
             <feBlend in="red" in2="green" mode="screen" result="warm" />
-            <feBlend in="warm" in2="blue" mode="screen" />
+            <feBlend in="warm" in2="blue" mode="screen" result="view" />
+            {/* The rim picks up the colour of what's behind it, the way an edge of real glass does. */}
+            <feImage href={built.rim} x="0" y="0" width={built.width} height={built.height} preserveAspectRatio="none" result="rim" />
+            <feColorMatrix in="view" type="saturate" values="4" result="vivid" />
+            <feComponentTransfer in="vivid" result="lit">
+              <feFuncR type="linear" slope="1.9" />
+              <feFuncG type="linear" slope="1.9" />
+              <feFuncB type="linear" slope="1.9" />
+            </feComponentTransfer>
+            <feComposite in="lit" in2="rim" operator="in" result="glint" />
+            <feBlend in="glint" in2="view" mode="screen" />
           </filter>
         </svg>
       )}
