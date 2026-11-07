@@ -1,0 +1,23 @@
+/* The sizes of the pixel canvases. The field and the skyline are sized by whatever holds them. */
+
+.flow {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+}
+
+.marquee {
+  display: block;
+  width: 100%;
+  height: clamp(130px, 22vw, 320px);
+}
+
+.mark {
+  display: inline-block;
+  flex: none;
+  width: var(--mark-size, 20px);
+  height: var(--mark-size, 20px);
+  background: currentColor;
+  -webkit-mask: url('/proto-seal.svg') center / contain no-repeat;
+  mask: url('/proto-seal.svg') center / contain no-repeat;
+}

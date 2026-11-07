@@ -43,19 +43,19 @@ export function Field({ label, hint, wide, children }: FieldProps) {
 
   return (
     <label className={styles.field} data-wide={wide || undefined}>
-      <span className={styles.label} data-fog-clear>
+      <span className={styles.label}>
         {label}
       </span>
       {control && issue
         ? cloneElement(control, { 'aria-invalid': true, 'aria-describedby': issueId })
         : children}
       {issue && (
-        <span id={issueId} className={styles.issue} data-fog-clear>
+        <span id={issueId} className={styles.issue}>
           {issue}
         </span>
       )}
       {hint && (
-        <span className={styles.hint} data-fog-clear>
+        <span className={styles.hint}>
           {hint}
         </span>
       )}
@@ -118,10 +118,10 @@ export function Form({
         <span className={styles.check} aria-hidden="true">
           ✓
         </span>
-        <p className={styles.thanksTitle} data-fog-clear>
+        <p className={styles.thanksTitle}>
           {thanks.title}
         </p>
-        <p className={styles.thanksText} data-fog-clear>
+        <p className={styles.thanksText}>
           {thanks.text}
         </p>
       </div>
@@ -187,19 +187,18 @@ export function Form({
         onSubmit={submit}
         onInput={clearIssue}
         aria-busy={pending || undefined}
-        data-fog-ignore
       >
         {children}
         {turnstile && <Turnstile action={turnstile} ref={human} />}
         {/* Bots fill every field; people never see or reach this one. */}
         <input className={styles.trap} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" defaultValue="" />
         {error && (
-          <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1} data-fog-clear>
+          <p ref={errorRef} className={styles.error} role="alert" tabIndex={-1}>
             {error}
           </p>
         )}
         <div className={styles.actions}>
-          <button type="submit" className={ui.primary} disabled={pending} data-fog-clear="box">
+          <button type="submit" className={ui.primary} disabled={pending}>
             {pending ? pendingLabel : submitLabel}
           </button>
           {actions}

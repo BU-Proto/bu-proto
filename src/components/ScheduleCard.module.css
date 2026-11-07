@@ -1,34 +1,23 @@
+/* A ruled sheet, its sessions rows inside it. Mono for the labels, the times in ink. */
 .card {
   display: grid;
-  padding: 12px 18px 8px;
-  border: 1px solid var(--rule);
-  border-radius: 22px;
-  /* The panels' navy sheet, so the small labels hold up over the photo. */
-  background: rgb(var(--navy-rgb) / 0.82);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  box-shadow:
-    0 24px 60px -34px rgb(var(--harbor-rgb) / 0.6),
-    inset 0 1px 0 rgb(var(--frost-rgb) / 0.1);
-}
-
-.handle {
-  width: 40px;
-  height: 3px;
-  margin: 2px auto 6px;
-  border-radius: 2px;
-  background: rgb(var(--frost-rgb) / 0.75);
+  padding: var(--cell) 18px 4px;
+  border: 1px solid var(--c-line);
+  background: var(--c-paper);
 }
 
 .location {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
   margin: 0;
   padding-bottom: 12px;
-  color: var(--ink-soft);
-  font-size: 12.5px;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
 }
 
 .location svg {
@@ -37,12 +26,11 @@
   height: 12px;
 }
 
-/* Sessions are rows in the one card, ruled apart, not cards of their own. */
 .slot {
   display: grid;
   gap: 10px;
-  padding: 14px 0;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.22);
+  padding: var(--cell) 0;
+  border-top: 1px solid var(--c-line);
 }
 
 .row {
@@ -60,28 +48,31 @@
 .level {
   display: flex;
   align-items: center;
-  gap: 5px;
-  color: var(--ink-soft);
-  font-size: 12px;
+  gap: 6px;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
+/* Three stepped cells. */
 .bars {
   display: inline-flex;
   align-items: flex-end;
-  gap: 1.5px;
+  gap: 1px;
   height: 9px;
 }
 
 .bars i {
   display: block;
-  width: 2px;
-  border-radius: 1px;
-  background: currentColor;
+  width: 3px;
+  background: var(--c-blue);
 }
 
 .bars i:nth-child(1) {
-  height: 4px;
+  height: 3px;
 }
 
 .bars i:nth-child(2) {
@@ -102,8 +93,11 @@
 .times small {
   display: block;
   margin-bottom: 2px;
-  color: var(--ink-soft);
-  font-size: 12px;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .times b {
@@ -123,8 +117,9 @@
   align-items: center;
   gap: 8px;
   padding-bottom: 6px;
-  color: var(--ink-soft);
-  font-size: 12px;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
   white-space: nowrap;
 }
 
@@ -133,5 +128,5 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgb(var(--frost-rgb) / 0.35);
+  background: var(--c-line);
 }

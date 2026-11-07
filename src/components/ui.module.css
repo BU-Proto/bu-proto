@@ -1,79 +1,166 @@
-/* Shared pieces for the inner pages: the page column, glass panels, buttons, the sample mark. */
+/*
+ * Shared pieces for the public pages: the page column, section patterns, type, buttons, the sample
+ * mark. Only public pages use this file; the portal has its own.
+ */
 
+/* ---- Page and sections ---- */
+
+/* Clears the fixed tab at the top. minmax(0, …) so a wide child can't push the page past the screen. */
 .page {
   display: grid;
-  /* minmax(0, …) so a wide child (a scrolling table) can't push the page past the screen. */
   grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
+  gap: calc(var(--cell) * 5);
   width: 100%;
-  max-width: 1180px;
+  max-width: calc(var(--maxw) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: clamp(28px, 6vh, 64px) 0 48px;
+  padding: calc(var(--cell) * 10) var(--gutter) calc(var(--cell) * 9);
 }
 
-/*
- * A sheet of navy for anything that has to be read or filled in. Nearly opaque, so the field
- * behind it is only a hint at the edges and small text never sits on a bright patch; the blur
- * only softens what little shows through.
- */
-.panel {
-  position: relative;
-  padding: clamp(18px, 2.6vw, 28px);
-  border: 1px solid var(--rule);
-  border-radius: 22px;
-  /* The field's light reaching the sheet's top edge: cerulean in one corner, the core's raspberry
-     in the other, both gone well before the text. Every sheet has the same light. */
-  background:
-    radial-gradient(60% 50% at 0% 0%, rgb(var(--sky-deep-rgb) / 0.16), transparent 70%),
-    radial-gradient(50% 44% at 100% 0%, rgb(var(--rose-deep-rgb) / 0.12), transparent 70%),
-    rgb(var(--navy-rgb) / 0.9);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  box-shadow:
-    0 24px 60px -34px rgb(var(--harbor-rgb) / 0.8),
-    inset 0 1px 0 rgb(var(--frost-rgb) / 0.1);
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
 }
 
-/* The same sheet, fully opaque, for dense text and tables. */
-.panelDeep {
-  composes: panel;
-  background:
-    radial-gradient(60% 50% at 0% 0%, rgb(var(--sky-deep-rgb) / 0.16), transparent 70%),
-    radial-gradient(50% 44% at 100% 0%, rgb(var(--rose-deep-rgb) / 0.12), transparent 70%),
-    var(--navy);
+/* A section's padding. `ed` for an editorial split, `proc` for a process or a list, `tight` for the opening lead. */
+.ed {
+  padding: calc(var(--cell) * 9) var(--gutter);
 }
 
-.inset {
-  padding: 14px 16px;
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  background: rgb(var(--harbor-rgb) / 0.55);
+.proc,
+.tight {
+  padding: calc(var(--cell) * 7) var(--gutter);
 }
 
-.sectionHead {
+/* Editorial split: the heading and its kicker on the left, the body on the right. */
+.split {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 24px;
-  margin-bottom: 18px;
+  flex-direction: column;
+  gap: calc(var(--cell) * 2);
 }
 
+@media (min-width: 860px) {
+  .split {
+    display: grid;
+    grid-template-columns: 0.82fr 1.18fr;
+    column-gap: calc(var(--cell) * 6);
+  }
+}
+
+/* The closing call: centered, with the big title. */
+.cta {
+  padding: calc(var(--cell) * 9) var(--gutter);
+  text-align: center;
+}
+
+.ctaTitle {
+  margin: 0 auto calc(var(--cell) * 3);
+  font-size: clamp(38px, 8vw, 130px);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+
+@media (max-width: 680px) {
+  .page {
+    padding-top: calc(var(--cell) * 7);
+    padding-bottom: calc(var(--cell) * 5);
+  }
+
+  .ed {
+    padding-block: calc(var(--cell) * 5);
+  }
+
+  .proc,
+  .tight {
+    padding-block: calc(var(--cell) * 4);
+  }
+
+  .cta {
+    padding-block: calc(var(--cell) * 7);
+  }
+}
+
+/* ---- Type ---- */
+
+.h2,
 .sectionTitle {
+  max-width: 16ch;
   margin: 0;
-  text-shadow: 0 2px 24px rgb(var(--harbor-rgb) / 0.35);
-  font-size: clamp(22px, 2.6vw, 30px);
+  font-size: clamp(26px, 3.4vw, 46px);
   font-weight: 400;
   letter-spacing: -0.02em;
-  line-height: 1.1;
+  line-height: 1.06;
 }
 
-.sectionLede {
-  max-width: 52ch;
+/* The big opening paragraph. Muted `em` for the second voice. */
+.lead {
   margin: 0;
-  color: var(--ink-soft);
-  text-wrap: pretty;
-  text-shadow: var(--on-field-shadow);
+  font-size: clamp(26px, 3.4vw, 46px);
+  letter-spacing: -0.02em;
+  line-height: 1.06;
+}
+
+.lead em {
+  color: var(--c-muted);
+  font-style: normal;
+}
+
+.body {
+  margin: 0;
+  color: var(--c-body);
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.62;
+  text-align: justify;
+  text-align-last: left;
+}
+
+.body strong {
+  color: var(--c-ink);
+  font-weight: 500;
+}
+
+.body a {
+  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 3px;
+  padding-bottom: 3px;
+  transition: background-size 0.45s var(--ease-out);
+}
+
+.body a:hover,
+.body a:focus-visible {
+  background-size: 100% 3px;
+}
+
+@media (max-width: 680px) {
+  .body {
+    text-align: left;
+  }
+}
+
+.small {
+  margin: 0;
+  color: var(--c-muted);
+  font-size: 14px;
+}
+
+/* Mono labels: `mono` on its own, `kicker` under a heading. */
+.mono,
+.kicker {
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.kicker {
+  margin: 14px 0 0;
+  font-size: 10px;
 }
 
 /* Hidden but still read out, for headings the layout already makes obvious. */
@@ -86,117 +173,403 @@
   white-space: nowrap;
 }
 
+/* ---- Page intro ---- */
+
+.intro {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--cell) * 2);
+  padding-top: calc(var(--cell) * 2);
+  border-top: 1px solid var(--c-line);
+}
+
+.introTitle {
+  margin: 0;
+  font-size: clamp(32px, 5.2vw, 82px);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.introLede {
+  margin: 0;
+  color: var(--c-body);
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.62;
+  text-wrap: pretty;
+}
+
+.introMore {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 900px) {
+  .intro {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    column-gap: calc(var(--cell) * 3);
+  }
+
+  .introLede {
+    padding-left: calc(var(--cell) * 1.5);
+    border-left: 1px solid var(--c-line);
+    margin-left: calc(var(--cell) * -1.5);
+  }
+}
+
+/* ---- Buttons and links ---- */
+
+.btn,
 .primary,
 .secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 11px 18px;
-  border-radius: 999px;
-  font-size: 13px;
+  gap: 8px;
+  padding: 16px 36px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--c-ink);
+  color: var(--c-paper);
+  font-family: var(--font-display);
+  font-size: clamp(15px, 1.2vw, 18px);
   font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s var(--ease-out);
 }
 
-.primary {
-  border: 1px solid var(--frost);
-  background: var(--frost);
-  color: var(--navy);
-  box-shadow: 0 10px 30px -14px rgb(var(--harbor-rgb) / 0.7);
-  text-shadow: none;
-}
-
-/* Pressing toward it turns it mint, the colour of acting: the same as a link in our emails. */
+.btn:not(:disabled):hover,
 .primary:not(:disabled):hover {
-  border-color: var(--mint);
-  background: var(--mint);
+  transform: translateY(-2px);
 }
 
+/* The hero's gradient rises through a filled button under the cursor. */
+.btn,
+.primary {
+  position: relative;
+  isolation: isolate;
+}
+
+.btn::after,
+.primary::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--c-sheen);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn:not(:disabled):hover::after,
+.primary:not(:disabled):hover::after {
+  opacity: 1;
+}
+
+/* The outline button: a dark face inset by a pixel, so the edge reads as a hairline. */
 .secondary {
-  border: 1px solid var(--glass-edge);
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  position: relative;
+  isolation: isolate;
+  color: var(--c-ink);
 }
 
-.secondary:hover {
-  background: var(--glass-strong);
+.secondary::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: 9px;
+  background: var(--c-paper);
+  transition: background-color 0.2s ease;
 }
 
+.secondary:not(:disabled, [aria-disabled='true']):hover {
+  color: var(--c-paper);
+  transform: translateY(-2px);
+}
+
+.secondary:not(:disabled, [aria-disabled='true']):hover::before {
+  background: var(--c-ink);
+}
+
+.btn:disabled,
 .primary:disabled,
 .secondary:disabled,
 .secondary[aria-disabled='true'] {
   cursor: default;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
+/* The corners cut a normal outline away, so focus is drawn inside the button. */
+.btn:focus-visible,
 .primary:focus-visible,
-.secondary:focus-visible,
+.secondary:focus-visible {
+  outline: 2px solid var(--c-blue);
+  outline-offset: -6px;
+}
+
+/* Ink at rest; a dotted line grows under it from the left on hover. */
+.textLink {
+  display: inline;
+  padding-bottom: 3px;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 3px;
+  font-weight: 500;
+  transition: background-size 0.45s var(--ease-out);
+}
+
+.textLink:hover,
 .textLink:focus-visible {
-  outline: 2px solid currentColor;
+  background-size: 100% 3px;
+}
+
+.textLink:focus-visible {
+  outline: 2px solid var(--c-blue);
   outline-offset: 2px;
 }
 
-/* The text stays ink; the rule under it is mint, the colour of acting, or the colour of the
-   thing it leads to when it sits inside something with a hue ("All wins" under the record). */
-.textLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-bottom: 1px solid rgb(var(--hue-rgb, var(--mint-rgb)) / 0.62);
+/* ---- Lists ---- */
+
+/* Numbered list: each li holds `.n` then its text. */
+.pts {
+  margin: 0;
+  padding: 0;
+  font-size: 15px;
+  list-style: none;
+}
+
+.pts > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--cell);
+  padding: var(--cell) 0;
+  border-top: 1px solid var(--c-line);
+}
+
+.pts > li:last-child {
+  border-bottom: 1px solid var(--c-line);
+}
+
+.pts b {
   font-weight: 500;
 }
 
-.textLink:hover {
-  border-bottom-color: var(--hue, var(--mint));
+.n {
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+}
+
+/* Four-up steps: `.step` holds `.stepHead` (`.badge` + `.stepTitle`) and `.stepText`. */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 840px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.step {
+  transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) {
+  .steps:hover .step {
+    opacity: 0.45;
+  }
+
+  .steps .step:hover {
+    opacity: 1;
+  }
+}
+
+.stepHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.stepText {
+  margin: 0;
+  color: var(--c-body);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.badge {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  background: var(--c-navy);
+  clip-path: var(--px-corners-sm);
+  color: var(--c-paper);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+}
+
+/* ---- Tags ---- */
+
+.tag {
+  display: inline-block;
+  padding: 7px 13px;
+  background: var(--c-ink);
+  clip-path: var(--px-corners-sm);
+  color: var(--c-paper);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.tagNavy {
+  background: var(--c-navy);
+}
+
+.tagBlue {
+  background: var(--c-blue);
+}
+
+.tagGold {
+  background: var(--c-gold);
+  color: var(--c-paper);
+}
+
+.tagRed {
+  background: var(--c-red);
+}
+
+.tagNeon {
+  background: var(--c-neon);
+  color: var(--c-paper);
 }
 
 /*
- * Made-up content, marked the way an editor would: the word itself, amber, italic, with a dashed
- * underline. No box, so it sits in any line of text, but the colour still stops the eye in review.
+ * Made-up content, marked plainly: the word in a small gold tag, so it still stops the eye in
+ * review. Inside the wins sheet it keeps the editor's amber it has always had there.
  */
 .sample {
-  margin-left: 0.4em;
-  color: var(--amber);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-style: italic;
+  display: inline-block;
+  margin-left: 0.5em;
+  padding: 3px 6px;
+  background: var(--c-gold);
+  clip-path: var(--px-corners-sm);
+  color: var(--c-paper);
+  font-family: var(--font-mono);
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0;
-  line-height: 1;
-  text-decoration: underline dashed rgb(var(--amber-rgb) / 0.85) 1px;
-  text-underline-offset: 3px;
-  text-shadow: var(--on-field-shadow);
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  vertical-align: middle;
   white-space: nowrap;
   cursor: help;
 }
 
-/* Page intro: the title and lede, set like the landing's section titles. */
-.intro {
-  display: grid;
-  gap: 16px;
-  max-width: 820px;
-}
-
-.introTitle {
-  margin: 0;
-  font-size: clamp(42px, 6.4vw, 84px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
-  line-height: 0.98;
-  text-wrap: balance;
-  text-shadow: 0 2px 30px rgb(var(--harbor-rgb) / 0.4);
-}
-
-.introLede {
-  max-width: 54ch;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 16px;
-  line-height: 1.55;
-  text-wrap: pretty;
+/* :where, so the sheet's own override of this tag still wins as it always has. */
+:where([data-field-cover]) .sample {
+  display: inline;
+  margin-left: 0.4em;
+  padding: 0;
+  background: none;
+  clip-path: none;
+  color: var(--amber);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-style: italic;
+  letter-spacing: 0;
+  line-height: 1;
+  text-decoration: underline dashed rgb(var(--amber-rgb) / 0.85) 1px;
   text-shadow: var(--on-field-shadow);
+  text-transform: none;
+  text-underline-offset: 3px;
+  vertical-align: baseline;
 }
 
+/* ---- Panels ---- */
+
+/* A ruled sheet for anything that has to be read or filled in. No shadow, no radius. */
+.panel,
+.panelDeep {
+  position: relative;
+  padding: clamp(18px, 2.6vw, 28px);
+  border: 1px solid var(--c-line);
+  background: var(--c-paper);
+}
+
+/* The dark panel, nearly full width, the only rounded thing on a page. Labels in `darkLabel`. */
+.dark {
+  margin: 0 8px;
+  padding: clamp(26px, 4vw, 54px);
+  border-radius: var(--radius);
+  background: var(--c-raised);
+  color: var(--c-ink);
+}
+
+.darkTitle {
+  max-width: 15ch;
+  margin: 0;
+  font-size: clamp(30px, 4.4vw, 60px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+.darkLabel {
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dark .btn,
+.dark .primary {
+  background: var(--c-paper);
+  color: var(--c-paper);
+}
+
+.dark .btn:not(:disabled):hover,
+.dark .primary:not(:disabled):hover {
+  background: var(--c-neon);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .primary,
+  .secondary,
+  .btn::after,
+  .primary::after,
+  .textLink,
+  .step {
+    transition: none;
+  }
+}

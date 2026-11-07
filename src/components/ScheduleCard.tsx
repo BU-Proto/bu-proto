@@ -11,12 +11,11 @@ interface ScheduleCardProps {
   placeholder?: boolean
 }
 
-/** The glass "this week" card: where hack night happens and the next sessions. */
+/** The ruled "this week" card: where hack night happens and the next sessions. */
 export function ScheduleCard({ location, slots, className, placeholder }: ScheduleCardProps) {
   return (
     <aside className={[styles.card, className].filter(Boolean).join(' ')} aria-label="This week">
-      <div className={styles.handle} aria-hidden="true" />
-      <p className={styles.location} data-fog-clear>
+      <p className={styles.location}>
         <PinIcon />
         {location}
         <SampleTag show={placeholder} />
@@ -25,10 +24,8 @@ export function ScheduleCard({ location, slots, className, placeholder }: Schedu
       {slots.map((slot) => (
         <div key={`${slot.day} ${slot.start}`} className={styles.slot}>
           <div className={styles.row}>
-            <span className={styles.day} data-fog-clear>
-              {slot.day}
-            </span>
-            <span className={styles.level} data-fog-clear>
+            <span className={styles.day}>{slot.day}</span>
+            <span className={styles.level}>
               <span className={styles.bars} aria-hidden="true">
                 <i />
                 <i />
@@ -39,14 +36,12 @@ export function ScheduleCard({ location, slots, className, placeholder }: Schedu
           </div>
 
           <div className={styles.times}>
-            <div data-fog-clear>
+            <div>
               <small>Start</small>
               <b>{slot.start}</b>
             </div>
-            <span className={styles.duration} data-fog-clear>
-              {slot.duration}
-            </span>
-            <div className={styles.end} data-fog-clear>
+            <span className={styles.duration}>{slot.duration}</span>
+            <div className={styles.end}>
               <small>End</small>
               <b>{slot.end}</b>
             </div>

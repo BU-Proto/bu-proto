@@ -1,17 +1,10 @@
-/* The resources hub: three cards on one plain navy sheet, a picture over each title, the way the
-   playbook sets its guides. No glow, no coloured edges: just the sheet and a hairline rule. */
-
-.sheet {
-  padding: clamp(20px, 3vw, 36px);
-  border: 1px solid var(--rule);
-  border-radius: 22px;
-  background: var(--navy);
-}
+/* The resources hub: three cards on the harbor ground, set like the carousel's slides: a square-cut picture
+   over a centred title. */
 
 .cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 28px clamp(20px, 3vw, 36px);
+  gap: calc(var(--cell) * 3) 28px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -20,90 +13,69 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
   height: 100%;
+  text-align: center;
 }
 
 .image {
   display: block;
-  overflow: hidden;
-  margin-bottom: 8px;
-  border-radius: 14px;
-  background: var(--harbor);
+  width: 100%;
+  background: var(--c-line-2);
 }
 
 .image img {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 6 / 5;
   object-fit: cover;
-  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .kicker {
-  color: var(--ink-dim);
-  font-size: 13px;
-  font-weight: 500;
+  margin-top: 20px;
 }
 
 .title {
-  font-size: clamp(24px, 2.4vw, 32px);
-  font-weight: 400;
-  letter-spacing: -0.025em;
+  margin-top: 10px;
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
   line-height: 1.1;
+  transition: color 0.2s ease;
 }
 
 .line {
-  color: var(--ink-soft);
-  font-size: 15px;
+  max-width: 32ch;
+  margin-top: 8px;
+  color: var(--c-body);
+  font-size: 14.5px;
   line-height: 1.5;
-  text-wrap: pretty;
 }
 
 .open {
   margin-top: auto;
-  padding-top: 6px;
-  color: var(--ink-soft);
+  padding-top: var(--cell);
+  color: var(--c-ink);
   font-size: 14px;
   font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 a.card:hover .title,
 a.card:hover .open {
-  color: var(--accent);
-}
-
-a.card:hover .title {
-  text-decoration: underline;
-  text-underline-offset: 5px;
+  color: var(--c-blue);
 }
 
 a.card:focus-visible {
-  outline: 2px solid var(--frost);
+  outline: 2px solid var(--c-blue);
   outline-offset: 6px;
-  border-radius: 14px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a.card:hover .image img {
-    transform: scale(1.03);
-  }
-}
-
-.note {
-  max-width: 72ch;
-  margin: 0;
-  color: var(--ink-dim);
-  font-size: 13.5px;
-  line-height: 1.5;
-  text-shadow: var(--on-field-shadow);
 }
 
 @media (max-width: 860px) {
   .cards {
     grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
+    gap: calc(var(--cell) * 3);
   }
 
   .image img {

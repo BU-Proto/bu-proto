@@ -95,7 +95,7 @@ export function Turnstile({ action, ref }: { action: string; ref: Ref<TurnstileH
           turnstile.render(container.current, {
             sitekey: SITE_KEY,
             action,
-            theme: 'dark',
+            theme: 'light',
             size: 'flexible',
             appearance: 'interaction-only',
             // The form sends the token itself, so no hidden input to trip over FormData or focus.

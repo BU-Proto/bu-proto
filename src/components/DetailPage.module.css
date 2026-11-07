@@ -1,132 +1,181 @@
-/* The layout every detail page shares (wins, events, hackathons): an opener, a deep glass
-   write-up with a side column, photos, and a previous / next bar. */
+/* The layout every detail page shares (wins, events): the opener built like the home hero, an
+   editorial write-up with a side column, photos, and a previous / next bar. */
 
 .page {
+  /* The side space of the page's column, read from each full-width child's own width. */
+  --inset: max(var(--gutter), calc((100% - var(--maxw)) / 2));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: clamp(40px, 8vh, 96px);
   width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 12px 0 48px;
+  padding-bottom: calc(var(--cell) * 4);
 }
 
 /* ---- Opening screen ---- */
 
-/* Edge to edge: out of the page column and the shell's side padding, to the viewport's edges. */
 .opener {
-  position: relative;
-  display: grid;
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
+  display: flex;
+  flex-direction: column;
 }
 
-/* The photo runs up under the top bar (its 44px, plus the shell's and the page's top padding) and
-   fills the first screen. */
+/* One screen tall: the photo starts at the very top of the page and takes what the copy leaves. */
 .withPhoto {
-  --under-bar: calc(44px + max(18px, env(safe-area-inset-top, 0px)) + 12px);
-  min-height: min(100svh, 980px);
-  margin-top: calc(-1 * var(--under-bar));
+  min-height: 100vh;
+  min-height: min(100svh, 1100px);
 }
 
 .typeOnly {
+  justify-content: flex-end;
   min-height: min(76svh, 820px);
+  padding-top: calc(var(--cell) * 10);
 }
 
 .cover {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1 0 46vh;
   overflow: hidden;
-  /* The photo dissolves into the field instead of ending on a hard edge. */
-  -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 58%, transparent 100%);
+  background: var(--c-line-2);
 }
 
 .cover img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* Ink pooled under the text, so the type holds up over a bright photo. */
-.cover::after {
-  content: '';
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  background:
-    linear-gradient(to bottom, rgb(var(--harbor-rgb) / 0.55), transparent 140px),
-    linear-gradient(to top, rgb(var(--harbor-rgb) / 0.8), rgb(var(--harbor-rgb) / 0.3) 55%, transparent 80%),
-    linear-gradient(to right, rgb(var(--harbor-rgb) / 0.5), transparent 70%);
+/* The credit for a default cover, small and out of the way just under the photo. */
+.credit {
+  margin: 0;
+  padding: 8px var(--inset) 0;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-align: right;
+  text-transform: uppercase;
 }
 
+.credit a {
+  padding-bottom: 3px;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 3px;
+  transition: background-size 0.45s var(--ease-out);
+}
+
+.credit a:hover,
+.credit a:focus-visible {
+  background-size: 100% 3px;
+}
+
+/* A hairline runs across the window above the copy, and another between its columns. */
 .openerText {
   position: relative;
-  grid-area: 1 / 1;
-  align-self: end;
-  width: 100%;
-  max-width: calc(1180px + 32px);
-  margin-inline: auto;
-  padding: 0 16px clamp(8px, 3vh, 32px);
-  text-shadow: var(--on-field-shadow);
+  padding: calc(var(--cell) * 2.5) var(--inset) calc(var(--cell) * 3);
 }
 
-/* The line set above the title: a win's placement, an event's date, a hackathon's dates. */
+.openerText::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--c-line);
+  transform-origin: left;
+}
+
+.openerGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* The first child (a win's placement, an event's date) runs above the title. The title spans every
+   row the right column uses; the spare height goes to the last row, so those rows stay tight. */
+@media (min-width: 900px) {
+  .openerGrid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    grid-template-rows: repeat(5, auto) 1fr;
+    column-gap: calc(var(--cell) * 3);
+  }
+
+  .openerGrid::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc((100% - var(--cell) * 3) * 1.6 / 2.6 + var(--cell) * 1.5);
+    width: 1px;
+    background: var(--c-line);
+    transform-origin: top;
+  }
+
+  .openerGrid > * {
+    grid-column: 2;
+  }
+
+  .openerGrid > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .openerGrid > .title {
+    grid-row: 2 / -1;
+    grid-column: 1;
+  }
+}
+
+/* The line set above the title: a win's placement and track. */
 .kicker {
-  margin: 0 0 clamp(12px, 2.4vh, 22px);
-  /* In the colour of what it marks, where it has one: a win's placement is rose. */
-  color: var(--hue, inherit);
-  font-size: clamp(30px, 4.4vw, 56px);
-  font-weight: 200;
-  letter-spacing: -0.035em;
-  line-height: 1;
+  margin: 0 0 calc(var(--cell) * 1.5);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
 }
 
 /* A quieter second line under the kicker. */
 .kickerNote {
   display: block;
-  margin-top: 10px;
-  color: var(--ink-soft);
-  font-size: clamp(15px, 1.3vw, 17px);
-  font-weight: 400;
-  letter-spacing: -0.005em;
+  margin-top: 6px;
+  color: var(--c-muted);
+  font-size: 10px;
 }
 
 .title {
-  max-width: 16ch;
   margin: 0;
-  font-size: clamp(48px, 8.6vw, 124px);
-  font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 0.94;
+  font-size: clamp(32px, 5.2vw, 82px);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+  overflow-wrap: break-word;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
 /* No photo: the name is the picture. */
 .hugeName .title {
-  font-size: clamp(56px, 12.5vw, 188px);
-  letter-spacing: -0.055em;
+  font-size: clamp(38px, 6.4vw, 104px);
 }
 
-.title > span {
-  vertical-align: 0.6em;
-}
-
-/* A sentence or two under the title. */
+/* A sentence or two beside the title. */
 .lede {
-  max-width: 44ch;
-  margin: clamp(16px, 2.6vh, 24px) 0 0;
-  font-size: clamp(17px, 1.6vw, 21px);
-  line-height: 1.45;
+  margin: calc(var(--cell) * 1.5) 0 0;
+  color: var(--c-body);
+  font-size: clamp(15px, 1.45vw, 20px);
+  line-height: 1.4;
   text-wrap: pretty;
 }
 
-/* The small print under the title: where it came from, when and where it is. */
+/* The small print: where it came from, when and where it is. */
 .note {
   margin: 10px 0 0;
-  color: var(--ink-soft);
-  font-size: 15px;
+  color: var(--c-muted);
+  font-size: 14px;
 }
 
 .actions {
@@ -134,16 +183,46 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  margin-top: clamp(20px, 3vh, 28px);
+  margin-top: calc(var(--cell) * 1.5);
+}
+
+@media (min-width: 900px) {
+  /* Level with the top of the title. */
+  .lede {
+    margin-top: 0;
+  }
 }
 
 /* ---- The write-up ---- */
 
 .sheet {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: clamp(28px, 4vw, 64px);
+  gap: calc(var(--cell) * 4);
+  padding: calc(var(--cell) * 9) var(--inset);
+}
+
+@media (min-width: 860px) {
+  .sheet {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    column-gap: calc(var(--cell) * 6);
+  }
+
+  .aside {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .main {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .main:only-child .section {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    column-gap: calc(var(--cell) * 6);
+  }
 }
 
 .sheet > :only-child {
@@ -153,21 +232,22 @@
 .main {
   display: grid;
   align-content: start;
-  gap: clamp(36px, 5vh, 56px);
-  padding: clamp(22px, 4vw, 52px);
+  gap: calc(var(--cell) * 6);
 }
 
 .section {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  gap: 18px;
+  gap: calc(var(--cell) * 2);
 }
 
 .prose {
-  max-width: 65ch;
-  font-size: 17px;
-  line-height: 1.7;
-  text-wrap: pretty;
+  color: var(--c-body);
+  font-size: clamp(15px, 1.15vw, 18px);
+  line-height: 1.62;
+  text-align: justify;
+  text-align-last: left;
 }
 
 .prose p {
@@ -178,96 +258,110 @@
   margin-top: 1em;
 }
 
+/* Clear of the tab at the top right while it's pinned. */
 .aside {
   position: sticky;
-  top: 24px;
+  top: calc(var(--cell) * 5);
   display: grid;
   align-content: start;
-  gap: 36px;
-  padding-top: clamp(22px, 4vw, 52px);
-  text-shadow: var(--on-field-shadow);
+  gap: calc(var(--cell) * 3);
 }
 
 .asideTitle {
-  margin: 0 0 6px;
-  color: var(--ink-soft);
-  font-size: 15px;
+  margin: 0 0 var(--cell);
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 400;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
 }
 
 /* A ruled list: names, facts, a run of show. Reads like a colophon, not a row of badges. */
 .ruled {
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--c-line);
   list-style: none;
 }
 
 .ruled > li {
-  padding: 9px 0;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
-  font-size: 18px;
-  font-weight: 300;
-  letter-spacing: -0.01em;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-line);
+  font-size: 15px;
 }
 
 .person {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
+  padding-bottom: 3px;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 3px;
+  transition: background-size 0.45s var(--ease-out);
 }
 
 .arrow {
-  color: var(--ink-dim);
-  font-size: 14px;
-  transition: color 150ms;
+  color: var(--c-muted);
+  font-size: 13px;
+  transition: color 0.15s ease;
 }
 
-.person:hover {
-  text-decoration: underline;
-  text-decoration-color: rgb(var(--frost-rgb) / 0.5);
-  text-underline-offset: 4px;
+.person:hover,
+.person:focus-visible {
+  background-size: 100% 3px;
 }
 
 .person:hover .arrow {
-  color: var(--accent);
+  color: var(--c-blue);
 }
 
 .person:focus-visible {
-  outline: 2px solid var(--frost);
+  outline: 2px solid var(--c-blue);
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
+/* The heading stays on the page's column; the strip under it runs edge to edge. */
 .gallery {
   display: grid;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--cell) * 2);
+  padding-block: calc(var(--cell) * 7);
 }
 
-/* A second, smaller glass panel after the photos. */
+.gallery > h2 {
+  max-width: none;
+  padding-inline: var(--inset);
+}
+
+/* A ruled panel of its own, after the photos. */
 .panel {
   display: grid;
-  gap: 16px;
+  gap: var(--cell);
+  margin-inline: var(--inset);
 }
 
 /* ---- Previous / next ---- */
 
-/* The end of the page sits on the field, not in another box: a hairline, then the neighbours set
-   large, like a book's next chapter. */
+/* The end of the page: a hairline, then the neighbours set at section size. */
 .neighbours {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: end;
-  gap: 16px clamp(16px, 4vw, 48px);
-  margin-top: clamp(24px, 6vh, 64px);
-  padding-top: clamp(28px, 5vh, 52px);
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.35);
-  text-shadow: var(--on-field-shadow);
+  gap: var(--cell) calc(var(--cell) * 3);
+  margin-inline: var(--inset);
+  padding-top: calc(var(--cell) * 3);
+  border-top: 1px solid var(--c-line);
 }
 
 .neighbour {
   display: grid;
   align-content: start;
-  gap: 6px;
+  justify-items: start;
+  gap: 8px;
   padding: 10px 0;
 }
 
@@ -277,33 +371,44 @@
 }
 
 .neighbourLabel {
-  color: var(--ink-soft);
-  font-size: 14px;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
 }
 
 .neighbourName {
-  font-size: clamp(28px, 4.6vw, 60px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  padding-bottom: 3px;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 3px;
+  font-size: clamp(26px, 3.4vw, 46px);
+  letter-spacing: -0.02em;
+  line-height: 1.06;
   text-wrap: balance;
+  transition: background-size 0.45s var(--ease-out);
+}
+
+.toNext .neighbourName {
+  background-position: right bottom;
 }
 
 .neighbourMeta {
-  color: var(--ink-soft);
+  color: var(--c-muted);
   font-size: 14px;
 }
 
-.neighbour:hover .neighbourName {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
+.neighbour:hover .neighbourName,
+.neighbour:focus-visible .neighbourName {
+  background-size: 100% 3px;
 }
 
 .neighbour:focus-visible {
-  outline: 2px solid var(--frost);
+  outline: 2px solid var(--c-blue);
   outline-offset: 4px;
-  border-radius: 4px;
 }
 
 .all {
@@ -315,53 +420,49 @@
 .missing {
   display: grid;
   justify-items: start;
-  gap: 18px;
+  gap: calc(var(--cell) * 2);
   max-width: 760px;
-  padding-top: clamp(24px, 10vh, 120px);
 }
 
 .missing > a {
   margin-top: 8px;
 }
 
-@media (max-width: 860px) {
-  .sheet {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
+@media (max-width: 859px) {
   /* Stacked under the text, the side column no longer needs pinning. */
   .aside {
     position: static;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 32px 28px;
-    padding-top: 0;
+    gap: calc(var(--cell) * 3) calc(var(--cell) * 2);
   }
 }
 
-@media (max-width: 640px) {
-  /* On a phone the type sits under the photo rather than over most of it. */
+@media (max-width: 680px) {
+  /* On a phone the photo keeps its own height and the type follows it. */
   .withPhoto {
     min-height: 0;
   }
 
-  .withPhoto .cover {
-    position: relative;
-    inset: auto;
-    grid-area: 1 / 1;
-    height: calc(56svh + var(--under-bar));
-  }
-
-  .withPhoto .openerText {
-    grid-area: 2 / 1;
-    margin-top: -96px;
+  .cover {
+    flex: none;
+    height: 56svh;
   }
 
   .typeOnly {
     min-height: min(64svh, 560px);
+    padding-top: calc(var(--cell) * 7);
+  }
+
+  .sheet {
+    padding-block: calc(var(--cell) * 5);
+  }
+
+  .gallery {
+    padding-block: calc(var(--cell) * 4);
   }
 
   .prose {
-    font-size: 16px;
+    text-align: left;
   }
 
   /* Previous and next side by side, the way back to the list under them. */
@@ -375,31 +476,50 @@
   }
 }
 
+/* The same order and the same curve as the home hero. */
 @media (prefers-reduced-motion: no-preference) {
   .cover img {
-    animation: settle 1400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: appear 1s var(--ease-lusion) both;
   }
 
-  .openerText > * {
-    animation: rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  .openerText::before {
+    animation: drawAcross 1s var(--ease-lusion) both;
   }
 
-  .openerText > :nth-child(2) {
-    animation-delay: 60ms;
+  .openerGrid::before {
+    animation: drawDown 1s var(--ease-lusion) both;
   }
 
-  .openerText > :nth-child(3) {
-    animation-delay: 120ms;
+  /* The RSVP form opens later, with an entrance of its own, so it stays out of this. */
+  .openerGrid > :not(.title, [role='group']) {
+    animation: rise 1s var(--ease-lusion) 0.3s both;
   }
 
-  .openerText > :nth-child(n + 4) {
-    animation-delay: 180ms;
+  .openerGrid > :nth-child(3):not(.title, [role='group']) {
+    animation-delay: 0.36s;
+  }
+
+  .openerGrid > :nth-child(4):not(.title, [role='group']) {
+    animation-delay: 0.44s;
+  }
+
+  .openerGrid > :nth-child(n + 5):not(.title, [role='group']) {
+    animation-delay: 0.58s;
   }
 }
 
-@keyframes settle {
+@media (prefers-reduced-motion: reduce) {
+  .credit a,
+  .person,
+  .arrow,
+  .neighbourName {
+    transition: none;
+  }
+}
+
+@keyframes appear {
   from {
-    transform: scale(1.06);
+    opacity: 0;
   }
 }
 
@@ -410,31 +530,14 @@
   }
 }
 
-@media (max-width: 640px) {
-  .neighbours {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .neighbours .all {
-    grid-column: 1 / -1;
-    grid-row: 2;
+@keyframes drawAcross {
+  from {
+    transform: scaleX(0);
   }
 }
 
-/* The credit for a default cover, small and out of the way at the photo's top corner. */
-.credit {
-  position: absolute;
-  top: calc(var(--under-bar, 0px) + 14px);
-  right: max(16px, env(safe-area-inset-right, 0px));
-  z-index: 1;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 11.5px;
-  text-shadow: var(--on-field-shadow);
-}
-
-.credit a {
-  text-decoration: underline;
-  text-decoration-color: rgb(var(--frost-rgb) / 0.35);
-  text-underline-offset: 2px;
+@keyframes drawDown {
+  from {
+    transform: scaleY(0);
+  }
 }

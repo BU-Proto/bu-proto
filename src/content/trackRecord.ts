@@ -48,6 +48,7 @@ export const LOGO_WALLS: readonly LogoWall[] = [
 export const LOGO_BAND = {
   label: 'Partners and sponsors',
   title: 'Built with',
+  lede: 'The BU programs and organizations we build with.',
   walls: ['partners', 'sponsors'] as readonly LogoWallId[],
   link: { label: 'See the track record', href: '/track-record' },
 }

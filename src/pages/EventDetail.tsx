@@ -15,10 +15,11 @@ import {
   WriteUpSection,
 } from '../components/DetailPage'
 import detail from '../components/DetailPage.module.css'
+import { KindTag } from '../components/KindTag'
 import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import ui from '../components/ui.module.css'
 import { EVENT_COVERS } from '../content/covers'
-import { EVENT_DETAIL, EVENT_NOT_FOUND, KIND_HUE } from '../content/events'
+import { EVENT_DETAIL, EVENT_NOT_FOUND } from '../content/events'
 import { BRAND } from '../content/site'
 import { eventToIcs, icsFileName } from '../lib/calendar'
 import type { EventPageData } from '../lib/content'
@@ -63,7 +64,7 @@ export function EventDetail() {
                   {agenda.map((line, i) => {
                     const { time, what } = agendaLine(line)
                     return (
-                      <li key={`${line}-${i}`} data-fog-clear>
+                      <li key={`${line}-${i}`}>
                         <span className={styles.agendaTime}>{time}</span>
                         <span>{what}</span>
                       </li>
@@ -80,9 +81,7 @@ export function EventDetail() {
             )}
 
             <AsideSection id="place" title={EVENT_DETAIL.place}>
-              <p className={styles.place} data-fog-clear>
-                {event.place}
-              </p>
+              <p className={styles.place}>{event.place}</p>
               <p className={styles.map}>
                 <OutLink href={mapsUrl(event.place)}>{EVENT_DETAIL.map}</OutLink>
               </p>
@@ -122,7 +121,7 @@ function Opener({ event, past }: { event: ProtoEvent; past: boolean }) {
       hugeName={false}
     >
       {/* The date set the way the home page sets the next event's: the day huge, the rest beside it. */}
-      <p className={styles.date} data-hue={KIND_HUE[event.kind]} data-fog-clear>
+      <p className={styles.date}>
         <span className={styles.day}>{day}</span>
         <span className={styles.monthWeek}>
           {monthLong}
@@ -133,26 +132,22 @@ function Opener({ event, past }: { event: ProtoEvent; past: boolean }) {
       </p>
       <DetailTitle sample={event.placeholder}>{event.title}</DetailTitle>
       {filled(event.text) && (
-        <p className={detail.lede} data-fog-clear>
-          {event.text}
-        </p>
+        <p className={detail.lede}>{event.text}</p>
       )}
       {/* Kind, time and place, set apart by space and tone rather than separators. */}
-      <p className={`${detail.note} ${styles.meta}`} data-hue={KIND_HUE[event.kind]} data-fog-clear>
-        {kindAddsInfo(event.kind, event.title) && <span className={styles.kind}>{event.kind}</span>}
+      <p className={`${detail.note} ${styles.meta}`}>
+        {kindAddsInfo(event.kind, event.title) && <KindTag kind={event.kind} />}
         <span className={styles.time}>{event.time}</span>
         <span>{event.place}</span>
       </p>
 
       {past ? (
-        <p className={styles.past} data-fog-clear>
-          {EVENT_DETAIL.past}
-        </p>
+        <p className={styles.past}>{EVENT_DETAIL.past}</p>
       ) : (
         <>
           <div className={detail.actions}>
             <RsvpButton rsvp={rsvp} prominent />
-            <a className={ui.secondary} href={ics} download={icsFileName(event.title)} data-fog-clear="box">
+            <a className={ui.secondary} href={ics} download={icsFileName(event.title)}>
               {EVENT_DETAIL.addToCalendar}
             </a>
           </div>

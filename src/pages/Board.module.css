@@ -1,17 +1,15 @@
 /*
- * The board as a masthead: a full portrait per seat, then name, role and links set plainly on the
- * field below it. Open seats keep the same shape with an empty frame, so the board reads as one
- * table with gaps in it. Nothing is boxed but the frames, so the copy carries the on-field shadow.
+ * The board as a masthead: a full portrait per seat, then name, role and links set plainly below
+ * it. Open seats keep the same shape with an empty dashed frame, so the board reads as one table
+ * with gaps in it. The form closes the page on the editorial split.
  */
 
 .contact {
   display: grid;
-  gap: 10px;
-  margin-top: 6px;
-  color: var(--ink-soft);
+  gap: 6px;
+  color: var(--c-body);
   font-size: 15px;
   line-height: 1.55;
-  text-shadow: var(--on-field-shadow);
 }
 
 .contact p {
@@ -19,43 +17,19 @@
 }
 
 .contact a {
-  color: var(--ink);
+  color: var(--c-ink);
 }
 
 /* While seats are open: what's happening, above the seats. */
 .board {
   display: grid;
-  gap: clamp(28px, 5vh, 44px);
-  padding-top: clamp(16px, 4vh, 40px);
-}
-
-.lead {
-  display: grid;
-  gap: 14px;
-  text-shadow: var(--on-field-shadow);
-}
-
-.leadTitle {
-  margin: 0;
-  font-size: clamp(34px, 4.6vw, 60px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  text-wrap: balance;
-}
-
-.leadText {
-  max-width: 46ch;
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.55;
-  text-wrap: pretty;
+  gap: calc(var(--cell) * 4);
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(48px, 7vh, 72px) clamp(24px, 3.4vw, 44px);
+  gap: calc(var(--cell) * 4) 28px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -65,33 +39,22 @@
   display: grid;
   grid-template-rows: auto 1fr;
   align-content: start;
-  gap: 20px;
+  gap: var(--cell);
   min-width: 0;
 }
 
 .portrait,
 .empty {
   position: relative;
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
-  border-radius: 6px;
-}
-
-.portrait {
   display: grid;
   place-items: center;
-  /* What shows with no photo, and under one while it loads: frosted glass that takes its colour
-     from the field behind it, deepening toward ink, with the field's cerulean at the top and its
-     raspberry at the foot. */
-  background:
-    radial-gradient(110% 70% at 20% 0%, rgb(var(--sky-deep-rgb) / 0.3), transparent 70%),
-    radial-gradient(90% 60% at 90% 100%, rgb(var(--rose-deep-rgb) / 0.24), transparent 70%),
-    linear-gradient(180deg, rgb(var(--frost-rgb) / 0.14), rgb(var(--navy-rgb) / 0.42));
-  -webkit-backdrop-filter: blur(28px) saturate(140%);
-  backdrop-filter: blur(28px) saturate(140%);
-  box-shadow:
-    0 30px 70px -40px rgb(var(--harbor-rgb) / 0.8),
-    inset 0 0 0 1px rgb(var(--frost-rgb) / 0.12);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+
+/* What shows with no photo, and under one while it loads. */
+.portrait {
+  background: var(--c-navy);
 }
 
 .portrait img {
@@ -102,35 +65,16 @@
   object-fit: cover;
 }
 
-/*
- * An open seat's frame: a dashed edge with the frozen field gathered just inside it and nothing
- * where the face would be. A dark wash keeps the live field from showing through as a picture.
- */
+/* An open seat's frame: a dashed edge with Proto's mark, faint, where the face would be. */
 .empty {
-  border: 1px dashed rgb(var(--frost-rgb) / 0.5);
-  /* The field's light gathered at the foot of the frame, where someone would stand. */
-  background:
-    radial-gradient(80% 50% at 50% 100%, rgb(var(--iris-deep-rgb) / 0.26), transparent 75%),
-    rgb(var(--harbor-rgb) / 0.6);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
-
-.empty::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--texture) 0 0 / 595px 400px;
-  -webkit-mask-image: radial-gradient(ellipse 58% 52% at 50% 46%, transparent 40%, #000 92%);
-  mask-image: radial-gradient(ellipse 58% 52% at 50% 46%, transparent 40%, #000 92%);
+  border: 1px dashed var(--c-muted);
+  color: var(--c-line);
 }
 
 .initials {
-  color: rgb(var(--frost-rgb) / 0.9);
+  color: var(--c-paper);
   font-size: clamp(56px, 7vw, 96px);
-  font-weight: 200;
-  text-shadow: 0 2px 30px rgb(var(--harbor-rgb) / 0.3);
-  letter-spacing: -0.04em;
+  letter-spacing: -0.035em;
   line-height: 1;
 }
 
@@ -139,53 +83,49 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
-  text-shadow: var(--on-field-shadow);
 }
 
 .name {
   margin: 0;
-  font-size: clamp(24px, 2.4vw, 30px);
-  font-weight: 300;
-  letter-spacing: -0.025em;
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
   line-height: 1.1;
   text-wrap: balance;
 }
 
-/* The sample tag sits on the name's baseline rather than floating at cap height. */
-.name > span {
-  vertical-align: 0.2em;
-}
-
 .role {
   margin: 0;
-  color: rgb(var(--frost-rgb) / 0.86);
-  font-size: 15px;
+  color: var(--c-body);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  line-height: 1.5;
+  text-transform: uppercase;
 }
 
-/* Where a member's role goes, an open seat says it's open, in the page's one accent. */
+/* Where a member's role goes, an open seat says it's open. */
 .status {
   margin: 0;
-  color: var(--mint);
-  font-size: 15px;
 }
 
 .detail {
   max-width: 34ch;
-  margin: 4px 0 14px;
-  color: var(--ink-soft);
-  font-size: 15px;
+  margin: 4px 0 var(--cell);
+  color: var(--c-body);
+  font-size: 14.5px;
   line-height: 1.5;
   text-wrap: pretty;
 }
 
 /* Pushed to the foot of the seat, so the buttons line up across a row whatever the copy's length. */
-.pick {
+.seat .pick {
   margin-top: auto;
-}
-
-.pick:focus-visible {
-  outline: 2px solid var(--frost);
-  outline-offset: 3px;
+  padding: 12px 24px;
+  font-size: 15px;
+  /* The labels are long: on a small phone they wrap rather than run off the screen. */
+  white-space: normal;
+  text-align: center;
 }
 
 .links {
@@ -198,55 +138,58 @@
   list-style: none;
 }
 
+/* A dotted line grows under it from the left on hover. */
 .link {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding-block: 2px;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.32);
-  color: var(--ink);
+  padding-bottom: 3px;
+  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  background-size: 0 3px;
+  color: var(--c-ink);
   font-weight: 500;
+  transition: background-size 0.45s var(--ease-out);
 }
 
-.link:hover {
-  border-bottom-color: var(--frost);
+.link:hover,
+.link:focus-visible {
+  background-size: 100% 3px;
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--frost);
-  outline-offset: 3px;
-  border-radius: 2px;
+  outline: 2px solid var(--c-blue);
+  outline-offset: 2px;
 }
 
 .glyph {
   flex: none;
   width: 14px;
   height: 14px;
+  margin-right: 6px;
+  vertical-align: -2px;
 }
 
-/* The one form for every open seat, on solid navy: the pitch on the left, the fields on the right. */
+.link .glyph {
+  margin-right: 0;
+}
+
+/* The one form for every open seat: the pitch on the left, the fields on the right. */
 .apply {
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  gap: clamp(24px, 4vw, 56px);
-  align-items: start;
-  margin-top: clamp(24px, 6vh, 56px);
-  padding: clamp(22px, 3.4vw, 40px);
-  scroll-margin-top: 24px;
+  padding-top: calc(var(--cell) * 4);
+  border-top: 1px solid var(--c-line);
+  scroll-margin-top: calc(var(--cell) * 4);
+}
+
+.apply > * {
+  min-width: 0;
 }
 
 .applyLead {
   display: grid;
-  gap: 12px;
-}
-
-.applyText {
-  max-width: 40ch;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 15px;
-  line-height: 1.55;
-  text-wrap: pretty;
+  align-content: start;
+  gap: var(--cell);
 }
 
 .privacy {
@@ -256,10 +199,6 @@
 @media (max-width: 960px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .apply {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -281,11 +220,13 @@
     gap: 18px;
   }
 
-  .vacancy .empty {
-    border-radius: 4px;
-  }
-
-  .vacancy .pick {
+  .seat .pick {
     margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition: none;
   }
 }

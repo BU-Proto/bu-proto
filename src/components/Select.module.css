@@ -11,8 +11,6 @@
   justify-content: space-between;
   gap: 10px;
   width: 100%;
-  /* Buttons don't inherit type by default; the class it's given (or its context) sets it. */
-  font: inherit;
   text-align: left;
   cursor: pointer;
 }
@@ -23,7 +21,7 @@
 }
 
 .trigger[aria-invalid='true'] {
-  border-color: var(--coral);
+  border-color: var(--c-red);
 }
 
 .value,
@@ -34,7 +32,7 @@
 }
 
 .placeholder {
-  color: var(--ink-dim);
+  color: var(--c-muted);
 }
 
 .chevron {
@@ -43,10 +41,10 @@
   height: 12px;
   margin-right: -2px;
   fill: none;
-  stroke: var(--ink-soft);
+  stroke: var(--c-ink);
   stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 
 .trigger[aria-expanded='true'] .chevron {
@@ -66,6 +64,7 @@
   pointer-events: none;
 }
 
+/* Portalled to the body, outside the public shell, so it reads only the site-wide tokens. */
 .list {
   position: fixed;
   z-index: 50;
@@ -75,20 +74,11 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 4px;
-  border: 1px solid var(--rule-strong);
-  border-radius: 12px;
-  background: var(--navy);
-  box-shadow:
-    0 14px 32px rgb(var(--harbor-rgb) / 0.55),
-    0 2px 6px rgb(var(--harbor-rgb) / 0.4);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  transform-origin: top center;
-}
-
-.list[data-up] {
-  transform-origin: bottom center;
+  border: 1px solid var(--c-ink);
+  background: var(--c-paper);
+  color: var(--c-ink);
+  font-family: var(--font-display);
+  font-size: 15px;
 }
 
 .list:focus {
@@ -103,18 +93,17 @@
   gap: 10px;
   min-height: 40px;
   padding: 8px 10px;
-  border-radius: 8px;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .option[data-active] {
-  background: rgb(var(--frost-rgb) / 0.1);
+  background: var(--c-line-2);
 }
 
 .option:active {
-  background: rgb(var(--frost-rgb) / 0.14);
+  background: var(--c-line);
 }
 
 .check {
@@ -122,10 +111,10 @@
   width: 16px;
   height: 16px;
   fill: none;
-  stroke: var(--mint);
+  stroke: var(--c-blue);
   stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
   visibility: hidden;
 }
 
@@ -141,12 +130,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .chevron {
-    transition: transform 160ms ease;
-  }
-
   .list:not([hidden]) {
-    animation: drop 140ms cubic-bezier(0.2, 0.8, 0.3, 1);
+    animation: drop 0.16s steps(3);
   }
 
   .list[data-up]:not([hidden]) {
@@ -157,13 +142,13 @@
 @keyframes drop {
   from {
     opacity: 0;
-    transform: translateY(-4px) scaleY(0.97);
+    transform: translateY(-6px);
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(4px) scaleY(0.97);
+    transform: translateY(6px);
   }
 }

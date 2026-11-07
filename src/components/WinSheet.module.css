@@ -1,0 +1,527 @@
+/* The wins on their light sheet: the landing's latest four and everything on /wins. */
+
+.sheet {
+  padding: clamp(40px, 6vw, 96px) clamp(20px, 5vw, 80px) clamp(56px, 8vw, 120px);
+  color: var(--paper-ink);
+  font-family: var(--font-display);
+}
+
+.empty {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* ---- The covers' canvas ---- */
+
+/* It's fixed to the screen, so the sheet's clip is what keeps it on the sheet. */
+.sheet[data-gl] {
+  clip-path: inset(0);
+  isolation: isolate;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.sheet:not([data-gl]) .stage {
+  display: none;
+}
+
+.sheet[data-gl] .head,
+.sheet[data-gl] .grid,
+.sheet[data-gl] .pillRow {
+  position: relative;
+  z-index: 1;
+}
+
+/* A drawn cover keeps its box still, for measuring, and its DOM picture out of sight. */
+.media[data-gl] {
+  transform: none !important;
+  transition: none !important;
+}
+
+.media[data-gl] .clip {
+  opacity: 0;
+}
+
+/* ---- Heading ---- */
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 8vh;
+}
+
+.title {
+  margin: 0 0 0 -0.07em;
+  padding-top: 0.5em;
+  overflow: hidden;
+  font-size: clamp(56px, 8vw, 128px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+}
+
+.word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.char {
+  display: inline-block;
+  transform-origin: 0 100%;
+}
+
+.lede {
+  flex: none;
+  width: 300px;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-size: clamp(10px, 0.9vw, 13px);
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.ledeLine {
+  display: block;
+}
+
+/* ---- Grid and tile ---- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 80px max(16px, 2vw);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  min-width: 0;
+}
+
+.tile {
+  display: block;
+  container-type: inline-size;
+  color: inherit;
+  border-radius: 16px;
+}
+
+.tile[data-link]:focus-visible {
+  outline: 2px solid var(--paper-ink);
+  outline-offset: 6px;
+}
+
+.media {
+  --mx: 0;
+  --my: 0;
+  position: relative;
+  aspect-ratio: 20 / 13;
+}
+
+.clip {
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--c-raised);
+  clip-path: inset(0 round 16px);
+}
+
+.zoom {
+  position: absolute;
+  inset: 0;
+}
+
+/* Larger than its box by the follow's reach, so the cursor never pulls an edge into view. */
+.art {
+  position: absolute;
+  inset: -12px;
+  display: grid;
+  place-items: center;
+  background: var(--c-raised);
+  transform: scale(1.026);
+}
+
+.art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The art's grid is 156 cells across at 0.6em each. */
+.ascii {
+  --figure-size: calc(100cqw / 93.6);
+  color: var(--c-iris-300);
+}
+
+.tag {
+  position: relative;
+  contain: layout;
+  margin: 1.5em 0 1em;
+  font-size: clamp(10px, 0.9vw, 13px);
+  line-height: 1.4;
+}
+
+.tagTwin {
+  color: transparent;
+}
+
+.tagLive {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---- The name in its one-line mask ---- */
+
+.name {
+  margin: 0;
+  /* A long name comes down to fit the column, leaving room for the hover's shift. */
+  font-size: min(clamp(26px, 3vw, 48px), calc(100cqw / (var(--n) * 0.54 + 1.6)));
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.mask {
+  position: relative;
+  left: -0.06em;
+  display: flex;
+  height: 1.15em;
+  overflow: hidden;
+  line-height: 1.15;
+}
+
+.arrow {
+  position: absolute;
+  top: 0;
+  left: -1em;
+  font-family: var(--font-mono);
+}
+
+.letter {
+  flex: none;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  height: 1.15em;
+}
+
+.copy {
+  display: block;
+  flex: none;
+  height: 1.15em;
+  white-space: pre;
+}
+
+.space {
+  flex: none;
+  width: 0.3em;
+}
+
+.sample {
+  margin: 8px 0 0;
+}
+
+.sample > span {
+  margin-left: 0;
+  color: var(--amber);
+  text-decoration-color: var(--amber);
+  text-shadow: none;
+}
+
+.blurb {
+  margin: 14px 0 0;
+  max-width: 56ch;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.team {
+  margin: 10px 0 0;
+  font-size: 13px;
+  opacity: 0.72;
+}
+
+/* ---- All wins ---- */
+
+.pillRow {
+  display: flex;
+  justify-content: center;
+  margin-top: calc(12vh - 12px);
+  overflow: hidden;
+  padding: 12px 24px 24px;
+}
+
+.pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 3.375em;
+  padding: 1em 1.5em 1em 1.625em;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--c-ink);
+  color: var(--c-paper);
+  font-size: clamp(0.875rem, 1vw, 1.75rem);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.pillDot {
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 1em;
+  border-radius: 50%;
+  background: var(--c-paper);
+}
+
+.pillLabel {
+  position: relative;
+}
+
+.pillArrow {
+  position: absolute;
+  top: 50%;
+  right: 1em;
+  font-family: var(--font-mono);
+  transform: translate(3em, -50%);
+}
+
+.pill:focus-visible {
+  outline: 2px solid var(--paper-ink);
+  outline-offset: 3px;
+}
+
+/* ---- Phones: the hover pose is how a tile rests ---- */
+
+@media (max-width: 812px) {
+  .head {
+    display: block;
+  }
+
+  .head {
+    margin-bottom: 0;
+  }
+
+  .title {
+    font-size: 15vw;
+  }
+
+  .lede {
+    margin: 3em 0;
+  }
+
+  .pillRow {
+    margin-top: calc(4em - 12px);
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .tile[data-link] .letter {
+    transform: translateX(1.5em);
+  }
+
+  .tile[data-link] .space {
+    transform: translateX(1.5em);
+  }
+
+  .tile[data-link] .arrow {
+    transform: translateX(1em);
+  }
+}
+
+/* ---- Entrance, once ---- */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Only the way in is animated: off screen, everything snaps back, ready to play again. */
+  .head[data-in] .char {
+    transition: transform 667ms var(--ease-lusion) calc(var(--i) * 33ms);
+  }
+
+  .head:not([data-in]) .char {
+    transform: translateY(1em) rotate(10deg);
+  }
+
+  .head[data-in] .ledeLine {
+    transition: transform 1s var(--ease-lusion);
+  }
+
+  .head:not([data-in]) .ledeLine {
+    transform: translateY(100%);
+  }
+
+  .pillRow[data-in] .pillRise {
+    transition:
+      transform 1s var(--ease-lusion),
+      opacity 1s var(--ease-lusion);
+  }
+
+  .pillRow:not([data-in]) .pillRise {
+    opacity: 0;
+    transform: translateY(150%) rotate(10deg);
+  }
+
+  .item[data-in] .media {
+    transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .item:not([data-in]) .media[data-side='left'] {
+    transform: translateX(3.5vw) rotate(-2.3deg);
+  }
+
+  .item:not([data-in]) .media[data-side='right'] {
+    transform: translateX(-3.5vw) rotate(2.3deg);
+  }
+
+  .item[data-in] .clip {
+    transition: clip-path 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* 12.5% each side is a 0.75 frame, and 0.75 x 1.333 keeps the picture its full size inside it. */
+  .item:not([data-in]) .clip {
+    clip-path: inset(12.5% round 16px);
+  }
+
+  .item[data-in] .zoom {
+    transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .item:not([data-in]) .zoom {
+    transform: scale(1.333);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (min-width: 813px) {
+  .words[data-in] .column {
+    transition: transform 1250ms cubic-bezier(0.87, 0, 0.13, 1) var(--roll);
+  }
+
+  .words:not([data-in]) .column {
+    transform: translateY(-500%);
+  }
+}
+
+/* ---- Hover and keyboard focus ---- */
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .art {
+    transition: transform 550ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .media:hover .art {
+    transform: translate(calc(var(--mx) * 10px), calc(var(--my) * 10px)) scale(1);
+  }
+
+  /* The cursor's arrival knocks the picture out of focus for a moment. */
+  .media:hover .art > * {
+    animation: settle 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pillDot {
+    transition:
+      background-color 0.5s var(--ease-lusion),
+      transform 0.4s var(--ease-lusion);
+  }
+
+  .pill {
+    transition:
+      background-color 0.2s var(--ease-lusion),
+      color 0.5s var(--ease-lusion);
+  }
+
+  .pillLabel {
+    transition: transform 0.4s var(--ease-lusion);
+  }
+
+  .pillArrow {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0, 1);
+  }
+
+  .pill:is(:hover, :focus-visible) {
+    background: var(--mint);
+    color: var(--navy);
+    transition:
+      background-color 0.5s var(--ease-lusion) 0.3s,
+      color 0.5s var(--ease-lusion);
+  }
+
+  .pill:is(:hover, :focus-visible) .pillDot {
+    background: var(--mint);
+    transform: translateX(4em) scale(32);
+  }
+
+  .pill:is(:hover, :focus-visible) .pillLabel {
+    transform: translateX(-1.5em);
+  }
+
+  .pill:is(:hover, :focus-visible) .pillArrow {
+    transform: translate(0, -50%);
+  }
+}
+
+/* Leaving plays the arrival backwards, so its curve is --ease-lusion turned end for end. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) and (min-width: 813px) {
+  .letter {
+    transition: transform 400ms cubic-bezier(1, 0, 0.65, 1);
+    transition-delay: calc(var(--i) * 4ms);
+  }
+
+  .space {
+    transition: transform 400ms cubic-bezier(1, 0, 0.65, 1);
+  }
+
+  .arrow {
+    transition: transform 280ms cubic-bezier(1, 0, 0.65, 1);
+  }
+
+  .tile[data-link]:is(:hover, :focus-within) .letter {
+    transform: translateX(1.5em);
+    transition-timing-function: var(--ease-lusion);
+    transition-delay: calc(var(--r) * 4ms);
+  }
+
+  .tile[data-link]:is(:hover, :focus-within) .space {
+    transform: translateX(1.5em);
+    transition-timing-function: var(--ease-lusion);
+  }
+
+  .tile[data-link]:is(:hover, :focus-within) .arrow {
+    transform: translateX(1em);
+    transition-timing-function: var(--ease-lusion);
+    transition-delay: 120ms;
+  }
+}
+
+@keyframes settle {
+  from {
+    filter: blur(3px);
+  }
+
+  to {
+    filter: blur(0);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .pill:is(:hover, :focus-visible) {
+    background: var(--mint);
+    color: var(--navy);
+  }
+}

@@ -1,16 +1,3 @@
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.decrypt {
-  white-space: pre-wrap;
-}
-
 /* ---- Marquee ---- */
 
 .marquee {
@@ -66,31 +53,7 @@
   }
 }
 
-/* ---- ScrubWords ---- */
-
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .word {
-      animation: lit linear both;
-      animation-timeline: view();
-      animation-range: entry calc(30% + var(--i) * 3%) cover calc(40% + var(--i) * 2%);
-    }
-  }
-}
-
-@keyframes lit {
-  from {
-    opacity: 0.14;
-    filter: blur(6px);
-  }
-
-  to {
-    opacity: 1;
-    filter: none;
-  }
-}
-
-/* ---- AsciiFigure ---- */
+/* ---- The wins' lettering (WinTile) ---- */
 
 .figure {
   margin: 0;
@@ -108,52 +71,100 @@
 /* ---- Scroll-in reveals (useReveal) ---- */
 
 /*
- * Four ways in, so the page doesn't fade up the same way everywhere: `rise` settles up a little,
- * `slide` comes in from the left, `column` lifts out of a baseline, and `words` sets a title word
- * by word. Each runs once; `--d` staggers a group. Only armed wrappers hide anything.
+ * Everything comes in the same way, on the same smooth curve as the Latest wins: `data-reveal`
+ * rises a little, `rule` and `rule-y` draw a hairline across or down. Each runs once; `--d`
+ * staggers a group. Only armed wrappers hide anything.
  */
-.revealWord {
-  display: inline-block;
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .reveal[data-armed] [data-reveal] {
     transition:
-      opacity 560ms cubic-bezier(0.2, 0.8, 0.2, 1),
-      transform 640ms cubic-bezier(0.2, 0.8, 0.2, 1);
-    transition-delay: var(--d, 0ms);
+      opacity 1s var(--ease-lusion),
+      transform 1s var(--ease-lusion);
+    transition-delay: calc(var(--d, 0ms) * 0.6);
   }
 
   .reveal[data-armed] [data-reveal]:not([data-shown]) {
     opacity: 0;
-    transform: translateY(22px);
+    transform: translateY(24px);
   }
 
-  .reveal[data-armed] [data-reveal='slide']:not([data-shown]) {
-    transform: translateX(-28px);
+  .reveal[data-armed] [data-reveal='rule'],
+  .reveal[data-armed] [data-reveal='rule-y'] {
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms);
   }
 
-  .reveal[data-armed] [data-reveal='column']:not([data-shown]) {
-    transform: translateY(45%);
+  .reveal[data-armed] [data-reveal='rule'] {
+    transform-origin: left;
   }
 
-  /* The title itself stays put; its words move. */
-  .reveal[data-armed] [data-reveal='words'],
-  .reveal[data-armed] [data-reveal='words']:not([data-shown]) {
+  .reveal[data-armed] [data-reveal='rule-y'] {
+    transform-origin: top;
+  }
+
+  .reveal[data-armed] [data-reveal='rule']:not([data-shown]) {
     opacity: 1;
-    transform: none;
-    transition: none;
+    transform: scaleX(0);
   }
 
-  .reveal[data-armed] [data-reveal='words'] .revealWord {
-    transition:
-      opacity 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
-      transform 620ms cubic-bezier(0.2, 0.8, 0.2, 1);
-    transition-delay: calc(var(--d, 0ms) + var(--i) * 70ms);
+  .reveal[data-armed] [data-reveal='rule-y']:not([data-shown]) {
+    opacity: 1;
+    transform: scaleY(0);
+  }
+}
+
+/* ---- Lines rising out of a mask (MaskLines) ---- */
+
+.mask {
+  position: relative;
+  display: block;
+}
+
+/* A hidden copy of the text, measured to find where it wraps. */
+.maskProbe {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* The paddings give ascenders and descenders room inside the mask; the margins take it back. */
+.maskLine {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.12em 0.18em;
+  margin-block: -0.12em -0.18em;
+}
+
+.maskWord {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.maskChar {
+  display: inline-block;
+  transform-origin: 0 100%;
+}
+
+/* The words for screen readers: out of sight, and out of the way of the letters. */
+.maskSr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The same entrance as the Latest wins heading. */
+@media (prefers-reduced-motion: no-preference) {
+  .mask:not([data-shown]) .maskChar {
+    transform: translateY(1.1em) rotate(10deg);
   }
 
-  .reveal[data-armed] [data-reveal='words']:not([data-shown]) .revealWord {
-    opacity: 0;
-    transform: translateY(0.45em);
+  .mask[data-shown] .maskChar {
+    transition: transform 667ms var(--ease-lusion);
+    transition-delay: calc(var(--delay, 0ms) + var(--i) * var(--step, 33ms));
   }
 }

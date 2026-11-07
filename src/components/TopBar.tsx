@@ -2,20 +2,19 @@ import { Link, NavLink } from 'react-router'
 import { BRAND, NAV_ITEMS } from '../content/site'
 import { MenuSheet } from './MenuSheet'
 import { NavMenu } from './NavMenu'
-import ui from './ui.module.css'
+import { ProtoMark } from './ProtoMark'
 import styles from './TopBar.module.css'
 
 /**
- * Seal and name, the centered nav pill, and Join on the right. A pill item with pages under it
- * (About) opens them in a small menu. On phones the pill doesn't fit, so the menu sheet takes
- * Join's place and carries every page; the footer lists the rest on desktop.
+ * The tab fixed to the top right of every page: Proto's mark, the main pages, and Join. A tab item
+ * with pages under it (About) opens them in a small menu. On phones the items don't fit, so the
+ * menu sheet takes their place and carries every page; the footer lists the rest on desktop.
  */
 export function TopBar() {
   return (
     <header className={styles.top}>
-      <Link className={styles.logo} to="/" data-fog-clear>
-        {/* A filled flat mark: shown as-is, not through the stroked icon helper. */}
-        <img src={BRAND.seal} alt="" width={24} height={24} />
+      <Link className={styles.logo} to="/">
+        <ProtoMark size={18} />
         {BRAND.short}
       </Link>
 
@@ -24,20 +23,18 @@ export function TopBar() {
           item.children ? (
             <NavMenu key={item.to} item={item} />
           ) : (
-            <NavLink key={item.to} to={item.to} data-fog-clear="box">
+            <NavLink key={item.to} to={item.to}>
               {item.label}
             </NavLink>
           ),
         )}
       </nav>
 
-      <div className={styles.actions}>
-        <Link className={`${ui.primary} ${styles.join}`} to="/join" data-fog-clear="box">
-          Join Proto
-        </Link>
-        <div className={styles.menu}>
-          <MenuSheet />
-        </div>
+      <Link className={styles.join} to="/join">
+        Join Proto
+      </Link>
+      <div className={styles.menu}>
+        <MenuSheet />
       </div>
     </header>
   )

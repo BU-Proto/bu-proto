@@ -22,11 +22,11 @@ import { TrackRecord } from './pages/TrackRecord'
 import { WinDetail, WinLoadError } from './pages/WinDetail'
 import { Wins } from './pages/Wins'
 
-// Pages that read from the API. Layout has no loader, so on first load it (and the field) renders
-// at once and only the page shows its fallback; the field never remounts when the data lands.
+// Pages that read from the API. Layout has no loader, so on first load it renders at once and only
+// the page shows its fallback; the top bar never remounts when the data lands.
 const dataRoute = { HydrateFallback: PageLoading, ErrorBoundary: LoadError }
 
-// Every page renders inside Layout, so the field and the top bar mount once and stay put.
+// Every page renders inside Layout, so the top bar and the footer mount once and stay put.
 const router = createBrowserRouter([
   {
     Component: Layout,

@@ -1,18 +1,20 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useLoaderData } from 'react-router'
 import type { Hackathon } from '../../shared/api'
+import motion from '../components/motion/motion.module.css'
+import { useReveal } from '../components/motion/useReveal'
 import { PageIntro } from '../components/PageIntro'
 import { SampleTag } from '../components/SampleTag'
 import { Status } from '../components/Status'
 import ui from '../components/ui.module.css'
 import { CARD, HACKATHONS_EMPTY, HACKATHONS_INTRO, MODE_LABEL, TRAVEL_NOTE } from '../content/hackathons'
 import { daysUntil, formatDay, formatMonth, formatRange } from '../lib/dates'
-import { glyphTexture, hash } from '../lib/glyphArt'
+import { hash } from '../lib/glyphArt'
 import { statusOf } from '../lib/hackathons'
 import styles from './Hackathons.module.css'
 
-/** Frost, a little brighter than the page texture, so a card without a photo still has a ground. */
-const FALLBACK_INK = 'rgba(246, 251, 255, 0.16)'
+/** How many solid grounds a card without a photo can fall on (see Hackathons.module.css). */
+const FALLBACK_TONES = 4
 
 /** "hackrpi.com" from its URL, so the card says where it goes. */
 function hostOf(href: string): string {
@@ -29,25 +31,24 @@ function placeLine(hackathon: Hackathon): string[] {
   return [hackathon.location, MODE_LABEL[hackathon.mode]]
 }
 
-function HackathonCard({ hackathon, texture }: { hackathon: Hackathon; texture: string }) {
+function HackathonCard({ hackathon, index }: { hackathon: Hackathon; index: number }) {
   const host = hackathon.href ? hostOf(hackathon.href) : ''
   const [place, mode] = placeLine(hackathon)
-  // Each fallback card shows a different stretch of the frozen field, so a row of them isn't a
-  // row of copies.
-  const offset = `${Math.round(hash(hackathon.id, 3) * 595)}px ${Math.round(hash(3, hackathon.id) * 400)}px`
+  // Each fallback card lands on its own colour, so a row of them isn't a row of copies.
+  const tone = Math.floor(hash(hackathon.id, 3) * FALLBACK_TONES)
   // MLH renames its images now and then, so an imported link can go dead: fall back, don't break.
   const [failed, setFailed] = useState({ photo: false, logo: false })
   const photo = failed.photo ? null : hackathon.photo
   const logo = failed.logo ? null : hackathon.logo
 
   return (
-    <li className={styles.card} data-linked={host !== ''} data-fog-clear="box">
-      <div
-        className={styles.art}
-        data-photo={photo ? '' : undefined}
-        style={{ '--texture': texture ? `url(${texture})` : 'none', '--offset': offset } as CSSProperties}
-        aria-hidden="true"
-      >
+    <li
+      className={styles.card}
+      data-linked={host !== ''}
+      data-reveal
+      style={{ '--d': `${(index % 3) * 70}ms` } as CSSProperties}
+    >
+      <div className={styles.art} data-photo={photo ? '' : undefined} data-tone={tone} aria-hidden="true">
         {photo && (
           <img
             className={styles.photo}
@@ -119,7 +120,7 @@ function HackathonCard({ hackathon, texture }: { hackathon: Hackathon; texture: 
 /** Upcoming hackathons as cards, grouped by the month they start in. */
 export function Hackathons() {
   const hackathons = useLoaderData<Hackathon[]>()
-  const texture = useMemo(() => glyphTexture(FALLBACK_INK), [])
+  const root = useReveal<HTMLDivElement>()
   const months = new Map<string, Hackathon[]>()
   for (const hackathon of hackathons
     .filter((item) => daysUntil(item.ends) >= 0)
@@ -129,32 +130,25 @@ export function Hackathons() {
   }
 
   return (
-    // The trips are the month's beat, so the page is in iris (see the palette in index.css).
-    <div className={ui.page} data-hue="iris">
+    <div ref={root} className={`${ui.page} ${motion.reveal}`}>
       <PageIntro intro={HACKATHONS_INTRO} />
 
       {months.size === 0 && (
-        <p className={ui.panel} data-fog-clear>
-          {HACKATHONS_EMPTY}
-        </p>
+        <p className={ui.panel}>{HACKATHONS_EMPTY}</p>
       )}
 
       {[...months].map(([month, items]) => (
         <section key={month} className={styles.month} aria-label={month}>
-          <h2 className={styles.monthName} data-fog-clear>
-            {month}
-          </h2>
+          <h2 className={styles.monthName}>{month}</h2>
           <ul className={styles.grid}>
-            {items.map((hackathon) => (
-              <HackathonCard key={hackathon.id} hackathon={hackathon} texture={texture} />
+            {items.map((hackathon, index) => (
+              <HackathonCard key={hackathon.id} hackathon={hackathon} index={index} />
             ))}
           </ul>
         </section>
       ))}
 
-      <p className={styles.footnote} data-fog-clear>
-        {TRAVEL_NOTE}
-      </p>
+      <p className={`${ui.small} ${styles.footnote}`}>{TRAVEL_NOTE}</p>
     </div>
   )
 }

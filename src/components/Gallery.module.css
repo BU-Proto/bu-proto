@@ -1,6 +1,5 @@
-/* Justified rows: every photo the same height, each row stretched to the full width, so whatever
-   the count there's never a lone photo stranded at the end. The first one leads, wider. */
-/* A filmstrip: every photo at its own aspect ratio and one shared height, scrolling sideways. */
+/* A filmstrip: every photo at its own aspect ratio and one shared height, scrolling sideways, edge
+   to edge, with the first photo lined up on the page's column. */
 .strip {
   position: relative;
   /* Its width comes from the page, never from the photos inside, or the strip would grow to fit
@@ -11,23 +10,30 @@
 }
 
 .grid {
-  --height: clamp(220px, 34vw, 440px);
+  --height: clamp(220px, 28vw, 350px);
+  --inset: max(var(--gutter), calc((100% - var(--maxw)) / 2));
   display: flex;
-  gap: 14px;
+  gap: var(--cell);
   margin: 0;
-  padding: 2px 2px 14px;
+  padding-block: 0;
+  padding-inline: var(--inset);
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline: 2px;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(var(--frost-rgb) / 0.35) transparent;
+  scrollbar-width: none;
   list-style: none;
+  cursor: grab;
+}
+
+.grid:active {
+  cursor: grabbing;
+}
+
+.grid::-webkit-scrollbar {
+  display: none;
 }
 
 .item {
   flex: none;
-  scroll-snap-align: start;
 }
 
 .thumb {
@@ -35,9 +41,8 @@
   height: var(--height);
   padding: 0;
   overflow: hidden;
-  border: 1px solid rgb(var(--frost-rgb) / 0.22);
-  border-radius: 16px;
-  background: rgb(var(--navy-rgb) / 0.45);
+  border: 0;
+  background: var(--c-line-2);
   cursor: zoom-in;
 }
 
@@ -48,6 +53,7 @@
   max-width: min(86vw, 900px);
   height: 100%;
   object-fit: contain;
+  -webkit-user-drag: none;
 }
 
 /* The stand-in width for a photo that hasn't loaded yet, about a screenshot's shape. */
@@ -56,46 +62,54 @@
 }
 
 .thumb:focus-visible {
-  outline: 2px solid var(--frost);
+  outline: 2px solid var(--c-blue);
   outline-offset: 3px;
 }
 
+/* Square, pixel-cut and only there while the pointer is over the strip or the button has focus. */
 .stripControl {
   position: absolute;
-  top: calc(50% - 7px);
+  top: 50%;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--glass-edge);
-  border-radius: 999px;
-  background: rgb(var(--navy-rgb) / 0.72);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  color: var(--ink);
-  font-size: 18px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  background: var(--c-ink);
+  clip-path: var(--px-corners);
+  color: var(--c-paper);
+  font-size: 16px;
+  opacity: 0;
   transform: translateY(-50%);
   cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.strip:hover .stripControl,
+.stripControl:focus-visible {
+  opacity: 1;
 }
 
 .stripControl:hover {
-  background: rgb(var(--navy-rgb) / 0.9);
+  background: var(--c-blue);
 }
 
+/* The corners cut a normal outline away, so focus is drawn inside the button. */
 .stripControl:focus-visible {
-  outline: 2px solid var(--frost);
-  outline-offset: 2px;
+  outline: 2px solid var(--c-neon);
+  outline-offset: -6px;
 }
 
 .stripPrev {
-  left: 10px;
+  left: var(--cell);
 }
 
 .stripNext {
-  right: 10px;
+  right: var(--cell);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 680px) {
   .grid {
     --height: 240px;
   }
@@ -106,7 +120,7 @@
   }
 }
 
-/* Full screen, above the field and the top bar, with the page held still behind it. */
+/* Full screen, above everything, on the harbor ground, with the page held still behind it. */
 .lightbox {
   width: 100vw;
   max-width: none;
@@ -115,12 +129,12 @@
   margin: 0;
   padding: 0;
   border: 0;
-  background: rgb(var(--harbor-rgb) / 0.94);
-  color: var(--ink);
+  background: var(--c-paper);
+  color: var(--c-ink);
 }
 
 .lightbox::backdrop {
-  background: rgb(var(--harbor-rgb) / 0.6);
+  background: var(--c-paper);
 }
 
 :global(html):has(.lightbox[open]) {
@@ -148,17 +162,18 @@
   max-width: 100%;
   /* The stage's top and bottom padding plus the counter's line; a % height won't resolve here. */
   max-height: calc(100dvh - 150px);
-  border-radius: 10px;
   object-fit: contain;
-  box-shadow: 0 30px 80px -30px rgb(var(--harbor-rgb) / 0.8);
 }
 
 .counter {
-  margin: 14px 0 0;
-  color: var(--ink-soft);
-  font-size: 14px;
+  margin: var(--cell) 0 0;
+  color: var(--c-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.18em;
   text-align: center;
+  text-transform: uppercase;
 }
 
 .control {
@@ -168,20 +183,21 @@
   width: 48px;
   height: 48px;
   padding: 0;
-  border: 1px solid rgb(var(--frost-rgb) / 0.24);
-  border-radius: 50%;
-  background: rgb(var(--frost-rgb) / 0.08);
-  font-size: 20px;
+  border: 0;
+  background: var(--c-ink);
+  clip-path: var(--px-corners);
+  color: var(--c-paper);
+  font-size: 18px;
   cursor: pointer;
 }
 
 .control:hover {
-  background: rgb(var(--frost-rgb) / 0.18);
+  background: var(--c-blue);
 }
 
 .control:focus-visible {
-  outline: 2px solid var(--frost);
-  outline-offset: 2px;
+  outline: 2px solid var(--c-neon);
+  outline-offset: -6px;
 }
 
 .control svg {
@@ -209,25 +225,7 @@
 }
 
 /* On phones the arrows move down beside the counter, so they never sit on the photo. */
-@media (max-width: 640px) {
-  .grid {
-    --row: 128px;
-    gap: 8px;
-  }
-
-  .item {
-    flex-basis: 140px;
-  }
-
-  .item:first-child {
-    flex-basis: 100%;
-    height: 210px;
-  }
-
-  .thumb {
-    border-radius: 12px;
-  }
-
+@media (max-width: 680px) {
   .stage {
     padding-inline: 12px;
     padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
@@ -255,20 +253,18 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .thumb img {
-    transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .thumb:hover img {
-    transform: scale(1.04);
-  }
-
   .lightbox[open] {
-    animation: fade 220ms ease-out;
+    animation: fade 0.3s steps(6);
   }
 
   .full {
-    animation: fade 260ms ease-out;
+    animation: fade 0.4s steps(6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stripControl {
+    transition: none;
   }
 }
 

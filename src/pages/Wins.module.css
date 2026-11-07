@@ -1,21 +1,6 @@
-/* The showcase itself is in components/Accolades.module.css; this paces it on the page. */
+/* The sheet runs nearly the full width of the window, past the page's gutters, like a dark panel. */
 
-.showcase {
-  display: grid;
-  gap: clamp(96px, 16vh, 180px);
-  padding-top: clamp(24px, 6vh, 64px);
-}
-
-.more {
-  display: grid;
-  gap: clamp(36px, 6vh, 64px);
-}
-
-.moreTitle {
-  margin: 0;
-  font-size: clamp(36px, 5vw, 64px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  text-shadow: var(--on-field-shadow);
+.bleed {
+  margin-top: calc(var(--cell) * -3);
+  padding: 0 8px calc(var(--cell) * 5);
 }
