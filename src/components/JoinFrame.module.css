@@ -189,7 +189,7 @@
 .links {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 18px;
+  gap: 6px 14px;
   margin: 0;
   padding: 0;
   font-family: var(--font-mono);
