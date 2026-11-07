@@ -29,26 +29,34 @@
 }
 
 .nav {
+  position: relative;
   display: flex;
   align-items: stretch;
 }
 
 .nav > a {
+  position: relative;
   display: flex;
   align-items: center;
   padding: 0 11px;
   white-space: nowrap;
 }
 
-.nav > a:hover {
-  color: var(--c-blue);
+/* The one plate that marks where you are, and where you're pointing. useNavPlate moves it. */
+.plate {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 19px;
+  background: rgb(255 255 255 / 0.14);
+  box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.1);
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-/* The page you're on is underlined by a short rule, kept clear of the pill's curve. */
-.nav > a[aria-current='page'] {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
+.plate[data-shown] {
+  opacity: 1;
 }
 
 .join {

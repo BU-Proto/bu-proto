@@ -6,6 +6,7 @@ import { MenuSheet } from './MenuSheet'
 import { NavMenu } from './NavMenu'
 import { ProtoMark } from './ProtoMark'
 import { useGlassLight } from './useGlassLight'
+import { useNavPlate } from './useNavPlate'
 import styles from './TopBar.module.css'
 
 /**
@@ -15,7 +16,10 @@ import styles from './TopBar.module.css'
  */
 export function TopBar() {
   const bar = useRef<HTMLElement>(null)
+  const nav = useRef<HTMLElement>(null)
+  const plate = useRef<HTMLSpanElement>(null)
   useGlassLight(bar)
+  useNavPlate(nav, plate)
 
   return (
     <header ref={bar} className={styles.top}>
@@ -25,12 +29,13 @@ export function TopBar() {
         {BRAND.short}
       </Link>
 
-      <nav className={styles.nav} aria-label="Primary">
+      <nav ref={nav} className={styles.nav} aria-label="Primary">
+        <span ref={plate} className={styles.plate} aria-hidden="true" />
         {NAV_ITEMS.filter((item) => item.inPill).map((item) =>
           item.children ? (
             <NavMenu key={item.to} item={item} />
           ) : (
-            <NavLink key={item.to} to={item.to}>
+            <NavLink key={item.to} to={item.to} data-plate="">
               {item.label}
             </NavLink>
           ),

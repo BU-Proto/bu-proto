@@ -102,7 +102,7 @@ export function NavMenu({ item }: { item: NavItem }) {
         if (open && !rootRef.current?.contains(event.relatedTarget as Node | null)) setOpen(false)
       }}
     >
-      <div className={styles.trigger} data-open={open || undefined} data-current={current || undefined}>
+      <div className={styles.trigger} data-plate="" data-open={open || undefined} data-current={current || undefined}>
         <Link
           className={styles.label}
           to={item.to}

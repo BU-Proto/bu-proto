@@ -8,14 +8,10 @@
 /* Set like the tab's links beside it: the name is a link to the section's page, and the chevron
    beside it, which turns over while the list is open, is its own small button. */
 .trigger {
+  position: relative;
   display: flex;
   align-items: stretch;
   white-space: nowrap;
-}
-
-.trigger:hover,
-.trigger[data-open] {
-  color: var(--c-blue);
 }
 
 .label {
@@ -33,11 +29,6 @@
   background: none;
   color: inherit;
   cursor: pointer;
-}
-
-/* On any of its pages it reads as the current section, the way a current link does. */
-.trigger[data-current] {
-  box-shadow: inset 0 -2px 0 var(--c-ink);
 }
 
 .label:focus-visible,
