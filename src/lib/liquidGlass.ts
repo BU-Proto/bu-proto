@@ -24,9 +24,11 @@ const RIM_WIDTH = 1.1
 const EDGE_GLOW = 0.14
 /** The lower lip of the glass is thicker than the upper one, since the light comes from above. */
 const LIP_TOP = 0.7
-/** Between these distances in from the rim, in CSS px, the clear edge turns to frost. */
-const CLEAR_TO = 5
-const FROST_FROM = 15
+/** In CSS px, how far in the view stays clear, and where the frost is complete, top and bottom. */
+const CLEAR_TOP = 4
+const FROST_TOP = 13
+const CLEAR_BOTTOM = 8
+const FROST_BOTTOM = 17
 
 const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(low, v))
 
@@ -125,7 +127,9 @@ export function glassMaps(width: number, height: number, radius: number, bezel: 
       rim.data[at + 2] = 255
       rim.data[at + 3] = 255 * clamp(line * (RIM_AMBIENT + RIM_PEAK * facing * reach) + glow, 0, 1)
 
-      const clear = clamp((inset - CLEAR_TO) / (FROST_FROM - CLEAR_TO), 0, 1)
+      const clearTo = CLEAR_BOTTOM + (CLEAR_TOP - CLEAR_BOTTOM) * (1 - below)
+      const frostFrom = FROST_BOTTOM + (FROST_TOP - FROST_BOTTOM) * (1 - below)
+      const clear = clamp((inset - clearTo) / (frostFrom - clearTo), 0, 1)
       core.data[at + 3] = 255 * clear * clear * (3 - 2 * clear)
     }
   }
