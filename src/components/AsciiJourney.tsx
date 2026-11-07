@@ -6,12 +6,12 @@ import { usePixelCanvas } from './usePixelCanvas'
 import ui from './ui.module.css'
 import styles from './AsciiJourney.module.css'
 
-const pitchFor = (width: number) => (width < 600 ? 8 : 12)
+const pitchFor = (width: number) => (width < 600 ? 8 : 11)
 
 /** A person's time at Proto, in ASCII: a loose crowd narrows into a team and opens out into what ships. */
 export function AsciiJourney() {
   const canvas = useRef<HTMLCanvasElement>(null)
-  usePixelCanvas(canvas, { palette: JOURNEY_PALETTE, pitch: pitchFor, fps: 12, still: 6, fontScale: 0.96, glyph: journeyGlyph, frame: journeyFrame })
+  usePixelCanvas(canvas, { palette: JOURNEY_PALETTE, pitch: pitchFor, fps: 24, still: 6, fontScale: 1, glyph: journeyGlyph, frame: journeyFrame })
 
   return (
     <section className={styles.section} aria-labelledby="journey">

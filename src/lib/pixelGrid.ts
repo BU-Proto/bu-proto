@@ -177,68 +177,80 @@ export function flowFrame(variant: FlowVariant, cells: Uint8Array, cols: number,
 
 // ---- The journey ----
 
-/** Blank, then blue and violet at three strengths, then rose and peach at three, then the baseline. */
+/** The journey's light, left to right, each stop at three strengths, then the steady beat underneath. */
+const JOURNEY_STOPS = ['#3fbcff', '#5ba6ff', '#7f94ff', '#9d8bff', '#c47ce0', '#ff6eb0', '#ff8fa4', '#ffb199'] as const
+const JOURNEY_STRENGTHS = [1, 0.6, 0.3] as const
+const dim = (hex: string, by: number) =>
+  `#${[1, 3, 5].map((at) => Math.round(Number.parseInt(hex.slice(at, at + 2), 16) * by).toString(16).padStart(2, '0')).join('')}`
+
 export const JOURNEY_PALETTE = [
   '',
-  '#3fbcff', '#1f7fc4', '#10476f',
-  '#9d8bff', '#6657c4', '#3a3178',
-  '#ff6eb0', '#c44a85', '#6e2a4c',
-  '#ffb199', '#c47f6c', '#6e463c',
-  '#f4f4f6',
+  ...JOURNEY_STRENGTHS.flatMap((by) => JOURNEY_STOPS.map((stop) => dim(stop, by))),
+  dim('#f4f4f6', 0.42),
 ] as const
+const JOURNEY_BEAT = JOURNEY_PALETTE.length - 1
 
-const JOURNEY_WAIST = 0.46
-const JOURNEY_BASELINE = 0.8
+const JOURNEY_WAIST = 0.44
+const JOURNEY_BEAT_ROW = 0.965
+/** How much of the grid is lit, roughly. */
+const JOURNEY_FILL = 0.2
+const TAU = Math.PI * 2
 
-/** Each stage has its own marks: loose at the start, more made as it goes. Stable per cell. */
+/** Each stage has its own marks: light at the start, more made as it goes. Stable per cell. */
 export function journeyGlyph(x: number, y: number, cols: number, rows: number): string {
-  if (y === Math.round(rows * JOURNEY_BASELINE)) return '_'
+  if (y === Math.round(rows * JOURNEY_BEAT_ROW)) return '_'
   const u = x / cols
-  const set = u < 0.26 ? '+:x.' : u < JOURNEY_WAIST ? '+x*:' : u < 0.7 ? '>=+*' : '#@%>'
+  const set = u < 0.22 ? '+:+x' : u < JOURNEY_WAIST ? 'x+*+' : u < 0.68 ? '>=*>' : '#@%#'
   return set[Math.floor(hash(x, y) * set.length)]!
 }
 
-/** A loose crowd narrows to a single line and opens out again into strands, over a steady beat. */
+/**
+ * People moving left to right: a wide crowd funnels through one narrow waist and comes out as three
+ * braided strands. They're real particles, so the shape holds and everything in it is travelling.
+ */
 export function journeyFrame(cells: Uint8Array, cols: number, rows: number, time: number) {
-  const beatRow = Math.round(rows * JOURNEY_BASELINE)
-  const beat = Math.floor(time * 5)
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      const u = x / cols
-      const v = y / rows
-      const seed = hash(x, y)
-      let strength = 0
-
-      if (u < JOURNEY_WAIST + 0.08) {
-        // The crowd: a wide cloud pinching toward the waist, its cells drifting in and out.
-        const spread = mix(0.5, 0.025, ease(u / JOURNEY_WAIST))
-        const off = Math.abs(v - 0.5 - 0.03 * Math.sin(u * 7 + time * 0.3)) / spread
-        const drift = noise(x * 0.38 + time * 0.55, y * 0.5 - time * 0.4)
-        const crowd = clamp01(1.15 - off) * mix(0.72, 1, ease(u / JOURNEY_WAIST)) + (drift - 0.5) * 0.7
-        if (seed < crowd * mix(0.5, 0.92, ease(u / JOURNEY_WAIST))) strength = hash(y, x + 5) < 0.55 ? 1 : 2
-      }
-      if (u > JOURNEY_WAIST - 0.08) {
-        // The strands: three lines leaving the waist, opening out and slowly swaying.
-        const open = ease((u - JOURNEY_WAIST) / (1 - JOURNEY_WAIST))
-        for (let k = 0; k < 3; k++) {
-          const wave = Math.sin(u * (7 + k * 3.5) - time * (0.32 + k * 0.1) + k * 2.1)
-          const line = 0.5 + wave * mix(0.02, 0.34 - k * 0.05, open)
-          const gap = Math.abs(v - line) * rows
-          if (gap < 0.95 + open * 0.5 && hash(x + k * 31, y) < 0.86) strength = strength === 1 ? 1 : k === 2 ? 3 : k + 1
-        }
-      }
-
-      if (strength === 0) {
-        cells[y * cols + x] = y === beatRow && (x + beat * 2) % 7 < 2 ? 13 : 0
-        continue
-      }
-      // Blue and violet give way to rose and peach, cell by cell, across the waist.
-      const warmth = ease((u - 0.3) / 0.44)
-      const warm = hash(y, x) < warmth
-      const family = warm ? (hash(x + 9, y) < mix(0.8, 0.3, u) ? 6 : 9) : hash(x + 9, y) < 0.6 ? 0 : 3
-      cells[y * cols + x] = family + strength
+  cells.fill(0)
+  const beatRow = Math.round(rows * JOURNEY_BEAT_ROW)
+  const count = Math.floor(cols * rows * JOURNEY_FILL)
+  const stops = JOURNEY_STOPS.length
+  const centre = 0.47
+  for (let i = 0; i < count; i++) {
+    // Evenly spread sequences, not random ones: no clumps and no holes in the crowd.
+    const a = (i * 0.618034) % 1
+    const b = (i * 0.754878) % 1
+    const c = (i * 0.569840) % 1
+    const u = (a + time * (0.016 + b * 0.014)) % 1
+    // Two random numbers added lean toward the middle, so the crowd thins out at its edges.
+    const off = b + c - 1
+    let v: number
+    let strength: number
+    if (u < JOURNEY_WAIST) {
+      const inward = ease(u / JOURNEY_WAIST)
+      const spread = mix(0.44, 0.014, inward * inward * (2 - inward))
+      v = centre + off * spread + Math.sin(time * 0.5 + a * 40) * spread * 0.05
+      strength = Math.abs(off) < mix(0.62, 1, inward) ? 0 : Math.abs(off) < 0.82 ? 1 : 2
+    } else {
+      const open = ease((u - JOURNEY_WAIST) / (1 - JOURNEY_WAIST))
+      const strand = Math.floor(c * 3)
+      const phase = u * 11 - time * 0.42 + (strand * TAU) / 3
+      v = centre + Math.sin(phase) * mix(0.014, 0.3, open) + off * mix(0.016, 0.05, open)
+      // A strand passing behind the others goes dim, which is what makes the braid read.
+      const front = Math.cos(phase)
+      strength = front > -0.15 ? 0 : front > -0.65 ? 1 : 2
+      // It thins out before the edge, so nothing is cut off by the screen.
+      if (a < (u - 0.9) / 0.1) continue
     }
+    const x = Math.floor(u * cols)
+    const y = Math.floor(v * rows)
+    if (y < 0 || y >= rows || y === beatRow) continue
+    const stop = Math.min(stops - 1, Math.max(0, Math.floor((u + (a - 0.5) * 0.05) * stops)))
+    const value = 1 + strength * stops + stop
+    const at = y * cols + x
+    // The brightest particle in a cell wins.
+    if (cells[at] === 0 || value < cells[at]!) cells[at] = value
   }
+  const beat = Math.floor(time * 6)
+  for (let x = 0; x < cols; x++) if ((x + beat) % 8 < 2) cells[beatRow * cols + x] = JOURNEY_BEAT
 }
 
 // ---- The skyline ----
