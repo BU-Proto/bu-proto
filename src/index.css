@@ -86,7 +86,65 @@
   --font-display: 'Host Grotesk', 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
 
+  /*
+   * The public site's language: Proto's harbor ground, frost ink and the field's light, on a 14px
+   * rhythm. Each colour is one hue at several lightnesses, so depth comes from the ground and
+   * meaning from the hue: sky, iris and rose are neighbours, read as small, medium and big, and
+   * mint is the warm-leaning opposite that means live or yours. Every text colour here clears
+   * 4.5:1 on harbor and on both raised grounds.
+   */
+  --c-paper: #061a2e;
+  --c-raised: #0b2a46;
+  --c-raised-2: #123a5c;
+  --c-ink: #f6fbff;
+  --c-body: #c9d6e2;
+  --c-muted: #8fa6b8;
+  --c-line: rgb(246 251 255 / 0.14);
+  --c-line-2: rgb(246 251 255 / 0.07);
+  --c-sky-200: #b9e2fa;
+  --c-sky-300: #7cc7f4;
+  --c-sky-500: #1a8fc0;
+  --c-sky-800: #1c4d75;
+  --c-iris-200: #d3cbff;
+  --c-iris-300: #ab9dff;
+  --c-iris-500: #7a6ee0;
+  --c-rose-200: #fad0df;
+  --c-rose-300: #f4a2c0;
+  --c-rose-500: #c2407a;
+  --c-mint-200: #cdf7d3;
+  --c-mint-300: #9df0a8;
+  /* The roles the pages read. */
+  --c-navy: var(--c-iris-300);
+  --c-blue: var(--c-sky-300);
+  --c-gold: #ffd38a;
+  --c-red: #ffb4a8;
+  --c-neon: var(--c-mint-300);
+  --cell: 14px;
+  --gutter: 56px;
+  --maxw: 1176px;
+  --radius: 26px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Stair-stepped corners, for clip-path. */
+  --px-corners: polygon(
+    10px 0, calc(100% - 10px) 0, calc(100% - 10px) 5px, calc(100% - 5px) 5px, calc(100% - 5px) 10px, 100% 10px,
+    100% calc(100% - 10px), calc(100% - 5px) calc(100% - 10px), calc(100% - 5px) calc(100% - 5px),
+    calc(100% - 10px) calc(100% - 5px), calc(100% - 10px) 100%, 10px 100%, 10px calc(100% - 5px), 5px calc(100% - 5px),
+    5px calc(100% - 10px), 0 calc(100% - 10px), 0 10px, 5px 10px, 5px 5px, 10px 5px
+  );
+  --px-corners-sm: polygon(
+    4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px,
+    100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px),
+    calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px), 2px calc(100% - 2px),
+    2px calc(100% - 4px), 0 calc(100% - 4px), 0 4px, 2px 4px, 2px 2px, 4px 2px
+  );
+
   color-scheme: dark;
+}
+
+@media (max-width: 680px) {
+  :root {
+    --gutter: 28px;
+  }
 }
 
 /* Something with a size in the palette's sense carries data-hue; its styles read --hue (text),
@@ -142,4 +200,63 @@ textarea {
 
 [hidden] {
   display: none !important;
+}
+
+/*
+ * The public site, which Layout marks with data-site. True black, as on lusion.co: no tint, no
+ * grain and no haze, so the only colour on a page is colour that's meant to be there, and the
+ * gradient reads electric against it. The hero's light dies into this same value.
+ */
+html:has([data-site='public']) {
+  --c-paper: #000;
+  --c-raised: #0d0d0f;
+  --c-raised-2: #18181b;
+  --c-ink: #f4f4f6;
+  --c-body: #c2c2c8;
+  --c-muted: #8c8c94;
+  --c-line: rgb(255 255 255 / 0.14);
+  --c-line-2: rgb(255 255 255 / 0.07);
+  /* The same hues, pushed electric: pastels go chalky on true black. All clear 7:1 on it. */
+  --sky: #3fbcff;
+  --iris: #9d8bff;
+  --rose: #ff6eb0;
+  --c-sky-300: #3fbcff;
+  --c-sky-200: #a3e0ff;
+  --c-iris-300: #9d8bff;
+  --c-iris-200: #cfc6ff;
+  --c-rose-300: #ff6eb0;
+  --c-rose-200: #ffc0dc;
+  --c-gold: #ffc24a;
+  --c-red: #ff7a6b;
+  --ink: var(--c-ink);
+  --ink-soft: var(--c-body);
+  --ink-dim: var(--c-muted);
+  --rule: var(--c-line);
+  --on-field-shadow: none;
+  --paper-ink: var(--c-ink);
+  /* What a button turns into under the cursor: the hero's gradient, in its light tones. */
+  --c-sheen: linear-gradient(100deg, var(--c-sky-300), var(--c-iris-300) 55%, var(--c-rose-300));
+
+  background: var(--c-paper);
+}
+
+body:has([data-site='public']) {
+  background: var(--c-paper);
+}
+
+[data-site='public'] {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* The proposed token fixes, previewed with ?palette=v2 in development. See ascii-field/palettePreview. */
+html[data-palette='v2'] {
+  --iris: #b6aaff;
+  --c-iris-300: #b6aaff;
+  --c-muted: #a7bac9;
+  --coral: #ff7f6e;
+  --c-red: #ff7f6e;
+  --field-sweep: linear-gradient(115deg, rgb(var(--lagoon-rgb)) 0%, rgb(var(--sky-deep-rgb)) 34%, rgb(var(--iris-deep-rgb)) 66%, rgb(var(--rose-deep-rgb)) 100%);
 }
