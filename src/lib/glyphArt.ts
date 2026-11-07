@@ -24,15 +24,18 @@ function segment(x: number, y: number, ax: number, ay: number, bx: number, by: n
   return Math.hypot(px - dx * t, py - dy * t)
 }
 
-/** Signed distance to the trail's three glyphs, drawn in a -1..1 square. */
+/**
+ * Signed distance to the trail's three glyphs, drawn in a -1..1 square. Each stroke stops 0.84 from
+ * the centre, so all three stand on one baseline and the ring and the rule are the same width.
+ */
 function shapeDistance(shape: FigureShape, x: number, y: number): number {
   if (shape === 'ring') return Math.abs(Math.hypot(x, y) - 0.64) - 0.2
   if (shape === 'chevron') {
-    return Math.min(segment(x, y, -0.42, -0.72, 0.42, 0), segment(x, y, 0.42, 0, -0.42, 0.72)) - 0.18
+    return Math.min(segment(x, y, -0.42, -0.66, 0.42, 0), segment(x, y, 0.42, 0, -0.42, 0.66)) - 0.18
   }
   // The underscore: a thin rule down on the baseline, not a block, so it reads as `_`.
-  const qx = Math.abs(x) - 0.82
-  const qy = Math.abs(y - 0.68) - 0.065
+  const qx = Math.abs(x) - 0.84
+  const qy = Math.abs(y - 0.775) - 0.065
   return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0)
 }
 
