@@ -11,17 +11,19 @@ const INDEX_OF_REFRACTION = 1.5
 const SLAB = 2
 const STEPS = 512
 
-/** The light: where it falls from (up and to the left), and how much of the rim it reaches. */
+/** The light: where it falls from (up and to the left), and how far along the rim it reaches. */
 const LIGHT_ANGLE = (120 * Math.PI) / 180
-const LIGHT_REACH = 0.42
-/** Rim opacity everywhere, then added where the light lands. A rim past 0.5 starts to look painted. */
-const RIM_AMBIENT = 0.13
-const RIM_PEAK = 0.37
-/** The bright line sits just inside the outline, in CSS px. */
-const RIM_INSET = 1.1
-const RIM_WIDTH = 1.1
-/** Glass catches more light at a glancing angle, so the very edge glows faintly. */
-const EDGE_GLOW = 0.14
+const LIGHT_REACH = 0.3
+/** Rim opacity everywhere, then added where the light lands. A flat rim reads as a CSS border, so the
+ * arcs between the two highlights are left almost dead. */
+const RIM_AMBIENT = 0.05
+const RIM_PEAK = 0.42
+/** The far highlight is the light coming back through the glass, so it's weaker. */
+const RIM_RETURN = 0.72
+/** The line sits just inside the outline, in CSS px: hard on the outside, with a soft fall inward. */
+const RIM_INSET = 0.8
+const RIM_WIDTH = 0.8
+const RIM_FALL = 3
 /** The lower lip of the glass is thicker than the upper one, since the light comes from above. */
 const LIP_TOP = 0.7
 /** In CSS px, how far in the view stays clear, and where the frost is complete, top and bottom. */
@@ -117,15 +119,14 @@ export function glassMaps(width: number, height: number, radius: number, bezel: 
       const along = (x + width / 2) / width
       const fromLeft = Math.exp(-((along / LIGHT_REACH) ** 2))
       const fromRight = Math.exp(-(((1 - along) / LIGHT_REACH) ** 2))
-      const reach = fromRight + (fromLeft - fromRight) * ((1 - ny) / 2)
+      const reach = fromRight * RIM_RETURN + (fromLeft - fromRight * RIM_RETURN) * (1 - below)
       const facing = Math.cos(Math.atan2(ny, nx) + LIGHT_ANGLE) ** 2
-      const offset = Math.abs(inset - RIM_INSET)
-      const line = offset < RIM_WIDTH ? Math.cos((Math.PI / 2) * (offset / RIM_WIDTH)) : 0
-      const glow = EDGE_GLOW * clamp(1.2 - 0.185 * Math.max(inset, 0) * 2.6, 0, 1) ** 5
+      const offset = inset - RIM_INSET
+      const line = offset < 0 ? clamp(1 + offset / RIM_WIDTH, 0, 1) : Math.exp(-offset / (RIM_FALL / 3))
       rim.data[at] = 255
       rim.data[at + 1] = 255
       rim.data[at + 2] = 255
-      rim.data[at + 3] = 255 * clamp(line * (RIM_AMBIENT + RIM_PEAK * facing * reach) + glow, 0, 1)
+      rim.data[at + 3] = 255 * clamp(line * (RIM_AMBIENT + RIM_PEAK * facing * reach), 0, 1)
 
       const clearTo = CLEAR_BOTTOM + (CLEAR_TOP - CLEAR_BOTTOM) * (1 - below)
       const frostFrom = FROST_BOTTOM + (FROST_TOP - FROST_BOTTOM) * (1 - below)
