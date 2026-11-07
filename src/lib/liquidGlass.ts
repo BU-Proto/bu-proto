@@ -11,6 +11,18 @@ const INDEX_OF_REFRACTION = 1.5
 const SLAB = 2
 const STEPS = 512
 
+/** The light: where it falls from (up and to the left), and how much of the rim it reaches. */
+const LIGHT_ANGLE = (120 * Math.PI) / 180
+const LIGHT_REACH = 0.42
+/** Rim opacity everywhere, then added where the light lands. A rim past 0.5 starts to look painted. */
+const RIM_AMBIENT = 0.13
+const RIM_PEAK = 0.37
+/** The bright line sits just inside the outline, in CSS px. */
+const RIM_INSET = 1.1
+const RIM_WIDTH = 1.1
+/** Glass catches more light at a glancing angle, so the very edge glows faintly. */
+const EDGE_GLOW = 0.14
+
 const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(low, v))
 
 /** The edge's height, 0 at the rim and 1 where it has curved over to flat: a squircle's quarter. */
@@ -39,6 +51,8 @@ const BEND = (() => {
 export interface GlassMaps {
   /** Displacement: red and green hold x and y, with 128 for none. */
   map: string
+  /** The rim of light, as white with the shape in alpha. */
+  rim: string
 }
 
 const cache = new Map<string, GlassMaps>()
@@ -52,6 +66,7 @@ export function glassMaps(width: number, height: number, radius: number, bezel: 
   const columns = Math.round(width * MAP_SCALE)
   const rows = Math.round(height * MAP_SCALE)
   const map = new ImageData(columns, rows)
+  const rim = new ImageData(columns, rows)
   const straightX = width / 2 - radius
   const straightY = height / 2 - radius
 
@@ -85,10 +100,24 @@ export function glassMaps(width: number, height: number, radius: number, bezel: 
       map.data[at + 1] = 128 - ny * bend * 127
       map.data[at + 2] = 128
       map.data[at + 3] = 255
+
+      // Each highlight starts at its own end of the box and dies away along the edge.
+      const along = (x + width / 2) / width
+      const fromLeft = Math.exp(-((along / LIGHT_REACH) ** 2))
+      const fromRight = Math.exp(-(((1 - along) / LIGHT_REACH) ** 2))
+      const reach = fromRight + (fromLeft - fromRight) * ((1 - ny) / 2)
+      const facing = Math.cos(Math.atan2(ny, nx) + LIGHT_ANGLE) ** 2
+      const offset = Math.abs(inset - RIM_INSET)
+      const line = offset < RIM_WIDTH ? Math.cos((Math.PI / 2) * (offset / RIM_WIDTH)) : 0
+      const glow = EDGE_GLOW * clamp(1.2 - 0.185 * Math.max(inset, 0) * 2.6, 0, 1) ** 5
+      rim.data[at] = 255
+      rim.data[at + 1] = 255
+      rim.data[at + 2] = 255
+      rim.data[at + 3] = 255 * clamp(line * (RIM_AMBIENT + RIM_PEAK * facing * reach) + glow, 0, 1)
     }
   }
 
-  const maps = { map: toDataUrl(map) }
+  const maps = { map: toDataUrl(map), rim: toDataUrl(rim) }
   cache.set(key, maps)
   return maps
 }
