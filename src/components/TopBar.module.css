@@ -53,6 +53,9 @@
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.2),
     inset 0 -1px 1px rgb(255 255 255 / 0.05);
+  /* Darkens what's under it as it lightens it, so the label keeps its contrast over anything bright. */
+  -webkit-backdrop-filter: brightness(0.82);
+  backdrop-filter: brightness(0.82);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
