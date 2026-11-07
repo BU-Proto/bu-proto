@@ -152,9 +152,13 @@
     height: auto;
   }
 
+  /* Stacked, the words set each panel's height, so the figure follows them in the flow and can
+     never land on their last line. */
   .way,
   .way[data-open] {
+    display: flex;
     flex: none;
+    flex-direction: column;
     min-height: 400px;
   }
 
@@ -165,7 +169,11 @@
   .way .figure,
   .way[data-open] .figure {
     --figure-size: 9px;
-    transform: translateX(-50%);
+    position: static;
+    align-self: center;
+    margin-top: auto;
+    margin-bottom: 28px;
+    transform: none;
   }
 }
 
