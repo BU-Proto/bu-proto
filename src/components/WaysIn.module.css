@@ -35,7 +35,7 @@
 .list {
   display: flex;
   gap: 8px;
-  height: clamp(520px, 76vh, 680px);
+  height: clamp(560px, 76vh, 680px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -106,9 +106,10 @@
 }
 
 /* The glyph, whole, on the panel's centre line and a shared baseline, so all three sit level and the
-   grid of type stays perfectly square. Sized off the screen, not the panel, so it never reflows. */
+   grid of type stays perfectly square. Sized off the screen, not the panel, so it never reflows, and
+   off its height too, so a short window can't push it up into the words. */
 .figure {
-  --figure-size: clamp(8px, 0.84vw, 12px);
+  --figure-size: clamp(8px, min(0.84vw, 1.35vh), 12px);
   position: absolute;
   bottom: 28px;
   left: 50%;
