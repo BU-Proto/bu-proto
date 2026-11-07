@@ -62,6 +62,8 @@ export interface GlassMaps {
   map: string
   /** The rim of light, as white with the shape in alpha. */
   rim: string
+  /** A plain line around the outline. The lens lights it from behind, so it glows only over something bright. */
+  edge: string
   /** Where the frost sits: all of the middle, gone by the rim, so the rim stays clear and bends sharply. */
   core: string
 }
@@ -78,6 +80,7 @@ export function glassMaps(width: number, height: number, radius: number, bezel: 
   const rows = Math.round(height * MAP_SCALE)
   const map = new ImageData(columns, rows)
   const rim = new ImageData(columns, rows)
+  const edge = new ImageData(columns, rows)
   const core = new ImageData(columns, rows)
   const straightX = width / 2 - radius
   const straightY = height / 2 - radius
@@ -128,6 +131,11 @@ export function glassMaps(width: number, height: number, radius: number, bezel: 
       rim.data[at + 2] = 255
       rim.data[at + 3] = 255 * clamp(line * (RIM_AMBIENT + RIM_PEAK * facing * reach), 0, 1)
 
+      edge.data[at] = 255
+      edge.data[at + 1] = 255
+      edge.data[at + 2] = 255
+      edge.data[at + 3] = 255 * clamp(line, 0, 1)
+
       const clearTo = CLEAR_BOTTOM + (CLEAR_TOP - CLEAR_BOTTOM) * (1 - below)
       const frostFrom = FROST_BOTTOM + (FROST_TOP - FROST_BOTTOM) * (1 - below)
       const clear = clamp((inset - clearTo) / (frostFrom - clearTo), 0, 1)
@@ -135,7 +143,7 @@ export function glassMaps(width: number, height: number, radius: number, bezel: 
     }
   }
 
-  const maps = { map: toDataUrl(map), rim: toDataUrl(rim), core: toDataUrl(core) }
+  const maps = { map: toDataUrl(map), rim: toDataUrl(rim), edge: toDataUrl(edge), core: toDataUrl(core) }
   cache.set(key, maps)
   return maps
 }
