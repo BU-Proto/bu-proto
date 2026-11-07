@@ -43,6 +43,10 @@
   height: 12px;
 }
 
+.chevron {
+  transition: transform 0.25s ease;
+}
+
 .toggle[aria-expanded='true'] .chevron {
   transform: rotate(180deg);
 }
@@ -58,6 +62,7 @@
   z-index: 3;
   width: 280px;
   border-radius: 23px;
+  transform-origin: 66px 0;
 }
 
 /* Bridges the gap down from the tab, so the pointer never crosses open air on the way to a link. */
@@ -128,15 +133,26 @@
   white-space: nowrap;
 }
 
+/* It pops out of the chevron. Only the transform moves and only the words fade: opacity on the panel
+   itself would blind the glass inside it for as long as the fade ran. */
 @media (prefers-reduced-motion: no-preference) {
   .panel:not([hidden]) {
-    animation: drop 0.2s steps(3);
+    animation: pop 0.42s linear(0, 0.097, 0.307, 0.543, 0.751, 0.908, 1.009, 1.062, 1.08, 1.076, 1.06, 1.041, 1.024, 1.01, 1.001, 0.996, 0.994, 0.994, 0.995, 0.996, 1);
+  }
+
+  .panel:not([hidden]) .list {
+    animation: words 0.22s ease;
   }
 }
 
-@keyframes drop {
+@keyframes pop {
+  from {
+    transform: scale(0.9) translateY(-8px);
+  }
+}
+
+@keyframes words {
   from {
     opacity: 0;
-    transform: translateY(-6px);
   }
 }
