@@ -1,68 +1,33 @@
-/* A BU program's page. Plain navy sheets with a hairline border: no glow, no highlight, no
-   coloured edges. The photo keeps the colours it was taken in. */
+/* A BU program's page, on the harbor ground. The photo keeps the colours it was taken in; each section
+   below is the editorial split: its heading on the left, a ruled list on the right. */
 
 .page {
-  gap: clamp(32px, 5vh, 56px);
-}
-
-.head {
-  display: grid;
-  gap: 14px;
-  max-width: 820px;
+  gap: calc(var(--cell) * 5);
 }
 
 .crumbs {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  grid-column: 1 / -1;
   margin: 0;
-  color: var(--ink-dim);
-  font-size: 15px;
 }
 
 .crumbs a {
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.5);
-  color: var(--ink);
-  font-weight: 500;
+  color: var(--c-ink);
+  transition: color 0.2s ease;
 }
 
 .crumbs a:hover {
-  border-bottom-color: var(--accent);
-  color: var(--accent);
-}
-
-.name {
-  margin: 0;
-  font-size: clamp(48px, 7.6vw, 104px);
-  font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 0.94;
-  text-shadow: 0 2px 30px rgb(var(--harbor-rgb) / 0.4);
-}
-
-.lede {
-  max-width: 44ch;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: clamp(17px, 1.6vw, 21px);
-  font-weight: 300;
-  line-height: 1.45;
-  text-wrap: pretty;
-  text-shadow: var(--on-field-shadow);
-}
-
-.sheet {
-  padding: clamp(20px, 2.6vw, 30px);
-  border: 1px solid var(--rule);
-  border-radius: 20px;
-  background: var(--navy);
+  color: var(--c-blue);
 }
 
 /* ---- The photo beside what it is ---- */
 
 .overview {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: clamp(20px, 3vw, 36px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(var(--cell) * 2) calc(var(--cell) * 4);
   align-items: start;
 }
 
@@ -77,245 +42,196 @@
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
-  border-radius: 20px;
   object-fit: cover;
-  background: var(--navy);
+  background: var(--c-line-2);
 }
 
 .credit {
-  color: var(--ink-dim);
+  color: var(--c-muted);
   font-size: 12.5px;
   line-height: 1.45;
-  text-shadow: var(--on-field-shadow);
 }
 
 .credit a {
-  text-decoration: underline;
+  text-decoration: underline dotted;
   text-underline-offset: 2px;
 }
 
 .part {
-  margin: 0 0 12px;
-  color: var(--ink-dim);
-  font-size: 14px;
-  font-weight: 500;
+  margin: 0 0 var(--cell);
 }
 
 .about {
-  margin: 0 0 12px;
-  font-size: 16px;
-  line-height: 1.6;
-  text-wrap: pretty;
+  margin-bottom: var(--cell);
 }
 
 .facts {
   display: grid;
-  margin: 20px 0 22px;
+  margin: calc(var(--cell) * 1.5) 0;
+  border-bottom: 1px solid var(--c-line);
 }
 
 .fact {
   display: grid;
   grid-template-columns: 9.5em minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--cell);
   padding: 11px 0;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--c-line);
   font-size: 14.5px;
   line-height: 1.45;
 }
 
 .fact dt {
-  color: var(--ink-dim);
+  color: var(--c-ink);
+  font-weight: 500;
 }
 
 .fact dd {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--c-body);
 }
 
-.site {
-  justify-self: start;
+a.site {
+  max-width: 100%;
+  padding-inline: 24px;
+  white-space: normal;
 }
 
 /* ---- Sections below ---- */
 
 .block {
-  display: grid;
-  gap: 16px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cell) * 2);
+  padding-top: calc(var(--cell) * 2);
 }
 
-.blockTitle {
-  margin: 0;
-  font-size: clamp(26px, 3vw, 38px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  text-shadow: 0 2px 24px rgb(var(--harbor-rgb) / 0.4);
+.rule {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--c-line);
 }
 
-/* What to go there for: a want, and the program that answers it. */
-.needs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 clamp(20px, 3vw, 40px);
-  margin: 0;
-  padding-block: 8px;
-  list-style: none;
+@media (min-width: 860px) {
+  .block {
+    display: grid;
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    column-gap: calc(var(--cell) * 6);
+    align-items: start;
+  }
+
+  .block > h2 {
+    grid-row: 1 / span 2;
+  }
+
+  .block > :not(h2, .rule) {
+    grid-column: 2;
+  }
 }
 
-.need {
-  display: grid;
-  gap: 4px;
-  height: 100%;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--rule);
-}
-
-.needs li:nth-last-child(-n + 2) .need {
-  border-bottom: 0;
-}
-
-.want {
-  color: var(--ink-soft);
-  font-size: 15px;
-}
-
-.go {
-  font-size: 18px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-a.need:hover .go {
-  color: var(--accent);
-}
-
-/* The programs, as a grid of plain sheets. */
-.programs {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-  gap: 14px;
+/* A ruled list: what to go there for, the programs, where else to go. */
+.rows {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.rows > li {
+  border-top: 1px solid var(--c-line);
+}
+
+.rows > li:last-child {
+  border-bottom: 1px solid var(--c-line);
+}
+
+.need,
+.other {
+  display: grid;
+  gap: 4px;
+  padding: var(--cell) 0;
+}
+
+.want {
+  color: var(--c-body);
+  font-size: 15px;
+}
+
+.go,
+.otherTitle,
+.programName {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  transition: color 0.2s ease;
+}
+
+a.need:hover .go,
+a.other:hover .otherTitle {
+  color: var(--c-blue);
+}
+
 .program {
   display: grid;
-  align-content: start;
   gap: 8px;
-  padding: 20px 22px 22px;
-  border: 1px solid var(--rule);
-  border-radius: 18px;
-  background: var(--navy);
+  padding: var(--cell) 0;
 }
 
 .program > a {
   justify-self: start;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 14px;
 }
 
 .programName {
   margin: 0;
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.015em;
 }
 
 .programText {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--c-body);
   font-size: 15px;
   line-height: 1.5;
-  text-wrap: pretty;
 }
 
 .when {
   margin: 0;
-  color: var(--ink-dim);
+  color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   line-height: 1.4;
+  text-transform: uppercase;
 }
 
 .example {
-  max-width: 70ch;
-  margin: 4px 0 0;
-  color: var(--ink-soft);
-  font-size: 15px;
   line-height: 1.5;
-  text-shadow: var(--on-field-shadow);
-}
-
-/* Where else to go. */
-.others {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.other {
-  display: grid;
-  gap: 6px;
-  height: 100%;
-  padding: 18px 22px;
-  border: 1px solid var(--rule);
-  border-radius: 18px;
-  background: var(--navy);
-}
-
-.otherTitle {
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.015em;
 }
 
 .otherLine {
-  color: var(--ink-soft);
+  color: var(--c-body);
   font-size: 14.5px;
   line-height: 1.45;
-}
-
-a.other:hover .otherTitle {
-  color: var(--accent);
 }
 
 a.need:focus-visible,
 a.other:focus-visible,
 .crumbs a:focus-visible {
-  outline: 2px solid var(--frost);
+  outline: 2px solid var(--c-blue);
   outline-offset: 3px;
-  border-radius: 6px;
-}
-
-.note {
-  max-width: 72ch;
-  margin: 0;
-  color: var(--ink-dim);
-  font-size: 13.5px;
-  line-height: 1.5;
-  text-shadow: var(--on-field-shadow);
 }
 
 @media (max-width: 860px) {
-  .overview,
-  .others {
+  .overview {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 640px) {
-  .needs {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .needs li:nth-last-child(2) .need {
-    border-bottom: 1px solid var(--rule);
-  }
-
   .fact {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;

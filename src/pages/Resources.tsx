@@ -1,4 +1,7 @@
+import type { CSSProperties } from 'react'
 import { Link } from 'react-router'
+import { useReveal } from '../components/motion/useReveal'
+import motion from '../components/motion/motion.module.css'
 import { PageIntro } from '../components/PageIntro'
 import ui from '../components/ui.module.css'
 import { GUIDES } from '../content/resources'
@@ -25,22 +28,23 @@ const CARDS: readonly Card[] = [
 
 /**
  * The resources hub: one card each for the playbook, Spark! and Innovate@BU, set like the
- * playbook's own cards, a picture over each title. Everything else is on their own pages.
+ * playbook's own cards, a square-cut picture over each centred title. Everything else is on their own pages.
  */
 export function Resources() {
+  const reveal = useReveal<HTMLDivElement>()
   return (
-    <div className={ui.page}>
+    <div ref={reveal} className={`${ui.page} ${motion.reveal}`}>
       <PageIntro intro={HUB_INTRO} />
 
-      <section className={styles.sheet} aria-label={HUB_COPY.cardsLabel}>
+      <section aria-label={HUB_COPY.cardsLabel}>
         <ul className={styles.cards}>
-          {CARDS.map((card) => (
-            <li key={card.href}>
+          {CARDS.map((card, index) => (
+            <li key={card.href} data-reveal style={{ '--d': `${index * 90}ms` } as CSSProperties}>
               <Link className={styles.card} to={card.href}>
                 <span className={styles.image}>
                   {card.image && <img src={card.image.thumb ?? card.image.src} alt="" loading="lazy" />}
                 </span>
-                <span className={styles.kicker}>{card.kicker}</span>
+                <span className={`${ui.mono} ${styles.kicker}`}>{card.kicker}</span>
                 <span className={styles.title}>{card.title}</span>
                 <span className={styles.line}>{card.line}</span>
                 <span className={styles.open}>
@@ -52,7 +56,7 @@ export function Resources() {
         </ul>
       </section>
 
-      <p className={styles.note} data-fog-clear>
+      <p className={ui.small}>
         {HUB_COPY.note}
       </p>
     </div>
