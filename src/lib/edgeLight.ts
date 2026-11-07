@@ -12,6 +12,8 @@ uniform vec2 uRes, uPointer;
 uniform float uT, uDpr, uPower, uNear;
 ${FILM}
 float h(vec2 p) { p = fract(p * vec2(233.34, 851.73)); p += dot(p, p + 23.45); return fract(p.x * p.y); }
+/* The film there and back: its last step, peach straight to lagoon, passes through grey, so it's skipped. */
+vec3 ramp(float t) { return film(abs(fract(t) * 2. - 1.) * .8); }
 
 void main() {
   vec2 px = vUv * uRes;
@@ -21,9 +23,9 @@ void main() {
   float d = (min(max(q.x, q.y), 0.) + length(max(q, 0.)) - radius) / -uDpr;
 
   float turn = atan(c.y * uRes.x / uRes.y, c.x) / 6.28318;
-  vec3 hue = film(turn + uT * .035);
+  vec3 hue = ramp(turn + uT * .035);
   /* the opposite side runs a little behind, so the two ends of the frame never match */
-  hue = mix(hue, film(turn * 2. - uT * .02 + .3), .3);
+  hue = mix(hue, ramp(turn * 2. - uT * .02 + .3), .15);
 
   float near = uNear * exp(-dot((px - uPointer) / uDpr, (px - uPointer) / uDpr) / 90000.);
   float edge = max(d, 0.);
