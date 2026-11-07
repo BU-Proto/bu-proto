@@ -14,7 +14,9 @@ function partial(lines: readonly string[], progress: number, frame: number): str
       for (let i = 0; i < line.length; i++) {
         // Cells settle from the left, with a ragged front, like the field drying into a shape.
         const settleAt = (i / line.length) * 0.6 + hash(i, j) * 0.4
-        out += progress >= settleAt ? line[i] : hash(i + frame, j) < 0.3 ? FINE_RAMP[1 + ((i + j + frame) % 6)] : ' '
+        // A cell that ends up empty stays empty, so the figure's outline holds while it develops.
+        const blank = line[i] === ' '
+        out += blank || progress >= settleAt ? line[i] : hash(i + frame, j) < 0.3 ? FINE_RAMP[1 + ((i + j + frame) % 6)] : ' '
       }
       return out
     })
