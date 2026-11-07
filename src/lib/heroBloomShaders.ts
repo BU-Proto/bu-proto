@@ -166,14 +166,15 @@ void main() {
   float depth = px.y / uHeroPx;
   /* the fall into the dark starts lower than the hero's foot, so more of the picture stands */
   float fall = smoothstep(.7, 1.22, (id.y + .5) * uCell / uHeroPx);
-  float L = pow(lum(cs.rgb), 1.45) * (1. + light * .6);
+  /* the travelling bands only nudge the light now, so they don't sweep pale clouds across the blocks */
+  float L = pow(lum(cs.rgb), 1.45) * (1. + light * .15);
   /* saturated darks count as light too, or the raspberry core would stand empty */
   L = max(L, .3 * smoothstep(.3, .7, max(cs.r, max(cs.g, cs.b)) - min(cs.r, min(cs.g, cs.b))));
   float run = floor((id.y + h(vec2(id.x, 4.)) * 9.) / (2. + floor(h(vec2(id.x, 7.)) * 5.)));
   float n = h(vec2(id.x, run)), n2 = h(id + .5);
   /* the shimmer: slow waves of brightness that push cells up a tier as they pass */
   float wave = vn(id * .045 + vec2(uT * .09, -uT * .06)) * .6 + vn(id * .1 - vec2(uT * .07, 0.)) * .4;
-  L *= 1. + .3 * (wave - .5) * 2.;
+  L *= 1. + .1 * (wave - .5) * 2.;
 
   /* the shade for this cell's light: none, light, medium, dark, full, a few cells a step lighter */
   int s = 0;

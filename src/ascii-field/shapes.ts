@@ -50,6 +50,9 @@ const P = {
 /** The violet at the middle of the tides' lower current, the old hero's purple. */
 const VIOLET: RGB = [122, 92, 236]
 
+/** How fast the summit's peaks rise and lean (radians a second): one breath takes about 20 seconds. */
+const SUMMIT_SPEED = 0.32
+
 /** The summit's peaks, back to front: where (0 to 1 across), how tall and wide, and their colours
     from the ridge down, each blending into the field's blue. */
 const SUMMIT_PEAKS: readonly { at: number; height: number; width: number; glow: number; tones: readonly RGB[] }[] = [
@@ -356,12 +359,18 @@ const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
   // a little right of centre, and a low pink one in front on the right. Each blends from its ridge
   // down into the field's blue rather than sitting in bands, with a haze along its ridge; the far
   // one is cooler, so it reads as further away.
-  summit: () =>
+  // The peaks move slowly on their own: each rises and settles, leans a little left and right and
+  // broadens and narrows, out of step with the others, so the range breathes without losing its shape.
+  summit: (time) =>
     painted((x, y, ground) => {
       const u = x / ASPECT
       let c = ground
-      for (const peak of SUMMIT_PEAKS) {
-        const d = y - (0.76 - peak.height * gauss((u - peak.at) / peak.width))
+      for (const [n, peak] of SUMMIT_PEAKS.entries()) {
+        const phase = time * SUMMIT_SPEED + n * 2.1
+        const height = peak.height * (1 + 0.12 * Math.sin(phase))
+        const at = peak.at + 0.025 * Math.sin(phase * 0.7 + 1.3)
+        const width = peak.width * (1 + 0.1 * Math.sin(phase * 0.8 + 2.6))
+        const d = y - (0.76 - height * gauss((u - at) / width))
         if (d < 0) c = over(c, peak.tones[0], gauss(d / 0.07) * 0.7 * peak.glow)
         else c = over(c, ramp(peak.tones, clamp01(d / 0.45)), 0.94 * (1 - smooth(0.35, 0.7, d)))
       }
@@ -496,7 +505,7 @@ const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
 }
 
 /** Shapes that move on their own, and how many times a second they're repainted. */
-const MOVING: Partial<Record<ShapeName, number>> = { tides: 12 }
+const MOVING: Partial<Record<ShapeName, number>> = { tides: 12, summit: 12 }
 
 const cache = new Map<ShapeName, GradientMap>()
 /** For a moving shape: which repaint its cached map is. */
