@@ -45,6 +45,7 @@
   place-items: center;
   aspect-ratio: 16 / 9;
   overflow: hidden;
+  border-radius: var(--radius-media);
   background: var(--c-ink);
   color: var(--c-paper);
 }

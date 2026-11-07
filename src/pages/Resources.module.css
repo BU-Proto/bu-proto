@@ -21,6 +21,8 @@
 .image {
   display: block;
   width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-media);
   background: var(--c-line-2);
 }
 

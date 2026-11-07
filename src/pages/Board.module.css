@@ -50,6 +50,7 @@
   place-items: center;
   aspect-ratio: 4 / 5;
   overflow: hidden;
+  border-radius: var(--radius-media);
 }
 
 /* What shows with no photo, and under one while it loads. */

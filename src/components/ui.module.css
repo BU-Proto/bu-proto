@@ -412,7 +412,7 @@
   width: 22px;
   height: 22px;
   background: var(--c-navy);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--radius-sm);
   color: var(--c-paper);
   font-family: var(--font-mono);
   font-size: 13px;
@@ -425,7 +425,7 @@
   display: inline-block;
   padding: 7px 13px;
   background: var(--c-ink);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--radius-sm);
   color: var(--c-paper);
   font-family: var(--font-mono);
   font-size: 13px;
@@ -465,7 +465,7 @@
   margin-left: 0.5em;
   padding: 3px 6px;
   background: var(--c-gold);
-  clip-path: var(--px-corners-sm);
+  border-radius: 6px;
   color: var(--c-paper);
   font-family: var(--font-mono);
   font-size: 13px;
@@ -514,6 +514,7 @@
   padding: clamp(26px, 4vw, 54px);
   border-radius: var(--radius);
   background: var(--c-raised);
+  box-shadow: var(--panel-edge);
   color: var(--c-ink);
 }
 

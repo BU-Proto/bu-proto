@@ -1,11 +1,11 @@
-/* Applications open, closing soon or closed: a small pixel-cut tag with a square lamp. */
+/* Applications open, closing soon or closed: a small tag with a lamp. */
 .status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
   background: var(--c-line-2);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--radius-sm);
   color: var(--c-body);
   font-family: var(--font-mono);
   font-size: 13px;
@@ -17,8 +17,9 @@
 .status::before {
   content: '';
   flex: none;
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: currentColor;
 }
 

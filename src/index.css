@@ -124,7 +124,25 @@
   --cell: 14px;
   --gutter: 56px;
   --maxw: 1176px;
-  --radius: 26px;
+  /*
+   * Corners, one scale. Buttons and the top bar are pills. Cards, panels and sheets take --radius;
+   * menus that drop over the page take --radius-menu, their rows --radius-field, the same as the
+   * fields; photos and art inside a page take --radius-media; small tags and marks --radius-sm.
+   */
+  --radius: 24px;
+  --radius-menu: 20px;
+  --radius-field: 14px;
+  --radius-media: 16px;
+  --radius-sm: 8px;
+  /*
+   * Glass, two kinds. What floats over the page (the top bar, its menus, a dropdown's list) is the
+   * liquid glass of Glass.tsx. What sits in the page (cards, sheets, the schedule) is this frosted
+   * panel: a faint fill lit from above, a hairline rim, and the field blurred behind it.
+   */
+  --panel-fill: linear-gradient(180deg, rgb(255 255 255 / 0.075), rgb(255 255 255 / 0.02) 55%, rgb(255 255 255 / 0.035)), rgb(0 0 0 / 0.38);
+  --panel-edge: inset 0 1px 0 rgb(255 255 255 / 0.2), inset 0 0 0 1px rgb(255 255 255 / 0.09);
+  --panel-shadow: 0 30px 70px -36px rgb(0 0 0 / 0.75);
+  --panel-filter: blur(18px) saturate(1.4);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   /* Stair-stepped corners, for clip-path. */
   --px-corners: polygon(

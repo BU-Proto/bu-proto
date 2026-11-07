@@ -1,9 +1,12 @@
-/* A ruled sheet, its sessions rows inside it. Mono for the labels, the times in ink. */
+/* A frosted panel, like every card in the page, its sessions ruled rows inside it. */
 .card {
   display: grid;
-  padding: var(--cell) 18px 4px;
-  border: 1px solid var(--c-line);
-  background: var(--c-paper);
+  padding: calc(var(--cell) * 1.4) 22px 8px;
+  border-radius: var(--radius);
+  background: var(--panel-fill);
+  box-shadow: var(--panel-edge), var(--panel-shadow);
+  -webkit-backdrop-filter: var(--panel-filter);
+  backdrop-filter: var(--panel-filter);
 }
 
 .location {

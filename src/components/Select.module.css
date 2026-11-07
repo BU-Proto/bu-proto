@@ -64,46 +64,62 @@
   pointer-events: none;
 }
 
-/* Portalled to the body, outside the public shell, so it reads only the site-wide tokens. */
-.list {
+/*
+ * Portalled to the body, outside the public shell, so it reads only the site-wide tokens. The box
+ * holds the glass (Glass.tsx) and sets its size; the list scrolls inside it. Larger glass runs
+ * darker, for the text it carries, as the top bar's menus do.
+ */
+.menu {
+  --glass-blur: 16px;
+  --glass-tone: saturate(1.8) contrast(0.5) brightness(0.42);
+  --glass-shadow: 0 18px 50px rgb(0 0 0 / 0.5);
   position: fixed;
   z-index: 50;
   /* As wide as the trigger, but never so narrow that options wrap mid-amount. */
   min-width: 11rem;
   box-sizing: border-box;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 4px;
-  border: 1px solid var(--c-ink);
-  background: var(--c-paper);
+  border-radius: var(--radius-menu);
   color: var(--c-ink);
   font-family: var(--font-display);
   font-size: 15px;
+}
+
+.list {
+  display: grid;
+  gap: 2px;
+  box-sizing: border-box;
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border-radius: inherit;
 }
 
 .list:focus {
   outline: none;
 }
 
-/* Text lines up with the trigger's: 4px of list padding plus 10px here matches its 14px. */
+/* Text lines up with the trigger's: 6px of list padding plus 8px here matches its 14px. Each row's
+   corner is the list's less its padding, so the two curves run parallel. */
 .option {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   min-height: 40px;
-  padding: 8px 10px;
+  padding: 8px 8px;
+  border-radius: var(--radius-field);
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .option[data-active] {
-  background: var(--c-line-2);
+  background: rgb(255 255 255 / 0.13);
 }
 
 .option:active {
-  background: var(--c-line);
+  background: rgb(255 255 255 / 0.18);
 }
 
 .check {
@@ -129,26 +145,36 @@
   }
 }
 
+/* Only the box moves and only the words fade: opacity on the box would blind the glass inside it
+   for as long as the fade ran. */
 @media (prefers-reduced-motion: no-preference) {
-  .list:not([hidden]) {
-    animation: drop 0.16s steps(3);
+  .menu:not([hidden]) {
+    animation: drop 0.3s var(--ease-out, ease-out);
   }
 
-  .list[data-up]:not([hidden]) {
+  .menu[data-up]:not([hidden]) {
     animation-name: rise;
+  }
+
+  .menu:not([hidden]) .list {
+    animation: words 0.18s ease;
   }
 }
 
 @keyframes drop {
   from {
-    opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-6px) scale(0.97);
   }
 }
 
 @keyframes rise {
   from {
+    transform: translateY(6px) scale(0.97);
+  }
+}
+
+@keyframes words {
+  from {
     opacity: 0;
-    transform: translateY(6px);
   }
 }

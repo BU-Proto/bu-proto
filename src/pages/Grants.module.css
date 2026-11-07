@@ -147,7 +147,7 @@
   min-height: 48px;
   padding: 11px 14px;
   border: 1px solid var(--c-line);
-  border-radius: 0;
+  border-radius: var(--radius-field);
   background: var(--c-paper);
   color: var(--c-ink);
   /* 16px keeps phones from zooming in on focus. */
