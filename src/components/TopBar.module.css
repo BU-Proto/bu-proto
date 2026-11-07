@@ -1,18 +1,18 @@
 .top {
-  /* The glass itself is its own layer (Glass.tsx). This box must stay free of filters and opacity,
-     or the dropdown inside it would lose sight of the page. */
+  /* The mark, the glass tab and Join across the top, in the page's column. Only its three parts
+     take the pointer, so the page between them stays clickable. */
   position: fixed;
   z-index: 50;
   top: calc(12px + env(safe-area-inset-top, 0px));
-  left: 50%;
+  right: 0;
+  left: 0;
   display: flex;
-  align-items: stretch;
-  width: max-content;
-  max-width: calc(100vw - 24px);
+  align-items: center;
+  justify-content: space-between;
   height: 46px;
-  border-radius: 23px;
+  padding: 0 var(--gutter);
   color: #fff;
-  transform: translateX(-50%);
+  pointer-events: none;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
@@ -21,11 +21,30 @@
   text-transform: uppercase;
 }
 
+.top > * {
+  pointer-events: auto;
+}
+
 .logo {
   display: flex;
   align-items: center;
+  align-self: stretch;
   gap: 8px;
-  padding: 0 18px;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
+}
+
+/* The glass tab, centred on the screen. The glass itself is its own layer (Glass.tsx); this box must
+   stay free of filters and opacity, or the dropdown inside it would lose sight of the page. */
+.bar {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: flex;
+  align-items: stretch;
+  height: 46px;
+  padding: 0 6px;
+  border-radius: 23px;
+  transform: translateX(-50%);
 }
 
 .nav {
@@ -64,12 +83,12 @@
   opacity: 1;
 }
 
-/* Set inside the tab's curve, so the rim runs unbroken around it. */
+/* On its own at the right, the height of the tab's plate. */
 .join {
   position: relative;
   display: flex;
   align-items: center;
-  margin: 4px 4px 4px 7px;
+  height: 38px;
   padding: 0 17px;
   overflow: hidden;
   isolation: isolate;
@@ -84,18 +103,9 @@
   transition: transform 0.42s linear(0, 0.097, 0.307, 0.543, 0.751, 0.908, 1.009, 1.062, 1.08, 1.076, 1.06, 1.041, 1.024, 1.01, 1.001, 0.996, 0.994, 0.994, 0.995, 0.996, 1);
 }
 
-.join::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: var(--c-sheen);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.join:hover::after {
-  opacity: 1;
+/* It lifts under the cursor; its colour stays put. */
+.join:hover {
+  transform: translateY(-2px);
 }
 
 .join:active {
@@ -119,11 +129,19 @@
   display: none;
 }
 
-/* The items don't fit on narrow screens; the menu sheet has every page, Join too. */
+/* The items don't fit on narrow screens: the tab moves to the right and holds just the menu sheet,
+   which has every page, Join too. */
 @media (max-width: 900px) {
   .nav,
   .join {
     display: none;
+  }
+
+  .bar {
+    right: var(--gutter);
+    left: auto;
+    padding: 0;
+    transform: none;
   }
 
   .menu {

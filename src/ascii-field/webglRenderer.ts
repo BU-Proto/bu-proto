@@ -51,6 +51,7 @@ uniform float uSlotW;
 uniform float uPad;
 uniform vec2 uAtlasSize;
 uniform float uTrailBase;
+uniform float uTrailOnly;
 uniform vec3 uTrailColor;
 uniform float uBaseColor;
 uniform float uContrast;
@@ -137,13 +138,26 @@ void main() {
     // and opacity.
     vec4 state = floor(texelFetch(uCells, cell, 0) * 255.0 + 0.5);
     if (state.b > 0.0) {
-      rgb = mix(rgb, uTrailColor, coverage(uTrailBase + state.b - 1.0, local) * state.a / 255.0);
+      float ink = coverage(uTrailBase + state.b - 1.0, local) * state.a / 255.0;
+      // The trail layer, as the field draws it: the art in this cell steps aside for a tile of the
+      // field's dark ground, and the trail's glyph sits on it (straight alpha, tile under glyph).
+      if (uTrailOnly > 0.5) {
+        float tile = 0.85 * state.a / 255.0;
+        float a = 1.0 - (1.0 - tile) * (1.0 - ink);
+        fragColor = vec4((BASE * tile * (1.0 - ink) + uTrailColor * ink) / max(a, 1e-4), a);
+        return;
+      }
+      rgb = mix(rgb, uTrailColor, ink);
+    } else if (uTrailOnly > 0.5) {
+      // Under the rest of the fog the art dims, as the field's own characters do.
+      fragColor = vec4(BASE, 1.0 - state.g / 255.0);
+      return;
     } else {
       float glyph = pickGlyph(cell, state.r / 255.0);
       if (glyph > 0.0) rgb = mix(rgb, tint, coverage(glyph, local) * state.g / 255.0);
     }
   }
-  fragColor = vec4(rgb, 1.0);
+  fragColor = uTrailOnly > 0.5 ? vec4(0.0) : vec4(rgb, 1.0);
 }
 `
 
@@ -175,6 +189,7 @@ const UNIFORMS = [
   'uPad',
   'uAtlasSize',
   'uTrailBase',
+  'uTrailOnly',
   'uTrailColor',
   'uBaseColor',
   'uContrast',
@@ -244,6 +259,8 @@ export class WebGLFieldRenderer implements FieldRenderer {
   private readonly canvas: HTMLCanvasElement
   private readonly gl: WebGL2RenderingContext
   private readonly onRestored: () => void
+  /** Draw only the trail's glyphs, on transparent. */
+  private readonly trailOnly: boolean
   private state: GLState | null = null
   private geometry: FieldGeometry | null = null
   private atlas: GlyphAtlas | null = null
@@ -253,10 +270,11 @@ export class WebGLFieldRenderer implements FieldRenderer {
   /** The cells texture was (re)allocated and holds nothing yet. */
   private cellsStale = true
 
-  constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, onRestored: () => void) {
+  constructor(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext, onRestored: () => void, trailOnly = false) {
     this.canvas = canvas
     this.gl = gl
     this.onRestored = onRestored
+    this.trailOnly = trailOnly
     this.state = this.init()
     canvas.addEventListener('webglcontextlost', this.onContextLost)
     canvas.addEventListener('webglcontextrestored', this.onContextRestored)
@@ -415,6 +433,7 @@ export class WebGLFieldRenderer implements FieldRenderer {
     gl.uniform1i(uniforms.uCells, UNIT_CELLS)
     gl.uniform1i(uniforms.uWarp, UNIT_WARP)
     gl.uniform2f(uniforms.uWarpSize, 1, 1)
+    gl.uniform1f(uniforms.uTrailOnly, this.trailOnly ? 1 : 0)
     this.trailColor = ''
     this.map = null
     return { program, vao, gradient, atlas, cells, warp, warpCols: 1, warpRows: 1, uniforms }

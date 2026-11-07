@@ -7,7 +7,7 @@
 .afterHero {
   position: relative;
   /* The words wait until the hero's light has gone, so they never stand on the fade. */
-  margin-top: 25vh;
+  margin-top: 37vh;
 }
 
 /* ---- The rhythm ---- */

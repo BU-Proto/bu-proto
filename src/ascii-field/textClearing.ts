@@ -2,7 +2,8 @@ import { FOG } from './settings'
 
 /**
  * Elements the trail should step back from so the copy stays legible.
- * `data-fog-clear="box"` clears the element's whole box (pills, buttons);
+ * `data-fog-clear="box"` clears the element's whole box (pills, buttons), as does
+ * `data-trail-skip` (a region whose own art draws the trail);
  * any other value clears just the line boxes of its text.
  */
 export const CLEAR_SELECTOR = '[data-fog-clear]'
@@ -32,10 +33,14 @@ export function buildClearMask(
     }
   }
 
+  const viewHeight = window.innerHeight
   for (const element of elements) {
+    // Off screen: nothing to clear, and no need to pay for its style.
+    const box = element.getBoundingClientRect()
+    if (box.bottom < -pad || box.top > viewHeight + pad || box.width <= 1 || box.height <= 1) continue
     if (getComputedStyle(element).visibility !== 'visible') continue
-    if (element.getAttribute('data-fog-clear') === 'box') {
-      fill(element.getBoundingClientRect())
+    if (element.getAttribute('data-fog-clear') === 'box' || element.hasAttribute('data-trail-skip')) {
+      fill(box)
     } else {
       const range = document.createRange()
       range.selectNodeContents(element)

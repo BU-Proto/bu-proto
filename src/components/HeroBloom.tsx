@@ -65,19 +65,8 @@ export function HeroBloom() {
       bloom.scrolled(Math.min(1, Math.max(0, window.scrollY / hero)))
       if (still) paint()
     }
-    const onMove = (event: PointerEvent) => {
-      if (event.pointerType === 'touch' || still) return
-      const rect = surface.getBoundingClientRect()
-      bloom.point(event.clientX - rect.left, event.clientY - rect.top)
-    }
-    const onOut = (event: PointerEvent) => {
-      if (!event.relatedTarget) bloom.point(null, 0)
-    }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('scroll', onScroll, { passive: true })
-    // On the capture, because Layout holds pointermove back from anything inside a link.
-    window.addEventListener('pointermove', onMove, { capture: true, passive: true })
-    window.addEventListener('pointerout', onOut, { passive: true })
     onScroll()
     sync()
 
@@ -87,8 +76,6 @@ export function HeroBloom() {
       screen.disconnect()
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('pointermove', onMove, { capture: true })
-      window.removeEventListener('pointerout', onOut)
       bloom.destroy()
     }
   }, [])

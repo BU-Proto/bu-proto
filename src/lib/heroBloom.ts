@@ -5,12 +5,10 @@
 import { gradientPixels } from '../ascii-field/gradient'
 import type { GradientMap } from '../ascii-field/shapes'
 import { GLYPHS, PICTURE, VERTEX } from './heroBloomShaders'
-import { createWakeBuffer } from './wakeField'
+import { trailWarp } from '../ascii-field/trailWarp'
 
 /** How long the gradient takes to rise out of the dark. */
 const INTRO_S = 1.1
-/** How long to keep the wake moving after the last pointer move. */
-const WAKE_SETTLE_MS = 1000
 /** Steps down the ladder when the median frame over a window of frames runs past this. */
 const SLOW_FRAME_MS = 24
 const WINDOW_FRAMES = 60
@@ -19,8 +17,9 @@ const TIERS = [
   { dpr: 1.25, picture: 720, pictureHz: 15 },
   { dpr: 1, picture: 540, pictureHz: 10 },
 ] as const
-const CELL_CSS = 9
-const CELL_CSS_PHONE = 7
+/** Cells at the old hero's type size, so the blocks read as a fine texture of tiles. */
+const CELL_CSS = 6
+const CELL_CSS_PHONE = 5
 const PHONE_WIDTH = 600
 
 function program(gl: WebGL2RenderingContext, fragment: string) {
@@ -50,8 +49,6 @@ export interface HeroBloom {
   resize(width: number, height: number, heroHeight: number): void
   /** Draws one frame. `now` is in ms; `still` holds time and skips the opening. */
   frame(now: number, still: boolean): void
-  /** The pointer in CSS pixels from the canvas's corner, or null when it's gone. */
-  point(x: number | null, y: number): void
   scrolled(amount: number): void
   destroy(): void
 }
@@ -62,17 +59,41 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
   if (!gl) return null
   let picture: WebGLProgram
   let glyphs: WebGLProgram
-  let wake: ReturnType<typeof createWakeBuffer>
   try {
     picture = program(gl, PICTURE)
     glyphs = program(gl, GLYPHS)
     gl.bindVertexArray(gl.createVertexArray())
-    wake = createWakeBuffer(gl)
   } catch {
     return null
   }
   const U = uniforms(gl, picture, ['uMap', 'uT', 'uHeroH', 'uIntro', 'uView'])
-  const V = uniforms(gl, glyphs, ['uPic', 'uWake', 'uRes', 'uCell', 'uT', 'uHeroPx', 'uIntro', 'uScroll'])
+  const V = uniforms(gl, glyphs, [
+    'uPic',
+    'uWarp',
+    'uWarpOn',
+    'uWarpScale',
+    'uWarpSize',
+    'uOrigin',
+    'uDpr',
+    'uRes',
+    'uCell',
+    'uT',
+    'uHeroPx',
+    'uIntro',
+    'uScroll',
+  ])
+
+  // The trail's wind (see trailWarp), on its own grid over the viewport, in CSS px.
+  const warpTexture = gl.createTexture()
+  gl.activeTexture(gl.TEXTURE2)
+  gl.bindTexture(gl.TEXTURE_2D, warpTexture)
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, 1, 1, 0, gl.RG, gl.FLOAT, new Float32Array(2))
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.activeTexture(gl.TEXTURE0)
+  const warpState = { version: -1, cols: 1, rows: 1 }
   const texture = gl.createTexture()
   const target = gl.createFramebuffer()
 
@@ -96,14 +117,6 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
     startedAt: 0,
     lastAt: 0,
     scroll: 0,
-    x: 0.5,
-    y: 0.5,
-    lastX: 0.5,
-    lastY: 0.5,
-    inside: false,
-    moved: false,
-    awakeUntil: 0,
-    wakeAt: 0,
     warm: false,
   }
   const times: number[] = []
@@ -155,24 +168,6 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
       box.height = height
       box.hero = heroHeight
       fit()
-      wake.resize(width, height)
-    },
-    point(x, y) {
-      if (x === null) {
-        state.inside = false
-        return
-      }
-      const nx = x / box.width
-      const ny = 1 - y / box.height
-      if (!state.inside) {
-        state.lastX = nx
-        state.lastY = ny
-      }
-      state.x = nx
-      state.y = ny
-      state.inside = true
-      state.moved = true
-      state.awakeUntil = performance.now() + WAKE_SETTLE_MS
     },
     scrolled(amount) {
       state.scroll = amount
@@ -183,14 +178,6 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
       const seconds = state.warm ? (performance.now() - state.startedAt) / 1000 : 0
       const time = still ? 7 : seconds + 7
       const intro = still ? 1 : Math.min(1, seconds / INTRO_S)
-
-      if (now < state.awakeUntil) {
-        wake.advance(state.wakeAt ? Math.min(now - state.wakeAt, 100) / 1000 : 1 / 60, [state.lastX, state.lastY], [state.x, state.y], state.moved)
-        state.lastX = state.x
-        state.lastY = state.y
-        state.moved = false
-        state.wakeAt = now
-      } else state.wakeAt = 0
 
       const hz = TIERS[state.tier].pictureHz
       if (still || now - state.pictureAt >= 1000 / hz - 2) {
@@ -215,10 +202,29 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
       gl.activeTexture(gl.TEXTURE0)
       gl.bindTexture(gl.TEXTURE_2D, texture)
       gl.uniform1i(V.uPic, 0)
-      gl.activeTexture(gl.TEXTURE2)
-      gl.bindTexture(gl.TEXTURE_2D, wake.texture)
-      gl.uniform1i(V.uWake, 2)
-      gl.activeTexture(gl.TEXTURE0)
+      const warp = still ? null : trailWarp.current
+      gl.uniform1f(V.uWarpOn, warp ? 1 : 0)
+      if (warp) {
+        gl.activeTexture(gl.TEXTURE2)
+        gl.bindTexture(gl.TEXTURE_2D, warpTexture)
+        if (warpState.version !== trailWarp.version) {
+          warpState.version = trailWarp.version
+          if (warp.cols !== warpState.cols || warp.rows !== warpState.rows) {
+            warpState.cols = warp.cols
+            warpState.rows = warp.rows
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, warp.cols, warp.rows, 0, gl.RG, gl.FLOAT, warp.data)
+          } else {
+            gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, warp.cols, warp.rows, gl.RG, gl.FLOAT, warp.data)
+          }
+        }
+        gl.uniform1i(V.uWarp, 2)
+        gl.uniform2f(V.uWarpScale, warp.scaleX, warp.scaleY)
+        gl.uniform2f(V.uWarpSize, warp.cols, warp.rows)
+        const at = canvas.getBoundingClientRect()
+        gl.uniform2f(V.uOrigin, at.left, at.top)
+        gl.uniform1f(V.uDpr, state.dpr)
+        gl.activeTexture(gl.TEXTURE0)
+      }
       gl.uniform2f(V.uRes, canvas.width, canvas.height)
       gl.uniform1f(V.uCell, state.cell)
       gl.uniform1f(V.uT, time)
@@ -238,7 +244,7 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
     },
     destroy() {
       canvas.removeEventListener('webglcontextlost', onContextLost)
-      wake.destroy()
+      gl.deleteTexture(warpTexture)
       gl.deleteTexture(texture)
       gl.deleteTexture(mapTexture)
       gl.deleteFramebuffer(target)
