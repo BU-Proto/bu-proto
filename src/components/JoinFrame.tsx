@@ -115,7 +115,7 @@ export function JoinFrame() {
           </div>
 
           <div className={styles.ring}>
-            <AsciiFigure shape="ring" rows={22} className={styles.figure} />
+            <AsciiFigure shape="halo" rows={24} className={styles.figure} />
             <Link className={`${ui.btn} ${styles.cta}`} to={JOIN_CTA.cta.href}>
               {JOIN_CTA.cta.label}
             </Link>

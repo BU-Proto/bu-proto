@@ -72,7 +72,8 @@
 }
 
 .figure {
-  --figure-size: clamp(7px, 1.15vh, 11px);
+  /* The opening is 14.4 of these across, so the floor keeps the button clear of the ring. */
+  --figure-size: clamp(10px, min(1.45vh, 1.35vw), 15px);
   background: var(--c-sheen);
   -webkit-background-clip: text;
   background-clip: text;
@@ -81,6 +82,12 @@
 
 .cta {
   position: absolute;
+}
+
+@media (max-height: 800px) {
+  .cta {
+    padding: 14px 28px;
+  }
 }
 
 .hint {
