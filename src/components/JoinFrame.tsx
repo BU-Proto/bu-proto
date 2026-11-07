@@ -8,7 +8,6 @@ import { onFrame } from '../lib/smoothScroll'
 import { reducedMotion } from '../lib/useInView'
 import { AsciiFigure } from './motion/AsciiFigure'
 import { MaskLines } from './motion/MaskLines'
-import { PixelSkyline } from './PixelSkyline'
 import { ProtoMark } from './ProtoMark'
 import ui from './ui.module.css'
 import styles from './JoinFrame.module.css'
@@ -90,7 +89,7 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
   return <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
 }
 
-/** The landing's last screen: the ask, framed in moving light, then the site's links and the skyline. */
+/** The landing's last screen: the ask, framed in moving light, then the site's links. */
 export function JoinFrame() {
   const section = useRef<HTMLElement>(null)
   return (
@@ -168,7 +167,6 @@ export function JoinFrame() {
           </nav>
         </div>
         <p className={styles.small}>{FOOTER.note}</p>
-        <PixelSkyline className={styles.skyline} />
       </footer>
     </section>
   )
