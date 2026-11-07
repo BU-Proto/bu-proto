@@ -1,4 +1,4 @@
-/* A tab item with pages under it, and the small white panel they open in. */
+/* A tab item with pages under it, and the small glass panel they open in. */
 
 .root {
   position: relative;
@@ -47,43 +47,51 @@
   transform: rotate(180deg);
 }
 
-/* Hangs straight from the tab, lined up with the trigger's right edge so it stays on screen. */
+/* Hangs from the tab, a little clear of it so the two never read as glass on glass, under its own
+   trigger. Larger glass runs darker, for the text it carries. */
 .panel {
+  --glass-frost: blur(18px) saturate(1.8) contrast(0.5) brightness(0.42);
+  --glass-shadow: 0 18px 50px rgb(0 0 0 / 0.5);
   position: absolute;
-  top: 100%;
-  right: 0;
+  top: calc(100% + 8px);
+  left: -4px;
   z-index: 3;
   width: 280px;
-  margin-top: 1px;
-  border: 1px solid var(--c-ink);
-  background: var(--c-paper);
+  border-radius: 23px;
+}
+
+/* Bridges the gap down from the tab, so the pointer never crosses open air on the way to a link. */
+.panel::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: 8px;
 }
 
 .list {
   display: grid;
+  gap: 2px;
   margin: 0;
-  padding: 0;
+  padding: 6px;
   list-style: none;
-}
-
-.list > li + li {
-  border-top: 1px solid var(--c-line);
 }
 
 .link {
   display: grid;
   gap: 6px;
-  padding: 13px 14px 14px;
+  padding: 12px 13px 13px;
+  border-radius: 17px;
 }
 
 .link:hover,
 .link:focus-visible {
-  background: var(--c-ink);
-  color: var(--c-paper);
+  background: rgb(255 255 255 / 0.13);
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid #fff;
   outline-offset: -2px;
 }
 
@@ -99,7 +107,7 @@
   content: '';
   width: 6px;
   height: 6px;
-  background: var(--c-blue);
+  background: #fff;
 }
 
 .line {
@@ -107,7 +115,7 @@
   font-size: 13px;
   letter-spacing: 0;
   line-height: 1.4;
-  opacity: 0.66;
+  opacity: 0.72;
   text-transform: none;
 }
 
