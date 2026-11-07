@@ -31,8 +31,11 @@ void main() {
   float edge = max(d, 0.);
   float line = exp(-edge / 9.) * 1.1 + exp(-edge / 30.) * .21;
   float wash = exp(-edge / 240.) * .056 + exp(-edge / 90.) * .032;
+  /* The tint dies before the middle, where every hue would otherwise meet at a point. */
+  float reach = min(half_.x, half_.y) / uDpr;
+  float tint = (wash + near * .06) * (1. - smoothstep(reach * .5, reach * .85, edge));
   /* However bright it gets, the light tops out at the film's own colour instead of clipping to white. */
-  vec3 col = hue * (1. - exp(-(line * (1. + near * .9) + wash + near * .06) * 1.6));
+  vec3 col = hue * (1. - exp(-(line * (1. + near * .9) + tint) * 1.6));
   col *= uPower;
   col += (h(px * .37 + fract(uT)) + h(px * .71 + fract(uT * 1.3)) - 1.) * 2. / 255.;
   o = vec4(clamp(col, 0., 1.), 1.);
