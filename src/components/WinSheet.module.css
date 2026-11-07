@@ -273,8 +273,13 @@
   padding: 1em 1.5em 1em 1.625em;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--c-ink);
-  color: var(--c-paper);
+  /* The site's filled button: the top bar's Join, a light pill with a bright lip. */
+  background: #f4f4f6;
+  color: #000;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 1px rgb(0 0 0 / 0.14),
+    0 1px 3px rgb(0 0 0 / 0.3);
   font-size: clamp(0.875rem, 1vw, 1.75rem);
   font-weight: 500;
   text-transform: uppercase;
@@ -441,9 +446,7 @@
   }
 
   .pill {
-    transition:
-      background-color 0.2s var(--ease-lusion),
-      color 0.5s var(--ease-lusion);
+    transition: transform 0.4s var(--ease-lusion);
   }
 
   .pillLabel {
@@ -454,17 +457,14 @@
     transition: transform 0.4s cubic-bezier(0.4, 0, 0, 1);
   }
 
+  /* Like every button it lifts and keeps its colour; the label still makes way for the arrow. */
   .pill:is(:hover, :focus-visible) {
-    background: var(--mint);
-    color: var(--navy);
-    transition:
-      background-color 0.5s var(--ease-lusion) 0.3s,
-      color 0.5s var(--ease-lusion);
+    transform: translateY(-2px);
   }
 
   .pill:is(:hover, :focus-visible) .pillDot {
-    background: var(--mint);
-    transform: translateX(4em) scale(32);
+    transform: translateX(-2em);
+    opacity: 0;
   }
 
   .pill:is(:hover, :focus-visible) .pillLabel {
@@ -519,9 +519,3 @@
   }
 }
 
-@media (hover: hover) and (prefers-reduced-motion: reduce) {
-  .pill:is(:hover, :focus-visible) {
-    background: var(--mint);
-    color: var(--navy);
-  }
-}

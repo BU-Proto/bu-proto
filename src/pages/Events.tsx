@@ -10,7 +10,7 @@ import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { EVENT_COVERS, type CoverPhoto } from '../content/covers'
 import { EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, HACK_NIGHT, NEXT_EVENT } from '../content/events'
-import { dateParts, daysUntil, formatMonth } from '../lib/dates'
+import { dateParts, daysUntil } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useRsvp } from '../lib/useRsvp'
 import styles from './Events.module.css'
@@ -18,8 +18,8 @@ import styles from './Events.module.css'
 const HACK_NIGHT_COVER = EVENT_COVERS['Hack night']
 
 /**
- * What's coming up: the next event set large with its photo, then the rest as one ruled list
- * grouped by month. Past events are left off; each event's own page links to its neighbours.
+ * What's coming up: the next event set large with its photo, then the rest as a grid of cards, each
+ * with its date at the top. Past events are left off; each event's own page links to its neighbours.
  */
 export function Events() {
   const events = useLoaderData<ProtoEvent[]>()
@@ -30,12 +30,6 @@ export function Events() {
   const nextHackNight = upcoming.find((event) => event.kind === 'Hack night')
   const root = useReveal<HTMLDivElement>()
 
-  const months = new Map<string, ProtoEvent[]>()
-  for (const event of later) {
-    const month = formatMonth(event.date)
-    months.set(month, [...(months.get(month) ?? []), event])
-  }
-
   return (
     <div ref={root} className={`${ui.page} ${motion.reveal} ${styles.page}`}>
       <div className={styles.head}>
@@ -45,23 +39,16 @@ export function Events() {
 
       {next ? <NextEvent key={next.id} event={next} /> : <Empty />}
 
-      {months.size > 0 && (
+      {later.length > 0 && (
         <section className={styles.later} aria-labelledby="later">
           <h2 id="later" className={ui.sectionTitle}>
             <MaskLines text={EVENTS_LATER} />
           </h2>
-          <div>
-            {[...months].map(([month, monthEvents]) => (
-              <section key={month} className={styles.month} aria-label={month} data-reveal>
-                <h3 className={styles.monthName}>{month}</h3>
-                <ol className={styles.list}>
-                  {monthEvents.map((event) => (
-                    <EventRow key={event.id} event={event} />
-                  ))}
-                </ol>
-              </section>
+          <ol className={styles.cards} data-reveal>
+            {later.map((event) => (
+              <EventCard key={event.id} event={event} />
             ))}
-          </div>
+          </ol>
         </section>
       )}
     </div>
@@ -175,21 +162,24 @@ function Empty() {
   )
 }
 
-/** One later event: the day to scan by, what and where, and a quiet RSVP. */
-function EventRow({ event }: { event: ProtoEvent }) {
+/** One later event as a card: its date, what and where, and an RSVP at the foot. */
+function EventCard({ event }: { event: ProtoEvent }) {
   const rsvp = useRsvp(event)
-  const { day, weekday } = dateParts(event.date)
+  const { day, monthLong, weekday } = dateParts(event.date)
 
   return (
     <li className={styles.event}>
       <time className={styles.rowDate} dateTime={event.date}>
         <span className={styles.rowDay}>{day}</span>
-        <span className={styles.rowWeekday}>{weekday}</span>
+        <span className={styles.rowWhen}>
+          <span>{monthLong}</span>
+          <span className={styles.rowWeekday}>{weekday}</span>
+        </span>
       </time>
 
       <div className={styles.body}>
         <h4 className={styles.title}>
-          {/* Stretched over the whole row, so a click anywhere opens the event's page. */}
+          {/* Stretched over the whole card, so a click anywhere opens the event's page. */}
           <Link className={styles.rowLink} to={`/events/${event.id}`}>
             {event.title}
           </Link>

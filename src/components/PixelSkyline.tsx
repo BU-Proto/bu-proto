@@ -12,5 +12,5 @@ export function PixelSkyline({ className }: { className?: string }) {
     still: 4,
     frame: (cells, cols, rows, time) => skylineFrame(cells, cols, rows, time),
   })
-  return <canvas ref={canvas} className={className} aria-hidden="true" />
+  return <canvas ref={canvas} className={className} aria-hidden="true" data-trail-art />
 }

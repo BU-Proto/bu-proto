@@ -2,9 +2,8 @@
   margin: 0;
   color: var(--c-body);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 /* Contents at the left, the text at a reading measure beside it. */
@@ -27,10 +26,9 @@
   margin: 0;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 400;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .contentsList {

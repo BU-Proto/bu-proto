@@ -9,16 +9,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 46px;
+  height: 52px;
   padding: 0 var(--gutter);
   color: #fff;
   pointer-events: none;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 500;
-  letter-spacing: 0.13em;
+  letter-spacing: 0;
   line-height: 1;
-  text-transform: uppercase;
 }
 
 .top > * {
@@ -29,7 +28,7 @@
   display: flex;
   align-items: center;
   align-self: stretch;
-  gap: 8px;
+  gap: 10px;
   text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
 }
 
@@ -41,9 +40,9 @@
   left: 50%;
   display: flex;
   align-items: stretch;
-  height: 46px;
+  height: 52px;
   padding: 0 6px;
-  border-radius: 23px;
+  border-radius: 26px;
   transform: translateX(-50%);
 }
 
@@ -57,7 +56,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: 0 11px;
+  padding: 0 13px;
   white-space: nowrap;
 }
 
@@ -67,7 +66,7 @@
   top: 4px;
   bottom: 4px;
   left: 0;
-  border-radius: 19px;
+  border-radius: 22px;
   background: rgb(255 255 255 / 0.1);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.2),
@@ -88,11 +87,11 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 38px;
-  padding: 0 17px;
+  height: 44px;
+  padding: 0 20px;
   overflow: hidden;
   isolation: isolate;
-  border-radius: 19px;
+  border-radius: 22px;
   background: #f4f4f6;
   box-shadow:
     inset 0 1px 0 #fff,
@@ -117,7 +116,7 @@
 .nav > a:focus-visible {
   outline: 2px solid #fff;
   outline-offset: -4px;
-  border-radius: 23px;
+  border-radius: 26px;
 }
 
 .join:focus-visible {

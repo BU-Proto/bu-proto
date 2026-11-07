@@ -6,10 +6,11 @@ import { PALETTE_V2 } from './palettePreview'
  * design; the others are painted here from the same pigments (picked out of that gradient), so
  * every shape is in the site's one palette and only the silhouette changes.
  */
-export const SHAPES = ['tides', 'bloom', 'eclipse', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
+export const SHAPES = ['summit', 'tides', 'bloom', 'eclipse', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
 export type ShapeName = (typeof SHAPES)[number]
 
 export const SHAPE_LABELS: Record<ShapeName, string> = {
+  summit: 'Summit',
   tides: 'Tides',
   bloom: 'Bloom',
   eclipse: 'Eclipse',
@@ -46,11 +47,15 @@ const P = {
   navy: hex('0b2a46'),
 } as const
 
-/** A pale ice blue between the frost and the field's sky, for the tides' brightest currents. */
-const ICE: RGB = [
-  P.frost[0] + (P.sky[0] - P.frost[0]) * 0.45,
-  P.frost[1] + (P.sky[1] - P.frost[1]) * 0.45,
-  P.frost[2] + (P.sky[2] - P.frost[2]) * 0.45,
+/** The violet at the middle of the tides' lower current, the old hero's purple. */
+const VIOLET: RGB = [122, 92, 236]
+
+/** The summit's peaks, back to front: where (0 to 1 across), how tall and wide, and their colours
+    from the ridge down, each blending into the field's blue. */
+const SUMMIT_PEAKS: readonly { at: number; height: number; width: number; glow: number; tones: readonly RGB[] }[] = [
+  { at: 0.28, height: 0.4, width: 0.17, glow: 0.6, tones: [[150, 118, 240], [122, 92, 236], [60, 96, 200], [4, 106, 168]] },
+  { at: 0.6, height: 0.56, width: 0.15, glow: 1, tones: [[237, 99, 125], [218, 52, 111], [122, 92, 236], [4, 106, 168]] },
+  { at: 0.86, height: 0.3, width: 0.13, glow: 0.8, tones: [[242, 120, 128], [218, 52, 111], [96, 90, 220], [4, 106, 168]] },
 ]
 
 /** Painted shapes are drawn on a 16:10 canvas, the hero's own proportion. */
@@ -172,8 +177,8 @@ function soften(map: GradientMap, sigma: number, scratch: Float32Array = new Flo
 }
 
 /**
- * The tides: four currents of light, bundled tight at the left edge and spreading wide as they
- * cross to the right. Each is a glossy tube with a soft glow of its own color and a faint shadow,
+ * The tides: four currents of light running level across the screen, evenly spaced and the same
+ * weight from edge to edge. Each is a glossy tube with a soft glow of its own color and a faint shadow,
  * in the field's own colors: two in ice and the field's blues, two in its warm pinks and peach,
  * over a ground sunk toward navy so each current stands out as its own shape. The lower ones pass
  * in front where they overlap in the bundle.
@@ -186,11 +191,11 @@ function soften(map: GradientMap, sigma: number, scratch: Float32Array = new Flo
 const CURRENTS = [
   // Colors run from the right edge (first) to the bundle (last). Each current blends within its
   // own family, and the warm ones only through peach, never straight from pink into blue.
-  { base: 0.06, tones: [P.sky, ICE, P.lagoon] },
-  { base: 0.22, tones: [P.rose, P.peach, P.rose] },
-  { base: 0.38, tones: [P.peach, P.rose, P.peach] },
-  { base: 0.54, tones: [P.lagoon, ICE, P.sky] },
-].map(({ base, tones }, k) => ({ base, tones, R: 0.09 + 0.012 * k }))
+  // Two only, on the blue ground: the old hero's pink over a slimmer current that turns from the
+  // field's sky to violet in the middle and back, so blue, pink and violet show in about equal measure.
+  { base: 0.2, tones: [P.rose, P.rose, P.rose] },
+  { base: 0.42, tones: [P.sky, VIOLET, P.sky] },
+].map(({ base, tones }, k) => ({ base, tones, R: k === 0 ? 0.11 : 0.075 }))
 
 /**
  * The ripples: how far they swell and settle a current (a share of its radius), how long one
@@ -201,22 +206,58 @@ const RIPPLE = 0.28
 const RIPPLE_PERIOD = 10
 const RIPPLE_K = (2 * 2 * Math.PI) / ASPECT
 
+
 /** Painted finer than the other shapes, so the currents' highlights stay crisp, and softened a little. */
 const TIDES_W = 128
 const TIDES_H = 80
 const TIDES_SOFTEN = 1.5
 
 /**
- * Where current `k` runs at `u` (measured from the right edge, 0, to the left, 1.6, so the bundle
- * sits on the left). It never moves: a gentle curve, the same for every current at a given u.
+ * Where current `k` runs at `u` (measured from the right edge, 0, to the left, 1.6). It never moves:
+ * a gentle curve, the same for every current at a given u.
  */
+/**
+ * In development, `?tides=` previews another path for the currents: `level` (level and evenly
+ * spaced), `bundle` (bundled on the left, spreading right), `sweep` (a diagonal rising to the
+ * right), `swell` (deep S waves) or `arc` (an arc over the top). Without it they draw the mountain.
+ */
+const TIDES_PATH =
+  import.meta.env.DEV && typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tides') : null
+
+/**
+ * The mountain's ridge, an abstract Everest: one soft summit a little right of centre and a lower
+ * shoulder to its left, every rise rounded so it reads as a form rather than a jagged line. `x` runs 0 (left) to 1 (right); the result is the
+ * ridge's height as a share of the picture from the top.
+ */
+function ridge(x: number): number {
+  const summit = 0.54 * gauss((x - 0.58) / 0.17)
+  const shoulder = 0.26 * gauss((x - 0.32) / 0.15)
+  return 0.68 - Math.max(summit, shoulder) - 0.3 * summit * shoulder
+}
+
 function currentY(k: number, u: number): number {
   const { base } = CURRENTS[k]
-  const pull = smooth(-0.1, 1.75, u)
-  const meet = 0.3 + (k - 1.5) * 0.045
-  const wave = 0.035 * Math.sin(2.4 * u) * (1 - pull)
-  const roll = 0.028 * Math.sin(1.2 * u) * (0.35 + 0.65 * (1 - pull))
-  return base + (meet - base) * pull + wave + roll
+  const across = u / ASPECT
+  if (!TIDES_PATH || TIDES_PATH === 'everest') {
+    // The mountain: the currents lie under the ridge as its contours. Like contour lines they crowd together at the summit and fan out down the slopes.
+    const x = 1 - across
+    const gap = 0.1 + 0.08 * (1 - gauss((x - 0.58) / 0.22))
+    return ridge(x) + k * gap
+  }
+  if (TIDES_PATH === 'bundle') {
+    const pull = smooth(-0.1, 1.75, u)
+    const meet = 0.3 + (k - 1.5) * 0.045
+    const wave = 0.035 * Math.sin(2.4 * u) * (1 - pull)
+    const roll = 0.028 * Math.sin(1.2 * u) * (0.35 + 0.65 * (1 - pull))
+    return base + (meet - base) * pull + wave + roll
+  }
+  if (TIDES_PATH === 'sweep') return 0.04 + base * 0.75 + 0.32 * across + 0.02 * Math.sin(2.2 * u)
+  if (TIDES_PATH === 'swell') return 0.12 + base * 0.8 + 0.1 * Math.sin(2.6 * u + 0.6)
+  if (TIDES_PATH === 'arc') return 0.1 + base * 0.75 + 0.32 * ((across - 0.5) * 2) ** 2
+  // `level`: evenly spaced the whole way across, the same weight from edge to edge.
+  const wave = 0.035 * Math.sin(2.4 * u)
+  const roll = 0.028 * Math.sin(1.2 * u)
+  return base + wave + roll
 }
 
 /** What doesn't move under the tides: the ground sunk toward navy, with a soft lagoon glow over the bundle. */
@@ -310,6 +351,22 @@ const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
   tides: paintTides,
 
   bloom: () => fromColormap(GRADIENT_COLORMAP),
+
+  // A range of three soft peaks, back to front: a violet one far off on the left, the tall pink summit
+  // a little right of centre, and a low pink one in front on the right. Each blends from its ridge
+  // down into the field's blue rather than sitting in bands, with a haze along its ridge; the far
+  // one is cooler, so it reads as further away.
+  summit: () =>
+    painted((x, y, ground) => {
+      const u = x / ASPECT
+      let c = ground
+      for (const peak of SUMMIT_PEAKS) {
+        const d = y - (0.76 - peak.height * gauss((u - peak.at) / peak.width))
+        if (d < 0) c = over(c, peak.tones[0], gauss(d / 0.07) * 0.7 * peak.glow)
+        else c = over(c, ramp(peak.tones, clamp01(d / 0.45)), 0.94 * (1 - smooth(0.35, 0.7, d)))
+      }
+      return c
+    }),
 
   // A ring of warm light around a dark disc, high on the right: the corona of an eclipse, lit
   // hottest on its lower-left rim, with a bright bead where the sun breaks through.

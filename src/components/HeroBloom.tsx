@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { shapeMap } from '../ascii-field/shapes'
 import { createHeroBloom } from '../lib/heroBloom'
 import { GROUNDS } from '../lib/pageGround'
 import { onFrame } from '../lib/smoothScroll'
@@ -19,7 +18,7 @@ export function HeroBloom() {
     if (!surface) return
     const bloom = createHeroBloom(
       surface,
-      shapeMap(GROUNDS.home.field.shape),
+      GROUNDS.home.field.shape,
       () => setFailed(true),
       () => {
         surface.dataset.ready = ''
@@ -81,5 +80,5 @@ export function HeroBloom() {
   }, [])
 
   if (failed) return null
-  return <canvas ref={canvas} className={styles.bloom} aria-hidden="true" />
+  return <canvas ref={canvas} className={styles.bloom} aria-hidden="true" data-trail-art />
 }

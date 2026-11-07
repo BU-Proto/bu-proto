@@ -13,7 +13,7 @@ import {
   type WarpField,
 } from './renderer'
 import { FIELD, FOG, MONO_FAMILY, MONO_STACK, RAMPS, type FieldSettings } from './settings'
-import { buildClearMask, CLEAR_SELECTOR } from './textClearing'
+import { buildAllowMask, buildClearMask, CLEAR_SELECTOR } from './textClearing'
 import { trailWarp } from './trailWarp'
 
 /** Pointer-downs inside elements marked `data-fog-ignore` (e.g. the tweak panel) don't splash. */
@@ -105,6 +105,8 @@ export interface FieldEngineOptions {
   clearSelector?: string
   /** Publish the wind's warp in trailWarp, so other art can slide its own glyphs with it. */
   shareWarp?: boolean
+  /** When set, the trail runs only over these elements (and still steps back from the copy). */
+  onlyOver?: string
 }
 
 export class AsciiFieldEngine {
@@ -124,6 +126,8 @@ export class AsciiFieldEngine {
   private readonly clearSelector: string
   /** Publish the warp in trailWarp, for other art to slide its glyphs by. */
   private readonly shareWarp: boolean
+  /** The elements the trail is kept to, or null to run everywhere. */
+  private readonly onlyOver: string | null
 
   // Grid.
   private geometry: FieldGeometry | null = null
@@ -181,6 +185,7 @@ export class AsciiFieldEngine {
     this.layer = options.layer ?? 'field'
     this.clearSelector = options.clearSelector ?? CLEAR_SELECTOR
     this.shareWarp = options.shareWarp ?? false
+    this.onlyOver = options.onlyOver ?? null
     this.renderer = createFieldRenderer(canvas, this.onRendererRestored, this.layer)
     const measureCtx = document.createElement('canvas').getContext('2d')
     if (!measureCtx) throw new Error('Canvas 2D is not supported in this browser')
@@ -646,6 +651,11 @@ export class AsciiFieldEngine {
     const { geometry } = this
     if (!geometry) return
     const mask = buildClearMask(elements, geometry.cols, geometry.rows, geometry.cellW, geometry.cellH)
+    if (this.onlyOver) {
+      // Outside the allowed elements the trail is cleared as if by copy.
+      const allow = buildAllowMask(document.querySelectorAll(this.onlyOver), geometry.cols, geometry.rows, geometry.cellW, geometry.cellH)
+      for (let k = 0; k < mask.length; k++) mask[k] = Math.max(mask[k], 1 - allow[k])
+    }
     this.clearMask = mask
     if (this.renderer.picksGlyphs) {
       // Hand the shader its share of the drift through the unused glyph byte.

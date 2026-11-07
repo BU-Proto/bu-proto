@@ -47,7 +47,7 @@
   border-top: 1px solid var(--c-line);
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   text-align: center;
 }
 
@@ -120,10 +120,9 @@
 .dateRest {
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0;
   line-height: 1.5;
-  text-transform: uppercase;
 }
 
 .soon {
@@ -153,9 +152,8 @@
   margin: 0;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .eventText {
@@ -223,9 +221,8 @@
 .countdown small {
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .deadlineName {
@@ -237,9 +234,8 @@
   grid-column: 2;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 /* An apply-by row is one link: its name, stretched over the row, with the dotted line on hover. */

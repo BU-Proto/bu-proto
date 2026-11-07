@@ -198,9 +198,8 @@
 .facts dt {
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .facts dd {
@@ -236,8 +235,8 @@
   overflow: hidden;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  letter-spacing: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

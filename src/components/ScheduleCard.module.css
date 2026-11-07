@@ -15,9 +15,8 @@
   padding-bottom: 12px;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .location svg {
@@ -51,9 +50,8 @@
   gap: 6px;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
@@ -95,9 +93,8 @@
   margin-bottom: 2px;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .times b {
@@ -119,7 +116,7 @@
   padding-bottom: 6px;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   white-space: nowrap;
 }
 

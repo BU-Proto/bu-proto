@@ -27,7 +27,7 @@ export function AsciiJourney() {
           {JOURNEY.lede}
         </p>
       </header>
-      <canvas ref={canvas} className={styles.art} aria-hidden="true" />
+      <canvas ref={canvas} className={styles.art} aria-hidden="true" data-trail-art />
       <ol className={`${ui.steps} ${styles.steps}`}>
         {JOURNEY.steps.map((step, index) => (
           <li key={step.name} className={ui.step}>

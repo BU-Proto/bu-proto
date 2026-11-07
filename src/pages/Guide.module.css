@@ -290,7 +290,7 @@ h1.title {
   clip-path: var(--px-corners-sm);
   color: var(--c-paper);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 13px;
   line-height: 1;
 }
 
@@ -709,7 +709,7 @@ a.nextCard {
 }
 
 a.nextCard:hover .nextButton {
-  background: var(--c-sheen);
+  transform: translateY(-2px);
 }
 
 a.nextCard:focus-visible {

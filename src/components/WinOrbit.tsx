@@ -162,7 +162,7 @@ function WinCard({ win, loaded }: { win: Win; loaded: boolean }) {
         {win.photo ? (
           loaded && <img src={win.photo} alt="" decoding="async" draggable={false} />
         ) : (
-          <pre className={styles.glyphs}>{lines}</pre>
+          <pre className={styles.glyphs} data-trail-art>{lines}</pre>
         )}
       </div>
     </div>
