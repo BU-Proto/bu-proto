@@ -30,7 +30,14 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
       return
     }
     const still = reducedMotion()
-    const state = { stop: null as (() => void) | null, onScreen: false, visible: !document.hidden }
+    const state = { stop: null as (() => void) | null, onScreen: false, visible: !document.hidden, greeted: false }
+    const button = box.querySelector<HTMLElement>('[data-pulse]')
+    const sendPulse = () => {
+      if (still || !button) return
+      const from = button.getBoundingClientRect()
+      const to = surface.getBoundingClientRect()
+      light.pulse(from.left + from.width / 2 - to.left, from.top + from.height / 2 - to.top)
+    }
 
     const power = () => {
       if (still) return 1
@@ -39,7 +46,15 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
       const t = Math.max(0, 1 - off / POWER_RANGE)
       return t * t * (3 - 2 * t)
     }
-    const draw = (now: number) => light.frame(now, power())
+    const draw = (now: number) => {
+      const lit = power()
+      // The frame greets you with one ring the first time it fills the screen.
+      if (!state.greeted && lit > 0.8) {
+        state.greeted = true
+        sendPulse()
+      }
+      light.frame(now, lit)
+    }
     const sync = () => {
       const run = !still && state.onScreen && state.visible
       if (run && !state.stop) state.stop = onFrame(draw)
@@ -64,12 +79,14 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
       sync()
     }
     document.addEventListener('visibilitychange', onVisibility)
+    button?.addEventListener('pointerenter', sendPulse)
 
     return () => {
       state.stop?.()
       sizes.disconnect()
       screen.disconnect()
       document.removeEventListener('visibilitychange', onVisibility)
+      button?.removeEventListener('pointerenter', sendPulse)
       light.destroy()
     }
   }, [section])
@@ -105,7 +122,7 @@ export function JoinFrame() {
 
           <div className={styles.ring}>
             <AsciiFigure shape="halo" rows={24} className={styles.figure} />
-            <Link className={`${ui.btn} ${styles.cta}`} to={JOIN_CTA.cta.href}>
+            <Link className={`${ui.btn} ${styles.cta}`} to={JOIN_CTA.cta.href} data-pulse="">
               {JOIN_CTA.cta.label}
             </Link>
           </div>
