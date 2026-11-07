@@ -8,7 +8,12 @@
   pointer-events: none;
 }
 
+.defs {
+  position: absolute;
+}
+
 .frost,
+.lens,
 .rim {
   position: absolute;
   inset: 0;
@@ -28,6 +33,16 @@
     var(--glass-shadow, 0 10px 30px rgb(0 0 0 / 0.34));
   -webkit-backdrop-filter: var(--glass-frost, var(--glass-frost-default));
   backdrop-filter: var(--glass-frost, var(--glass-frost-default));
+}
+
+/* Only ever handed its filter in Chromium. It comes up over the frost once its map has decoded. */
+.lens {
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.lens[data-ready] {
+  opacity: 1;
 }
 
 .rim {
