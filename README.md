@@ -125,8 +125,8 @@ src/
     settings.ts          settings type, defaults and every tuning constant
   admin/                 the portal at /admin: shell, sign-in, dashboard, editors, people and email pages
   components/
-    Layout.tsx           mounts the field once, the top bar, the page and the footer
-    TopBar, MenuSheet, Footer, Hero, ScheduleCard, PageIntro, SampleTag, Form, RouteStates, IconButton, icons
+    Layout.tsx           the top bar, the page and the footer, on the black ground
+    TopBar, MenuSheet, Footer, Hero, ScheduleCard, PageIntro, SampleTag, Form, RouteStates, icons
     ui.module.css        shared glass panels, buttons, the sample tag and the page intro
   content/               all copy, one typed file per page (see Content)
   lib/content.ts         fetches the D1 content for the route loaders
