@@ -37,8 +37,8 @@ export const LOGO_WALLS: readonly LogoWall[] = [
     title: 'Partners',
     text: 'BU programs and orgs we co-host with.',
     logos: [
-      { name: 'Boston University', href: 'https://www.bu.edu' },
-      { name: 'Spark!', href: 'https://www.bu.edu/spark/' },
+      { name: 'Boston University', src: '/logos/boston-university.png', href: 'https://www.bu.edu' },
+      { name: 'Spark!', src: '/logos/spark.png', href: 'https://www.bu.edu/spark/' },
     ],
   },
   { id: 'wins', title: 'Other wins', text: 'Accelerators, fellowships and awards members have landed.', logos: [] },

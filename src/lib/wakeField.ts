@@ -1,7 +1,9 @@
-// The events section's ground: giant words, barely there, and a cursor that leaves a wake. The wake is
-// a small buffer of velocity and strength that advects itself and fades in about half a second. The
-// words only catch colour where the wake crosses them, as a thin film would: bright inside the letter,
-// a split of colour along its edges, and just a dark oily sheen on the ground around it.
+// The events section's ground: giant words, barely there, and a cursor that stirs a real fluid over
+// them. The letters never move. They're a window: inside one the fluid's film shows at full strength
+// in hard bands of colour, its edge catches a hairline split of colour, and out on the ground there
+// are only the film's thin contour lines. The hero uses the simpler wake buffer in this file.
+
+import { createFluid } from './fluidField'
 
 export const VERTEX = `#version 300 es
 out vec2 vUv;
@@ -57,7 +59,7 @@ const WORDS = `#version 300 es
 precision highp float;
 in vec2 vUv;
 out vec4 o;
-uniform sampler2D uAtlas, uWake;
+uniform sampler2D uAtlas, uDye, uVel;
 uniform vec2 uRes;
 uniform float uPitch, uRow, uScroll, uShift, uSkew, uT, uDpr, uCount;
 uniform float uWidths[8];
@@ -83,28 +85,43 @@ float letters(vec2 p, float lod) {
 
 ${FILM}
 
+/* Thin film, hard-banded: electric blue, cyan, white, peach, magenta, violet. Stops turn over fast,
+   so the colour sits in bands with crisp seams between them. */
+vec3 bands(float t) {
+  vec3 c[6] = vec3[6](vec3(.04, .12, 1.), vec3(.18, .82, 1.), vec3(.82, .93, 1.), vec3(1., .69, .6), vec3(1., .16, .6), vec3(.42, .2, 1.));
+  float x = fract(t) * 6.;
+  int i = int(floor(x));
+  return mix(c[i], c[(i + 1) % 6], smoothstep(.3, .7, fract(x)));
+}
+
 void main() {
   vec2 px = vec2(vUv.x, 1. - vUv.y) * uRes;
-  vec4 w = texture(uWake, vUv);
-  vec2 V = (w.rg - .5) * 2.;
-  float S = w.b;
+  float film = max(texture(uDye, vUv).r, 0.);
+  vec2 flow = texture(uVel, vUv).xy * .0025;
+  float speed = min(length(flow), 1.);
 
-  /* the letters bend a little under the wake, and each colour bends a different amount */
-  vec2 bend = V * S * 14. * uDpr;
-  float c = letters(px + bend, 0.), cA = letters(px + bend * 1.5, 0.), cB = letters(px + bend * .5, 0.);
-  float soft = letters(px + bend, 3.2);
+  /* the letters hold still; only a hairline of colour splits along their edges where the film is */
+  float c = letters(px, 0.);
+  vec2 split = (speed > .001 ? normalize(flow) : vec2(1., 0.)) * 1.6 * uDpr * smoothstep(.0, .3, film);
+  float cA = letters(px + split, 0.), cB = letters(px - split, 0.);
+  float soft = letters(px, 3.2);
 
   /* at rest: the faintest fill and a hairline, slightly warmer on one side of the screen */
   float line = 1. - abs(c * 2. - 1.);
   vec3 col = FROST * c * .03 + mix(SKY, RASP, vUv.x) * line * .1 + FROST * line * .07;
 
-  float along = S * 2.6 + dot(V, vec2(.7, .5)) * .9 + vUv.x * 1.1 - vUv.y * .7 + uT * .05;
-  vec3 tint = film(along);
-  float lit = smoothstep(.02, .7, S);
-  col += tint * lit * 1.3 * c;
-  col += FROST * lit * clamp((c - soft) * 3.4, 0., 1.);
-  col += RASP * max(cA - c, 0.) * S * 2.6 + SKY * max(cB - c, 0.) * S * 2.6;
-  col += tint * S * S * .2 * (1. - c);
+  float t = film * 1.15 + speed * .35 + vUv.x * .22 - vUv.y * .16 + uT * .02;
+  vec3 tint = bands(t);
+  float body = smoothstep(.015, .16, film);
+  col += tint * body * c * .9;
+  col += FROST * body * clamp((c - soft) * 2.6, 0., 1.) * .45;
+  col += vec3(.1, .85, 1.) * max(cA - c, 0.) * body * 2.2 + vec3(1., .16, .5) * max(cB - c, 0.) * body * 2.2;
+
+  /* out on the ground the film is only its contour lines, thin and dim */
+  float seam = abs(fract(t * 3.) - .5);
+  float contour = (1. - smoothstep(.0, .022, seam)) * smoothstep(.01, .08, film);
+  col += tint * contour * .2 * (1. - c);
+  col += tint * film * .035 * (1. - c);
 
   col += (h(px * .37 + fract(uT)) + h(px * .71 + fract(uT * 1.3)) - 1.) * 2. / 255. * step(.004, length(col));
   col = clamp(col, 0., 1.);
@@ -115,7 +132,7 @@ const SIM_HEIGHT = 200
 const POINTER_POWER = 0.9
 const MAX_DPR = 1.5
 /** How long to keep drawing after the last move, while the wake dies. */
-const SETTLE_MS = 900
+const SETTLE_MS = 1800
 const FRAME_WAKE = 1 / 60
 const SKEW_PER_PX = 0.9
 const SHIFT_PER_PX = 0.16
@@ -267,15 +284,16 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
   const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false })
   if (!gl) return null
   let picture: WebGLProgram
-  let wake: ReturnType<typeof createWakeBuffer>
+  let fluid: ReturnType<typeof createFluid>
   try {
     picture = program(gl, WORDS)
     gl.bindVertexArray(gl.createVertexArray())
-    wake = createWakeBuffer(gl)
+    fluid = createFluid(gl)
   } catch {
     return null
   }
-  const P = location(gl, picture, ['uAtlas', 'uWake', 'uRes', 'uPitch', 'uRow', 'uScroll', 'uShift', 'uSkew', 'uT', 'uDpr', 'uCount', 'uWidths'])
+  if (!fluid) return null
+  const P = location(gl, picture, ['uAtlas', 'uDye', 'uVel', 'uRes', 'uPitch', 'uRow', 'uScroll', 'uShift', 'uSkew', 'uT', 'uDpr', 'uCount', 'uWidths'])
 
   const atlasSize = Math.min(4096, gl.getParameter(gl.MAX_TEXTURE_SIZE) as number)
   const atlas = drawAtlas(words, atlasSize)
@@ -311,7 +329,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       box.dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
       canvas.width = Math.round(width * box.dpr)
       canvas.height = Math.round(height * box.dpr)
-      wake.resize(width, height)
+      fluid.resize(width, height)
       state.drawnScroll = NaN
     },
     point(x, y) {
@@ -346,10 +364,14 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       const aim = Math.max(-MAX_SKEW, Math.min(MAX_SKEW, delta * SKEW_PER_PX))
       state.skew += (aim - state.skew) * 0.12
 
-      wake.advance(elapsed, [state.lastX, state.lastY], [state.x, state.y], state.moved)
-      state.lastX = state.x
-      state.lastY = state.y
-      state.moved = false
+      const stepped = fluid.advance(elapsed, [state.lastX, state.lastY], [state.x, state.y], state.moved)
+      // Nothing's changed between fluid steps on a 120Hz screen, so there's nothing new to draw.
+      if (!stepped && delta === 0) return true
+      if (stepped) {
+        state.lastX = state.x
+        state.lastY = state.y
+        state.moved = false
+      }
 
       const px = box.dpr
       const pitch = Math.max(box.height * 0.42, 220) * px
@@ -362,8 +384,11 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       gl.bindTexture(gl.TEXTURE_2D, atlasTexture)
       gl.uniform1i(P.uAtlas, 0)
       gl.activeTexture(gl.TEXTURE1)
-      gl.bindTexture(gl.TEXTURE_2D, wake.texture)
-      gl.uniform1i(P.uWake, 1)
+      gl.bindTexture(gl.TEXTURE_2D, fluid.dye)
+      gl.uniform1i(P.uDye, 1)
+      gl.activeTexture(gl.TEXTURE2)
+      gl.bindTexture(gl.TEXTURE_2D, fluid.velocity)
+      gl.uniform1i(P.uVel, 2)
       gl.uniform2f(P.uRes, canvas.width, canvas.height)
       gl.uniform1f(P.uPitch, pitch)
       gl.uniform1f(P.uRow, pitch * 0.96)
@@ -380,7 +405,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
     },
     destroy() {
       canvas.removeEventListener('webglcontextlost', onContextLost)
-      wake.destroy()
+      fluid.destroy()
       gl.deleteProgram(picture)
       gl.deleteTexture(atlasTexture)
     },

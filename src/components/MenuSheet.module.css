@@ -2,22 +2,23 @@
 .close {
   display: grid;
   place-items: center;
-  width: calc(var(--cell) * 3);
+  width: 46px;
   padding: 0;
   border: 0;
+  border-radius: 19px;
   background: none;
   color: inherit;
   cursor: pointer;
 }
 
 .close {
-  height: calc(var(--cell) * 3);
-  margin: -14px -18px -14px 0;
-  border-left: 1px solid var(--c-line);
+  height: 38px;
+  margin: -6px -8px -6px 0;
 }
 
+/* Set inside the tab's curve, like Join. */
 .open {
-  border-left: 1px solid var(--c-line);
+  margin: 4px 4px 4px 0;
 }
 
 .open svg,
@@ -28,13 +29,12 @@
 
 .open:hover,
 .close:hover {
-  background: var(--c-ink);
-  color: var(--c-paper);
+  background: rgb(255 255 255 / 0.14);
 }
 
 .open:focus-visible,
 .close:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid #fff;
   outline-offset: -2px;
 }
 
@@ -47,13 +47,17 @@
   margin: 0;
   padding: 0;
   border: 0;
-  border-left: 1px solid var(--c-ink);
-  background: var(--c-paper);
-  color: var(--c-ink);
+  background: rgb(14 13 20 / 0.5);
+  box-shadow:
+    inset 1px 0 0 rgb(255 255 255 / 0.16),
+    -24px 0 60px rgb(0 0 0 / 0.5);
+  color: #fff;
+  -webkit-backdrop-filter: blur(30px) saturate(1.8) contrast(0.6) brightness(0.5);
+  backdrop-filter: blur(30px) saturate(1.8) contrast(0.6) brightness(0.5);
 }
 
 .sheet::backdrop {
-  background: rgb(6 26 46 / 0.7);
+  background: rgb(0 0 0 / 0.45);
 }
 
 .inner {
@@ -172,18 +176,26 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .sheet[open] {
-    animation: slide-in 0.3s steps(6);
+    animation: slide-in 0.42s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .sheet[open]::backdrop {
-    animation: fade-in 0.3s steps(6);
+    animation: fade-in 0.3s ease;
+  }
+}
+
+/* Asked for less: a solid sheet, with no filter left running. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  .sheet {
+    background: var(--c-paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 
 @keyframes slide-in {
   from {
-    transform: translateX(40px);
-    opacity: 0;
+    transform: translateX(100%);
   }
 }
 

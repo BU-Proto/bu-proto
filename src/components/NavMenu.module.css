@@ -1,4 +1,4 @@
-/* A tab item with pages under it, and the small white panel they open in. */
+/* A tab item with pages under it, and the small glass panel they open in. */
 
 .root {
   position: relative;
@@ -8,14 +8,10 @@
 /* Set like the tab's links beside it: the name is a link to the section's page, and the chevron
    beside it, which turns over while the list is open, is its own small button. */
 .trigger {
+  position: relative;
   display: flex;
   align-items: stretch;
   white-space: nowrap;
-}
-
-.trigger:hover,
-.trigger[data-open] {
-  color: var(--c-blue);
 }
 
 .label {
@@ -35,15 +31,11 @@
   cursor: pointer;
 }
 
-/* On any of its pages it reads as the current section, the way a current link does. */
-.trigger[data-current] {
-  box-shadow: inset 0 -2px 0 var(--c-ink);
-}
-
 .label:focus-visible,
 .toggle:focus-visible {
-  outline: 2px solid var(--c-blue);
-  outline-offset: -2px;
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+  border-radius: 19px;
 }
 
 .chevron {
@@ -51,47 +43,61 @@
   height: 12px;
 }
 
+.chevron {
+  transition: transform 0.25s ease;
+}
+
 .toggle[aria-expanded='true'] .chevron {
   transform: rotate(180deg);
 }
 
-/* Hangs straight from the tab, lined up with the trigger's right edge so it stays on screen. */
+/* Hangs from the tab, a little clear of it so the two never read as glass on glass, under its own
+   trigger. Larger glass runs darker, for the text it carries. */
 .panel {
+  --glass-blur: 16px;
+  --glass-tone: saturate(1.8) contrast(0.5) brightness(0.42);
+  --glass-shadow: 0 18px 50px rgb(0 0 0 / 0.5);
   position: absolute;
-  top: 100%;
-  right: 0;
+  top: calc(100% + 8px);
+  left: -4px;
   z-index: 3;
   width: 280px;
-  margin-top: 1px;
-  border: 1px solid var(--c-ink);
-  background: var(--c-paper);
+  border-radius: 23px;
+  transform-origin: 66px 0;
+}
+
+/* Bridges the gap down from the tab, so the pointer never crosses open air on the way to a link. */
+.panel::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: 8px;
 }
 
 .list {
   display: grid;
+  gap: 2px;
   margin: 0;
-  padding: 0;
+  padding: 6px;
   list-style: none;
-}
-
-.list > li + li {
-  border-top: 1px solid var(--c-line);
 }
 
 .link {
   display: grid;
   gap: 6px;
-  padding: 13px 14px 14px;
+  padding: 12px 13px 13px;
+  border-radius: 17px;
 }
 
 .link:hover,
 .link:focus-visible {
-  background: var(--c-ink);
-  color: var(--c-paper);
+  background: rgb(255 255 255 / 0.13);
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid #fff;
   outline-offset: -2px;
 }
 
@@ -107,7 +113,7 @@
   content: '';
   width: 6px;
   height: 6px;
-  background: var(--c-blue);
+  background: #fff;
 }
 
 .line {
@@ -115,7 +121,7 @@
   font-size: 13px;
   letter-spacing: 0;
   line-height: 1.4;
-  opacity: 0.66;
+  opacity: 0.72;
   text-transform: none;
 }
 
@@ -128,15 +134,26 @@
   white-space: nowrap;
 }
 
+/* It pops out of the chevron. Only the transform moves and only the words fade: opacity on the panel
+   itself would blind the glass inside it for as long as the fade ran. */
 @media (prefers-reduced-motion: no-preference) {
   .panel:not([hidden]) {
-    animation: drop 0.2s steps(3);
+    animation: pop 0.42s linear(0, 0.097, 0.307, 0.543, 0.751, 0.908, 1.009, 1.062, 1.08, 1.076, 1.06, 1.041, 1.024, 1.01, 1.001, 0.996, 0.994, 0.994, 0.995, 0.996, 1);
+  }
+
+  .panel:not([hidden]) .list {
+    animation: words 0.22s ease;
   }
 }
 
-@keyframes drop {
+@keyframes pop {
+  from {
+    transform: scale(0.9) translateY(-8px);
+  }
+}
+
+@keyframes words {
   from {
     opacity: 0;
-    transform: translateY(-6px);
   }
 }

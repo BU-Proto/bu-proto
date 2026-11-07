@@ -1,26 +1,24 @@
 .top {
+  /* The glass itself is its own layer (Glass.tsx). This box must stay free of filters and opacity,
+     or the dropdown inside it would lose sight of the page. */
   position: fixed;
   z-index: 50;
-  top: 0;
-  right: 0;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 50%;
   display: flex;
   align-items: stretch;
-  height: calc(var(--cell) * 3 + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
-  border-bottom: 1px solid var(--c-line);
-  border-left: 1px solid var(--c-line);
-  background: var(--c-paper);
-  color: var(--c-ink);
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  height: 46px;
+  border-radius: 23px;
+  color: #fff;
+  transform: translateX(-50%);
   font-family: var(--font-mono);
   font-size: 11px;
+  font-weight: 500;
   letter-spacing: 0.13em;
   line-height: 1;
   text-transform: uppercase;
-  transition: border-color 0.2s ease;
-}
-
-.top:hover {
-  border-color: var(--c-ink);
 }
 
 .logo {
@@ -28,41 +26,62 @@
   align-items: center;
   gap: 8px;
   padding: 0 18px;
-  font-weight: 500;
 }
 
 .nav {
+  position: relative;
   display: flex;
   align-items: stretch;
 }
 
 .nav > a {
+  position: relative;
   display: flex;
   align-items: center;
   padding: 0 11px;
   white-space: nowrap;
 }
 
-.nav > a:hover {
-  color: var(--c-blue);
+/* The one plate that marks where you are, and where you're pointing. useNavPlate moves it. */
+.plate {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 19px;
+  background: rgb(255 255 255 / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    inset 0 -1px 1px rgb(255 255 255 / 0.05);
+  /* Darkens what's under it as it lightens it, so the label keeps its contrast over anything bright. */
+  -webkit-backdrop-filter: brightness(0.82);
+  backdrop-filter: brightness(0.82);
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-/* The page you're on is underlined by a thick rule along the tab's foot. */
-.nav > a[aria-current='page'] {
-  box-shadow: inset 0 -2px 0 var(--c-ink);
+.plate[data-shown] {
+  opacity: 1;
 }
 
+/* Set inside the tab's curve, so the rim runs unbroken around it. */
 .join {
+  position: relative;
   display: flex;
   align-items: center;
-  margin-left: 7px;
-  padding: 0 18px;
-  position: relative;
+  margin: 4px 4px 4px 7px;
+  padding: 0 17px;
+  overflow: hidden;
   isolation: isolate;
-  background: var(--c-ink);
-  color: var(--c-paper);
-  font-weight: 500;
+  border-radius: 19px;
+  background: #f4f4f6;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 1px rgb(0 0 0 / 0.14),
+    0 1px 3px rgb(0 0 0 / 0.3);
+  color: #000;
   white-space: nowrap;
+  transition: transform 0.42s linear(0, 0.097, 0.307, 0.543, 0.751, 0.908, 1.009, 1.062, 1.08, 1.076, 1.06, 1.041, 1.024, 1.01, 1.001, 0.996, 0.994, 0.994, 0.995, 0.996, 1);
 }
 
 .join::after {
@@ -79,11 +98,21 @@
   opacity: 1;
 }
 
+.join:active {
+  transform: scale(0.97);
+  transition-duration: 0.09s;
+}
+
 .logo:focus-visible,
-.nav > a:focus-visible,
+.nav > a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+  border-radius: 23px;
+}
+
 .join:focus-visible {
-  outline: 2px solid var(--c-blue);
-  outline-offset: -2px;
+  outline: 2px solid #000;
+  outline-offset: -4px;
 }
 
 .menu {

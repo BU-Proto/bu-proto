@@ -18,7 +18,7 @@ function wayFromScroll(section: HTMLElement): number {
 
 /**
  * The three ways in: three panels of colour, side by side. The way the page has reached opens
- * wider, and so does the one under the pointer, with each glyph drifting slowly inside its panel.
+ * wider, and so does the one under the pointer, with each glyph alive in the middle of its panel.
  * All the words are always there; opening a panel only gives it more room. On phones the panels stack.
  */
 export function WaysIn() {
@@ -77,7 +77,7 @@ export function WaysIn() {
               </ul>
             </div>
             <div className={styles.figure}>
-              <AsciiFigure shape={FIGURES[track.glyph] ?? 'ring'} />
+              <AsciiFigure shape={FIGURES[track.glyph] ?? 'ring'} live />
             </div>
           </li>
         ))}

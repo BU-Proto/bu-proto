@@ -35,7 +35,7 @@
 .list {
   display: flex;
   gap: 8px;
-  height: clamp(520px, 76vh, 680px);
+  height: clamp(560px, 76vh, 680px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -52,7 +52,7 @@
   overflow: hidden;
   border-radius: var(--radius);
   background:
-    radial-gradient(120% 80% at 70% 100%, rgb(var(--deep) / 0.85), transparent 72%),
+    radial-gradient(120% 80% at 50% 100%, rgb(var(--deep) / 0.85), transparent 72%),
     var(--c-raised);
   color: var(--words);
   transition: flex-grow 0.9s var(--glide);
@@ -105,40 +105,22 @@
   margin-top: 6px;
 }
 
-/* The glyph, oversized and let run off the panel's corner. */
+/* The glyph, whole, on the panel's centre line and a shared baseline, so all three sit level and the
+   grid of type stays perfectly square. Sized off the screen, not the panel, so it never reflows, and
+   off its height too, so a short window can't push it up into the words. */
 .figure {
-  --figure-size: clamp(12px, 1.25vw, 17px);
+  --figure-size: clamp(8px, min(0.84vw, 1.35vh), 12px);
   position: absolute;
-  right: -5%;
-  bottom: -6%;
+  bottom: 28px;
+  left: 50%;
   color: var(--art);
   transition: transform 1.1s var(--glide);
-  transform: scale(0.86);
-  transform-origin: 100% 100%;
+  transform: translateX(-50%) scale(0.92);
+  transform-origin: 50% 100%;
 }
 
 .way[data-open] .figure {
-  transform: scale(1.06);
-}
-
-/* The bar sits low in its glyph, so it's lifted to stay in the panel. */
-.way:nth-child(3) .figure {
-  bottom: 8%;
-}
-
-.figure pre {
-  animation: drift 9s ease-in-out infinite alternate;
-  animation-delay: calc(var(--i) * -2.5s);
-}
-
-@keyframes drift {
-  from {
-    transform: translate(-8px, 6px) rotate(-2deg);
-  }
-
-  to {
-    transform: translate(8px, -8px) rotate(2deg);
-  }
+  transform: translateX(-50%) scale(1.06);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -171,9 +153,13 @@
     height: auto;
   }
 
+  /* Stacked, the words set each panel's height, so the figure follows them in the flow and can
+     never land on their last line. */
   .way,
   .way[data-open] {
+    display: flex;
     flex: none;
+    flex-direction: column;
     min-height: 400px;
   }
 
@@ -184,6 +170,10 @@
   .way .figure,
   .way[data-open] .figure {
     --figure-size: 9px;
+    position: static;
+    align-self: center;
+    margin-top: auto;
+    margin-bottom: 28px;
     transform: none;
   }
 }
@@ -192,9 +182,5 @@
   .way,
   .figure {
     transition: none;
-  }
-
-  .figure pre {
-    animation: none;
   }
 }

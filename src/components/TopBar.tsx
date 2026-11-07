@@ -1,29 +1,41 @@
+import { useRef } from 'react'
 import { Link, NavLink } from 'react-router'
 import { BRAND, NAV_ITEMS } from '../content/site'
+import { Glass } from './Glass'
 import { MenuSheet } from './MenuSheet'
 import { NavMenu } from './NavMenu'
 import { ProtoMark } from './ProtoMark'
+import { useGlassLight } from './useGlassLight'
+import { useNavPlate } from './useNavPlate'
 import styles from './TopBar.module.css'
 
 /**
- * The tab fixed to the top right of every page: Proto's mark, the main pages, and Join. A tab item
- * with pages under it (About) opens them in a small menu. On phones the items don't fit, so the
+ * The glass tab fixed to the top centre of every page: Proto's mark, the main pages, and Join. A tab
+ * item with pages under it (About) opens them in a small menu. On phones the items don't fit, so the
  * menu sheet takes their place and carries every page; the footer lists the rest on desktop.
  */
 export function TopBar() {
+  const bar = useRef<HTMLElement>(null)
+  const nav = useRef<HTMLElement>(null)
+  const plate = useRef<HTMLSpanElement>(null)
+  useGlassLight(bar)
+  useNavPlate(nav, plate)
+
   return (
-    <header className={styles.top}>
+    <header ref={bar} className={styles.top}>
+      <Glass radius={23} bezel={18} bend={36} />
       <Link className={styles.logo} to="/">
         <ProtoMark size={18} />
         {BRAND.short}
       </Link>
 
-      <nav className={styles.nav} aria-label="Primary">
+      <nav ref={nav} className={styles.nav} aria-label="Primary">
+        <span ref={plate} className={styles.plate} aria-hidden="true" />
         {NAV_ITEMS.filter((item) => item.inPill).map((item) =>
           item.children ? (
             <NavMenu key={item.to} item={item} />
           ) : (
-            <NavLink key={item.to} to={item.to}>
+            <NavLink key={item.to} to={item.to} data-plate="">
               {item.label}
             </NavLink>
           ),

@@ -8,7 +8,6 @@ import { onFrame } from '../lib/smoothScroll'
 import { reducedMotion } from '../lib/useInView'
 import { AsciiFigure } from './motion/AsciiFigure'
 import { MaskLines } from './motion/MaskLines'
-import { PixelSkyline } from './PixelSkyline'
 import { ProtoMark } from './ProtoMark'
 import ui from './ui.module.css'
 import styles from './JoinFrame.module.css'
@@ -31,15 +30,31 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
       return
     }
     const still = reducedMotion()
-    const state = { stop: null as (() => void) | null, onScreen: false, visible: !document.hidden }
+    const state = { stop: null as (() => void) | null, onScreen: false, visible: !document.hidden, greeted: false }
+    const button = box.querySelector<HTMLElement>('[data-pulse]')
+    const sendPulse = () => {
+      if (still || !button) return
+      const from = button.getBoundingClientRect()
+      const to = surface.getBoundingClientRect()
+      light.pulse(from.left + from.width / 2 - to.left, from.top + from.height / 2 - to.top)
+    }
 
     const power = () => {
       if (still) return 1
-      const top = box.getBoundingClientRect().top / window.innerHeight
-      const t = Math.max(0, 1 - Math.abs(top) / POWER_RANGE)
+      const rect = box.getBoundingClientRect()
+      const off = Math.max(0, rect.top, window.innerHeight - rect.bottom) / window.innerHeight
+      const t = Math.max(0, 1 - off / POWER_RANGE)
       return t * t * (3 - 2 * t)
     }
-    const draw = (now: number) => light.frame(now, power())
+    const draw = (now: number) => {
+      const lit = power()
+      // The frame greets you with one ring the first time it fills the screen.
+      if (!state.greeted && lit > 0.8) {
+        state.greeted = true
+        sendPulse()
+      }
+      light.frame(now, lit)
+    }
     const sync = () => {
       const run = !still && state.onScreen && state.visible
       if (run && !state.stop) state.stop = onFrame(draw)
@@ -63,25 +78,15 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
       state.visible = !document.hidden
       sync()
     }
-    const onMove = (event: PointerEvent) => {
-      if (event.pointerType === 'touch' || !state.onScreen) return
-      const rect = surface.getBoundingClientRect()
-      light.point(event.clientX - rect.left, event.clientY - rect.top)
-    }
-    const onOut = (event: PointerEvent) => {
-      if (!event.relatedTarget) light.point(null, 0)
-    }
     document.addEventListener('visibilitychange', onVisibility)
-    window.addEventListener('pointermove', onMove, { capture: true, passive: true })
-    window.addEventListener('pointerout', onOut, { passive: true })
+    button?.addEventListener('pointerenter', sendPulse)
 
     return () => {
       state.stop?.()
       sizes.disconnect()
       screen.disconnect()
       document.removeEventListener('visibilitychange', onVisibility)
-      window.removeEventListener('pointermove', onMove, { capture: true })
-      window.removeEventListener('pointerout', onOut)
+      button?.removeEventListener('pointerenter', sendPulse)
       light.destroy()
     }
   }, [section])
@@ -90,7 +95,7 @@ function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
   return <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
 }
 
-/** The landing's last screen: the ask, framed in moving light, then the site's links and the skyline. */
+/** The landing's last screen: the ask, framed in moving light, then the site's links. */
 export function JoinFrame() {
   const section = useRef<HTMLElement>(null)
   return (
@@ -116,8 +121,8 @@ export function JoinFrame() {
           </div>
 
           <div className={styles.ring}>
-            <AsciiFigure shape="ring" rows={22} className={styles.figure} />
-            <Link className={`${ui.btn} ${styles.cta}`} to={JOIN_CTA.cta.href}>
+            <AsciiFigure shape="halo" rows={24} className={styles.figure} />
+            <Link className={`${ui.btn} ${styles.cta}`} to={JOIN_CTA.cta.href} data-pulse="">
               {JOIN_CTA.cta.label}
             </Link>
           </div>
@@ -168,7 +173,6 @@ export function JoinFrame() {
           </nav>
         </div>
         <p className={styles.small}>{FOOTER.note}</p>
-        <PixelSkyline className={styles.skyline} />
       </footer>
     </section>
   )

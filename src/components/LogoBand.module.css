@@ -73,11 +73,12 @@ a.item:focus-visible {
   outline-offset: -1.5em;
 }
 
-/* The file is a stencil, so any logo takes on the page's ink and the hover's colour. */
+/* The file is a stencil, so any logo takes on the page's ink and the hover's colour. The box is tall
+   enough that a round seal carries the same weight as a wide wordmark beside it. */
 .logo {
   display: block;
   width: 9em;
-  height: 4.5em;
+  height: 6em;
   background: currentColor;
   mask: var(--logo) center / contain no-repeat;
 }

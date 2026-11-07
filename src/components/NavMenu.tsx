@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { Link, useLocation } from 'react-router'
 import { navItemHolds, type NavItem } from '../content/site'
+import { Glass } from './Glass'
 import styles from './NavMenu.module.css'
 
 /** How long the panel waits after the pointer leaves before it closes, so a slightly crooked path
@@ -102,7 +103,7 @@ export function NavMenu({ item }: { item: NavItem }) {
         if (open && !rootRef.current?.contains(event.relatedTarget as Node | null)) setOpen(false)
       }}
     >
-      <div className={styles.trigger} data-open={open || undefined} data-current={current || undefined}>
+      <div className={styles.trigger} data-plate="" data-open={open || undefined} data-current={current || undefined}>
         <Link
           className={styles.label}
           to={item.to}
@@ -131,6 +132,7 @@ export function NavMenu({ item }: { item: NavItem }) {
       </div>
 
       <div id={id} className={styles.panel} hidden={!open}>
+        <Glass radius={23} bezel={18} bend={36} />
         <ul ref={listRef} className={styles.list} onKeyDown={onListKey}>
           {item.children?.map((child) => {
             const [path, anchor] = child.to.split('#')
