@@ -161,7 +161,7 @@
 .foot {
   position: relative;
   z-index: 1;
-  padding: clamp(14px, 2.4vh, 24px) var(--gutter) clamp(24px, 3.6vh, 36px);
+  padding: clamp(14px, 2.4vh, 24px) var(--gutter) clamp(40px, 5.6vh, 56px);
 }
 
 .footRow {
@@ -215,7 +215,7 @@
 
 .small {
   margin: 8px 0 0;
-  color: var(--c-muted);
+  color: var(--c-body);
   font-size: 11px;
 }
 
