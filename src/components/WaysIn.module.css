@@ -126,21 +126,6 @@
   bottom: 8%;
 }
 
-.figure pre {
-  animation: drift 9s ease-in-out infinite alternate;
-  animation-delay: calc(var(--i) * -2.5s);
-}
-
-@keyframes drift {
-  from {
-    transform: translate(-8px, 6px) rotate(-2deg);
-  }
-
-  to {
-    transform: translate(8px, -8px) rotate(2deg);
-  }
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .head,
   .way {
@@ -192,9 +177,5 @@
   .way,
   .figure {
     transition: none;
-  }
-
-  .figure pre {
-    animation: none;
   }
 }
