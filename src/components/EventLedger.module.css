@@ -1,6 +1,9 @@
 /* Hairlines run the full width; the words sit behind everything and the ledger in the right half. */
 .section {
   position: relative;
+  /* The stage's negative margin lets it stick until its top reaches the section's end, so it would
+     hang a full screen over the next section. Clip, not hidden: hidden would break the sticking. */
+  overflow: clip;
   min-height: 120vh;
   padding-bottom: clamp(72px, 12vh, 140px);
 }
