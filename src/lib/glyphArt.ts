@@ -63,6 +63,45 @@ export function asciiFigure(shape: FigureShape, rows = 22, aspect = 0.6): string
   return lines
 }
 
+/**
+ * A figure at a moment in time, as one string. Each shape moves the way its glyph means: the ring
+ * breathes with light orbiting it, the chevron pushes forward in pulses, the underscore blinks like
+ * a cursor with a glint running along it. The grid never changes, so only the characters do.
+ */
+export function asciiFigureAt(shape: FigureShape, time: number, rows = 22, aspect = 0.6): string {
+  const cols = Math.round(rows / aspect)
+  const top = FINE_RAMP.length - 1
+  let out = ''
+  for (let j = 0; j < rows; j++) {
+    for (let i = 0; i < cols; i++) {
+      let x = ((i + 0.5) / cols) * 2 - 1
+      let y = ((j + 0.5) / rows) * 2 - 1
+      let light: number
+      if (shape === 'ring') {
+        const breath = 1 + 0.045 * Math.sin(time * 0.9)
+        x /= breath
+        y /= breath
+        light = 0.5 + 0.5 * Math.cos(Math.atan2(y, x) - time * 0.8)
+      } else if (shape === 'chevron') {
+        x -= 0.07 * Math.sin(time * 1.1)
+        light = 0.5 + 0.5 * Math.sin(x * 3.6 - y * 0.8 - time * 2.2)
+      } else {
+        light = Math.exp(-(((x - Math.sin(time * 0.7) * 0.9) / 0.4) ** 2))
+      }
+      const d = shapeDistance(shape, x, y)
+      const body = d < 0 ? 0.62 + clamp01(-d / 0.1) * 0.2 : Math.max(0, 0.46 - d * 2.2)
+      const blink = shape === 'bar' ? 0.72 + 0.28 * Math.sin(time * 2.4) ** 2 : 1
+      const rib = 0.86 + 0.14 * Math.cos(i * 1.15 + time * 0.4)
+      // Each cell also breathes on its own clock, so the surface is never quite still.
+      const grain = (hash(i, j) - 0.5) * 0.2 * (0.6 + 0.4 * Math.sin(time * 1.4 + hash(j, i) * 6.28))
+      const lit = body * blink * (0.72 + 0.46 * light)
+      out += FINE_RAMP[Math.round(clamp01(lit * rib + (body > 0.02 ? grain : 0)) * top)]
+    }
+    if (j < rows - 1) out += '\n'
+  }
+  return out
+}
+
 /** Split a long name across two lines, at the space nearest its middle. */
 function wordLines(word: string): string[] {
   const middle = word.length / 2
