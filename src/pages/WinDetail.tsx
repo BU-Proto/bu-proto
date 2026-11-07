@@ -36,33 +36,33 @@ export function WinDetail() {
       <title>{`${win.project} · ${BRAND.full}`}</title>
 
       <DetailOpener photo={win.photo} alt={`${win.project} at ${win.event}`}>
-        <p className={detail.kicker} data-hue="rose" data-fog-clear>
+        <p className={detail.kicker}>
           {win.placement}
           {filled(win.track) && (
-            <span className={detail.kickerNote} data-fog-clear>
+            <span className={detail.kickerNote}>
               {win.track}
             </span>
           )}
         </p>
         <DetailTitle sample={win.placeholder}>{win.project}</DetailTitle>
         {filled(win.blurb) && (
-          <p className={detail.lede} data-fog-clear>
+          <p className={detail.lede}>
             {win.blurb}
           </p>
         )}
-        <p className={detail.note} data-fog-clear>
+        <p className={detail.note}>
           {win.event}
           {win.date && `, ${formatMonth(win.date)}`}
         </p>
         {(win.github || win.devpost) && (
           <div className={detail.actions}>
             {win.devpost && (
-              <a className={ui.primary} href={win.devpost} target="_blank" rel="noopener noreferrer" data-fog-clear="box">
+              <a className={ui.primary} href={win.devpost} target="_blank" rel="noopener noreferrer">
                 {WIN_DETAIL.devpost} <span aria-hidden="true">↗</span>
               </a>
             )}
             {win.github && (
-              <a className={ui.secondary} href={win.github} target="_blank" rel="noopener noreferrer" data-fog-clear="box">
+              <a className={ui.secondary} href={win.github} target="_blank" rel="noopener noreferrer">
                 {WIN_DETAIL.github} <span aria-hidden="true">↗</span>
               </a>
             )}
@@ -101,7 +101,7 @@ export function WinDetail() {
                 <AsideSection id="stack" title={WIN_DETAIL.stack}>
                   <ul className={styles.stack}>
                     {stack.map((tech, i) => (
-                      <li key={`${tech}-${i}`} data-fog-clear>
+                      <li key={`${tech}-${i}`}>
                         {tech}
                       </li>
                     ))}
@@ -111,7 +111,7 @@ export function WinDetail() {
 
               {filled(win.funding) && (
                 <AsideSection id="funding" title={WIN_DETAIL.funding}>
-                  <p className={styles.funding} data-fog-clear>
+                  <p className={styles.funding}>
                     {win.funding}
                   </p>
                 </AsideSection>

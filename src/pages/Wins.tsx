@@ -19,7 +19,7 @@ export function Wins() {
         <PageIntro intro={WINS_INTRO} />
         <WinTally wins={wins} />
         {wins.length === 0 && (
-          <p className={ui.panel} data-fog-clear>
+          <p className={ui.panel}>
             {WINS_EMPTY}
           </p>
         )}
