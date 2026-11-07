@@ -1,6 +1,8 @@
-// A screen edge lit from behind: a tight, saturated line of light around a rounded frame that throws
-// a long faint tint into the dark and slowly travels around the frame. It tops out at the film's own
-// colour, the same film as the cursor's wake. It's dithered, since nearly all of it is dark.
+// The screen's own edges, lit from behind: a tight, saturated line of light that throws a long faint
+// tint into the dark, with the colour slowly travelling around it. There's no outline to draw. The
+// light is measured in from the real edges of the screen, so it runs right into every corner, while
+// its inner side curves away from them. It tops out at the film's own colour, so it never burns to
+// white. It's dithered, since nearly all of it is dark.
 
 import { FILM, program } from './wakeField'
 
@@ -18,9 +20,10 @@ vec3 ramp(float t) { return film(abs(fract(t) * 2. - 1.) * .8); }
 void main() {
   vec2 px = vUv * uRes;
   vec2 half_ = uRes * .5, c = px - half_;
-  float radius = 52. * uDpr;
-  vec2 q = abs(c) - half_ + radius;
-  float d = (min(max(q.x, q.y), 0.) + length(max(q, 0.)) - radius) / -uDpr;
+  /* CSS px in from the nearest side, across and down, then blended so it's zero on every edge and
+     rounds off through the corners, with no crease on the diagonals. */
+  vec2 gap = (half_ - abs(c)) / uDpr;
+  float edge = gap.x * gap.y / max(length(gap), .001);
 
   float turn = atan(c.y * uRes.x / uRes.y, c.x) / 6.28318;
   vec3 hue = ramp(turn + uT * .035);
@@ -28,7 +31,6 @@ void main() {
   hue = mix(hue, ramp(turn * 2. - uT * .02 + .3), .15);
 
   float near = uNear * exp(-dot((px - uPointer) / uDpr, (px - uPointer) / uDpr) / 90000.);
-  float edge = max(d, 0.);
   float line = exp(-edge / 9.) * 1.1 + exp(-edge / 30.) * .21;
   float wash = exp(-edge / 240.) * .056 + exp(-edge / 90.) * .032;
   /* The tint dies before the middle, where every hue would otherwise meet at a point. */
