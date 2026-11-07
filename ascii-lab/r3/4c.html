@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>4c Mushroom Sign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* The mushroom as the mark. A drawn Proto mushroom sign (own SDF silhouette: domed cap, gill band, stem, spots,
+   a ring) rendered in partitive colour: every cell is two pure ladder stops, flat tile plus coverage-matched
+   glyph, nothing interpolated. Rose leads the cap, a lagoon-sky rim lifts the lit edge, one mint cell is the live tip. */
+(function () {
+  'use strict';
+  var Pal = LabPalette, S = LabSubjects;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+  var C = Pal.colors;
+  /* ladder of pure stops, dark to light: tone and arc position fold into one scalar along it */
+  var LADDER = ['harbor', 'raised', 'raisedHi', 'irisDeep', 'raspberry', 'rose', 'peach', 'frost'].map(function (k) { return Pal.toCss(Pal.resolve(k)); });
+  /* the cool, light-rail variant for small marks: sky and iris slot in where the hue hint is low */
+  var LADDER_COOL = ['harbor', 'raised', 'raisedHi', 'irisDeep', 'iris', 'rose', 'peach', 'frost'].map(function (k) { return Pal.toCss(Pal.resolve(k)); });
+  var mintC = Pal.toCss(Pal.resolve('mint'));
+  var W, H, dpr, unit, cols, rows, buf;
+  var GL = [];            /* glyphs sorted by measured coverage: {ch, cov, line} */
+  var lensX = 0.5, lensY = 0.5, pointer = null, lensOn = true;
+
+  function buildAtlas() {
+    var s = 32, c = document.createElement('canvas'); c.width = c.height = s;
+    var g = c.getContext('2d', { willReadFrequently: true });
+    var set = ' .,:;-=+*/\\|xoO#%@8', out = [];
+    for (var i = 0; i < set.length; i++) {
+      g.clearRect(0, 0, s, s); g.fillStyle = '#fff'; g.font = '700 ' + s + 'px ' + FONT;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      if (set[i] !== ' ') g.fillText(set[i], s / 2, s / 2 + s * 0.04);
+      var d = g.getImageData(0, 0, s, s).data, a = 0;
+      for (var k = 3; k < d.length; k += 4) a += d[k];
+      out.push({ ch: set[i], cov: a / 255 / (s * s), line: '/\\|-x'.indexOf(set[i]) >= 0 });
+    }
+    out.push({ ch: '#', cov: 1, block: true });         /* solid block: full ink */
+    out.sort(function (p, q) { return p.cov - q.cov; });
+    var mx = 0; for (var j = 0; j < out.length; j++) if (!out[j].block && out[j].cov > mx) mx = out[j].cov;
+    for (j = 0; j < out.length; j++) if (!out[j].block) out[j].cov = out[j].cov / (mx * 1.02);
+    GL = out;
+  }
+  function pick(f, wantLine) {
+    var best = 0, bd = 9;
+    for (var i = 0; i < GL.length; i++) {
+      var d = Math.abs(GL[i].cov - f) - (wantLine && GL[i].line ? 0.07 : 0);
+      if (d < bd) { bd = d; best = i; }
+    }
+    return GL[best];
+  }
+
+  function resize() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    unit = Math.max(7, Math.ceil(Math.min(W, H) / 96));
+    cols = Math.ceil(W / unit); rows = Math.ceil(H / unit);
+    buf = S.create(cols, rows, 1);
+  }
+
+  /* 4x4 Bayer, stable in motion; used only to break ties on the mix ratio so coverage bands do not ring */
+  var BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
+
+  function sm(a, b, x) { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); }
+  function sign(buf, t) {
+    var w = buf.width, h = buf.height, asp = w / h, i = 0, sc = 1.12;
+    var lx = -0.55, ly = 0.7, ll = Math.sqrt(lx * lx + ly * ly); lx /= ll; ly /= ll;
+    for (var r = 0; r < h; r++) {
+      var y = (1 - (r + 0.5) / h * 2) * sc;
+      for (var c = 0; c < w; c++, i++) {
+        var x = ((c + 0.5) / w * 2 - 1) * asp * sc;
+        var rad = Math.sqrt(x * x + y * y);
+        /* backdrop: soft rose-leaning glow behind the cap, dissolving to ground */
+        var lum = 0.2 * Math.exp(-(x * x + (y - 0.15) * (y - 0.15)) * 1.6), hint = 0.75, edge = 0, mk = 0;
+        /* ring */
+        var rg = Math.abs(rad - 0.97);
+        if (rg < 0.035) { var ra = 1 - sm(0.012, 0.035, rg); var ang = Math.atan2(y, x); var dash = 0.5 + 0.5 * Math.sin(ang * 36 + t * 0.4); lum = Math.max(lum, 0.5 * ra * (0.55 + 0.45 * dash)); hint = 1; edge = Math.max(edge, 0.3 * ra); }
+        /* cap: upper dome of an ellipse, with a gently bowed underside */
+        var cy = 0.06, rx = 0.74, ry = 0.62;
+        var ex = x / rx, ey = (y - cy) / ry;
+        var capD = Math.sqrt(ex * ex + ey * ey) - 1;             /* <0 inside ellipse */
+        var under = cy - 0.02 * (1 - ex * ex) * 1.0;             /* flat-ish base line */
+        var inCap = capD < 0 && y > under - 0.0;
+        /* gill band under the cap */
+        var gx = x / 0.68, gy = (y - (cy - 0.035)) / 0.1, gD = Math.sqrt(gx * gx + gy * gy) - 1;
+        var inGill = gD < 0 && y <= under + 0.002;
+        /* stem: slight taper, bulb foot */
+        var sw = 0.17 + 0.05 * sm(0, -0.62, y) + 0.06 * sm(-0.5, -0.74, y);
+        var inStem = y < cy - 0.02 && y > -0.76 && Math.abs(x) < sw && !(gD < 0 && false);
+        var foot = Math.abs(x) < 0.3 && y < -0.64 && y > -0.78 && (x * x / 0.09 + (y + 0.66) * (y + 0.66) / 0.014) < 1;
+        if (inStem || foot) {
+          var u = x / sw;                           /* -1..1 across */
+          var shade = 0.72 - 0.2 * u;
+          lum = Math.max(0, Math.min(1, shade * (0.85 + 0.15 * sm(-0.75, 0, y))));
+          hint = 0.45; mk = 1;
+          if (Math.abs(u) > 0.82) edge = 0.6;
+          if (u > 0.55) { lum = Math.max(lum * 0.85, 0.5); hint = 0.7; }              /* shadow side, toward raspberry */
+          
+        }
+        if (inGill) {
+          var st = Math.sin(x * 70);
+          lum = 0.26 + 0.2 * (st > 0.2 ? 1 : 0); hint = 0.85; mk = 1; edge = st > 0.2 ? 0.8 : 0.1;
+        }
+        if (inCap) {
+          var nx = ex, ny = ey, nz = Math.sqrt(Math.max(0, 1 - nx * nx * 0.9 - ny * ny * 0.9));
+          var dl = nx * lx + ny * ly + nz * 0.5;
+          lum = 0.5 + 0.42 * Math.max(-0.6, Math.min(1, dl - 0.2));
+          hint = 0.62 - 0.4 * sm(0.35, 0.95, dl);                /* rose body, cooler toward the lit rim */
+          mk = 1;
+          /* lit rim */
+          var rim = 1 - sm(0, 0.07, -capD);
+          if (rim > 0 && dl > 0.1) { lum = Math.max(lum, 0.85); hint = 0.12; edge = 0.9 * rim; }
+          else if (rim > 0) edge = 0.5 * rim;
+          /* spots, three, frost blocks */
+          var sp = [[-0.30, 0.3, 0.1], [0.12, 0.42, 0.075], [0.38, 0.2, 0.09], [-0.5, 0.12, 0.05], [0.0, 0.16, 0.05]];
+          for (var q = 0; q < sp.length; q++) {
+            var d = Math.sqrt((x - sp[q][0]) * (x - sp[q][0]) + (y - sp[q][1]) * (y - sp[q][1]) * 1.25);
+            if (d < sp[q][2]) { lum = 1; hint = 0.9; edge = 0.8; }
+          }
+          /* underside of the dome, a shadowed lip above the gills */
+          if (y < under + 0.06) { lum *= 0.75; hint = 0.8; }
+        }
+        buf.lum[i] = Math.max(0, Math.min(1, lum)); buf.hint[i] = Math.max(0, Math.min(1, hint));
+        buf.edge[i] = Math.max(0, Math.min(1, edge)); buf.mask[i] = mk;
+      }
+    }
+  }
+
+  function frame(tm) {
+    var t = still ? 6 : tm / 1000 * 0.5;
+    sign(buf, t);
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = LADDER[0]; cx.fillRect(0, 0, W, H);
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    var fs = unit * 1.05, sx = unit / (fs * 0.6);
+    cx.font = '700 ' + fs + 'px ' + FONT;
+    var n = LADDER.length - 1;
+    /* one live cell, mint, chosen from bright edge cells by time */
+    var liveIdx = -1, cand = [];
+    for (var q = 0; q < cols * rows; q += 3) if (buf.edge[q] > 0.75 && buf.lum[q] > 0.5) cand.push(q);
+    if (cand.length) liveIdx = cand[Math.floor(t * 0.7) % cand.length];
+
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        var i = y * cols + x, L = buf.lum[i], hint = buf.hint[i], E = buf.edge[i];
+        /* scalar along the ladder: tone leads, the photo's hue position leans it toward rose, pink-heavy */
+        var tone = Math.min(1, L * 1.1);
+        var s = Math.min(1, Math.max(0, Math.pow(tone, 1.1) * (0.8 + 0.4 * hint) + 0.06 * E * tone));
+        if (L < 0.12) s *= L / 0.12;           /* the ground sinks fully */
+        var p = s * n, k = Math.min(n - 1, Math.floor(p)), f = p - k;
+        var lad = hint < 0.3 && s > 0.3 && s < 0.55 ? LADDER_COOL : LADDER;
+        var bay = (BAY[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+        f = Math.min(1, Math.max(0, f + (bay - 0.5) * 0.12));
+        var px = x * unit, py = y * unit;
+        /* ink B = tile, ink A = glyph. Whole cell is one pair of pure stops. */
+        cx.fillStyle = lad[k]; cx.fillRect(px, py, unit + 0.5, unit + 0.5);
+        if (i === liveIdx) { cx.fillStyle = lad[0]; cx.fillRect(px, py, unit + .5, unit + .5); cx.fillStyle = mintC; cx.fillText('*', px + unit / 2, py + unit / 2); continue; }
+        if (f < 0.04) continue;
+        var g = pick(f, E > 0.3 && L > 0.45);
+        if (g.ch === ' ') continue;
+        cx.fillStyle = lad[k + 1];
+        if (g.block) { cx.fillRect(px, py, unit + 0.5, unit + 0.5); continue; }
+        cx.save(); cx.translate(px + unit / 2, py + unit / 2 + unit * 0.04); cx.scale(sx, 1);
+        cx.fillText(g.ch, 0, 0); cx.restore();
+      }
+    }
+  }
+
+  var last = 0;
+  function loop(tm) {
+    if (tm - last > 66) { last = tm; frame(tm); }
+    requestAnimationFrame(loop);
+  }
+  buildAtlas(); resize();
+  window.addEventListener('resize', function () { resize(); frame(performance.now()); });
+  window.addEventListener('pointermove', function (e) { pointer = [e.clientX, e.clientY]; });
+  window.addEventListener('pointerleave', function () { pointer = null; });
+  if (still) frame(0); else requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

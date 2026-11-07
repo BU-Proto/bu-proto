@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tides, negative space</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Pal = window.LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c');
+  var gl = cv.getContext('webgl2', { antialias: false });
+  if (!gl) { document.body.style.background = '#0b2a46'; return; }
+
+  var VS = '#version 300 es\nvoid main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;gl_Position=vec4(p*2.-1.,0,1);}';
+  var FS = '#version 300 es\n' +
+  'precision highp float;\n' +
+  'uniform vec2 res; uniform vec2 cell; uniform float t; uniform float nG;\n' +
+  'uniform sampler2D atlas, ramp;\n' +
+  'out vec4 o;\n' +
+  'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n' +
+  'float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);\n' +
+  ' return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y);}\n' +
+  'void main(){\n' +
+  ' vec2 fp=vec2(gl_FragCoord.x,res.y-gl_FragCoord.y);\n' +
+  ' vec2 cid=floor(fp/cell); vec2 loc=fp-cid*cell;\n' +
+  ' vec2 cc=(cid+.5)*cell; float asp=res.x/res.y;\n' +
+  ' float u=cc.x/res.x*asp; float v=1.-cc.y/res.y;\n' +   /* v up, 0 bottom */
+  ' float tide=.5+.5*sin(t*.21);\n' +
+  ' float shore=.30+.26*tide+.07*sin(u*2.6+t*.17)+.045*sin(u*6.1-t*.31)+.06*(vn(vec2(u*2.2,t*.05))-.5);\n' +
+  /* wave sets run in from the deep: a front travels up the frame and slaps the shore */
+  ' float sets=sin(v*7.-t*.55+1.6*sin(u*2.+t*.2))*.5+.5;\n' +
+  ' float surge=.06*pow(sets,3.);\n' +
+  ' float pools=smoothstep(.68,.85,vn(vec2(u*5.5,v*9.)+3.))*smoothstep(.45,.12,v-shore)*.3;\n' +
+  ' float d=shore+surge-v+pools;\n' +   /* depth: positive under water */
+  ' float rip=.42*sin(d*34.-t*1.6+2.*sin(u*5.+t*.25));\n' +
+  ' float c=smoothstep(.34,-.3,d)+max(rip,0.)*smoothstep(-.3,.0,d)*(1.-.45*smoothstep(.1,.6,d));\n' +
+  ' c=clamp(c,0.,1.);\n' +
+  /* above the waterline the ground thins to dashes of light */
+  ' float dry=smoothstep(-.02,-.34,d);\n' +
+  ' float keep=1.-smoothstep(.55,1.,dry+.55*(h21(cid+7.)-.5)+.4*dry*(vn(cid*.31+t*.04)-.5));\n' +
+  ' float hz=floor(c*(nG-1.)+.5);\n' +
+  ' hz=min(hz,nG-1.-step(.5,dry)*1.);\n' +
+  ' float ga=texelFetch(atlas,ivec2(int(hz)*int(cell.x)+int(loc.x),int(loc.y)),0).r;\n' +
+  /* dashes: dry cells squash toward a horizontal bar, longer near the water */
+  ' float bar=step(abs(loc.y-cell.y*.5),1.)*step(abs(loc.x-cell.x*.5),cell.x*.5*(1.-dry*.75));\n' +
+  ' float cut=mix(ga,0.,step(.5,dry));\n' +
+  ' float fillA=mix(1.,bar*step(.35,keep),step(.5,dry));\n' +
+  /* colour from depth: shallows cerulean and iris, rose where it is deep, peach at the bed */
+  ' float tt=.06+.94*smoothstep(-.1,.62,d)+.1*sin(u*4.+t*.2+v*3.)*smoothstep(0.,.3,d);\n' +
+  ' tt=clamp(tt,0.,1.);\n' +
+  ' vec3 g=texture(ramp,vec2(tt,.5)).rgb;\n' +
+  ' vec3 harbor=vec3(.024,.102,.18); vec3 frost=vec3(.965,.984,1.);\n' +
+  /* foam on the leading edge of the water, cell by cell */
+  ' float foam=smoothstep(.07,0.,abs(d-.015))*(.5+.5*h21(cid+floor(t*2.)));\n' +
+  ' g=mix(g,frost,foam*.9);\n' +
+  /* a dawn core where the water is deepest */
+  ' g=mix(g,vec3(.973,.573,.541),smoothstep(.5,.85,d)*.14);\n' +
+  ' vec3 col=mix(harbor,g,fillA*(1.-cut));\n' +
+  /* a drifting tint of raised harbor where nothing lives, so the ground has depth */
+  ' col+=(vec3(.043,.165,.275)-harbor)*(1.-fillA)*smoothstep(.2,1.,v)*.5;\n' +
+  /* one mint cell rides the tip of the strongest set */
+  ' float tip=step(abs(cid.x-floor(res.x/cell.x*(.5+.3*sin(t*.13)))),.5)*step(abs(cid.y-floor((1.-(shore+.03))*res.y/cell.y)),.5);\n' +
+  ' col=mix(col,vec3(.616,.941,.659),tip*(1.-ga)*.95);\n' +
+  ' o=vec4(col,1.);\n' +
+  '}';
+
+  function sh(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+  var pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  var U = {}; ['res', 'cell', 't', 'nG', 'atlas', 'ramp'].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+
+  function tex(unit, w, h, src, isCanvas) {
+    var tx = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tx);
+    if (isCanvas) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, src);
+    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, src);
+    var f = isCanvas ? gl.NEAREST : gl.LINEAR;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+  tex(1, 256, 1, Pal.lut(256), false);
+
+  /* glyph atlas: built on a canvas, ordered by measured ink coverage. Index 0 is empty, so deep water is solid light. */
+  var CH = ' .,·-~:;=+*x/|%#&@'.split('');
+  var nG = 0, cwPx = 0, chPx = 0;
+  function buildAtlas(cw, ch) {
+    var tmp = document.createElement('canvas'); tmp.width = cw; tmp.height = ch;
+    var t2 = tmp.getContext('2d', { willReadFrequently: true });
+    t2.font = '700 ' + Math.round(ch * 0.78) + 'px ui-monospace, "SF Mono", Menlo, monospace';
+    t2.textAlign = 'center'; t2.textBaseline = 'middle'; t2.fillStyle = '#fff';
+    var items = CH.map(function (g) {
+      t2.clearRect(0, 0, cw, ch); t2.fillText(g, cw / 2, ch / 2 + ch * 0.04);
+      var d = t2.getImageData(0, 0, cw, ch).data, s = 0;
+      for (var i = 3; i < d.length; i += 4) s += d[i];
+      return { g: g, cov: s };
+    }).sort(function (a, b) { return a.cov - b.cov; });
+    var at = document.createElement('canvas'); at.width = cw * items.length; at.height = ch;
+    var a2 = at.getContext('2d'); a2.fillStyle = '#000'; a2.fillRect(0, 0, at.width, at.height);
+    a2.font = t2.font; a2.textAlign = 'center'; a2.textBaseline = 'middle'; a2.fillStyle = '#fff';
+    items.forEach(function (it, i) { a2.fillText(it.g, i * cw + cw / 2, ch / 2 + ch * 0.04); });
+    nG = items.length;
+    tex(0, 0, 0, at, true);
+  }
+
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = Math.max(1, Math.round(innerWidth * dpr)), h = Math.max(1, Math.round(innerHeight * dpr));
+    cv.width = w; cv.height = h;
+    var cw = Math.max(8, Math.round(Math.max(9, Math.min(innerWidth / 100, 15)) * dpr));
+    var ch = Math.round(cw * 1.75);
+    if (cw !== cwPx || ch !== chPx) { cwPx = cw; chPx = ch; buildAtlas(cw, ch); }
+    gl.viewport(0, 0, w, h);
+  }
+
+  function frame(ms) {
+    var t = still ? 9.3 : ms / 1000 + 4;
+    gl.uniform2f(U.res, cv.width, cv.height); gl.uniform2f(U.cell, cwPx, chPx);
+    gl.uniform1f(U.t, t); gl.uniform1f(U.nG, nG);
+    gl.uniform1i(U.atlas, 0); gl.uniform1i(U.ramp, 1);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (!still) requestAnimationFrame(frame);
+  }
+  resize();
+  addEventListener('resize', function () { resize(); if (still) frame(0); });
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

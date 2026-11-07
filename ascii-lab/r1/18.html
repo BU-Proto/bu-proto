@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>r1/18 mushroom: two planes, fog between</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#061a2e;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%;display:block}</style>
+</head><body><canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+(function(){'use strict';
+var Pal=LabPalette,cv=document.getElementById('c');
+var gl=cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true});
+if(!gl){document.body.style.background='#0b2a46';return;}
+var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* glyph atlas: row 0 density ramp ordered by measured coverage, row 1 line glyphs (- / | \ + x) */
+var GW=20,GH=36,RAMP=' .,:;-+=xo*#%@'.split(''),EDGE=['-','/','|','\\','+','x'];
+var ac=document.createElement('canvas'),ax=ac.getContext('2d',{willReadFrequently:true});
+function paint(ch,i,row){ax.fillStyle='#fff';ax.font='bold 30px ui-monospace,Menlo,monospace';ax.textAlign='center';ax.textBaseline='middle';ax.fillText(ch,i*GW+GW/2,row*GH+GH/2+1);}
+ac.width=16*GW;ac.height=2*GH;
+var meas=RAMP.map(function(ch){ax.clearRect(0,0,ac.width,ac.height);paint(ch,0,0);var d=ax.getImageData(0,0,GW,GH).data,s=0;for(var i=3;i<d.length;i+=4)s+=d[i];return{ch:ch,s:s};});
+meas.sort(function(a,b){return a.s-b.s;});
+ax.clearRect(0,0,ac.width,ac.height);
+meas.forEach(function(m,i){paint(m.ch,i,0);});
+EDGE.forEach(function(ch,i){paint(ch,i,1);});
+var NR=meas.length;
+
+var vs='#version 300 es\nvoid main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;gl_Position=vec4(p*2.-1.,0,1);}';
+var fs='#version 300 es\nprecision highp float;out vec4 o;uniform vec2 R,M;uniform float T,KB,KF;uniform sampler2D atlas,ramp;const float NR='+NR+'.;\n'+
+'const vec3 H=vec3(.024,.102,.18),RS=vec3(.043,.165,.275),RH=vec3(.071,.227,.361),F=vec3(.965,.984,1.),MINT=vec3(.616,.941,.659);\n'+
+'const vec3 LAG=vec3(.247,.722,.816),IRD=vec3(.478,.431,.878),RASP=vec3(.761,.251,.478),PEACH=vec3(.973,.573,.541),HAZE=vec3(.808,.757,.745);\n'+
+'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n'+
+'float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+1.),f.x),f.y);}\n'+
+'vec3 arc(float t){return texture(ramp,vec2(clamp(t,0.,1.),.5)).rgb;}\n'+
+/* The scene: underside of a cap seen from inside its own shadow. Gills fan from a centre off-screen,
+   a translucent margin glows at the rim, light bleeds through the gaps toward the edge. */
+'void gills(vec2 s,vec2 C,float Rr,float N,float lift,out float L,out float t,out float ang,out float rim,out float skirt){\n'+
+' vec2 d=s-C;float r=length(d);float a=atan(d.y,d.x);\n'+
+' a+=.018*sin(T*.25+r*3.)+.02*(vn(vec2(r*3.5,a*2.))-.5);\n'+
+' float rr=Rr*(1.+.05*(vn(vec2(a*6.,5.))-.5)+.012*sin(a*21.+T*.2));\n'+
+' float rn=r/rr;\n'+
+' float g=a*N/6.2831853,gf=fract(g)-.5,id=floor(g);\n'+
+' float g2=a*N*2./6.2831853+.5,gf2=fract(g2)-.5,id2=floor(g2);\n'+
+' float w=mix(.36,.13,smoothstep(.15,1.,rn))*(.8+.4*h21(vec2(id,3.)));\n'+
+' float b=smoothstep(w,w*.3,abs(gf));\n'+
+' float b2=smoothstep(w*.8,w*.25,abs(gf2))*smoothstep(.42,.62,rn)*step(.3,h21(vec2(id2,9.)));\n'+
+' b=max(b,b2*.85);\n'+
+' float lit=smoothstep(.1,1.,rn);\n'+
+' float mott=vn(vec2(a*9.,r*5.)+T*.04);\n'+
+' L=.05+.12*mott*lit+b*(.2+.7*pow(lit,1.3))+.32*smoothstep(.7,1.,rn)*(1.-b)*(.6+.4*mott);\n'+
+' t=.3+.55*pow(clamp(rn,0.,1.),.9)+.1*b+.08*(mott-.5);\n'+
+' skirt=smoothstep(1.,1.012,rn);\n'+
+' float m=smoothstep(1.16,1.012,rn)*skirt;\n'+
+' L=mix(L,.86+.14*mott,m*.9);t=mix(t,.95,m*.75);\n'+
+' rim=smoothstep(.022,0.,abs(rn-1.01));\n'+
+' ang=a;\n'+
+' float out_=smoothstep(1.06,1.5,rn);\n'+
+' if(rn>1.012){float haze=vn(s*2.4+vec2(T*.02,0.));L=mix(L,.04+.16*haze,smoothstep(1.02,1.2,rn));t=mix(t,.45+.2*haze,out_);}\n'+
+' L*=lift;\n'+
+'}\n'+
+'void main(){\n'+
+' vec2 px=gl_FragCoord.xy;vec2 q=(px-.5*R)/R.y;\n'+
+' /* ground: harbor to raised, a warm breath behind the rim at upper right */\n'+
+' vec3 col=mix(H,RS,smoothstep(-.6,.8,q.y*.7+q.x*.4));\n'+
+' float glow=exp(-dot(q-vec2(.62,.42),q-vec2(.62,.42))*2.2);\n'+
+' col=mix(col,mix(RH,IRD*.55,.5),glow*.45);\n'+
+' col+=PEACH*.045*glow;\n'+
+' float fogN=vn(q*1.7+vec2(T*.03,-T*.02)),fogN2=vn(q*3.3-vec2(T*.02,0.)+9.);\n'+
+' /* ---- far plane: big cells, few gills, deep hues, slow parallax ---- */\n'+
+' vec2 cb=vec2(24.,42.)*KB;vec2 ib=floor(px/cb);vec2 fb=fract(px/cb);vec2 cc=(ib+.5)*cb;\n'+
+' vec2 sb=(cc-.5*R)/R.y+M*.05+vec2(.03*sin(T*.11),0.);\n'+
+' float L,t,ang,rim,sk;\n'+
+' gills(sb*1.05,vec2(-.2,-1.1),2.1,22.,.8,L,t,ang,rim,sk);\n'+
+' float hb=h21(ib+3.);\n'+
+' float lb=clamp(L,0.,1.);\n'+
+' float vis=smoothstep(.1,.4,lb)*step(.2,hb);\n'+
+' vec2 gu=vec2((fb.x+0.)/16.,0.);\n'+
+' float ri=floor(clamp(lb*NR*.9,1.,NR-1.));\n'+
+' float cov=texture(atlas,vec2((ri+fb.x)/16.,(1.-fb.y)*.5)).a;\n'+
+' float ei=floor(mod(ang/.7853982+.5,4.));\n'+
+' float covE=texture(atlas,vec2((ei+fb.x)/16.,.5+(1.-fb.y)*.5)).a;\n'+
+' float cvb=mix(cov,covE,step(.45,lb));\n'+
+' vec3 cB=mix(arc(t*.55),RASP,.4*t);cB=mix(cB,IRD,.3);\n'+
+' /* soft cell emission under the glyph keeps the plane readable as a plane */\n'+
+' col=mix(col,cB*.55,lb*lb*.22*step(.3,hb));\n'+
+' col=mix(col,cB,cvb*vis*.55);\n'+
+' /* ---- fog between the planes: iris-deep haze, thicker low and toward the stem ---- */\n'+
+' float fog=(.34+.34*fogN+.2*fogN2)*(.7+.5*smoothstep(.5,-.6,q.y));\n'+
+' col=mix(col,mix(RS,IRD,.3)*.7,clamp(fog*.75,0.,.55));\n'+
+' /* ---- near plane: small cells, many thin gills, line glyphs in the bright pass ---- */\n'+
+' vec2 cf=vec2(10.,18.)*KF;vec2 i0=floor(px/cf);vec2 f0=fract(px/cf);vec2 c0=(i0+.5)*cf;\n'+
+' vec2 sf=(c0-.5*R)/R.y+M*.13+vec2(.05*sin(T*.13+1.),.012*sin(T*.2));\n'+
+' gills(sf,vec2(-.55,-.7),1.55,64.,1.,L,t,ang,rim,sk);\n'+
+' float hf=h21(i0+7.);\n'+
+' vec3 gc=vec3(0.);float ga=0.;\n'+
+' float ei2=floor(mod(ang/.7853982+.5,4.));\n'+
+' if(rim>.35&&hf>.25){ei2=4.;}\n'+
+' float covL=texture(atlas,vec2((ei2+f0.x)/16.,.5+(1.-f0.y)*.5)).a;\n'+
+' float rj=floor(clamp(L*NR,1.,NR-1.));\n'+
+' float covR=texture(atlas,vec2((rj+f0.x)/16.,(1.-f0.y)*.5)).a;\n'+
+' vec3 base=arc(t);\n'+
+' if(L<.2){ /* shadow: thin dark ticks, raised blue on harbor */\n'+
+'  if(hf>.5){gc=RH*1.5;ga=covL*.8;}\n'+
+' }else if(L<.46){ /* midtone: sparse deep marks, nothing between */\n'+
+'  if(hf>.58){gc=mix(base,mix(IRD,RASP,t),.45);ga=covR*.8;}\n'+
+' }else{ /* highlight: line glyphs in the arc, blowing out to frost blocks */\n'+
+'  float blow=smoothstep(.74,.98,L);\n'+
+'  gc=mix(base,F,blow);\n'+
+'  if(rim>.35)gc=mix(LAG,F,.35+.4*blow);\n'+
+'  float covB=texture(atlas,vec2((NR-2.+f0.x)/16.,(1.-f0.y)*.5)).a;\n'+
+'  ga=mix(covL,covB,blow);\n'+
+' }\n'+
+' /* margin skirt dissolves into the dark as dashes */\n'+
+' float dash=step(.0,.5-abs(f0.y-.5)*2.)*step(f0.x,.85);\n'+
+' if(sk<.5&&L>.12&&L<.24&&hf>.7){gc=mix(IRD,base,.5);ga=dash*.6;}\n'+
+' /* near-plane emission under bright cells */\n'+
+' col=mix(col,gc*.6,smoothstep(.5,1.,L)*.2);\n'+
+' col=mix(col,gc,clamp(ga,0.,1.));\n'+
+' /* one live cell: mint, drifting along the dark outside the rim */\n'+
+' vec2 mp=floor(vec2(R.x*(.78+.08*sin(T*.2)),R.y*(.82+.04*sin(T*.31)))/cf);\n'+
+' if(i0==mp){float c=texture(atlas,vec2((4.+f0.x)/16.,.5+(1.-f0.y)*.5)).a;col=mix(col,MINT,c*(.55+.45*sin(T*3.)));}\n'+
+' /* light grain, vignette */\n'+
+' col*=1.-.35*dot(q*vec2(.6,.9),q*vec2(.6,.9));\n'+
+' col+=(h21(px+T)-.5)*.012;\n'+
+' o=vec4(clamp(col,0.,1.),1.);\n'+
+'}';
+function sh(type,src){var s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
+var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+function tex(unit,w,h,data,filter,src){var tx=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,tx);
+ if(src)gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);else gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,data);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+tex(0,0,0,null,gl.LINEAR,ac);tex(1,256,1,Pal.lut(256),gl.LINEAR);
+var U=function(n){return gl.getUniformLocation(pr,n);};
+gl.uniform1i(U('atlas'),0);gl.uniform1i(U('ramp'),1);
+var uR=U('R'),uM=U('M'),uT=U('T'),uKB=U('KB'),uKF=U('KF');
+var mx=0,my=0,sx=0,sy=0;
+addEventListener('pointermove',function(e){mx=e.clientX/innerWidth*2-1;my=1-e.clientY/innerHeight*2;});
+function size(){var d=Math.min(devicePixelRatio||1,2),k=Math.max(.8,Math.min(1.5,innerHeight/900));
+ cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);gl.viewport(0,0,cv.width,cv.height);
+ gl.uniform2f(uR,cv.width,cv.height);gl.uniform1f(uKB,d*k);gl.uniform1f(uKF,d*Math.max(.9,k*.95));}
+function draw(t){sx+=(mx-sx)*.04;sy+=(my-sy)*.04;
+ gl.uniform1f(uT,t);gl.uniform2f(uM,sx+.25*Math.sin(t*.12),sy+.12*Math.cos(t*.09));gl.drawArrays(gl.TRIANGLES,0,3);}
+size();
+addEventListener('resize',function(){size();if(still)draw(4.);});
+if(still){draw(4.);}else{var t0=performance.now();(function f(n){draw((n-t0)/1000+4.);requestAnimationFrame(f);})(t0);}
+})();
+</script></body></html>

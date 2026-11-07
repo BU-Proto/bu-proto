@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>30 Riso Gills</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Pal = LabPalette, S = LabSubjects;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+  var W, H, dpr, unit;
+  var BW = 900, BH = 560;
+  var buf = S.create(BW, BH, 1);
+  S.fill('mushroom', buf, 6);
+
+  function mixc(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function css(c) { return Pal.toCss(c); }
+  var harbor = Pal.resolve('harbor'), raised = Pal.resolve('raised');
+  /* plate inks: cyan-ish and pink. screen-blended they overprint toward iris. */
+  var CY0 = Pal.resolve('cerulean'), CY1 = Pal.resolve('lagoon'), CY2 = Pal.resolve('sky');
+  var PK0 = Pal.resolve('raspberry'), PK1 = Pal.resolve('rose'), PK2 = Pal.resolve('peach');
+  var LV = 24, cyL = [], pkL = [];
+  for (var i = 0; i < LV; i++) {
+    var t = i / (LV - 1);
+    cyL.push(css(t < 0.6 ? mixc(CY0, CY1, t / 0.6) : mixc(CY1, CY2, (t - 0.6) / 0.4)));
+    pkL.push(css(t < 0.6 ? mixc(PK0, PK1, t / 0.6) : mixc(PK1, PK2, (t - 0.6) / 0.4 * 0.5)));
+  }
+
+  /* crop window into the buffer, pixels; drifts slowly */
+  var CROP = { x: 665, y: 195, w: 330 };
+
+  function resize() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    unit = Math.max(9, Math.round(Math.max(W, H) / 100));
+  }
+
+  var cw, ch, ox, oy;
+  function setCrop(t) {
+    cw = CROP.w * (1 + 0.04 * Math.sin(t * 0.21));
+    ch = cw * H / W;
+    ox = CROP.x + 10 * Math.sin(t * 0.17) - cw / 2;
+    oy = CROP.y + 8 * Math.cos(t * 0.13) - ch / 2;
+  }
+  /* sample buffer at screen px (sx, sy) -> fills smp */
+  var smp = { L: 0, H: 0, E: 0, M: 0, gx: 0, gy: 0 };
+  function field(a, i, j) { var k = j * BW + i; return a[k]; }
+  function bil(a, fx, fy) {
+    fx = Math.max(0, Math.min(BW - 1.001, fx)); fy = Math.max(0, Math.min(BH - 1.001, fy));
+    var i = fx | 0, j = fy | 0, u = fx - i, v = fy - j, k = j * BW + i;
+    return (a[k] * (1 - u) + a[k + 1] * u) * (1 - v) + (a[k + BW] * (1 - u) + a[k + BW + 1] * u) * v;
+  }
+  function sample(sx, sy) {
+    var fx = ox + sx / W * cw, fy = oy + sy / H * ch;
+    smp.L = bil(buf.lum, fx, fy); smp.H = bil(buf.hint, fx, fy);
+    smp.E = bil(buf.edge, fx, fy); smp.M = bil(buf.mask, fx, fy);
+    var d = 2;
+    smp.gx = bil(buf.lum, fx + d, fy) - bil(buf.lum, fx - d, fy);
+    smp.gy = bil(buf.lum, fx, fy + d) - bil(buf.lum, fx, fy - d);
+  }
+  function lineGlyph(gx, gy) {
+    var ax = Math.abs(gx), ay = Math.abs(gy);
+    if (ax > 2 * ay) return '|';
+    if (ay > 2 * ax) return '-';
+    return gx * gy > 0 ? '/' : '\\';
+  }
+
+  /* one plate. kind 0 = cyan: line glyphs that follow edges, dots between.
+     kind 1 = pink: density ramp, solid blocks where light blows out. */
+  var RAMP = ' .:-=+*#%@';
+  function plate(kind, t, cell, ang, offx, offy, lut) {
+    var ca = Math.cos(ang), sa = Math.sin(ang);
+    var cxs = W / 2, cys = H / 2;
+    var cols = Math.ceil(Math.hypot(W, H) / cell) + 2, rows = cols;
+    var lastSize = -1;
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    for (var r = -rows / 2 | 0; r < rows / 2; r++) {
+      for (var c = -cols / 2 | 0; c < cols / 2; c++) {
+        var gxp = (c + 0.5) * cell, gyp = (r + 0.5) * cell;
+        var px = cxs + gxp * ca - gyp * sa + offx, py = cys + gxp * sa + gyp * ca + offy;
+        if (px < -cell || py < -cell || px > W + cell || py > H + cell) continue;
+        /* press slip: the pink plate reads the image a little to one side, more where it is bright */
+        sample(px, py);
+        var L = smp.L, E = smp.E, ch_, a = 1;
+        var lvl = Math.min(LV - 1, Math.max(0, Math.round((0.15 + L * 1.1) * (LV - 1))));
+        var size = cell * 1.3;
+        var line = E > 0.45 && L > 0.1;
+        if (kind === 0) {
+          lvl = Math.min(LV - 1, Math.round((0.45 + L * 0.6) * (LV - 1)));
+          if (line) ch_ = lineGlyph(smp.gx, smp.gy);
+          else if (L > 0.5) ch_ = '#';
+          else if (L > 0.34) ch_ = '%';
+          else if (L > 0.2) ch_ = '+';
+          else if (L > 0.1) ch_ = ':';
+          else continue;
+        } else {
+          lvl = Math.min(LV - 1, Math.round((0.25 + L * 0.8) * (LV - 1)));
+          if (line && L > 0.35) ch_ = lineGlyph(smp.gx, smp.gy);
+          else if (L > 0.7) ch_ = '@';
+          else if (L > 0.5) ch_ = '#';
+          else if (L > 0.38) ch_ = '%';
+          else continue;
+        }
+        if (size !== lastSize) { cx.font = (kind === 0 ? '700 ' : '700 ') + ''  + size + 'px ' + FONT; lastSize = size; }
+        cx.fillStyle = lut[lvl];
+        cx.save();
+        cx.translate(px, py + size * 0.04);
+        cx.rotate(ang);
+        cx.fillText(ch_, 0, 0);
+        cx.restore();
+      }
+    }
+  }
+
+  function frame(tm) {
+    var t = still ? 7 : tm / 1000;
+    setCrop(t * 0.6);
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.globalCompositeOperation = 'source-over';
+    var g = cx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#061a2e'); g.addColorStop(1, '#0b2a46');
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+
+    cx.globalCompositeOperation = 'screen';
+    /* slip: pink plate drifts off register, cyan stays put */
+    var slip = unit * (0.8 + 0.3 * Math.sin(t * 0.5));
+    plate(0, t, unit, 0, 0, 0, cyL);
+    plate(1, t, unit * 1.03, 0.045 + 0.012 * Math.sin(t * 0.3), slip * 0.9, -slip * 0.45 + unit * 0.3 * Math.sin(t * 0.37), pkL);
+    cx.globalCompositeOperation = 'source-over';
+  }
+
+  function loop(tm) { frame(tm); if (!still) requestAnimationFrame(loop); }
+  resize();
+  addEventListener('resize', function () { resize(); if (still) frame(0); });
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

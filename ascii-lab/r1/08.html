@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/08 field, polarity under soft light</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #061a2e; }
+  canvas { position: fixed; display: block; }
+  #soft { inset: -24px; width: calc(100% + 48px); height: calc(100% + 48px); filter: blur(16px) saturate(1.1); }
+  #ink { inset: 0; width: 100%; height: 100%; }
+  #vig { position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 90% at 50% 45%, rgba(6,26,46,0) 55%, rgba(6,26,46,.55) 100%); }
+</style>
+</head>
+<body>
+<canvas id="soft"></canvas><canvas id="ink"></canvas><div id="vig"></div>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = LabSubjects, Pal = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var soft = document.getElementById('soft'), ink = document.getElementById('ink');
+  var sx = soft.getContext('2d'), ix = ink.getContext('2d');
+  var harbor = Pal.resolve('harbor'), frost = Pal.resolve('frost'), hi = Pal.resolve('raisedHi'), mint = Pal.colors.mint;
+  var under = document.createElement('canvas'), ux = under.getContext('2d');
+  var cols, rows, CW, CH, dpr, buf, img, lit;
+
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function hash(i, j) { var h = Math.imul(i * 374761393 + j * 668265263, 1274126177); h = (h ^ (h >>> 13)) >>> 0; return (h & 0xffff) / 65535; }
+  function css(c, a) { return Pal.toCss(c, a); }
+  function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+
+  function size() {
+    var w = innerWidth, h = innerHeight;
+    dpr = Math.min(2, devicePixelRatio || 1);
+    CW = Math.max(7, Math.round(w / 150)); CH = Math.round(CW * 1.8);
+    cols = Math.ceil(w / CW); rows = Math.ceil(h / CH);
+    ink.width = Math.round(w * dpr); ink.height = Math.round(h * dpr);
+    soft.width = cols; soft.height = rows;               /* soft layer is grid-sized, stretched and blurred */
+    under.width = cols; under.height = rows;
+    buf = S.create(cols, rows, CW / CH); img = ux.createImageData(cols, rows);
+  }
+
+  /* pink-led hue: remap field hint so rose owns most of the arc */
+  var HL = 0; function hue(h) { h = 0.5 + 0.55 * (h - 0.58) + HL; return h < 0 ? 0 : h > 1 ? 1 : h; }
+
+  function draw(t) {
+    S.fill('field', buf, t);
+    var L = buf.lum, H = buf.hint, E = buf.edge, d = img.data, i, x, y;
+    for (i = 0; i < L.length; i++) { var m = L[i] * 1.18; L[i] = m > 1 ? 1 : m; H[i] += (L[i] - 0.5) * 0.5 + 0.12; }
+    /* soft beneath: arc colour sinking to harbor, a little lifted so shadow ticks have something to cut */
+    for (i = 0; i < cols * rows; i++) {
+      var c = Pal.arc(hue(H[i])), k = Math.min(1, L[i] * 1.7 + 0.04), w = Math.max(0, L[i] - 0.8) / 0.2 * 0.5;
+      for (var q = 0; q < 3; q++) { var v = harbor[q] + (c[q] - harbor[q]) * k; d[i * 4 + q] = (v + (frost[q] - v) * w) * 255; }
+      d[i * 4 + 3] = 255;
+    }
+    ux.putImageData(img, 0, 0);
+    sx.imageSmoothingEnabled = true; sx.drawImage(under, 0, 0, cols, rows);
+
+    ix.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ix.clearRect(0, 0, innerWidth, innerHeight);
+    ix.font = '700 ' + Math.round(CH * 0.82) + 'px ui-monospace, "SF Mono", Menlo, monospace';
+    ix.textBaseline = 'middle'; ix.textAlign = 'center';
+    var LINE = ['-', '/', '|', '\\'], slot = Math.floor(t * 1.6);
+    var mx = -1, my = -1;
+    /* one mint cell: a wandering live point, only on dark ground */
+    var tx = Math.floor((0.5 + 0.42 * Math.sin(t * 0.07 + 1)) * cols), ty = Math.floor((0.5 + 0.38 * Math.cos(t * 0.053)) * rows);
+    for (var r = 0; r < 18 && mx < 0; r++) {
+      var px = Math.min(cols - 1, Math.max(0, tx + r * 3)), qy = Math.min(rows - 1, Math.max(0, ty));
+      if (L[qy * cols + px] < 0.12) { mx = px; my = qy; }
+    }
+
+    for (y = 0; y < rows; y++) {
+      for (x = 0; x < cols; x++) {
+        i = y * cols + x;
+        var l = L[i], e = E[i], cx = x * CW + CW / 2, cy = y * CH + CH / 2, ch = null, col, a = 1, h = hash(x, y);
+        if (x === mx && y === my) { ix.fillStyle = mint; ix.fillText('+', cx, cy); continue; }
+        var th = (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+        if (l > 0.88 + 0.05 * (1 - e)) {
+          /* blow-out: frost block, ragged by dither so it breathes */
+          if (th < (l - 0.86) * 3.5 && h > 0.35) { ix.fillStyle = css(frost); ix.fillRect(x * CW, y * CH + 1, CW, CH - 2); continue; }
+        }
+        if (l > 0.5) {
+          /* bright pass: line glyph along the iso-light edge, frost to reflected-arc tint */
+          var gx = (L[i + (x < cols - 1 ? 1 : 0)] - L[i - (x > 0 ? 1 : 0)]), gy = (L[i + (y < rows - 1 ? cols : 0)] - L[i - (y > 0 ? cols : 0)]);
+          var g = Math.sqrt(gx * gx + gy * gy);
+          if (th > (l - 0.46) * 2.4 + 0.1) continue;
+          if (g > 0.018) {
+            var ang = Math.atan2(gx, -gy) * 180 / Math.PI;      /* direction perpendicular to gradient, y up */
+            ang = ((ang % 180) + 180) % 180;
+            var k = Math.floor((ang + 22.5) / 45) % 4;
+            ch = LINE[k];
+            if (g > 0.07 && h > 0.5) ch = (slot + Math.floor(h * 8)) % 2 ? 'x' : '+';
+          } else ch = (h > 0.5 ? '+' : '=');
+          var rc = Pal.arc(1 - hue(H[i]));
+          col = lerp3(rc, frost, Math.min(1, (l - 0.5) * 2.2));
+        } else if (l > 0.2 && l < 0.46) {
+          /* shadow pass: harbor ticks cut into the soft light */
+          if (th > (0.46 - l) * 3 + 0.05) continue;
+          ch = (e > 0.1 || h > 0.6) ? '|' : (h > 0.3 ? '-' : '.');
+          col = harbor; a = 0.9;
+        } else if (l <= 0.2) {
+          /* dissolve: sparse horizontal dashes in raised blue, thinning to nothing */
+          if (h > 0.05 + l * 2.4 + (Math.sin(y * 0.45 + t * 0.2) * 0.04)) continue;
+          ch = '-'; col = lerp3(hi, Pal.arc(hue(H[i])), 0.28); a = 0.35 + l * 2.5;
+        } else continue;
+        ix.fillStyle = css(col, a); ix.fillText(ch, cx, cy);
+      }
+    }
+  }
+
+  size();
+  var raf = 0;
+  function frame(ms) { draw(ms / 1000 + 6); raf = requestAnimationFrame(frame); }
+  function start() { cancelAnimationFrame(raf); if (still) draw(9); else raf = requestAnimationFrame(frame); }
+  addEventListener('resize', function () { size(); start(); });
+  start();
+})();
+</script>
+</body>
+</html>

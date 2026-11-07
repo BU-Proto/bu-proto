@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>29 mushroom, misregistered riso</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#061a2e;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%;display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function(){
+'use strict';
+var cv=document.getElementById('c');
+var gl=cv.getContext('webgl2',{antialias:false});
+var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var vs='#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+var fs='#version 300 es\nprecision highp float;\nuniform vec2 R;uniform float T;uniform vec2 cell;uniform sampler2D S;uniform vec2 tx;out vec4 o;\n'+
+'vec3 H(float r,float g,float b){return vec3(r,g,b)/255.;}\n'+
+'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n'+
+'float bayer(vec2 c){vec2 a=mod(c,4.);float x=a.x,y=a.y;'+
+'float b0=mod(floor(x/2.)+floor(y/2.)*2.,4.);float m0=b0==0.?0.:b0==1.?2.:b0==2.?3.:1.;'+
+'float c0=mod(x,2.)+mod(y,2.)*2.;float m1=c0==0.?0.:c0==1.?2.:c0==2.?3.:1.;'+
+'return (m0*4.+m1+.5)/16.;}\n'+
+/* stroke coverage of segment a-b, width w, in px */
+'float seg(vec2 q,vec2 a,vec2 b,float w){vec2 pa=q-a,ba=b-a;float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);float d=length(pa-ba*h);return 1.-smoothstep(w*.5-.6,w*.5+.6,d);}\n'+
+/* one plate: returns coverage in x, tone in y. kind 0 = lines (cyan plate), 1 = crosses (pink plate) */
+'vec2 plate(vec2 px,vec2 off,float kind,float t){\n'+
+' vec2 pl=px-off;vec2 cid=floor(pl/cell);vec2 lp=pl-cid*cell;vec2 q=lp-cell*.5;\n'+
+' vec2 sc=(cid+.5)*cell+off;vec2 uv=sc/R;\n'+
+' vec4 s=texture(S,uv);float L=s.r,hint=s.g,E=s.b,M=s.a;\n'+
+' float Lx=texture(S,uv+vec2(tx.x,0.)).r-texture(S,uv-vec2(tx.x,0.)).r;\n'+
+' float Ly=texture(S,uv+vec2(0.,tx.y)).r-texture(S,uv-vec2(0.,tx.y)).r;\n'+
+' float ang=atan(Ly,Lx)+1.5708;ang=floor(mod(ang/3.14159265,1.)*4.+.5)/4.*3.14159265;\n'+
+' vec2 dir=vec2(cos(ang),-sin(ang));\n'+
+' float w=cell.x*.24;float hl=cell.x*.3;\n'+
+' float th=bayer(cid)*.8+.1;\n'+
+' float cov=0.,tone=L;\n'+
+' if(kind<.5){\n'+
+/* cyan plate: structure and shade. lines follow edges, short dashes in shadow bodies */
+'  float body=M*(.18+.8*(1.-L))+E*.7;\n'+
+'  float ln=seg(q,-dir*hl*1.35,dir*hl*1.35,w*1.2);\n'+
+'  float dash=seg(q,vec2(-hl,0.),vec2(hl,0.),w*(.7+1.3*(1.-L)));\n'+
+'  float g=E>.34?ln:dash;\n'+
+'  cov=g*step(th,body);}\n'+
+'else{\n'+
+/* pink plate: light, gills, rim and the warm bloom. crosses and diagonals, blocks where it blows out */
+'  float lit=smoothstep(.15,.8,L);float body=lit*(.7+.5*M)+M*.45+E*.6*M+(1.-M)*lit*.7;\n'+
+'  float c1=seg(q,vec2(-hl*.8,-hl*.8),vec2(hl*.8,hl*.8),w*1.25);float c2=seg(q,vec2(-hl*.8,hl*.8),vec2(hl*.8,-hl*.8),w*1.25);\n'+
+'  float plus=max(seg(q,vec2(-hl,0.),vec2(hl,0.),w*1.3),seg(q,vec2(0.,-hl*1.3),vec2(0.,hl*1.3),w*1.3));\n'+
+'  float ln=seg(q,-dir*hl*1.35,dir*hl*1.35,w*1.5);\n'+
+'  float blk=step(abs(q.x),cell.x*.4)*step(abs(q.y),cell.y*.4);\n'+
+'  float g=E>.4?ln:(L>.86?blk:(lit>.55?max(c1,c2):plus));\n'+
+'  float dotg=1.-smoothstep(w*.8,w*1.3,length(q));\n'+
+'  g=lit<.3?dotg:g;\n'+
+'  cov=g*step(th,body+.12);}\n'+
+' return vec2(cov,tone+hint*0.);\n}\n'+
+'void main(){\n'+
+' vec2 px=gl_FragCoord.xy;px.y=R.y-px.y;\n'+
+' vec2 ctr=px/R-vec2(.5,.52);ctr.x*=R.x/R.y;float rr=length(ctr);\n'+
+/* misregistration: a slow breathing offset, growing toward the sheet edges, and swinging with a drifting skew */
+' float k=cell.x*(.1+2.2*rr*rr*rr);\n'+
+' vec2 d=vec2(cos(T*.17+rr*1.4),.5*sin(T*.23))*k*.5;\n'+
+' vec2 offA=-d+vec2(0.,cell.y*.06*sin(T*.4));vec2 offB=d+vec2(cell.x*.1,cell.y*.08);\n'+
+' vec2 a=plate(px,offA,0.,T),b=plate(px,offB,1.,T);\n'+
+' vec3 cer=H(26.,143.,192.),lag=H(63.,184.,208.),sky=H(124.,199.,244.);\n'+
+' vec3 ras=H(194.,64.,122.),ros=H(244.,162.,192.),pea=H(248.,146.,138.);\n'+
+' vec3 idp=H(122.,110.,224.),iri=H(182.,170.,255.),fro=H(246.,251.,255.);\n'+
+' float ta=clamp(a.y,0.,1.),tb=clamp(b.y,0.,1.);\n'+
+' vec3 cA=ta<.5?mix(cer,lag,ta*2.):mix(lag,sky,(ta-.5)*2.);\n'+
+' vec3 cB=tb<.5?mix(ras,ros,tb*2.):mix(ros,pea,smoothstep(.5,.95,tb)*.55);\n'+
+' float to=(ta+tb)*.5;\n'+
+' vec3 cO=to<.5?mix(idp,iri,to*2.):mix(iri,fro,smoothstep(.62,1.,to)*.85);\n'+
+' vec3 g0=H(6.,26.,46.),g1=H(11.,42.,70.);\n'+
+' vec3 ground=mix(g0,g1,smoothstep(1.1,.0,rr)*.8);\n'+
+' vec3 col=ground;\n'+
+' col=mix(col,cA,a.x);col=mix(col,cB,b.x*(1.-a.x));\n'+
+' float ov=a.x*b.x;col=mix(col,cO,ov);\n'+
+' o=vec4(col,1.);}\n';
+function sh(t,s){var x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(x));return x;}
+var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+var b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+var l=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
+var uR=gl.getUniformLocation(pr,'R'),uT=gl.getUniformLocation(pr,'T'),uC=gl.getUniformLocation(pr,'cell'),uTx=gl.getUniformLocation(pr,'tx');
+var tex=gl.createTexture();gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+gl.uniform1i(gl.getUniformLocation(pr,'S'),0);
+var buf,rgba,cols,rows;
+function size(){var d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);gl.viewport(0,0,cv.width,cv.height);
+ var cw=Math.max(9,Math.round(Math.min(innerWidth,innerHeight*1.2)/84))*d,ch=cw*1.8;
+ gl.uniform2f(uC,cw,ch);gl.uniform2f(uR,cv.width,cv.height);
+ /* source grid finer than the cells so lines and edges stay legible; capped for per-frame cost */
+ cols=Math.min(190,Math.ceil(cv.width/cw*1.6));rows=Math.min(110,Math.ceil(cv.height/ch*1.6));
+ buf=LabSubjects.create(cols,rows,(cv.width/cols)/(cv.height/rows));rgba=new Uint8Array(cols*rows*4);
+ gl.uniform2f(uTx,1/cols,1/rows);upload(6);}
+function upload(t){LabSubjects.fill('mushroom',buf,t);LabSubjects.toRGBA(buf,rgba);
+ gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,cols,rows,0,gl.RGBA,gl.UNSIGNED_BYTE,rgba);}
+addEventListener('resize',function(){size();});size();
+var t0=performance.now(),n=0;
+function frame(){var t=still?6.:(performance.now()-t0)/1000+6.;
+ if(!still&&(n++%3===0))upload(t);
+ gl.uniform1f(uT,t);gl.drawArrays(gl.TRIANGLES,0,3);if(!still)requestAnimationFrame(frame);}
+frame();
+})();
+</script></body></html>

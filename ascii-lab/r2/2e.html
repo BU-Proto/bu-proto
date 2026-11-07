@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r2/2e Mushroom, pared engraving</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+/* No font. Every glyph is distance-to-line-segment in the fragment shader: dash, line, dagger, plus, diamond, dot, block.
+   A close crop under the cap: radial gills fan from off-screen lower left to a lagoon rim. Each cell samples the gill field
+   at its centre; the stroke follows the gill tangent (8 bins), so strokes join into a vector engraving. Rail = polarity:
+   harbor ticks on raspberry in the valleys, arc-coloured strokes at midtone, frost diamonds and blocks on blown highlights.
+   Colour is thickness: iris deep at the hub, rose along the blades, peach at the lit core, lagoon at the rim. */
+(function () {
+  'use strict';
+  var P = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c');
+  var gl = cv.getContext('webgl2', { antialias: false });
+  if (!gl) { document.body.style.background = '#0b2a46'; return; }
+
+  function v3(n) { var c = P.resolve(n); return 'vec3(' + c.map(function (x) { return x.toFixed(4); }).join(',') + ')'; }
+  var consts = ['harbor', 'raised', 'raisedHi', 'frost', 'lagoon', 'sky', 'irisDeep', 'raspberry', 'rose', 'peach', 'mint']
+    .map(function (n) { return 'const vec3 K_' + n + ' = ' + v3(n) + ';'; }).join('\n');
+
+  var vs = '#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }';
+  var fs = '#version 300 es\nprecision highp float;\n' + consts + '\n' + [
+'uniform vec2 uRes; uniform vec2 uCell; uniform float uT; uniform sampler2D uLut;',
+'out vec4 o;',
+'const float PI = 3.14159265;',
+'float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }',
+'float vn(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);',
+'  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y); }',
+'vec3 arc(float t){ return texture(uLut, vec2(clamp(t,0.,1.), .5)).rgb; }',
+'float seg(vec2 q, vec2 a, vec2 b){ vec2 pa=q-a, ba=b-a; float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-6),0.,1.); return length(pa-ba*h); }',
+'',
+'/* Three glyphs only: line, diamond, block. All distance to line segments. */',
+'float stroke(vec2 q, float ang, float frac, float w, float aa, vec2 asp2){',
+'  vec2 v = vec2(cos(ang), sin(ang));',
+'  float L = min(asp2.x*.5/max(abs(v.x),1e-3), .5/max(abs(v.y),1e-3)) * frac;',
+'  return 1. - smoothstep(w-aa, w+aa, seg(q, -v*L, v*L));',
+'}',
+'float glyph(vec2 q, float ang, float tone, float aa, float asp){',
+'  vec2 a2 = vec2(asp, 1.);',
+'  float w = mix(.03, .07, tone);',
+'  if (tone < .1) return 0.;',
+'  if (tone < .88) return stroke(q, ang, mix(.4, 1.05, smoothstep(.1,.5,tone)), w, aa, a2);',
+'  if (tone < .985) {',
+'    vec2 s = vec2(q.x/asp, q.y); float r = .3;',
+'    float d = min(min(seg(s, vec2(-r,0.), vec2(0.,r)), seg(s, vec2(0.,r), vec2(r,0.))), min(seg(s, vec2(r,0.), vec2(0.,-r)), seg(s, vec2(0.,-r), vec2(-r,0.))));',
+'    return 1. - smoothstep(.045-aa, .045+aa, d);',
+'  }',
+'  return 1. - smoothstep(.28-aa, .28+aa, seg(q, vec2(-asp*.16,0.), vec2(asp*.16,0.)));',
+'}',
+'',
+'void main(){',
+'  vec2 fc = gl_FragCoord.xy;',
+'  vec2 cu = fc / uCell; vec2 cell = floor(cu); vec2 loc = cu - cell - .5;',
+'  float asp = uCell.x/uCell.y; vec2 q = vec2(loc.x*asp, loc.y);',
+'  vec2 cpx = (cell + .5) * uCell;',
+'  vec2 p = (cpx - uRes*.5) / (uRes.y*.5);',
+'  float T = uT;',
+'  float aa = 1.2 / uCell.y;',
+'  vec2 C = vec2(-1.15, -1.05);',
+'  vec2 d = p - C; float r = length(d); float th = atan(d.y, d.x);',
+'  float R = 2.42 + .05*(vn(vec2(th*6., 3.))-.5);',
+'  float qr = r - R;',
+'  vec2 Lp = vec2(.3+.5*sin(T*.13), .2+.2*cos(T*.09));',
+'  float light = exp(-dot(p-Lp,p-Lp)*.45);',
+'  float tone = 0., t = .5, ang = th;',
+'  const float N = 76.;',
+'  float gu = th*N/(2.*PI); float id = floor(gu); float u = fract(gu);',
+'  float s = clamp((r-.5)/(R-.5), 0., 1.);',
+'  bool rim = false;',
+'  if (qr < -.1) {',
+'    float lit = pow(smoothstep(.05, .86, u), 1.3);',
+'    float edge = smoothstep(.86, .95, u) * (1. - smoothstep(.97, 1., u));',
+'    float hub = smoothstep(.25, .8, r);',
+'    tone = (.2 + .5*lit*(.5+.9*light) + .62*edge*(.5+light)) * hub;',
+'    t = clamp(mix(.4, .84, pow(s, .7)) + .1*edge + .16*light*lit, 0., .985);',
+'  } else if (qr < .03) {',
+'    rim = true; tone = .55; ang = th + PI*.5;',
+'  } else {',
+'    float fall = exp(-qr*2.6);',
+'    tone = .3*fall*smoothstep(.5,.8,vn(vec2(th*30., qr*8.))) * (.5+.5*light);',
+'    ang = 0.;',
+'  }',
+'  ang = mod(ang, PI); ang = floor(ang/(PI/8.) + .5) * (PI/8.);',
+'  tone = clamp(tone, 0., 1.);',
+'  vec3 c = arc(t);',
+'  vec3 bg = mix(K_harbor, K_raised, .55);',
+'  bg = mix(bg, c, .08 + .22*smoothstep(.3, 1., tone));',
+'  vec3 ink = mix(arc(t), K_rose, .3);',
+'  ink = mix(ink, K_frost, .5*smoothstep(.65,.98,tone));',
+'  if (rim) ink = mix(K_lagoon, K_sky, .35);',
+'  if (tone >= .985) ink = K_frost;',
+'  if (qr >= .03) ink = mix(K_sky, K_irisDeep, .5);',
+'  float g = glyph(q, ang, tone, aa, asp);',
+'  if (rim) g *= step(.2, hash(cell));',
+'  vec3 col = mix(bg, ink, g);',
+'  float tm = 1.0 + .35*sin(T*.3);',
+'  vec2 mp = C + (R-.06)*vec2(cos(tm), sin(tm));',
+'  vec2 mc = floor((mp*uRes.y*.5 + uRes*.5)/uCell);',
+'  if (mc == cell) col = mix(K_harbor, K_mint, 1. - smoothstep(.1,.1+aa*2., seg(q, vec2(-asp*.15,0.), vec2(asp*.15,0.))));',
+'  o = vec4(col, 1.);',
+'}'].join('\n');
+
+  function sh(type, src) {
+    var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  var pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  var tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, P.lut(256));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  var U = {}; ['uRes', 'uCell', 'uT', 'uLut'].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+  gl.uniform1i(U.uLut, 0);
+
+  function resize() {
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
+    cv.width = W; cv.height = H; gl.viewport(0, 0, W, H);
+    var chCss = Math.min(30, Math.max(14, innerHeight / 42));
+    var ch = Math.round(chCss * dpr), cw = Math.round(ch * .5);
+    gl.uniform2f(U.uRes, W, H); gl.uniform2f(U.uCell, cw, ch);
+  }
+  function draw(t) { gl.uniform1f(U.uT, t); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+  var t0 = performance.now();
+  function frame(now) { draw(4 + (now - t0) / 1000); requestAnimationFrame(frame); }
+  addEventListener('resize', function () { resize(); if (still) draw(4); });
+  resize();
+  if (still) draw(4); else requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

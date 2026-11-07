@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mushroom, quiet cells</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #061a2e; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = LabSubjects, Pal = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var inks = Pal.cssLut(128), HARBOR = '#061a2e', FROST = '#f6fbff', RAISED = '#0b2a46', RAISEDHI = '#123a5c';
+  var IRISD = '#7a6ee0', CER = '#1a8fc0', LAG = '#3fb8d0', RASP = '#c2407a';
+  var W, H, CW, CH, cols, rows, buf, dpr;
+
+  function hash(i, j) { var s = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return s - Math.floor(s); }
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    CW = Math.max(10, Math.round(W / 84)); CH = Math.max(5, Math.round(CW * 0.5));
+    cols = Math.ceil(W / CW) + 1; rows = Math.ceil(H / CH) + 1;
+    buf = S.create(cols, rows, CW / CH);
+  }
+
+  function draw(t) {
+    var B = buf, i, r, c;
+    S.fill('mushroom', B, t);
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = HARBOR; cx.fillRect(0, 0, W, H);
+    for (r = 0; r < rows; r++) {
+      var y0 = r * CH;
+      /* one shear per row: the whole row slides as a sheet, slowly */
+      var rowSh = Math.sin(t * 0.35 + r * 0.55) * 0.5 + Math.sin(t * 0.21 - r * 0.17) * 0.5;
+      for (c = 0; c < cols; c++) {
+        i = r * cols + c;
+        var l = B.lum[i], h = B.hint[i], m = B.mask[i], e = B.edge[i];
+        var mass = Math.max(0, Math.min(1, (l - 0.1) * 1.55 + m * 0.15));
+        if (m < 0.5) mass *= 0.25 + 0.5 * m; /* surround dissolves sooner */
+        var drift = S.noise(c * 0.22 + t * 0.06, r * 0.4 - t * 0.04);
+        var hh = hash(c, r);
+        var x0 = c * CW;
+        var tint = inks[Math.min(127, Math.floor(Math.max(0, Math.min(1, 0.1 + 0.66 * h + 0.06 * (drift - 0.5))) * 127))];
+        if (mass > 0.62) {
+          /* body: abutting rectangles, one hairline gap, widths settle to full */
+          var ww = CW - 1;
+          cx.fillStyle = l > 0.86 ? FROST : tint;
+          cx.fillRect(x0, y0, ww, CH - 1);
+          /* single edge idea: frost bar on the lit rim */
+          if (e > 0.6 && l > 0.7 && hh < e) {
+            cx.fillStyle = FROST;
+            cx.fillRect(x0 + 1, y0 + Math.round(CH * 0.4), ww - 2, 1);
+          }
+        } else if (mass > 0.07) {
+          /* dissolve: shed height, then width, then drop out; slide with the row */
+          var k = mass / 0.62;
+          if (hh > k * 1.7 + (drift - 0.5) * 0.9) continue;
+          var th = Math.max(1, Math.round(CH * (0.14 + 0.7 * k * k)));
+          var wd = Math.max(2, Math.round(CW * (0.35 + 0.65 * Math.min(1, k * 1.3))));
+          var dx = Math.round(x0 + (CW - wd) / 2 + (1 - k) * CW * 2.2 * rowSh);
+          var dy = Math.round(y0 + (CH - th) / 2);
+          cx.fillStyle = k < 0.45 ? RAISEDHI : tint;
+          if (k < 0.5 && hh < 0.25) cx.fillStyle = Pal.toCss(Pal.arc(0.82 + 0.18 * hh * 4));
+          cx.fillRect(dx, dy, wd, th);
+        }
+      }
+    }
+  }
+
+  setup();
+  addEventListener('resize', function () { setup(); draw(6); });
+  if (still) { draw(6); return; }
+  (function loop(ms) { draw((ms || 0) / 1000 + 6); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

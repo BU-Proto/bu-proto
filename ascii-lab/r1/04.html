@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/04 field: flow-set arc</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #061a2e; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+/* Tide-set arc. One scalar field v, three separate signals:
+   hue   : v posterised into 8 flat arc stops, dithered between stops by a Bayer matrix (divisionist, stable)
+   glyph : turned to follow the field's own iso-lines where the gradient is steep (| / - \), tone ramp elsewhere
+   colour of glyph : arc reflection t' = 1 - t, lightness flipped against the tile so it always crosses a rail
+   Edges of the mass dissolve into harbor as sparse rose dashes. One mint cell rides the pointer = live. */
+(function () {
+  'use strict';
+  var Pal = window.LabPalette, cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  var N = 8, DASH = N + 1, PEAK = N, MINT = N + 2;
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var HARBOR = Pal.hexToRgb('#061a2e'), FROST = Pal.hexToRgb('#f6fbff');
+
+  /* glyph sets: tone ramp (cat: # * % = + :) and four line glyphs */
+  var RAMP = ['.', ':', '+', '=', '%', '*', '#'];
+  var LINES = ['-', '\\', '|', '/'];
+  var GLYPHS = RAMP.concat(LINES, ['—', '█']); /* 0-6 ramp, 7-10 lines, 11 em dash, 12 block */
+  var G_DASH = 11, G_BLOCK = 12;
+
+  /* per-level colours */
+  var tileRgb = [], glyphRgb = [];
+  function lum(c) { return Pal.toOklch(c)[0]; }
+  for (var i = 0; i < N; i++) {
+    var t = i / (N - 1), a = Pal.arc(t);
+    var tile = [a[0] * 0.80 + HARBOR[0] * 0.20, a[1] * 0.80 + HARBOR[1] * 0.20, a[2] * 0.80 + HARBOR[2] * 0.20];
+    tileRgb.push(tile);
+    var comp = Pal.toOklch(Pal.arc(1 - t)), L = lum(tile);
+    var target = L > 0.60 ? Math.max(0.24, L - 0.40) : Math.min(0.97, L + 0.38);
+    glyphRgb.push(Pal.fromOklch([target, Math.max(comp[1], 0.15), comp[2]]));
+  }
+  tileRgb[PEAK] = FROST; glyphRgb[PEAK] = Pal.arc(0.8);          /* blown-out core: frost block, rose glyph */
+  tileRgb[DASH] = HARBOR; glyphRgb[DASH] = Pal.arc(0.7);         /* dissolve: rose dashes on ground */
+  tileRgb[MINT] = HARBOR; glyphRgb[MINT] = Pal.hexToRgb(Pal.colors.mint);
+
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function sstep(a, b, x) { x = (x - a) / (b - a); x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); }
+
+  var W, H, dpr, cw, ch, cols, rows, atlas, tiles, tctx, timg, V, M, px = -1, py = -1, mouseOn = 0;
+
+  function build() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    var cssW = Math.max(10, Math.min(16, W / 110));
+    cols = Math.ceil(W / cssW); rows = Math.ceil(H / (cssW * 1.8));
+    cw = cv.width / cols; ch = cv.height / rows;        /* cells exactly tile the canvas: full bleed at any size */
+    var iw = Math.ceil(cw), ih = Math.ceil(ch);
+    atlas = document.createElement('canvas'); atlas.width = iw * GLYPHS.length; atlas.height = ih * (N + 3);
+    var a = atlas.getContext('2d');
+    a.textAlign = 'center'; a.textBaseline = 'middle';
+    a.font = '700 ' + Math.round(ch * 0.78) + 'px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+    for (var l = 0; l < N + 3; l++) {
+      a.fillStyle = Pal.toCss(glyphRgb[l]);
+      for (var g = 0; g < GLYPHS.length; g++) {
+        if (g === G_BLOCK) continue;
+        a.fillText(GLYPHS[g], g * iw + iw / 2, l * ih + ih / 2 + ch * 0.04);
+      }
+    }
+    atlas.iw = iw; atlas.ih = ih;
+    tiles = document.createElement('canvas'); tiles.width = cols; tiles.height = rows;
+    tctx = tiles.getContext('2d'); timg = tctx.createImageData(cols, rows);
+    V = new Float32Array(cols * rows); M = new Float32Array(cols * rows);
+  }
+
+  /* the tide: domain-warped sine sum, aspect-correct, slow */
+  function field(x, y, t, i) {
+    var X = x * 2.3, Y = y * 2.3;
+    var qx = X + 0.95 * Math.sin(Y * 1.3 + t * 0.21 + 1.0), qy = Y + 0.95 * Math.sin(X * 1.1 - t * 0.17);
+    var v = 0.55 * Math.sin(qx * 1.2 + qy * 0.7 + t * 0.10) + 0.30 * Math.sin(qy * 2.1 - qx * 1.3 - t * 0.13) +
+            0.15 * Math.sin(qx * 3.1 + qy * 2.3 + t * 0.20);
+    v = 0.5 + 0.5 * v;
+    v = 0.72 * v + 0.28 * (0.5 + 0.5 * (x * 0.55 - y * 0.35));         /* lean: pink to the upper right */
+    V[i] = sstep(0.16, 0.86, v);
+    var m = 0.5 + 0.5 * Math.sin(qx * 0.8 - qy * 0.55 + 2.1 + t * 0.07);
+    M[i] = m + 0.18 * (v - 0.5);
+  }
+
+  var t0 = performance.now();
+  function frame(now) {
+    var t = reduce ? 6.0 : (now - t0) / 1000, asp = W / H;
+    var i, c, r;
+    for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) {
+      i = r * cols + c;
+      field(((c + 0.5) / cols * 2 - 1) * asp, (1 - (r + 0.5) / rows * 2), t, i);
+    }
+    /* pointer: raises the tide locally */
+    var pc = px / W * cols, pr = py / H * rows;
+    if (mouseOn > 0) for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) {
+      var dx = (c - pc) * 0.55, dy = (r - pr) * 1.0, d = Math.sqrt(dx * dx + dy * dy);
+      i = r * cols + c; var k = Math.exp(-d * d / 90) * mouseOn;
+      V[i] = V[i] + (1 - V[i]) * k * 0.55; M[i] += k * 0.6;
+    }
+
+    var d = timg.data, glyphIdx = new Uint8Array(cols * rows), lvl = new Uint8Array(cols * rows), mintCell = -1;
+    if (mouseOn > 0.2) mintCell = Math.min(rows - 1, Math.max(0, Math.round(pr - 0.5))) * cols + Math.min(cols - 1, Math.max(0, Math.round(pc - 0.5)));
+    else mintCell = Math.floor(rows * (0.5 + 0.3 * Math.sin(t * 0.2))) * cols + Math.floor(cols * (0.5 + 0.35 * Math.sin(t * 0.13 + 1)));
+    for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) {
+      i = r * cols + c;
+      var bay = (BAYER[(r & 3) * 4 + (c & 3)] + 0.5) / 16;
+      var v = V[i], m = M[i];
+      /* dissolve: three flat steps of tile, then sparse dashes */
+      var vis = sstep(0.12, 0.42, m);
+      if (vis < bay * 0.9 + 0.04) {
+        var dash = vis > 0.04 && bay < 0.5 && ((c + r * 3) & 1) === 0;
+        lvl[i] = dash ? DASH : N + 0; glyphIdx[i] = dash ? G_DASH : 255;
+        if (!dash) { lvl[i] = 255; }
+        d[i * 4] = HARBOR[0] * 255; d[i * 4 + 1] = HARBOR[1] * 255; d[i * 4 + 2] = HARBOR[2] * 255; d[i * 4 + 3] = 255;
+        if (vis > 0.04 && vis < 0.5) { /* ground lifts a touch where the tide thins */
+          var rz = Pal.hexToRgb('#0b2a46'); d[i * 4] = rz[0] * 255; d[i * 4 + 1] = rz[1] * 255; d[i * 4 + 2] = rz[2] * 255;
+        }
+        continue;
+      }
+      /* hue: dithered posterise */
+      var band = Math.floor(v * (N - 1) + bay);
+      band = band < 0 ? 0 : band > N - 1 ? N - 1 : band;
+      var peak = v > 0.965 && bay < 0.6;
+      var L = peak ? PEAK : band, tc = tileRgb[L];
+      var dim = vis < 0.8 ? 0.55 : 1;                                   /* mid-dissolve: dimmer tiles */
+      d[i * 4] = (HARBOR[0] + (tc[0] - HARBOR[0]) * dim) * 255; d[i * 4 + 1] = (HARBOR[1] + (tc[1] - HARBOR[1]) * dim) * 255;
+      d[i * 4 + 2] = (HARBOR[2] + (tc[2] - HARBOR[2]) * dim) * 255; d[i * 4 + 3] = 255;
+      lvl[i] = L;
+      if (peak) { glyphIdx[i] = G_BLOCK; lvl[i] = 255; continue; }
+      /* glyph: follow iso-lines where steep, tone ramp otherwise */
+      var cx = c < cols - 1 ? c + 1 : c, cxm = c > 0 ? c - 1 : c, ry = r < rows - 1 ? r + 1 : r, rym = r > 0 ? r - 1 : r;
+      var gx = (V[r * cols + cx] - V[r * cols + cxm]) * 0.5, gy = (V[ry * cols + c] - V[rym * cols + c]) * 0.5 * 0.55;
+      var mag = Math.sqrt(gx * gx + gy * gy);
+      if (mag > 0.045) {
+        var ang = Math.atan2(gx, gy); /* iso-line direction is perpendicular to gradient */
+        var a8 = Math.round(((ang % Math.PI) + Math.PI) % Math.PI / (Math.PI / 4)) % 4;
+        glyphIdx[i] = 7 + [2, 1, 0, 3][a8];
+      } else {
+        var f = v * (N - 1) - Math.floor(v * (N - 1));
+        glyphIdx[i] = Math.min(6, Math.floor(f * 7 + bay * 0.8 - 0.1) < 0 ? 0 : Math.floor(f * 7 + bay * 0.8 - 0.1));
+      }
+    }
+    tctx.putImageData(timg, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#061a2e'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(tiles, 0, 0, cols, rows, 0, 0, cv.width, cv.height);
+    var iw = atlas.iw, ih = atlas.ih;
+    for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) {
+      i = r * cols + c; var g = glyphIdx[i], l = lvl[i];
+      if (i === mintCell) { g = 4; l = MINT; }
+      if (g === 255 || l === 255) continue;
+      ctx.drawImage(atlas, g * iw, l * ih, iw, ih, c * cw, r * ch, cw + 0.5, ch + 0.5);
+    }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+
+  function go() { build(); if (reduce) frame(0); else requestAnimationFrame(frame); }
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { build(); if (reduce) frame(0); }, 80); });
+  window.addEventListener('pointermove', function (e) { px = e.clientX; py = e.clientY; mouseOn = 1; });
+  window.addEventListener('pointerleave', function () { mouseOn = 0; });
+  go();
+})();
+</script>
+</body>
+</html>

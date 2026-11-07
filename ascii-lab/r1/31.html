@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>31 Tides, misregistered riso</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.LabSubjects, Pal = window.LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+
+  /* Two ink plates. Alone each is a deep, cool or warm ink; added they make iris. */
+  var plates = [
+    { name: 'cyan', cw: 8, ch: 14, ramp: '.:-=+*#', ink: [22, 96, 168], hot: [124, 199, 244], tOff: 0.0, ox: 0, oy: 0 },
+    { name: 'pink', cw: 14, ch: 24, ramp: '.,/|x%#', ink: [176, 64, 120], hot: [244, 162, 192], tOff: 0.55, ox: 0, oy: 0 }
+  ];
+  var W, H, dpr, started = performance.now();
+
+  function atlas(p, color) {
+    var n = p.ramp.length, a = document.createElement('canvas');
+    a.width = p.cw * n * dpr; a.height = p.ch * dpr;
+    var x = a.getContext('2d');
+    x.scale(dpr, dpr);
+    x.font = 'bold ' + Math.round(p.ch * 0.82) + 'px ' + FONT;
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillStyle = 'rgb(' + color.join(',') + ')';
+    for (var i = 0; i < n; i++) x.fillText(p.ramp[i], i * p.cw + p.cw / 2, p.ch / 2 + 1);
+    return a;
+  }
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    /* plates overscan by a cell so offsets never expose an edge */
+    plates.forEach(function (p) {
+      p.cols = Math.ceil(W / p.cw) + 4; p.rows = Math.ceil(H / p.ch) + 4;
+      p.buf = S.create(p.cols, p.rows, p.cw / p.ch);
+      p.atInk = atlas(p, p.ink); p.atHot = atlas(p, p.hot);
+    });
+    draw(still ? 7.5 : (performance.now() - started) / 1000);
+  }
+
+  function draw(t) {
+    var g = cx.createLinearGradient(0, 0, 0, H * dpr);
+    g.addColorStop(0, '#061a2e'); g.addColorStop(0.55, '#0b2a46'); g.addColorStop(1, '#061a2e');
+    cx.globalCompositeOperation = 'source-over';
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.fillStyle = g; cx.fillRect(0, 0, cv.width, cv.height);
+    cx.globalCompositeOperation = 'lighter';
+
+    /* registration drifts like a press losing grip: the pink plate slides along the tide,
+       and the gap itself swells and closes, so violet breathes in and out of the overlap */
+    var gap = 0.5 + 0.5 * Math.sin(t * 0.21);
+    plates[0].ox = -(5 + 22 * gap) * Math.cos(t * 0.13); plates[0].oy = -(3 + 9 * gap);
+    plates[1].ox = (7 + 26 * gap) * Math.cos(t * 0.13 + 0.6); plates[1].oy = (4 + 12 * gap) * Math.sin(t * 0.17 + 1);
+
+    plates.forEach(function (p, k) {
+      /* each plate reads the tide at its own phase: a plate-level misfit, not just a shifted copy */
+      S.fill('tides', p.buf, t * (1 + 0.06 * k) + p.tOff);
+      var n = p.ramp.length, b = p.buf, i = 0, cw = p.cw * dpr, ch = p.ch * dpr;
+      var bx = (p.ox - 2 * p.cw) * dpr, by = (p.oy - 2 * p.ch) * dpr;
+      for (var r = 0; r < p.rows; r++) {
+        var y = by + r * ch;
+        for (var c = 0; c < p.cols; c++, i++) {
+          var lum = b.lum[i];
+          if (lum < 0.1) continue;
+          var gi = Math.min(n - 1, (lum * lum * 0.85 * n) | 0);
+          var x = bx + c * cw;
+          cx.globalAlpha = Math.min(0.85, 0.2 + lum * 0.7);
+          cx.drawImage(p.atInk, gi * cw, 0, cw, ch, x, y, cw, ch);
+          /* crests blow toward the light tint, and edge cells get one more strike */
+          var hi = Math.max(lum - 0.8, b.edge[i] * 0.5);
+          if (hi > 0.2) {
+            cx.globalAlpha = Math.min(0.7, hi * 1.2);
+            cx.drawImage(p.atHot, Math.max(0, gi - 1) * cw, 0, cw, ch, x, y, cw, ch);
+          }
+        }
+      }
+    });
+    cx.globalAlpha = 1;
+    cx.globalCompositeOperation = 'source-over';
+  }
+
+  function loop() { draw((performance.now() - started) / 1000); requestAnimationFrame(loop); }
+  addEventListener('resize', resize);
+  resize();
+  if (!still) requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

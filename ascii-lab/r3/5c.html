@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r3/5c Mushroom sign, segment glyphs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+/* No font, no atlas. Every glyph is built in the fragment shader from line segments, and the glyph is a
+   continuous function of two fields: tone picks how many strokes it owns (dot, dash, line, cross, asterisk,
+   diamond, solid bar) and the contour direction of a warped height field sets the angle of every stroke.
+   Neighbouring cells therefore hatch along the contours of the field like an engraving made of marks.
+   Hue is a third, separate field read from a baked pink-weighted arc. Shadows get dim ticks, midtones the
+   arc, peaks blow out to frost bars with a peach core. One mint cell wanders as the live cursor. */
+(function () {
+  'use strict';
+  var P = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c');
+  var gl = cv.getContext('webgl2', { antialias: false, alpha: false });
+
+  var VS = '#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  var FS = [
+'#version 300 es',
+'precision highp float;',
+'uniform vec2 R; uniform float T; uniform vec2 cell; uniform sampler2D lut;',
+'out vec4 o;',
+'const vec3 HARBOR=vec3(.0235,.1020,.1804), RAISED=vec3(.0431,.1647,.2745), RHI=vec3(.0706,.2275,.3608);',
+'const vec3 FROST=vec3(.9647,.9843,1.), PEACH=vec3(.9725,.5725,.5412), MINT=vec3(.6157,.9412,.6588);',
+'const float PI=3.14159265;',
+'float hgt(vec2 q,float t){',
+'  q+=.32*vec2(sin(q.y*2.1+t*.21+1.3),cos(q.x*1.7-t*.17));',
+'  q+=.18*vec2(sin(q.y*4.3-t*.31),cos(q.x*3.9+t*.27));',
+'  float a=sin(q.x*2.6+1.7*sin(q.y*1.9+t*.13)+t*.2);',
+'  float b=sin((q.x*.8+q.y*1.5)*3.1+t*.11);',
+'  float c=sin(length(q-vec2(.25,-.1))*5.2-t*.4);',
+'  return .5+.5*(.5*a+.32*b+.28*c)/1.1;',
+'}',
+'float sdE(vec2 p,vec2 r){float k=length(p/r);return (k-1.)*min(r.x,r.y)*.9;}',
+'float sdBox(vec2 p,vec2 b,float r){vec2 d=abs(p)-b+r;return length(max(d,0.))+min(max(d.x,d.y),0.)-r;}',
+'float smin(float a,float b,float k){float h=clamp(.5+.5*(b-a)/k,0.,1.);return mix(b,a,h)-k*h*(1.-h);}',
+'float spots(vec2 u){float d=1e3;',
+'  d=min(d,length(u-vec2(-.20,.30))-.085);d=min(d,length(u-vec2(.10,.37))-.065);',
+'  d=min(d,length(u-vec2(.30,.17))-.075);d=min(d,length(u-vec2(-.36,.12))-.05);d=min(d,length(u-vec2(.02,.17))-.04);',
+'  return d;}',
+/* mushroom: dome cap, flat curved underside, tapering stem with a flared foot. u has y up. */
+'float mush(vec2 u){',
+'  u.x+=.03*sin(u.y*3.+T*.4)*step(0.,-u.y);',
+'  float cap=sdE(u-vec2(0.,-.02),vec2(.66,.58));',
+'  cap=max(cap,-(u.y+.02+.05*(u.x*u.x)/.4)); ',
+'  float sx=.15+.045*(1.-smoothstep(-.55,.0,u.y))+.1*(1.-smoothstep(-.66,-.5,u.y));',
+'  float stem=sdBox(u-vec2(0.,-.36),vec2(sx,.28),.06);',
+'  return smin(cap,stem,.035);}',
+'float seg(vec2 p,vec2 a,vec2 b){vec2 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);return length(pa-ba*h);}',
+'vec2 rot(vec2 p,float a){float c=cos(a),s=sin(a);return vec2(c*p.x+s*p.y,-s*p.x+c*p.y);}',
+'float line(vec2 p,float a,float hl){vec2 d=vec2(cos(a),sin(a))*hl;return seg(p,-d,d);}',
+/* distance to the glyph for stroke level lv (1..7), angle a */
+'float glyph(vec2 p,float lv,float a){',
+'  float d=1e3;',
+'  if(lv<1.5){ d=length(p)-.02; }',
+'  else if(lv<2.5){ d=line(p,a,.13); }',
+'  else if(lv<3.5){ d=line(p,a,.42); }',
+'  else if(lv<4.5){ d=min(line(p,a,.34),line(p,a+PI*.5,.2)); }',
+'  else if(lv<5.5){ d=min(line(p,a,.36),min(line(p,a+PI/3.,.3),line(p,a+2.*PI/3.,.3))); }',
+'  else if(lv<6.5){ vec2 r=rot(p,a); vec2 A=vec2(.0,-.34),B=vec2(.2,0.),C=vec2(0.,.34),D=vec2(-.2,0.);',
+'    d=min(min(seg(r,A,B),seg(r,B,C)),min(seg(r,C,D),seg(r,D,A))); d=min(d,length(p)-.03); }',
+'  else { vec2 r=abs(rot(p,a))-vec2(.40,.17); d=length(max(r,0.))+min(max(r.x,r.y),0.)+.035; }',
+'  return d;',
+'}',
+'vec3 ramp(float t){return texture(lut,vec2(clamp(t,0.,1.)*.998+.001,.5)).rgb;}',
+'void main(){',
+'  vec2 px=gl_FragCoord.xy; px.y=R.y-px.y;',
+'  vec2 id=floor(px/cell); vec2 f=(px-id*cell)/cell-.5;',
+'  vec2 cc=(id+.5)*cell;',
+'  float asp=R.x/R.y;',
+'  vec2 q=(cc/R.y-vec2(asp*.5,.5))*2.;',
+'  float t=T;',
+'  float e=.006;',
+'  vec2 u=vec2(q.x,-q.y)*.92+vec2(0.,.06);',
+'  float sd=mush(u);',
+'  float gx=mush(u+vec2(e,0.))-mush(u-vec2(e,0.));',
+'  float gy=-(mush(u+vec2(0.,e))-mush(u-vec2(0.,e)));',
+'  float h=hgt(q,t);',
+'  float ang=atan(gy,gx)+PI*.5;',
+'  float ca=cell.y/cell.x;',
+'  vec2 p=f*vec2(1./ca,1.);',
+'  float ang2=ang;',
+'  float ins=1.-smoothstep(-.012,.012,sd);',
+'  float depth=clamp(-sd,0.,1.);',
+'  vec2 nrm=vec2(gx,-gy); float nl=length(nrm); nrm=nl>1e-6?nrm/nl:vec2(0.);',
+'  float lit=dot(nrm,normalize(vec2(-.55,.8)));',
+'  float rim=(1.-smoothstep(.0,.13,depth));',
+'  float isCap=smoothstep(-.14,-.04,u.y);',
+'  float spd=spots(u);',
+'  float sp=(1.-smoothstep(-.01,.01,spd))*isCap*ins;',
+'  float vig=smoothstep(2.3,.1,length(q*vec2(.7,1.)));',
+'  float halo=exp(-max(sd,0.)*5.5);',
+'  float tIn=.6+.14*lit+.22*rim*(.5+.5*lit)+.1*smoothstep(0.,.5,depth);',
+'  tIn=mix(tIn*.95,tIn,isCap);\n'+'  float gb=ins*(1.-smoothstep(.0,.12,u.y+.1))*step(-.2,u.y)*step(abs(u.x),.58)*step(.2,abs(u.x))*isCap;\n'+'  tIn=mix(tIn,.66+.1*lit,gb);ang2=mix(ang2,PI*.5,gb);',
+'  tIn=mix(tIn,.99,sp);',
+'  float tOut=(.2+.35*smoothstep(.3,.8,h))*halo*vig*(.5+.5*smoothstep(-.6,.5,q.y*.0+u.x*.5+u.y*.3));',
+'  float tone=clamp(mix(tOut*.8,tIn,ins),0.,1.);',
+'  float hu=mix(.05+.3*h*halo,.3+.34*isCap+.2*rim*(.5+.5*lit)*isCap+.1*(1.-isCap)*(.5+.5*lit),ins);',
+'  hu=mix(hu,.84,sp*.3+smoothstep(.9,.99,tone)*.4);',
+'  float dis=1.;',
+'  vec3 col=ramp(hu);',
+'  float hashv=fract(sin(dot(id,vec2(127.1,311.7)))*43758.5453);',
+/* levels: 0 none .. 7 bar */
+'  float lvf=tone*8.6-.6+(hashv-.5)*.5;',
+'  float lv=clamp(floor(lvf+.5),0.,7.);',
+'  float pxu=1./cell.y;',
+'  float w=mix(.045,.075,smoothstep(.2,.9,tone));',
+'  float d=lv>.5?glyph(p,lv,ang2):1e3;',
+'  float cov=1.-smoothstep(w-pxu*.8,w+pxu*.8,d);',
+'  float glow=exp(-max(d,0.)*9.)*(lv>.5?1.:0.);',
+/* ground: dark harbor, lit by the arc where tone is high */
+'  float lite=smoothstep(.25,.95,tone);',
+'  vec3 gnd=mix(HARBOR,RAISED,smoothstep(1.4,.0,length(q))*.7+.1*h);',
+'  gnd=mix(gnd,mix(RHI,col,.22),lite*.5);',
+/* polarity: shadow ticks dark-on-lit, light strokes on dark */
+'  vec3 ink=col;',
+'  if(tone>.84) ink=mix(col,FROST,smoothstep(.84,.97,tone)*.9);',
+'  if(tone>.9 && lv>6.5) ink=mix(PEACH,FROST,smoothstep(.9,1.,tone));',
+'  if(tone<.3) ink=mix(RHI,col,.55+tone);',
+'  vec3 c=gnd+col*glow*.28*lite;',
+'  c=mix(c,ink,cov);',
+/* mint cursor: one live cell on a slow lissajous path, dark ground only */
+'  vec2 mc=floor((vec2(.5+.36*sin(t*.23),.5+.33*sin(t*.31+1.))*R)/cell);',
+'  if(id==mc||id==mc+vec2(1.,0.)){',
+'    float dm=min(line(p,0.,.4),line(p,PI*.5,.28));',
+'    float cm=1.-smoothstep(.04-pxu,.04+pxu,dm);',
+'    c=mix(c,MINT,cm*(.6+.4*step(.5,fract(t*1.4))));',
+'  }',
+'  o=vec4(c,1.);',
+'}'].join('\n');
+
+  function sh(type, src) {
+    var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  var pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  /* pink-led arc: blue is a faint ground-tinted whisper, raspberry then rose own the range */
+  function lut() {
+    var st = [[0, P.mix('cerulean', 'raised', .55)], [.1, P.mix('irisDeep', 'raised', .3)], [.3, 'raspberry'], [.62, 'rose'], [.84, P.mix('rose', 'peach', .5)], [1, 'peach']];
+    var out = new Uint8Array(256 * 4), k = 0;
+    for (var i = 0; i < 256; i++) {
+      var t = i / 255; while (k < st.length - 2 && t > st[k + 1][0]) k++;
+      var a = st[k], b = st[k + 1], c = P.mix(a[1], b[1], Math.min(1, Math.max(0, (t - a[0]) / (b[0] - a[0]))));
+      out[i*4] = Math.round(c[0]*255); out[i*4+1] = Math.round(c[1]*255); out[i*4+2] = Math.round(c[2]*255); out[i*4+3] = 255;
+    }
+    return out;
+  }
+  var tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, lut());
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  var uR = gl.getUniformLocation(pr, 'R'), uT = gl.getUniformLocation(pr, 'T'), uC = gl.getUniformLocation(pr, 'cell');
+  gl.uniform1i(gl.getUniformLocation(pr, 'lut'), 0);
+
+  function size() {
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+    var cw = Math.max(10, Math.round(innerWidth / 130)) * dpr;
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.uniform2f(uR, cv.width, cv.height);
+    gl.uniform2f(uC, cw, Math.round(cw * 1.8));
+  }
+  function draw(t) { gl.uniform1f(uT, t); gl.drawArrays(gl.TRIANGLES, 0, 3); }
+  var T0 = 6;
+  size(); draw(T0);
+  addEventListener('resize', function () { size(); draw(T0); });
+  if (!still) (function loop(ms) { draw(T0 + ms / 1000); requestAnimationFrame(loop); })(0);
+})();
+</script>
+</body>
+</html>

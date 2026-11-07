@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>4d Rose Partitive Mushroom, Fast</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #perf { position: fixed; left: 12px; bottom: 10px; margin: 0; font: 11px/1.4 ui-monospace, Menlo, monospace; color: #7cc7f4; white-space: pre; pointer-events: none; display: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<pre id="perf"></pre>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Performance pass on 7a. Same look: every cell is two pure palette stops, a flat tile of one and a glyph of its
+   ladder neighbour, glyph chosen by measured coverage, a drifting lens showing the blurred distance view.
+   What changed:
+   - Drawing is one WebGL2 draw call. The CPU writes one 4-byte record per cell (ladder row, glyph, flag) into an
+     integer texture; the fragment shader reads the record and the glyph atlas. No per-cell fillText, no save/restore,
+     no canvas filter blur. The lens blur is a 25-tap gaussian over the cell data, inside the disc only.
+   - Glyph choice is a baked 256-step lookup, not a scan. Subject data updates at a fixed rate (the field drifts
+     slowly); the lens moves every frame at no CPU cost.
+   - Governor: a rolling frame-time window. If frames run long it steps down (render scale, update rate), and if
+     that is not enough it freezes to one still frame. Add ?perf to the URL for a live cost readout.
+   - Still frame: prefers-reduced-motion, no WebGL2, a lost context or governor give-up all paint one frame
+     (WebGL when possible, Canvas2D otherwise) with the lens parked at its still position. */
+(function () {
+  'use strict';
+  var Pal = LabPalette, S = LabSubjects;
+  var cv = document.getElementById('c');
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var showPerf = /[?&]perf\b/.test(location.search);
+  var perfEl = document.getElementById('perf'); if (showPerf) perfEl.style.display = 'block';
+
+  function rgb(k) { return Pal.resolve(k); }
+  var KEYS = ['harbor', 'raised', 'raisedHi', 'irisDeep', 'raspberry', 'rose', 'peach', 'frost'];
+  var KEYS_COOL = ['harbor', 'raised', 'raisedHi', 'irisDeep', 'iris', 'rose', 'peach', 'frost'];
+  var LAD = KEYS.concat(KEYS_COOL).map(rgb);       /* 16 rgb triples: warm ladder, then cool */
+  var MINT = rgb('mint'), ROSE = rgb('rose');
+
+  var W, H, dpr, unit, cols, rows, buf, cells;
+  var GL = [], BLOCK = 0, PICK = [new Uint8Array(256), new Uint8Array(256)];
+  var gl = null, mode = 'gl', prog, tex, atlasTex, U = {};
+  var tier = 0, still = reduce, lensPointer = null;
+  var DPR_CAP = [2, 1.5, 1, 1], HZ = [20, 20, 12, 8];
+
+  /* ---- glyph atlas: coverage measured from the same canvas render that fills the GPU atlas ---- */
+  var SET = ' .,:;-=+*/\\|xoO#%@8', ACOLS = 8, AROWS = 4, AS = 32;
+  var atlasCanvas;
+  function buildAtlas() {
+    var tmp = document.createElement('canvas'); tmp.width = tmp.height = AS;
+    var g = tmp.getContext('2d', { willReadFrequently: true });
+    atlasCanvas = document.createElement('canvas'); atlasCanvas.width = ACOLS * AS; atlasCanvas.height = AROWS * AS;
+    var ag = atlasCanvas.getContext('2d');
+    /* the glyph is squashed to the cell width exactly as 7a did: font 1.05 cell, x scaled so advance = cell */
+    var fs = AS * 1.05, sx = AS / (fs * 0.6);
+    var out = [];
+    for (var i = 0; i < SET.length; i++) {
+      var draw = function (c, ox, oy) {
+        c.save(); c.translate(ox + AS / 2, oy + AS / 2 + AS * 0.04); c.scale(sx, 1);
+        c.fillStyle = '#fff'; c.font = '700 ' + fs + 'px ' + FONT; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText(SET[i], 0, 0); c.restore();
+      };
+      g.clearRect(0, 0, AS, AS);
+      if (SET[i] !== ' ') { draw(g, 0, 0); draw(ag, (i % ACOLS) * AS, Math.floor(i / ACOLS) * AS); }
+      var d = g.getImageData(0, 0, AS, AS).data, a = 0;
+      for (var k = 3; k < d.length; k += 4) a += d[k];
+      out.push({ ch: SET[i], cov: a / 255 / (AS * AS), line: '/\\|-x'.indexOf(SET[i]) >= 0, idx: i, block: false });
+    }
+    var mx = 0; for (var j = 0; j < out.length; j++) if (out[j].cov > mx) mx = out[j].cov;
+    for (j = 0; j < out.length; j++) out[j].cov = out[j].cov / (mx * 1.02);
+    out.push({ ch: '#', cov: 1, line: false, idx: SET.length, block: true });   /* solid block: full ink, no atlas cell */
+    BLOCK = SET.length;
+    out.sort(function (p, q) { return p.cov - q.cov; });
+    GL = out;
+    /* bake pick(f, wantLine) into 256 steps */
+    for (var w = 0; w < 2; w++) for (var s = 0; s < 256; s++) {
+      var f = s / 255, best = 0, bd = 9;
+      for (var q = 0; q < GL.length; q++) {
+        var dd = Math.abs(GL[q].cov - f) - (w && GL[q].line ? 0.07 : 0);
+        if (dd < bd) { bd = dd; best = q; }
+      }
+      PICK[w][s] = GL[best].idx;
+    }
+  }
+
+  /* ---- subject to cell records. Mirrors 7a's per-cell logic exactly. ---- */
+  var BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  var N = 7, liveCell = -1;
+  function update(t) {
+    S.fill('mushroom', buf, t);
+    var lum = buf.lum, hintA = buf.hint, edge = buf.edge, total = cols * rows;
+    var cand = [];
+    for (var q = 0; q < total; q += 3) if (edge[q] > 0.75 && lum[q] > 0.5) cand.push(q);
+    liveCell = cand.length ? cand[Math.floor(t * 0.7) % cand.length] : -1;
+    var o = 0;
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++, o += 4) {
+        var i = y * cols + x, L = lum[i], hint = hintA[i], E = edge[i];
+        var tone = Math.min(1, L * 1.1);
+        var s = Math.min(1, Math.max(0, Math.pow(tone, 1.1) * (0.8 + 0.4 * hint) + 0.06 * E * tone));
+        if (L < 0.12) s *= L / 0.12;
+        var p = s * N, k = Math.min(N - 1, Math.floor(p)), f = p - k;
+        var cool = hint < 0.3 && s > 0.3 && s < 0.55 ? 8 : 0;
+        var bay = (BAY[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+        f = Math.min(1, Math.max(0, f + (bay - 0.5) * 0.12));
+        if (i === liveCell) { cells[o] = 0; cells[o + 1] = SET.indexOf('*'); cells[o + 2] = 1; continue; }
+        cells[o] = k + cool;
+        cells[o + 2] = 0;
+        if (f < 0.04) { cells[o + 1] = 0; continue; }
+        cells[o + 1] = PICK[(E > 0.3 && L > 0.45) ? 1 : 0][Math.round(f * 255)];
+      }
+    }
+  }
+
+  /* ---- WebGL2 path ---- */
+  var VS = '#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0., 1.); }';
+  var FS = '#version 300 es\nprecision mediump float; precision mediump int; precision mediump usampler2D;\n' +
+    'uniform usampler2D uCells; uniform sampler2D uAtlas;\n' +
+    'uniform vec3 uLad[16]; uniform vec3 uMint; uniform vec3 uRose;\n' +
+    'uniform float uCov[32];\n' +
+    'uniform vec2 uRes; uniform float uUnit; uniform ivec2 uGrid; uniform vec3 uLens; uniform float uDpr;\n' +
+    'out vec4 o;\n' +
+    'const float AC = 8., AR = 4.;\n' +
+    'uvec4 cellAt(vec2 px){ ivec2 c = clamp(ivec2(floor(px / uUnit)), ivec2(0), uGrid - 1); return texelFetch(uCells, c, 0); }\n' +
+    /* mean colour of a cell as the eye sees it from far: tile mixed toward glyph by measured coverage */
+    'vec3 meanCol(uvec4 d){ int k = int(d.r); if (d.b == 1u) return mix(uLad[0], uMint, 0.3); return mix(uLad[k], uLad[k+1], uCov[int(d.g)]); }\n' +
+    'void main(){\n' +
+    '  vec2 px = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uDpr;\n' +
+    '  vec3 col;\n' +
+    '  float dl = length(px - uLens.xy);\n' +
+    '  if (dl < uLens.z) {\n' +
+    '    float sg = uUnit * 1.35 * 0.8; vec3 acc = vec3(0.); float wt = 0.;\n' +
+    '    for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) {\n' +
+    '      float w = exp(-0.32 * float(i*i + j*j));\n' +
+    '      acc += w * meanCol(cellAt(px + vec2(float(i), float(j)) * sg)); wt += w;\n' +
+    '    }\n' +
+    '    col = acc / wt;\n' +
+    '  } else {\n' +
+    '    uvec4 d = cellAt(px); int k = int(d.r);\n' +
+    '    vec2 lc = fract(px / uUnit);\n' +
+    '    float cov;\n' +
+    '    if (d.b == 0u && int(d.g) == ' + 0 + ' ) cov = 0.;\n' +
+    '    else if (int(d.g) == uBlockIdx()) cov = 1.;\n' +
+    '    else cov = texture(uAtlas, (vec2(float(int(d.g) % 8), float(int(d.g) / 8)) + lc) / vec2(AC, AR)).r;\n' +
+    '    vec3 tile = d.b == 1u ? uLad[0] : uLad[k];\n' +
+    '    vec3 ink = d.b == 1u ? uMint : uLad[k + 1];\n' +
+    '    col = mix(tile, ink, cov);\n' +
+    '  }\n' +
+    '  float ring = (1. - smoothstep(0.4, 1.3, abs(dl - uLens.z))) * 0.7;\n' +
+    '  col = mix(col, uRose, ring);\n' +
+    '  o = vec4(col, 1.);\n' +
+    '}';
+  FS = FS.replace('uBlockIdx()', String(0)); /* placeholder, replaced in initGL once the block index is known */
+
+  function compile(type, src) {
+    var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  function initGL() {
+    gl = cv.getContext('webgl2', { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'low-power', preserveDrawingBuffer: false });
+    if (!gl) return false;
+    try {
+      var src = FS.replace('int(d.g) == 0 )', 'int(d.g) == 0 )'); /* no-op, readability */
+      src = src.replace('else if (int(d.g) == 0) cov = 1.;', 'else if (int(d.g) == ' + BLOCK + ') cov = 1.;');
+      prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, src));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    } catch (e) { console.warn('4d: shader failed', e); gl = null; return false; }
+    gl.useProgram(prog);
+    var vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);   /* one oversized triangle */
+    var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    ['uCells', 'uAtlas', 'uLad', 'uMint', 'uRose', 'uCov', 'uRes', 'uUnit', 'uGrid', 'uLens', 'uDpr'].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
+    atlasTex = gl.createTexture(); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, atlasTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, atlasCanvas);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    tex = gl.createTexture();
+    gl.uniform1i(U.uCells, 0); gl.uniform1i(U.uAtlas, 1);
+    var lad = new Float32Array(48); LAD.forEach(function (c, i) { lad.set(c, i * 3); });
+    gl.uniform3fv(U.uLad, lad); gl.uniform3fv(U.uMint, MINT); gl.uniform3fv(U.uRose, ROSE);
+    var cov = new Float32Array(32); for (var i = 0; i < GL.length; i++) cov[GL[i].idx] = GL[i].cov;
+    gl.uniform1fv(U.uCov, cov);
+    gl.clearColor(0.024, 0.102, 0.18, 1);
+    return true;
+  }
+  function allocGL() {
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8UI, cols, rows, 0, gl.RGBA_INTEGER, gl.UNSIGNED_BYTE, cells);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+  function uploadCells() {
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, cols, rows, gl.RGBA_INTEGER, gl.UNSIGNED_BYTE, cells);
+  }
+  function lensPos(t) {
+    var r = Math.min(W, H) * 0.2, lx, ly;
+    if (lensPointer) { lx = lensPointer[0]; ly = lensPointer[1]; }
+    else if (still) { lx = W * 0.27; ly = H * 0.34; }
+    else { lx = W * (0.5 + 0.34 * Math.sin(t * 0.21 + 0.6)); ly = H * (0.5 + 0.30 * Math.sin(t * 0.17 + 2.1)); }
+    return [lx, ly, r];
+  }
+  function drawGL(t) {
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.uniform2f(U.uRes, cv.width, cv.height); gl.uniform1f(U.uUnit, unit); gl.uniform2i(U.uGrid, cols, rows); gl.uniform1f(U.uDpr, dpr);
+    var l = lensPos(t); gl.uniform3f(U.uLens, l[0], l[1], l[2]);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  /* ---- Canvas2D still, for browsers without WebGL2. One frame, no loop. ---- */
+  function draw2DStill(t) {
+    var cx = cv.getContext('2d'); if (!cx) return;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var css = LAD.map(function (c) { return Pal.toCss(c); });
+    cx.fillStyle = css[0]; cx.fillRect(0, 0, W, H);
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    var fs = unit * 1.05, sx = unit / (fs * 0.6);
+    cx.font = '700 ' + fs + 'px ' + FONT;
+    var o = 0;
+    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++, o += 4) {
+      var k = cells[o], gi = cells[o + 1], live = cells[o + 2] === 1, px = x * unit, py = y * unit;
+      cx.fillStyle = live ? css[0] : css[k]; cx.fillRect(px, py, unit + 0.5, unit + 0.5);
+      if (gi === 0 && !live) continue;
+      cx.fillStyle = live ? Pal.toCss(MINT) : css[k + 1];
+      if (gi === BLOCK) { cx.fillRect(px, py, unit + 0.5, unit + 0.5); continue; }
+      cx.save(); cx.translate(px + unit / 2, py + unit / 2 + unit * 0.04); cx.scale(sx, 1); cx.fillText(SET[gi], 0, 0); cx.restore();
+    }
+    var l = lensPos(t);
+    cx.save(); cx.beginPath(); cx.arc(l[0], l[1], l[2], 0, 6.2832); cx.clip();
+    cx.filter = 'blur(' + (unit * 1.35) + 'px)'; cx.drawImage(cv, 0, 0, cv.width, cv.height, 0, 0, W, H); cx.filter = 'none'; cx.restore();
+    cx.beginPath(); cx.arc(l[0], l[1], l[2], 0, 6.2832); cx.strokeStyle = Pal.toCss(ROSE, 0.7); cx.lineWidth = 1; cx.stroke();
+  }
+
+  /* ---- sizing ---- */
+  function resize() {
+    dpr = Math.min(DPR_CAP[tier], window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    unit = Math.max(8, Math.ceil(Math.max(W, H) / 170));
+    cols = Math.ceil(W / unit); rows = Math.ceil(H / unit);
+    buf = S.create(cols, rows, 1);
+    cells = new Uint8Array(cols * rows * 4);
+    if (gl) allocGL();
+  }
+  function paintStill() {
+    update(6);
+    if (gl && mode === 'gl') { uploadCells(); drawGL(6); }
+    else if (!gl) draw2DStill(6);
+  }
+
+  /* ---- loop and governor ---- */
+  var tStart = performance.now(), lastUpd = -1e9, lastTs = 0;
+  var ft = [], updMs = 0, updN = 0, subMs = 0, subN = 0, gpuMs = 0, ext = null, q = null, qPending = null;
+  var settle = 0;   /* frames to ignore after a tier change or resize */
+  function govern(dt) {
+    if (settle > 0) { settle--; return; }
+    ft.push(dt);
+    if (ft.length < 90) return;
+    var s = ft.slice().sort(function (a, b) { return a - b; });
+    var p95 = s[Math.floor(s.length * 0.95)], med = s[s.length >> 1];
+    ft.length = 0;
+    /* a 60Hz display gives ~16.7ms; 30Hz displays give ~33, so only compare against the display's own median */
+    if (p95 > Math.max(24, med * 1.6) || med > 20) stepDown();
+  }
+  function stepDown() {
+    if (tier >= 3) { giveUp('governor'); return; }
+    tier++; settle = 20; resize();
+  }
+  function giveUp(why) {
+    still = true; window.__perf = window.__perf || {}; window.__perf.gaveUp = why;
+    paintStill();
+  }
+  function loop(tm) {
+    if (still) return;
+    requestAnimationFrame(loop);
+    var dt = tm - lastTs; lastTs = tm;
+    var t0 = performance.now();
+    var t = (tm - tStart) / 1000 * 0.5;
+    if (tm - lastUpd >= 1000 / HZ[tier]) {
+      lastUpd = tm; update(t); uploadCells();
+      updMs += performance.now() - t0; updN++;
+    }
+    var t1 = performance.now();
+    if (ext && !qPending) { q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); }
+    drawGL(t);
+    if (ext && q && !qPending) { gl.endQuery(ext.TIME_ELAPSED_EXT); qPending = q; q = null; }
+    if (ext && qPending && gl.getQueryParameter(qPending, gl.QUERY_RESULT_AVAILABLE) && !gl.getParameter(ext.GPU_DISJOINT_EXT)) {
+      gpuMs = gpuMs * 0.9 + gl.getQueryParameter(qPending, gl.QUERY_RESULT) / 1e6 * 0.1; gl.deleteQuery(qPending); qPending = null;
+    }
+    subMs += performance.now() - t1; subN++;
+    if (dt > 0 && dt < 250) govern(dt);
+    if (showPerf && (subN & 15) === 0) report(dt);
+  }
+  function report(dt) {
+    var P = window.__perf = window.__perf || {};
+    P.cells = cols * rows; P.unit = unit; P.dpr = dpr; P.tier = tier; P.hz = HZ[tier];
+    P.updateMs = +(updMs / Math.max(1, updN)).toFixed(3);
+    P.submitMs = +(subMs / Math.max(1, subN)).toFixed(3);
+    P.gpuMs = ext ? +gpuMs.toFixed(3) : null;
+    P.frameMs = +dt.toFixed(1);
+    perfEl.textContent = 'cells ' + P.cells + '  unit ' + unit + 'px  dpr ' + dpr + '  tier ' + tier + '\n' +
+      'update ' + P.updateMs + 'ms @' + P.hz + 'Hz   submit ' + P.submitMs + 'ms   gpu ' + (P.gpuMs === null ? 'n/a' : P.gpuMs + 'ms') + '\nframe ' + P.frameMs + 'ms';
+  }
+
+  /* headless-safe one-shot measurement of the CPU side, exposed for tests: window.__bench(n) */
+  window.__bench = function (n) {
+    n = n || 120; var a = performance.now();
+    for (var i = 0; i < n; i++) update(i * 0.05);
+    var u = (performance.now() - a) / n;
+    a = performance.now();
+    if (gl) { for (i = 0; i < n; i++) { uploadCells(); drawGL(i * 0.05); } gl.finish(); }
+    var d = gl ? (performance.now() - a) / n : null;
+    return { cells: cols * rows, updateMs: +u.toFixed(3), uploadDrawMs: d === null ? null : +d.toFixed(3) };
+  };
+
+  buildAtlas();
+  if (!initGL()) mode = '2d';
+  resize();
+  if (gl) ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
+  window.addEventListener('resize', function () { resize(); settle = 20; if (still) paintStill(); });
+  window.addEventListener('pointermove', function (e) { lensPointer = [e.clientX, e.clientY]; });
+  window.addEventListener('pointerleave', function () { lensPointer = null; });
+  cv.addEventListener('webglcontextlost', function (e) { e.preventDefault(); still = true; });
+  cv.addEventListener('webglcontextrestored', function () { gl = null; initGL(); resize(); if (matchMedia('(prefers-reduced-motion: reduce)').matches) paintStill(); else { still = false; requestAnimationFrame(loop); } });
+  if (still || mode === '2d') { still = true; paintStill(); } else { requestAnimationFrame(loop); }
+})();
+</script>
+</body>
+</html>

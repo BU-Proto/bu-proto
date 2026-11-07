@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>21 Quadtree Mushroom</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Pal = LabPalette, S = LabSubjects;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+  var harbor = Pal.resolve('harbor'), raised = Pal.resolve('raised'), frost = Pal.resolve('frost');
+  var mintC = Pal.toCss(Pal.resolve('mint'));
+  var W, H, dpr, unit, cols, rows, buf, ground;
+  var LEVEL = 3;                      /* block = 1,2,4,8 units */
+  var RAMP = ' .:-+*oO#@';
+
+  function css(c) { return Pal.toCss(c); }
+  function mixc(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+
+  function resize() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    unit = Math.max(7, Math.ceil(Math.max(W, H) / 190));   /* smallest glyph cell in css px */
+    cols = Math.ceil(W / unit); rows = Math.ceil(H / unit);
+    buf = S.create(cols, rows, 1);
+    ground = cx.createLinearGradient(0, 0, 0, H);
+    ground.addColorStop(0, css(harbor)); ground.addColorStop(1, '#0a2238');
+  }
+
+  var leaves = [];
+  function stats(x0, y0, s) {
+    var mn = 1, mx = 0, e = 0, m0 = 1, m1 = 0, sl = 0, sh = 0, n = 0, x1 = Math.min(cols, x0 + s), y1 = Math.min(rows, y0 + s);
+    for (var y = y0; y < y1; y++) for (var x = x0; x < x1; x++) {
+      var i = y * cols + x, l = buf.lum[i];
+      if (l < mn) mn = l; if (l > mx) mx = l;
+      if (buf.edge[i] > e) e = buf.edge[i];
+      if (buf.mask[i] < m0) m0 = buf.mask[i]; if (buf.mask[i] > m1) m1 = buf.mask[i];
+      sl += l; sh += buf.hint[i]; n++;
+    }
+    return { range: mx - mn, edge: e, mrange: m1 - m0, lum: sl / n, hint: sh / n, max: mx };
+  }
+  var THR = [0, 0, 0.075, 0.095, 0.12];
+  function build(x0, y0, s) {
+    var st = stats(x0, y0, s);
+    if (s > 1 && (st.range > THR[Math.log2(s) + 1] || (s >= 2 && st.edge > 0.3) || st.mrange > 0.25)) {
+      var h = s >> 1;
+      build(x0, y0, h); build(x0 + h, y0, h); build(x0, y0 + h, h); build(x0 + h, y0 + h, h);
+      return;
+    }
+    if (x0 >= cols || y0 >= rows) return;
+    st.x = x0; st.y = y0; st.s = s; st.k = Math.log2(s);
+    var ci = Math.min(rows - 1, y0 + (s >> 1)) * cols + Math.min(cols - 1, x0 + (s >> 1));
+    var xa = Math.min(cols - 2, Math.max(1, x0 + (s >> 1))), ya = Math.min(rows - 2, Math.max(1, y0 + (s >> 1)));
+    var gx = 0, gy = 0, w = Math.max(1, s >> 1);
+    gx = buf.lum[ya * cols + Math.min(cols - 1, xa + w)] - buf.lum[ya * cols + Math.max(0, xa - w)];
+    gy = buf.lum[Math.min(rows - 1, ya + w) * cols + xa] - buf.lum[Math.max(0, ya - w) * cols + xa];
+    st.gx = gx; st.gy = gy;
+    leaves.push(st);
+  }
+
+  function lineGlyph(gx, gy) {
+    var ax = Math.abs(gx), ay = Math.abs(gy);
+    if (ax > 2 * ay) return '|';
+    if (ay > 2 * ax) return '-';
+    return gx * gy > 0 ? '/' : '\\';
+  }
+
+  function frame(tm) {
+    var t = still ? 6 : tm / 1000 * 0.55;
+    S.fill('mushroom', buf, t);
+    leaves = [];
+    for (var by = 0; by < rows; by += 8) for (var bx = 0; bx < cols; bx += 8) build(bx, by, 8);
+
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = ground; cx.fillRect(0, 0, W, H);
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+
+    /* one live cell: a small bright-edge leaf chosen by time */
+    var cand = [];
+    for (var q = 0; q < leaves.length; q++) if (leaves[q].k === 0 && leaves[q].edge > 0.7) cand.push(q);
+    var live = cand.length ? cand[Math.floor(t * 0.9) % cand.length] : -1;
+
+    var lastFont = -1;
+    for (var n = 0; n < leaves.length; n++) {
+      var f = leaves[n], px = f.x * unit, py = f.y * unit, size = f.s * unit;
+      var L = f.lum, E = f.edge;
+      /* size is colour: small = sky end, big = rose end; the photo-ish hint pulls the rest */
+      var sizeT = f.k / LEVEL;
+      var tt = Math.min(1, Math.max(0, 0.5 * f.hint + 0.5 * (0.18 + 0.72 * sizeT)));
+      var base = Pal.arc(tt);
+      var d = Math.min(1, L * 1.9);
+      var lit = mixc(harbor, base, d);
+      var blow = Math.max(0, L - 0.74) / 0.26;
+      lit = mixc(lit, frost, blow);
+
+      /* tile: the leaf itself, with a hairline gutter so the tree shows */
+      var tileA = 0.10 + 0.36 * d * d;
+      cx.fillStyle = css(mixc(raised, lit, tileA));
+      cx.fillRect(px + 0.5, py + 0.5, size - 1, size - 1);
+
+      var ch, col;
+      var cxm = px + size / 2, cym = py + size / 2;
+      if (n === live) { ch = '*'; col = mintC; }
+      else if (L > 0.82 && E > 0.25 && f.k <= 1) {
+        /* highlights blow out to blocks */
+        cx.fillStyle = css(frost);
+        cx.fillRect(px + 1, py + 1, size - 2, size - 2);
+        continue;
+      } else if (L < 0.2) {
+        /* polarity flip: in shadow, thin deep ticks, raspberry or iris deep on raised */
+        ch = E > 0.3 ? lineGlyph(f.gx, f.gy) : (f.k >= 2 ? '+' : '.');
+        col = css(mixc(Pal.resolve(tt > 0.55 ? 'raspberry' : 'irisDeep'), raised, f.k >= 2 ? 0.72 : 0.08));
+        if (f.k >= 2) ch = f.k >= 3 ? ':' : '+';
+      } else if (E > 0.3 && f.k <= 1) {
+        ch = lineGlyph(f.gx, f.gy);
+        col = css(mixc(lit, frost, 0.55));
+      } else {
+        /* calm: ramp glyph by tone, big and dim in the open, bright on the body */
+        var ri = Math.min(RAMP.length - 1, Math.floor(L * 1.15 * RAMP.length));
+        ch = RAMP.charAt(ri);
+        if (ch === ' ') ch = f.k >= 2 ? '.' : ' ';
+        col = css(mixc(lit, frost, 0.18 + 0.4 * blow));
+        if (f.k >= 2 && f.mrange < 0.1 && L < 0.45) col = css(mixc(lit, harbor, 0.35));
+      }
+      if (ch === ' ') continue;
+      var fs = size * 1.05;
+      if (f.k !== lastFont) { cx.font = '600 ' + fs + 'px ' + FONT; lastFont = f.k; }
+      cx.save();
+      cx.translate(cxm, cym + size * 0.04);
+      cx.scale(size / (fs * 0.6), 1);
+      cx.fillStyle = col;
+      cx.fillText(ch, 0, 0);
+      cx.restore();
+    }
+  }
+
+  var last = 0;
+  function loop(tm) {
+    if (tm - last > 90) { last = tm; frame(tm); }
+    requestAnimationFrame(loop);
+  }
+  resize();
+  window.addEventListener('resize', function () { resize(); frame(performance.now()); });
+  if (still) frame(0); else requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

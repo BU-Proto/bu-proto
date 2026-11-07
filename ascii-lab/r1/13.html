@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/13 Mushroom, drifting hue arc</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Glyph-only mushroom on harbor. No image under the marks: each glyph's hue is read off ONE slowly
+   moving arc that travels across SPACE as a swirl (angle about the cap centre + distance + a long
+   diagonal), so the palette sweeps through the picture like weather rather than tracking tone.
+   Tone only chooses glyph shape and weight; frost lights the highlights. Outside the subject the
+   same arc continues as sparse dashes that thin into the ground. */
+(function () {
+  'use strict';
+  var S = LabSubjects, P = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var NB = 72, inks = P.cssLut(NB), dim = [];
+  var harbor = P.resolve('harbor'), FROST = '#f6fbff';
+  for (var i = 0; i < NB; i++) dim.push(P.toCss(P.mix(harbor, P.arc(i / (NB - 1)), 0.55)));
+  var RAMP = ['.', ':', '-', '=', '+', '*', '#', '%'];
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  var W, H, CW, CH, cols, rows, buf, dpr, bins;
+
+  function setup() {
+    dpr = Math.min(2, devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    CW = Math.max(8, Math.round(W / 150)); CH = Math.round(CW * 1.8);
+    cols = Math.ceil(W / CW); rows = Math.ceil(H / CH);
+    buf = S.create(cols, rows, CW / CH);
+    bins = [];
+    for (var b = 0; b < NB * 3; b++) bins.push([]);
+  }
+
+  function frame(t) {
+    var B = buf, k, r, c;
+    S.fill('mushroom', B, t);
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = '#061a2e'; cx.fillRect(0, 0, W, H);
+    cx.textBaseline = 'middle'; cx.textAlign = 'center';
+    cx.font = Math.round(CH * 0.88) + 'px ui-monospace, "SF Mono", Menlo, monospace';
+    for (k = 0; k < bins.length; k++) bins[k].length = 0;
+    var ccx = cols * 0.5, ccy = rows * 0.42, asp = CH / CW;
+    var lt = t * 0.045;                                /* the arc's drift: one lap in ~22 s */
+    for (r = 1; r < rows - 1; r++) for (c = 1; c < cols - 1; c++) {
+      k = r * cols + c;
+      var l = B.lum[k], m = B.mask[k], e = B.edge[k];
+      var dx = c - ccx, dy = (r - ccy) * asp;
+      var rad = Math.sqrt(dx * dx + dy * dy) / cols, ang = Math.atan2(dy, dx);
+      /* hue coordinate: spiral phase through space, then a slow drift in time */
+      var ph = rad * 0.55 + ang / (2 * Math.PI) * 0.35 + (dx - dy) / cols * 0.3 - lt;
+      var u = 0.5 + 0.5 * Math.sin(ph * 2 * Math.PI);          /* 0..1 along the arc */
+      u = 0.22 + Math.pow(u, 0.6) * 0.56;                            /* weight toward the pink end */
+      var th = (BAYER[(r & 3) * 4 + (c & 3)] + 0.5) / 16;
+      var gx = B.lum[k + 1] - B.lum[k - 1], gy = (B.lum[k + cols] - B.lum[k - cols]) * asp;
+      var mag = Math.sqrt(gx * gx + gy * gy);
+      var q = Math.round((Math.atan2(gy, gx) + Math.PI / 2) / (Math.PI / 4)); q = ((q % 4) + 4) % 4;
+      var line = ['-', '\\', '|', '/'][q];
+      var x = c * CW + CW / 2, y = r * CH + CH / 2;
+      var bi = Math.min(NB - 1, Math.floor(u * (NB - 1) + 0.5)), ch = null, kind = 0;
+      if (m > 0.5) {
+        if (l > 0.8 && th < (l - 0.8) * 4) { cx.fillStyle = FROST; cx.fillRect(c * CW, r * CH, CW, CH - 1); continue; }
+        if (l > 0.6) { ch = (e > 0.4 && th < e) ? ((q & 1) ? 'x' : '+') : line; kind = 0; if (th > 0.15 + (l - 0.6) * 2) ch = '.'; }
+        else if (l > 0.12) ch = RAMP[Math.min(7, Math.floor(l * 11))];
+        else if (th < 0.4) ch = ':'; else continue;
+        bins[bi].push(ch, x, y);
+      } else {
+        /* open ground: the arc dissolves outward as dashes */
+        var dens = 0.16 * Math.exp(-rad * 2.2) + 0.03;
+        if (th > dens * 3 || (c * 7 + r * 13) % 5) continue;
+        bins[NB + bi].push(mag > 0.01 ? line : '-', x, y);
+      }
+    }
+    var b, a, n;
+    for (b = 0; b < NB; b++) {
+      a = bins[b]; if (!a.length) continue;
+      cx.fillStyle = inks[b];
+      for (n = 0; n < a.length; n += 3) cx.fillText(a[n], a[n + 1], a[n + 2]);
+      a = bins[NB + b]; if (!a.length) continue;
+      cx.fillStyle = dim[b];
+      for (n = 0; n < a.length; n += 3) cx.fillText(a[n], a[n + 1], a[n + 2]);
+    }
+  }
+
+  setup();
+  addEventListener('resize', function () { setup(); frame(4); });
+  if (still) { frame(4); return; }
+  (function loop(ms) { frame((ms || 0) / 1000 + 4); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

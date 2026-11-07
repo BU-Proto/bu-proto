@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quadtree Gills</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* r1/22  mushroom, close crop of gills and rim.
+   Method: a quadtree of glyph tiles. Calm gill flats become a few big tiles, the rim and each gill edge split down
+   to the smallest. Tile size is also the hue: small = sky, medium = iris, big = rose, with the warm core on top. */
+(function () {
+  'use strict';
+  var Pal = window.LabPalette, S = window.LabSubjects;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d', { alpha: false });
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+
+  var harbor = Pal.resolve('harbor'), frost = Pal.resolve('frost'), raised = Pal.resolve('raised');
+  var mint = Pal.resolve('mint'), peach = Pal.resolve('peach'), haze = Pal.resolve('haze');
+  function mixc(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function css(c) { return Pal.toCss(c); }
+  function sm(a, b, x) { x = (x - a) / (b - a); x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); }
+  function hash(i, j) { var h = Math.imul(i, 374761393) + Math.imul(j, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+
+  /* ---- the source render, once, at a fixed size; the crop is sampled from it ---- */
+  var BW = 1280, BH = 800;
+  var buf = S.create(BW, BH, 1);
+  S.fill('mushroom', buf, 0);
+  var cropCx = 500, cropCy = 385, cropH = 230;   /* centre and height of the gill/rim crop, in buffer px */
+
+  function samp(arr, x, y) {
+    x = x < 0 ? 0 : x > BW - 1.001 ? BW - 1.001 : x; y = y < 0 ? 0 : y > BH - 1.001 ? BH - 1.001 : y;
+    var x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * BW + x0;
+    return (arr[i] * (1 - fx) + arr[i + 1] * fx) * (1 - fy) + (arr[i + BW] * (1 - fx) + arr[i + BW + 1] * fx) * fy;
+  }
+
+  var W, H, DPR, base, leaves, layer, lx, scale, bx0, by0, mintLeaf;
+
+  function toBuf(px, py) { return [bx0 + px / scale, by0 + py / scale]; }
+
+  function stats(px, py, s) {
+    /* 6x6 probe of the node: means, plus the spread of its four quadrant means (what a split could still reveal) */
+    var L = 0, Hh = 0, E = 0, M = 0, emax = 0, q = [0, 0, 0, 0];
+    for (var j = 0; j < 6; j++) for (var i = 0; i < 6; i++) {
+      var qx = px + (i + 0.5) / 6 * s, qy = py + (j + 0.5) / 6 * s, b = toBuf(qx, qy);
+      var l = samp(buf.lum, b[0], b[1]);
+      L += l; Hh += samp(buf.hint, b[0], b[1]);
+      var e = samp(buf.edge, b[0], b[1]); E += e; if (e > emax) emax = e;
+      M += samp(buf.mask, b[0], b[1]);
+      q[(j > 2 ? 2 : 0) + (i > 2 ? 1 : 0)] += l;
+    }
+    var lo = Math.min(q[0], q[1], q[2], q[3]) / 9, hi = Math.max(q[0], q[1], q[2], q[3]) / 9;
+    var c = toBuf(px + s / 2, py + s / 2), h = 2;
+    var gx = samp(buf.lum, c[0] + h, c[1]) - samp(buf.lum, c[0] - h, c[1]);
+    var gy = samp(buf.lum, c[0], c[1] + h) - samp(buf.lum, c[0], c[1] - h);
+    return { L: L / 36, H: Hh / 36, E: E / 36, Emax: emax, M: M / 36, range: hi - lo, gx: gx, gy: gy };
+  }
+
+  function build() {
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = Math.max(1, innerWidth); H = Math.max(1, innerHeight);
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    layer = document.createElement('canvas'); layer.width = cv.width; layer.height = cv.height;
+    lx = layer.getContext('2d', { alpha: false });
+
+    scale = Math.max(H / cropH, W / (BW * 0.92));
+    var cw = W / scale, ch = H / scale;
+    var ccx = Math.min(BW - cw / 2 - 2, Math.max(cw / 2 + 2, cropCx));
+    var ccy = Math.min(BH - ch / 2 - 2, Math.max(ch / 2 + 2, cropCy));
+    bx0 = ccx - cw / 2; by0 = ccy - ch / 2;
+
+    var minS = Math.max(5, Math.round(Math.min(W, H) / 120));
+    var rootS = minS * 16;
+    leaves = [];
+    for (var ry = 0; ry < H; ry += rootS) for (var rx = 0; rx < W; rx += rootS) split(rx, ry, rootS, minS);
+
+    /* live marker: smallest leaf with the strongest rim in the upper right third, away from the copy-free centre */
+    mintLeaf = null; var best = -1;
+    for (var k = 0; k < leaves.length; k++) {
+      var q = leaves[k];
+      if (q.s === minS && q.E > best && q.x > W * 0.62 && q.y < H * 0.5) { best = q.E; mintLeaf = q; }
+    }
+    paintStatic(minS, rootS);
+  }
+
+  function split(px, py, s, minS) {
+    var st = stats(px, py, s);
+    var maxS = st.M < 0.2 ? minS * 16 : st.E > 0.3 ? minS * 4 : st.E > 0.15 ? minS * 4 : minS * 8;
+    var calm = st.range < 0.035 + 0.012 * (s / minS) && s <= maxS;
+    if (s <= minS || calm) { leaves.push(mk(px, py, s, st, minS)); return; }
+    var h = s / 2;
+    split(px, py, h, minS); split(px + h, py, h, minS); split(px, py + h, h, minS); split(px + h, py + h, h, minS);
+  }
+
+  function mk(px, py, s, st, minS) {
+    var lvl = Math.log(s / minS) / Math.LN2 / 4;       /* 0 smallest .. 1 root */
+    var inv = 1 - st.M;                                /* outside the subject: dark ground */
+    /* size is colour: sky small, iris medium, rose big; hint nudges, and the warm core rides the lum */
+    var t = 0.04 + 0.74 * Math.pow(lvl, 0.6) + (st.H - 0.55) * 0.55;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    var col = Pal.arc(t);
+    var hot = sm(0.62, 0.95, st.L);
+    var tone = st.L;
+    var cc = col;
+    if (hot > 0) cc = mixc(col, frost, hot * hot * 0.92);
+    if (hot > 0 && lvl > 0.45) cc = mixc(col, mixc(peach, haze, 0.35), 0.55 * hot);
+    var a = Math.atan2(st.gy, st.gx) + Math.PI / 2;   /* edge runs perpendicular to the gradient */
+    /* inside the plate the gills fan out from the stem hub, so the glyph follows that fan; the rim keeps its own edge */
+    var hx = (640 - bx0) * scale, hy = (320 - by0) * scale;
+    var rimish = sm(0.78, 0.95, st.L) > 0.3 && st.Emax > 0.85;
+    if (st.M > 0.5 && !rimish) a = Math.atan2(py + s / 2 - hy, px + s / 2 - hx);
+    var mag = Math.sqrt(st.gx * st.gx + st.gy * st.gy);
+    return { x: px, y: py, s: s, lvl: lvl, L: tone, E: Math.max(st.E, st.Emax * 0.7), ang: a, mag: mag, col: cc, base: col, M: st.M, inv: inv,
+      id: hash(px | 0, py | 0), phase: (px * 0.8 + py * 0.6) };
+  }
+
+  /* ---- glyph drawing: strokes stretch to the tile, characters come from the measured-coverage ramp ---- */
+  var RAMP = ['.', ':', '+', '*', 'x', '#', '%'];
+  function drawTile(c, q, boost) {
+    var s = q.s, x = q.x, y = q.y;
+    var L = Math.min(1, q.L + boost * 0.5);
+    var gap = s > 14 ? Math.max(1, s * 0.035) : s > 8 ? 1 : 0;
+    var cn = q.col, bs = q.base;
+    if (boost > 0) cn = mixc(q.col, frost, boost);
+    /* tile body: a soft sample of the photo-ish light beneath, tinted by the tile's own hue */
+    var body = mixc(harbor, bs, (q.M < 0.25 ? 0.03 : 0.05) + 0.26 * L * L * (0.3 + 0.7 * q.M) + 0.2 * boost);
+    if (q.L > 0.7 && q.lvl > 0.3) body = mixc(body, mixc(peach, haze, 0.4), 0.2 * (q.L - 0.7) / 0.3);
+    c.fillStyle = css(body);
+    c.fillRect(x + gap * 0.5, y + gap * 0.5, s - gap, s - gap);
+
+    var cxm = x + s / 2, cym = y + s / 2, r = s * 0.46;
+    if (q.M < 0.2 && boost === 0) {
+      /* ground: the field thins to sparse dashes, bigger tiles emptier */
+      if (q.id > 0.55 - q.lvl * 0.25) {
+        c.fillStyle = css(mixc(harbor, bs, 0.38 + 0.4 * L)); var w = Math.max(1, s * 0.5), hh = Math.max(1, s * 0.07);
+        c.fillRect(cxm - w / 2, cym - hh / 2, w, hh);
+      }
+      return;
+    }
+    var edge = q.E, small = s <= 12;
+    var ink;
+    if (L < 0.2 && boost === 0) {
+      /* shadow: thin dark ticks, harbor on a tinted tile (polarity flips) */
+      ink = mixc(harbor, bs, 0.12);
+      c.strokeStyle = css(ink); c.lineWidth = Math.max(1, s * 0.09);
+      stroke(c, cxm, cym, r * 0.8, q.ang + 0.2 * (q.id - 0.5));
+      return;
+    }
+    if (edge > 0.3 && q.mag > 0.004) {
+      /* edge: line glyph along the gill, frost in highlights, hue in between */
+      ink = L > 0.72 ? mixc(cn, frost, 0.75) : cn;
+      c.strokeStyle = css(ink); c.lineCap = 'butt';
+      c.lineWidth = Math.max(1, s * (small ? 0.2 : 0.11));
+      var a = q.ang;
+      stroke(c, cxm, cym, r, a);
+      if (edge > 0.9 && q.id > 0.8) stroke(c, cxm, cym, r * 0.9, a + Math.PI / 2);  /* x or + at hot junctions */
+      return;
+    }
+    if (L < 0.4 && boost === 0) {
+      /* quiet middle: leave the tile bare, one pinpoint on some */
+      if (q.id > 0.5) { c.fillStyle = css(mixc(bs, frost, 0.2)); c.fillRect(cxm - s * 0.04, cym - s * 0.04, Math.max(1, s * 0.08), Math.max(1, s * 0.08)); }
+      return;
+    }
+    ink = cn;
+    if (s >= 18) {
+      /* big calm tiles carry one large shape: ring, diamond or plus, by lum band and hash */
+      c.strokeStyle = css(ink); c.lineWidth = Math.max(1.2, s * 0.07); c.lineJoin = 'miter';
+      var k = q.id;
+      if (L > 0.82) { c.fillStyle = css(mixc(ink, frost, 0.7)); c.fillRect(x + s * 0.18, y + s * 0.18, s * 0.64, s * 0.64); }
+      else if (k < 0.34) { c.beginPath(); c.arc(cxm, cym, r * 0.62, 0, 6.2832); c.stroke(); }
+      else if (k < 0.67) { c.beginPath(); c.moveTo(cxm, cym - r * 0.78); c.lineTo(cxm + r * 0.78, cym); c.lineTo(cxm, cym + r * 0.78); c.lineTo(cxm - r * 0.78, cym); c.closePath(); c.stroke(); }
+      else { stroke(c, cxm, cym, r * 0.72, 0); stroke(c, cxm, cym, r * 0.72, Math.PI / 2); }
+      return;
+    }
+    /* small calm tiles: ramp character by tone, white block when blown out */
+    if (L > 0.88) { c.fillStyle = css(mixc(ink, frost, 0.85)); c.fillRect(x + s * 0.12, y + s * 0.12, s * 0.76, s * 0.76); return; }
+    var idx = Math.max(0, Math.min(RAMP.length - 1, Math.floor(((L - 0.4) / 0.5) * RAMP.length)));
+    c.fillStyle = css(ink); c.font = '700 ' + Math.round(s * 0.95) + 'px ' + FONT;
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(RAMP[idx], cxm, cym + s * 0.05);
+  }
+  function stroke(c, x, y, r, a) {
+    var dx = Math.cos(a) * r, dy = Math.sin(a) * r;
+    c.beginPath(); c.moveTo(x - dx, y - dy); c.lineTo(x + dx, y + dy); c.stroke();
+  }
+
+  function paintStatic(minS, rootS) {
+    lx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    lx.fillStyle = css(harbor); lx.fillRect(0, 0, W, H);
+    for (var i = 0; i < leaves.length; i++) drawTile(lx, leaves[i], 0);
+  }
+
+  /* ---- motion: a band of light slides along the gills and re-lights only the tiles it touches ---- */
+  function frame(ms) {
+    var t = still ? 2.2 : ms / 1000;
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.drawImage(layer, 0, 0);
+    cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    var dirx = 0.86, diry = -0.5, span = (W * dirx + H * Math.abs(diry)) + 400;
+    var pos = ((t * 0.07) % 1) * span - 200;
+    var pos2 = (((t * 0.07) + 0.5) % 1) * span - 200;
+    for (var i = 0; i < leaves.length; i++) {
+      var q = leaves[i];
+      if (q.L < 0.22 && q.E < 0.3) continue;
+      var proj = (q.x + q.s / 2) * dirx + (q.y + q.s / 2) * -diry * -1 * 0 + (q.y + q.s / 2) * diry * -1;
+      var d1 = Math.abs(proj - pos), d2 = Math.abs(proj - pos2);
+      var b = Math.max(0, 1 - Math.min(d1, d2) / (110 + q.s * 1.2));
+      if (b > 0.04) {
+        b = b * b * (0.55 + 0.45 * Math.sin(t * 3 + q.phase));
+        if (b > 0.06) drawTile(cx, q, b);
+      }
+    }
+    /* mint: one live cell at the rim tip, pulsing */
+    if (mintLeaf) {
+      var m = mintLeaf, on = still ? 1 : 0.5 + 0.5 * Math.sin(t * 4.2);
+      cx.fillStyle = css(harbor); cx.fillRect(m.x, m.y, m.s, m.s);
+      cx.fillStyle = css(mixc(harbor, mint, 0.35 + 0.65 * on));
+      var in_ = m.s * 0.22; cx.fillRect(m.x + in_, m.y + in_, m.s - 2 * in_, m.s - 2 * in_);
+    }
+    if (!still) requestAnimationFrame(frame);
+  }
+
+  var rz;
+  addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { build(); if (still) frame(0); }, 120); });
+  build();
+  if (still) frame(0); else requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
