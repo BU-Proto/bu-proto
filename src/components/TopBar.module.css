@@ -1,16 +1,18 @@
 .top {
   position: fixed;
   z-index: 50;
-  top: 0;
-  right: 0;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 50%;
   display: flex;
   align-items: stretch;
-  height: calc(var(--cell) * 3 + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
-  border-bottom: 1px solid var(--c-line);
-  border-left: 1px solid var(--c-line);
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  height: 46px;
+  border: 1px solid var(--c-line);
+  border-radius: 999px;
   background: var(--c-paper);
   color: var(--c-ink);
+  transform: translateX(-50%);
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.13em;
@@ -47,18 +49,22 @@
   color: var(--c-blue);
 }
 
-/* The page you're on is underlined by a thick rule along the tab's foot. */
+/* The page you're on is underlined by a short rule, kept clear of the pill's curve. */
 .nav > a[aria-current='page'] {
-  box-shadow: inset 0 -2px 0 var(--c-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
 }
 
 .join {
   display: flex;
   align-items: center;
   margin-left: 7px;
-  padding: 0 18px;
+  padding: 0 20px;
   position: relative;
+  overflow: hidden;
   isolation: isolate;
+  border-radius: 0 999px 999px 0;
   background: var(--c-ink);
   color: var(--c-paper);
   font-weight: 500;

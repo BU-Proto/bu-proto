@@ -6,7 +6,7 @@ import { ProtoMark } from './ProtoMark'
 import styles from './TopBar.module.css'
 
 /**
- * The tab fixed to the top right of every page: Proto's mark, the main pages, and Join. A tab item
+ * The pill fixed to the top centre of every page: Proto's mark, the main pages, and Join. A tab item
  * with pages under it (About) opens them in a small menu. On phones the items don't fit, so the
  * menu sheet takes their place and carries every page; the footer lists the rest on desktop.
  */
