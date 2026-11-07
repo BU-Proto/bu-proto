@@ -1,0 +1,210 @@
+/* Sizes live here and the component reads them back: --size is an item at rest, and items are laid
+   out at --box, their largest, then scaled down. */
+.root {
+  --size: max(12vw, 108px);
+  --gap: calc(var(--size) / 12);
+  --box: calc(var(--size) * 1.45);
+  position: relative;
+  overflow: clip;
+  isolation: isolate;
+  color: var(--c-ink);
+}
+
+/* Without motion the section is a plain block: the statement, then the items tilted in a wrap. */
+.stage {
+  padding: clamp(48px, 8vw, 96px) 16px;
+}
+
+.spacer {
+  display: none;
+}
+
+.statement {
+  position: relative;
+  z-index: 2;
+  max-width: min(42rem, 82vw);
+  margin: 0 auto 32px;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.04em;
+  text-align: center;
+  text-wrap: balance;
+  color: inherit;
+}
+
+.line {
+  display: block;
+}
+
+.muted {
+  color: var(--c-muted);
+}
+
+.ring {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  pointer-events: none;
+}
+
+.item {
+  flex: none;
+  width: clamp(96px, 24vw, 180px);
+  aspect-ratio: 1;
+  transform: rotate(var(--tilt));
+}
+
+@media (min-width: 768px) {
+  .statement {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .statement {
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* The pinned distance: half the row's travel, since the row moves at twice the scroll. */
+  .spacer {
+    display: block;
+    height: calc((109vw + var(--count) * (var(--size) + var(--gap))) * 0.5);
+  }
+
+  .statement {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  .ring {
+    display: block;
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Hidden until the first frame places it, and without scripts the statement stands alone. */
+  .item {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: var(--box);
+    margin-top: calc(var(--box) / -2);
+    visibility: hidden;
+    will-change: transform;
+    contain: layout style;
+  }
+
+  .root[data-spin='true'] .words {
+    animation: orbit-spin var(--spin) linear infinite;
+    will-change: transform;
+  }
+
+  .root[data-live='false'] .words {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 3.2%;
+  border-radius: 4.6%;
+  background: var(--c-raised);
+}
+
+.shot {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  container-type: inline-size;
+  border-radius: 1.4% / 2.5%;
+  background: var(--c-paper);
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A mono cell is 0.6em wide, so this fits the 104 columns of art to the card exactly. */
+.glyphs {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: calc(100cqw / 62.4);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: pre;
+  color: var(--c-sky-300);
+  background: none;
+}
+
+.stamp {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--stamp-ground);
+  color: var(--stamp-ink);
+}
+
+.face,
+.words {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.keyline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+
+.mark {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 15;
+  stroke-linecap: square;
+}
+
+.words text {
+  fill: currentColor;
+  font-family: var(--font-display);
+  font-size: 23px;
+  font-weight: 600;
+}

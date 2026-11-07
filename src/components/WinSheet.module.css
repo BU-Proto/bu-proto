@@ -1,11 +1,8 @@
 /* The wins on their light sheet: the landing's latest four and everything on /wins. */
 
 .sheet {
-  border-radius: 24px;
   padding: clamp(40px, 6vw, 96px) clamp(20px, 5vw, 80px) clamp(56px, 8vw, 120px);
-  background: var(--paper);
   color: var(--paper-ink);
-  color-scheme: light;
   font-family: var(--font-display);
 }
 
@@ -18,7 +15,7 @@
 
 /* It's fixed to the screen, so the sheet's clip is what keeps it on the sheet. */
 .sheet[data-gl] {
-  clip-path: inset(0 round 24px);
+  clip-path: inset(0);
   isolation: isolate;
 }
 
@@ -137,7 +134,7 @@
   container-type: inline-size;
   overflow: hidden;
   border-radius: 16px;
-  background: var(--harbor);
+  background: var(--c-raised);
   clip-path: inset(0 round 16px);
 }
 
@@ -152,7 +149,7 @@
   inset: -12px;
   display: grid;
   place-items: center;
-  background: var(--harbor);
+  background: var(--c-raised);
   transform: scale(1.026);
 }
 
@@ -166,7 +163,7 @@
 /* The art's grid is 156 cells across at 0.6em each. */
 .ascii {
   --figure-size: calc(100cqw / 93.6);
-  color: var(--frost);
+  color: var(--c-iris-300);
 }
 
 .tag {
@@ -238,11 +235,10 @@
   margin: 8px 0 0;
 }
 
-/* Amber is for dark grounds; on paper it needs the depth to read. */
 .sample > span {
   margin-left: 0;
-  color: #7a4e00;
-  text-decoration-color: #7a4e00;
+  color: var(--amber);
+  text-decoration-color: var(--amber);
   text-shadow: none;
 }
 
@@ -277,11 +273,8 @@
   padding: 1em 1.5em 1em 1.625em;
   overflow: hidden;
   border-radius: 999px;
-  background: #fff;
-  box-shadow:
-    0 6px 10px rgba(0, 0, 0, 0.04),
-    0 2px 4px rgba(0, 0, 0, 0.04);
-  color: var(--paper-ink);
+  background: var(--c-ink);
+  color: var(--c-paper);
   font-size: clamp(0.875rem, 1vw, 1.75rem);
   font-weight: 500;
   text-transform: uppercase;
@@ -293,7 +286,7 @@
   height: 0.5em;
   margin-right: 1em;
   border-radius: 50%;
-  background: var(--paper-ink);
+  background: var(--c-paper);
 }
 
 .pillLabel {

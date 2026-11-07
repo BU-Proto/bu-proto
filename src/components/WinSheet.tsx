@@ -70,7 +70,7 @@ export function WinGrid({ wins, details = false }: { wins: readonly Win[]; detai
 }
 
 /**
- * The light sheet, its covers drawn in WebGL behind the words. Only for a mouse: a touch scroll runs
+ * The sheet, its covers drawn in WebGL behind the words. Only for a mouse: a touch scroll runs
  * ahead of the page's frames, so a drawn cover would trail its own words.
  */
 function Sheet({ wins, children }: { wins: readonly Win[]; children: ReactNode }) {
