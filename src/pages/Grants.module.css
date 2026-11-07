@@ -52,12 +52,10 @@
   gap: calc(var(--cell) * 4);
 }
 
-/* ---- Next to Ignite: the dark panel, wider than the page column, 8px off the screen's edges ---- */
+/* ---- Next to Ignite: the dark panel, inside the page column like every other card ---- */
 
 .page .ignite {
-  justify-self: start;
-  width: calc(100vw - 16px);
-  margin: 0 0 0 calc(50% - 50vw + 8px);
+  margin: 0;
 }
 
 .igniteHead {

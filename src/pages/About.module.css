@@ -30,6 +30,13 @@
 
 /* ---- Why ---- */
 
+/* The dark panel sits in the page's column, its edges in line with the copy above it. */
+.why {
+  width: calc(100% - var(--gutter) * 2);
+  max-width: var(--maxw);
+  margin: 0 auto;
+}
+
 .whyText {
   margin: 0;
   color: rgb(246 251 255 / 0.82);
