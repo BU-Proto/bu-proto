@@ -15,7 +15,9 @@
 .clear,
 .frost,
 .lens,
-.rim {
+.glow,
+.rim,
+.sheen {
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -63,4 +65,29 @@
 
 .rim {
   background: var(--rim) center / 100% 100% no-repeat;
+}
+
+/* Light from the pointer: a highlight along the rim as it nears, and a glow within while pressed. */
+.sheen {
+  padding: 1.5px;
+  background: radial-gradient(150px 70px at var(--light-x, 50%) var(--light-y, 0), rgb(255 255 255 / 0.62), transparent 72%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: var(--light, 0);
+}
+
+.glow {
+  background: radial-gradient(150px 90px at var(--light-x, 50%) var(--light-y, 50%), rgb(255 255 255 / 0.17), transparent 72%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+:active > .glass .glow {
+  opacity: 1;
+  transition-duration: 0.08s;
 }

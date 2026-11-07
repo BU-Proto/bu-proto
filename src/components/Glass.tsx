@@ -28,9 +28,10 @@ interface Built extends GlassMaps {
 /**
  * A surface of liquid glass, filling its positioned parent from behind the content. Bottom to top:
  * frost, which blurs the page and compresses its brightness so labels hold their contrast over
- * anything; the lens, which bends the view at the rim; and the rim of light. Where the lens runs, the
- * frost pulls back from the rim over a clear layer, so what bends there stays sharp. Each is its own
- * layer: the frost is there at once, and stays if the lens can't run.
+ * anything; the lens, which bends the view at the rim; the rim of light; and two lights that follow
+ * the pointer. Where the lens runs, the frost pulls back from the rim over a clear layer, so what
+ * bends there stays sharp. Each is its own layer: the frost is there at once, and stays if the lens
+ * can't run.
  *
  * Nothing above this in the tree may set `filter`, `opacity`, `mask`, `clip-path` or `backdrop-filter`:
  * any of them would stop the glass seeing the page.
@@ -136,7 +137,9 @@ export function Glass({ radius, bezel, bend }: GlassProps) {
         data-ready={ready || undefined}
         style={built ? { backdropFilter: `url(#${id}) blur(0.5px)` } : undefined}
       />
+      <span className={styles.glow} />
       <span className={styles.rim} />
+      <span className={styles.sheen} />
     </span>
   )
 }

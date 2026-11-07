@@ -1,9 +1,11 @@
+import { useRef } from 'react'
 import { Link, NavLink } from 'react-router'
 import { BRAND, NAV_ITEMS } from '../content/site'
 import { Glass } from './Glass'
 import { MenuSheet } from './MenuSheet'
 import { NavMenu } from './NavMenu'
 import { ProtoMark } from './ProtoMark'
+import { useGlassLight } from './useGlassLight'
 import styles from './TopBar.module.css'
 
 /**
@@ -12,8 +14,11 @@ import styles from './TopBar.module.css'
  * menu sheet takes their place and carries every page; the footer lists the rest on desktop.
  */
 export function TopBar() {
+  const bar = useRef<HTMLElement>(null)
+  useGlassLight(bar)
+
   return (
-    <header className={styles.top}>
+    <header ref={bar} className={styles.top}>
       <Glass radius={23} bezel={21} bend={44} />
       <Link className={styles.logo} to="/">
         <ProtoMark size={18} />
