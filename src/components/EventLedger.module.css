@@ -1,11 +1,16 @@
 /* Hairlines run the full width; the words sit behind everything and the ledger in the right half. */
 .section {
+  /* The section's empty top and bottom, where the words dissolve so its edges never show as a line. */
+  --fade-top: clamp(96px, 16vh, 180px);
+  --fade-bottom: clamp(72px, 12vh, 140px);
   position: relative;
   /* The stage's negative margin lets it stick until its top reaches the section's end, so it would
      hang a full screen over the next section. Clip, not hidden: hidden would break the sticking. */
   overflow: clip;
   min-height: 120vh;
-  padding-bottom: clamp(72px, 12vh, 140px);
+  padding-bottom: var(--fade-bottom);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
 }
 
 .stage {
@@ -29,7 +34,7 @@
 .body {
   position: relative;
   z-index: 1;
-  padding-top: clamp(96px, 16vh, 180px);
+  padding-top: var(--fade-top);
 }
 
 .head {
