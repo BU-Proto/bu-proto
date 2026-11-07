@@ -77,7 +77,7 @@ export function WaysIn() {
               </ul>
             </div>
             <div className={styles.figure}>
-              <AsciiFigure shape={FIGURES[track.glyph] ?? 'ring'} />
+              <AsciiFigure shape={FIGURES[track.glyph] ?? 'ring'} live />
             </div>
           </li>
         ))}
