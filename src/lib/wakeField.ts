@@ -1,7 +1,7 @@
-// The events section's ground: giant words, barely there, and a cursor that leaves a wake. The wake is
-// a small buffer of velocity and strength that advects itself and fades in about half a second. The
-// words only catch colour where the wake crosses them, as a thin film would: bright inside the letter,
-// a split of colour along its edges, and just a dark oily sheen on the ground around it.
+// The events section's ground: giant words, barely there, and a cursor that stirs a real fluid over
+// them. The letters never move. They're a window: inside one the fluid's film shows at full strength
+// in hard bands of colour, its edge catches a hairline split of colour, and out on the ground there
+// are only the film's thin contour lines. The hero uses the simpler wake buffer in this file.
 
 import { createFluid } from './fluidField'
 
@@ -116,6 +116,11 @@ void main() {
   col += tint * body * c * .9;
   col += FROST * body * clamp((c - soft) * 2.6, 0., 1.) * .45;
   col += vec3(.1, .85, 1.) * max(cA - c, 0.) * body * 2.2 + vec3(1., .16, .5) * max(cB - c, 0.) * body * 2.2;
+
+  /* out on the ground the film is only its contour lines, thin and dim */
+  float seam = abs(fract(t * 3.) - .5);
+  float contour = (1. - smoothstep(.0, .022, seam)) * smoothstep(.01, .08, film);
+  col += tint * contour * .2 * (1. - c);
   col += tint * film * .035 * (1. - c);
 
   col += (h(px * .37 + fract(uT)) + h(px * .71 + fract(uT * 1.3)) - 1.) * 2. / 255. * step(.004, length(col));
