@@ -63,8 +63,10 @@
   opacity: 1;
 }
 
+/* The dark band just inside the rim gives the edge more depth than the highlight does. */
 .rim {
   background: var(--rim) center / 100% 100% no-repeat;
+  box-shadow: inset 0 0 5px 0.5px rgb(0 0 0 / 0.26);
 }
 
 /* Light from the pointer: a highlight along the rim as it nears, and a glow within while pressed. */
