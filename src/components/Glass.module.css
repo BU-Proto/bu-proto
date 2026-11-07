@@ -1,0 +1,35 @@
+/* See Glass.tsx. A surface sets --glass-frost and --glass-shadow to suit its size. */
+
+.glass {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.frost,
+.rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+/*
+ * Blur first, then saturate, since the next step cuts colour. contrast() then brightness() map 0..1
+ * onto a short range: the floor keeps the surface visible on pure black, and the ceiling keeps white
+ * labels at 4.5:1 over pure white.
+ */
+.frost {
+  --glass-frost-default: blur(6px) saturate(1.9) contrast(0.643) brightness(0.56);
+  background: rgb(150 140 255 / 0.05);
+  box-shadow:
+    0 0 0 0.5px rgb(0 0 0 / 0.32),
+    var(--glass-shadow, 0 10px 30px rgb(0 0 0 / 0.34));
+  -webkit-backdrop-filter: var(--glass-frost, var(--glass-frost-default));
+  backdrop-filter: var(--glass-frost, var(--glass-frost-default));
+}
+
+.rim {
+  background: var(--rim) center / 100% 100% no-repeat;
+}
