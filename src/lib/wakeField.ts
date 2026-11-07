@@ -365,6 +365,8 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       state.skew += (aim - state.skew) * 0.12
 
       const stepped = fluid.advance(elapsed, [state.lastX, state.lastY], [state.x, state.y], state.moved)
+      // Nothing's changed between fluid steps on a 120Hz screen, so there's nothing new to draw.
+      if (!stepped && delta === 0) return true
       if (stepped) {
         state.lastX = state.x
         state.lastY = state.y
