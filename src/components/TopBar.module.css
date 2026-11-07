@@ -59,19 +59,24 @@
   opacity: 1;
 }
 
+/* Set inside the tab's curve, so the rim runs unbroken around it. */
 .join {
+  position: relative;
   display: flex;
   align-items: center;
-  margin-left: 7px;
-  padding: 0 20px;
-  position: relative;
+  margin: 4px 4px 4px 7px;
+  padding: 0 17px;
   overflow: hidden;
   isolation: isolate;
-  border-radius: 0 999px 999px 0;
-  background: var(--c-ink);
-  color: var(--c-paper);
-  font-weight: 500;
+  border-radius: 19px;
+  background: #f4f4f6;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 1px rgb(0 0 0 / 0.14),
+    0 1px 3px rgb(0 0 0 / 0.3);
+  color: #000;
   white-space: nowrap;
+  transition: transform 0.42s linear(0, 0.097, 0.307, 0.543, 0.751, 0.908, 1.009, 1.062, 1.08, 1.076, 1.06, 1.041, 1.024, 1.01, 1.001, 0.996, 0.994, 0.994, 0.995, 0.996, 1);
 }
 
 .join::after {
@@ -86,6 +91,11 @@
 
 .join:hover::after {
   opacity: 1;
+}
+
+.join:active {
+  transform: scale(0.97);
+  transition-duration: 0.09s;
 }
 
 .logo:focus-visible,
