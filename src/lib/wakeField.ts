@@ -85,15 +85,24 @@ float letters(vec2 p, float lod) {
 
 ${FILM}
 
+/* Thin film, hard-banded: electric blue, cyan, white, peach, magenta, violet. Stops turn over fast,
+   so the colour sits in bands with crisp seams between them. */
+vec3 bands(float t) {
+  vec3 c[6] = vec3[6](vec3(.04, .12, 1.), vec3(.18, .82, 1.), vec3(.82, .93, 1.), vec3(1., .69, .6), vec3(1., .16, .6), vec3(.42, .2, 1.));
+  float x = fract(t) * 6.;
+  int i = int(floor(x));
+  return mix(c[i], c[(i + 1) % 6], smoothstep(.3, .7, fract(x)));
+}
+
 void main() {
   vec2 px = vec2(vUv.x, 1. - vUv.y) * uRes;
-  float S = max(texture(uDye, vUv).r, 0.);
-  vec2 V = texture(uVel, vUv).xy * .0025;
-  float speed = min(length(V), 1.);
+  float film = max(texture(uDye, vUv).r, 0.);
+  vec2 flow = texture(uVel, vUv).xy * .0025;
+  float speed = min(length(flow), 1.);
 
   /* the letters hold still; only a hairline of colour splits along their edges where the film is */
   float c = letters(px, 0.);
-  vec2 split = (speed > .001 ? normalize(V) : vec2(1., 0.)) * 1.6 * uDpr * smoothstep(.0, .3, S);
+  vec2 split = (speed > .001 ? normalize(flow) : vec2(1., 0.)) * 1.6 * uDpr * smoothstep(.0, .3, film);
   float cA = letters(px + split, 0.), cB = letters(px - split, 0.);
   float soft = letters(px, 3.2);
 
@@ -101,13 +110,13 @@ void main() {
   float line = 1. - abs(c * 2. - 1.);
   vec3 col = FROST * c * .03 + mix(SKY, RASP, vUv.x) * line * .1 + FROST * line * .07;
 
-  float along = S * 2.6 + dot(V, vec2(.7, .5)) * .9 + vUv.x * 1.1 - vUv.y * .7 + uT * .05;
-  vec3 tint = film(along);
-  float lit = smoothstep(.02, .7, S);
-  col += tint * lit * 1.3 * c;
-  col += FROST * lit * clamp((c - soft) * 3.4, 0., 1.);
-  col += RASP * max(cA - c, 0.) * S * 2.6 + SKY * max(cB - c, 0.) * S * 2.6;
-  col += tint * S * S * .2 * (1. - c);
+  float t = film * 1.15 + speed * .35 + vUv.x * .22 - vUv.y * .16 + uT * .02;
+  vec3 tint = bands(t);
+  float body = smoothstep(.015, .16, film);
+  col += tint * body * c * .9;
+  col += FROST * body * clamp((c - soft) * 2.6, 0., 1.) * .45;
+  col += vec3(.1, .85, 1.) * max(cA - c, 0.) * body * 2.2 + vec3(1., .16, .5) * max(cB - c, 0.) * body * 2.2;
+  col += tint * film * .035 * (1. - c);
 
   col += (h(px * .37 + fract(uT)) + h(px * .71 + fract(uT * 1.3)) - 1.) * 2. / 255. * step(.004, length(col));
   col = clamp(col, 0., 1.);
