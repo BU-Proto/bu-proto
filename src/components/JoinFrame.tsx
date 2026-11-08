@@ -1,106 +1,17 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Link } from 'react-router'
 import { JOIN_CTA } from '../content/home'
 import { CONTACT_EMAIL, LEGAL_LINKS } from '../content/legal'
 import { BRAND, FOOTER } from '../content/site'
-import { createEdgeLight } from '../lib/edgeLight'
-import { onFrame } from '../lib/smoothScroll'
-import { reducedMotion } from '../lib/useInView'
 import { AsciiFigure } from './motion/AsciiFigure'
 import { MaskLines } from './motion/MaskLines'
 import { ProtoMark } from './ProtoMark'
 import ui from './ui.module.css'
 import styles from './JoinFrame.module.css'
 
-/** How much of a screen short of full the frame's light starts to come up. */
-const POWER_RANGE = 0.5
-
-/** The screen's own edge, lit, while the frame fills it. Without WebGL2 the section is plain black. */
-function EdgeCanvas({ section }: { section: RefObject<HTMLElement | null> }) {
-  const canvas = useRef<HTMLCanvasElement>(null)
-  const [failed, setFailed] = useState(false)
-
-  useEffect(() => {
-    const surface = canvas.current
-    const box = section.current
-    if (!surface || !box) return
-    const light = createEdgeLight(surface, () => setFailed(true))
-    if (!light) {
-      setFailed(true)
-      return
-    }
-    const still = reducedMotion()
-    const state = { stop: null as (() => void) | null, onScreen: false, visible: !document.hidden, greeted: false }
-    const button = box.querySelector<HTMLElement>('[data-pulse]')
-    const sendPulse = () => {
-      if (still || !button) return
-      const from = button.getBoundingClientRect()
-      const to = surface.getBoundingClientRect()
-      light.pulse(from.left + from.width / 2 - to.left, from.top + from.height / 2 - to.top)
-    }
-
-    const power = () => {
-      if (still) return 1
-      const rect = box.getBoundingClientRect()
-      const off = Math.max(0, rect.top, window.innerHeight - rect.bottom) / window.innerHeight
-      const t = Math.max(0, 1 - off / POWER_RANGE)
-      return t * t * (3 - 2 * t)
-    }
-    const draw = (now: number) => {
-      const lit = power()
-      // The frame greets you with one ring the first time it fills the screen.
-      if (!state.greeted && lit > 0.8) {
-        state.greeted = true
-        sendPulse()
-      }
-      light.frame(now, lit)
-    }
-    const sync = () => {
-      const run = !still && state.onScreen && state.visible
-      if (run && !state.stop) state.stop = onFrame(draw)
-      else if (!run && state.stop) {
-        state.stop()
-        state.stop = null
-      }
-    }
-
-    const sizes = new ResizeObserver(() => {
-      light.resize(surface.clientWidth, surface.clientHeight)
-      draw(performance.now())
-    })
-    sizes.observe(surface)
-    const screen = new IntersectionObserver(([entry]) => {
-      state.onScreen = entry.isIntersecting
-      sync()
-    })
-    screen.observe(box)
-    const onVisibility = () => {
-      state.visible = !document.hidden
-      sync()
-    }
-    document.addEventListener('visibilitychange', onVisibility)
-    button?.addEventListener('pointerenter', sendPulse)
-
-    return () => {
-      state.stop?.()
-      sizes.disconnect()
-      screen.disconnect()
-      document.removeEventListener('visibilitychange', onVisibility)
-      button?.removeEventListener('pointerenter', sendPulse)
-      light.destroy()
-    }
-  }, [section])
-
-  if (failed) return null
-  return <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
-}
-
-/** The landing's last screen: the ask, framed in moving light, then the site's links. */
+/** The landing's last screen: the ask, then the site's links, on the plain black ground. */
 export function JoinFrame() {
-  const section = useRef<HTMLElement>(null)
   return (
-    <section ref={section} className={styles.frame} aria-labelledby="join-cta">
-      <EdgeCanvas section={section} />
+    <section className={styles.frame} aria-labelledby="join-cta">
       <div className={styles.inner}>
         <header className={styles.head}>
           <h2 id="join-cta" className={styles.title}>
@@ -122,7 +33,7 @@ export function JoinFrame() {
 
           <div className={styles.ring}>
             <AsciiFigure shape="halo" rows={24} className={styles.figure} />
-            <Link className={`${ui.btn} ${styles.cta}`} to={JOIN_CTA.cta.href} data-pulse="">
+            <Link className={`${ui.btn} ${styles.cta}`} to={JOIN_CTA.cta.href}>
               {JOIN_CTA.cta.label}
             </Link>
           </div>
