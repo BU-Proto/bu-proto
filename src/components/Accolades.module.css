@@ -36,7 +36,7 @@
   max-height: 50vh;
   overflow: hidden;
   border-radius: 16px;
-  background: var(--navy);
+  background: var(--surface);
   outline: 1px solid rgb(var(--frost-rgb) / 0.16);
   outline-offset: -1px;
   /* A win is the peak, so its cover throws the rose of the field's core onto the ground under it. */
@@ -140,50 +140,50 @@
   white-space: nowrap;
 }
 
-/* ---- A prize set smaller: the prize, the photo under it, then the project ---- */
+/*
+ * A prize set smaller, as a card: the photo, then the prize and where, the project and what it
+ * does, and the team at the foot. Cards side by side share their rows (subgrid), so prizes,
+ * descriptions and teams line up across a row and every card in it is the same height. Long
+ * prizes and descriptions are clamped so one wordy entry can't stretch its row.
+ */
 
 .plates {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(64px, 10vh, 112px) clamp(28px, 4.4vw, 64px);
-}
-
-.plate {
-  position: relative;
-  display: grid;
-  /* Headline, photo, project: the headlines of side-by-side prizes share a row height, so the
-     photos line up even when one prize wraps to two lines. */
-  grid-template-rows: subgrid;
-  grid-row: span 3;
-  row-gap: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
 }
 
 .plates > li {
   display: grid;
   grid-template-rows: subgrid;
-  grid-row: span 3;
+  grid-row: span 4;
   row-gap: 0;
 }
 
-.plateHead {
+.plate {
+  position: relative;
   display: grid;
-  align-content: end;
-  gap: 8px;
-  padding-bottom: clamp(18px, 2.6vh, 26px);
-  text-shadow: var(--on-field-shadow);
+  grid-template-rows: subgrid;
+  grid-row: span 4;
+  row-gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow:
+    0 24px 60px -34px rgb(0 0 0 / 0.8),
+    inset 0 1px 0 rgb(var(--frost-rgb) / 0.08);
+  transition: border-color 0.2s ease;
+}
+
+.plate:has(.overlay:hover, .name:hover) {
+  border-color: var(--rule-strong);
 }
 
 .platePhoto {
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 16px;
-  /* Devpost covers are often screenshots on white, so the text stays off them and the photo gets
-     a hairline to hold its edge against the field. */
-  outline: 1px solid rgb(var(--frost-rgb) / 0.16);
-  outline-offset: -1px;
-  box-shadow:
-    0 30px 60px -40px rgb(var(--harbor-rgb) / 0.7),
-    0 36px 90px -50px rgb(var(--rose-deep-rgb) / 0.7);
+  border-bottom: 1px solid var(--rule);
 }
 
 .platePhoto img {
@@ -198,53 +198,61 @@
   transform: scale(1.03);
 }
 
-.plateText {
+.plateHead {
   display: grid;
-  justify-items: start;
-  gap: 6px;
   align-content: start;
-  margin-top: clamp(16px, 2.4vh, 24px);
-  text-shadow: var(--on-field-shadow);
+  gap: 6px;
+  padding: 20px 22px 0;
 }
 
 .platePrize {
-  max-width: 16ch;
   margin: 0;
   color: var(--rose);
-  font-size: clamp(30px, 3.3vw, 48px);
-  font-weight: 300;
-  letter-spacing: -0.04em;
-  line-height: 1.02;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   text-wrap: balance;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .plateWhere {
   margin: 0;
-  color: var(--ink-soft);
-  font-size: 17px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  color: var(--ink-dim);
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .plateNote {
   display: block;
   margin-bottom: 2px;
-  color: var(--ink);
+  color: var(--ink-soft);
+}
+
+.plateText {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 6px;
+  padding: 16px 22px 0;
 }
 
 .plateName {
   margin: 0;
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
 .plateBlurb {
-  max-width: 52ch;
   margin: 0;
-  color: var(--ink);
-  font-size: 15px;
+  color: var(--ink-soft);
+  font-size: 14px;
   line-height: 1.55;
   text-wrap: pretty;
   display: -webkit-box;
@@ -252,6 +260,30 @@
   -webkit-line-clamp: 3;
   line-clamp: 3;
   overflow: hidden;
+}
+
+/* The team at the card's foot, under a hairline, whatever height the text above it took. */
+.plateTeam {
+  align-self: end;
+  margin: 18px 22px 0;
+  padding: 14px 0 20px;
+  border-top: 1px solid var(--rule);
+}
+
+.plateTeam .team {
+  margin: 0;
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+@media (max-width: 1080px) {
+  .plates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ---- Shared ---- */
@@ -269,7 +301,8 @@
 .featureText,
 .plateHead,
 .platePhoto,
-.plateText {
+.plateText,
+.plateTeam {
   pointer-events: none;
 }
 
@@ -349,11 +382,17 @@
       animation-range: entry 0% cover 40%;
     }
 
-    .featureText,
-    .plateText {
+    .featureText {
       animation: settle linear both;
       animation-timeline: view();
       animation-range: entry 15% cover 35%;
+    }
+
+    /* A card settles in whole, so it never stands half empty. */
+    .plate {
+      animation: settle linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 20%;
     }
   }
 }

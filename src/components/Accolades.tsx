@@ -124,15 +124,15 @@ export function AccoladePlate({ win, level = 3 }: { win: Win; level?: Level }) {
   return (
     <article className={styles.plate}>
       <Overlay win={win} />
+      <div className={styles.platePhoto}>
+        <Cover win={win} alt={`${win.project} at ${hackathon}`} />
+      </div>
       <div className={styles.plateHead}>
         <Prize win={win} level={level} className={styles.platePrize} />
         <p className={styles.plateWhere} data-fog-clear>
           {note && <span className={styles.plateNote}>{note}</span>}
           {WIN_SHOWCASE.at} {hackathon}
         </p>
-      </div>
-      <div className={styles.platePhoto}>
-        <Cover win={win} alt={`${win.project} at ${hackathon}`} />
       </div>
       <div className={styles.plateText}>
         <ProjectLink win={win} className={styles.plateName} />
@@ -141,6 +141,9 @@ export function AccoladePlate({ win, level = 3 }: { win: Win; level?: Level }) {
             {win.blurb}
           </p>
         )}
+      </div>
+      {/* Always there, so every card keeps the same four rows. */}
+      <div className={styles.plateTeam}>
         <Team win={win} />
       </div>
     </article>
@@ -160,7 +163,7 @@ export function AccoladeFeatures({ wins, level = 2, eagerFirst = false }: { wins
   )
 }
 
-/** Prizes in two even columns, one on phones. */
+/** Prizes as even cards, three across (two on tablets, one on phones), their parts lined up by row. */
 export function AccoladePlates({ wins, level = 3 }: { wins: readonly Win[]; level?: Level }) {
   return (
     <ul className={styles.plates}>

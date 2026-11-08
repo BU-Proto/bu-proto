@@ -31,7 +31,7 @@
   padding: 10px 14px;
   border: 1px solid var(--rule-strong);
   border-radius: 12px;
-  background: var(--harbor);
+  background: var(--surface-sunk);
   color: var(--ink);
   font-size: 14px;
 }
@@ -59,7 +59,7 @@ select.input {
 }
 
 select.input option {
-  background: var(--harbor);
+  background: var(--surface-sunk);
 }
 
 .input:hover {
@@ -104,7 +104,7 @@ select.input option {
   padding: 10px 14px;
   border: 1px solid rgb(var(--coral-rgb) / 0.5);
   border-radius: 12px;
-  background: var(--harbor);
+  background: var(--surface-sunk);
   font-size: 13px;
 }
 

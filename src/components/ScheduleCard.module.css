@@ -4,7 +4,7 @@
   border: 1px solid var(--rule);
   border-radius: 22px;
   /* The panels' navy sheet, so the small labels hold up over the photo. */
-  background: rgb(var(--navy-rgb) / 0.82);
+  background: rgb(var(--surface-rgb) / 0.82);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   box-shadow:

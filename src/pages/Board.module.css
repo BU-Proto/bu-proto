@@ -86,7 +86,7 @@
   background:
     radial-gradient(110% 70% at 20% 0%, rgb(var(--sky-deep-rgb) / 0.3), transparent 70%),
     radial-gradient(90% 60% at 90% 100%, rgb(var(--rose-deep-rgb) / 0.24), transparent 70%),
-    linear-gradient(180deg, rgb(var(--frost-rgb) / 0.14), rgb(var(--navy-rgb) / 0.42));
+    linear-gradient(180deg, rgb(var(--frost-rgb) / 0.06), rgb(var(--surface-rgb) / 0.86));
   -webkit-backdrop-filter: blur(28px) saturate(140%);
   backdrop-filter: blur(28px) saturate(140%);
   box-shadow:
@@ -104,14 +104,14 @@
 
 /*
  * An open seat's frame: a dashed edge with the frozen field gathered just inside it and nothing
- * where the face would be. A dark wash keeps the live field from showing through as a picture.
+ * where the face would be. A near-black wash keeps the live field from showing through as a picture.
  */
 .empty {
   border: 1px dashed rgb(var(--frost-rgb) / 0.5);
   /* The field's light gathered at the foot of the frame, where someone would stand. */
   background:
     radial-gradient(80% 50% at 50% 100%, rgb(var(--iris-deep-rgb) / 0.26), transparent 75%),
-    rgb(var(--harbor-rgb) / 0.6);
+    rgb(var(--surface-rgb) / 0.86);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }

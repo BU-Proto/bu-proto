@@ -200,6 +200,16 @@ const RIPPLE = 0.28
 const RIPPLE_PERIOD = 10
 const RIPPLE_K = (2 * 2 * Math.PI) / ASPECT
 
+/**
+ * Toward the bundle on the left the currents run fuller and ripple harder: at the left edge they're
+ * this much wider (a share of their radius) and their ripple this much stronger, easing back to the
+ * plain currents by the middle of the screen.
+ */
+const LEFT_GROW = 0.45
+const LEFT_RIPPLE = 0.6
+/** How far toward the bundle `u` is: 0 from the middle rightward, 1 at the left edge. */
+const leftness = (u: number) => smooth(0.55, ASPECT, u)
+
 /** Painted finer than the other shapes, so the currents' highlights stay crisp, and softened a little. */
 const TIDES_W = 128
 const TIDES_H = 80
@@ -212,7 +222,8 @@ const TIDES_SOFTEN = 1.5
 function currentY(k: number, u: number): number {
   const { base } = CURRENTS[k]
   const pull = smooth(-0.1, 1.75, u)
-  const meet = 0.3 + (k - 1.5) * 0.045
+  // Spread a little in the bundle, so the fuller currents there read as a bigger bundle, not a clump.
+  const meet = 0.3 + (k - 1.5) * 0.058
   const wave = 0.035 * Math.sin(2.4 * u) * (1 - pull)
   const roll = 0.028 * Math.sin(1.2 * u) * (0.35 + 0.65 * (1 - pull))
   return base + (meet - base) * pull + wave + roll
@@ -264,7 +275,10 @@ function paintTides(time: number): GradientMap {
       // The current's width ripples up and down in place: its ripples sit still along it and swell
       // and settle in turn. Neighbouring currents swell in opposite turns, so as one swells the next
       // settles and the two warm ones never grow together.
-      radii[o] = CURRENTS[k].R * (1 + RIPPLE * Math.sin(RIPPLE_K * u + k * 1.1) * Math.sin(swell + k * Math.PI))
+      // Toward the bundle they're fuller and swell harder (see LEFT_GROW).
+      const left = leftness(u)
+      const ripple = RIPPLE * (1 + LEFT_RIPPLE * left)
+      radii[o] = CURRENTS[k].R * (1 + LEFT_GROW * left) * (1 + ripple * Math.sin(RIPPLE_K * u + k * 1.1) * Math.sin(swell + k * Math.PI))
       tones[o] = ramp(CURRENTS[k].tones, along)
     }
   }

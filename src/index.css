@@ -68,10 +68,16 @@
   --ink-dim: rgb(var(--frost-rgb) / 0.58);
   --rule: rgb(var(--frost-rgb) / 0.16);
   --rule-strong: rgb(var(--frost-rgb) / 0.32);
-  --glass: rgb(var(--frost-rgb) / 0.15);
-  --glass-strong: rgb(var(--frost-rgb) / 0.23);
-  --glass-edge: rgb(var(--frost-rgb) / 0.36);
-  --pill: rgb(var(--navy-rgb) / 0.62);
+  /* Components (panels, cards, menus, fields, buttons) stand in a deeper harbor than the page's
+     own: the same hue taken darker, so they read as objects on the ground rather than patches of it
+     and stay in the one palette. `sunk` is a field inside one. */
+  --surface: #030e19;
+  --surface-rgb: 3 14 25;
+  --surface-sunk: #020911;
+  --glass: rgb(var(--surface-rgb) / 0.62);
+  --glass-strong: rgb(var(--surface-rgb) / 0.8);
+  --glass-edge: rgb(var(--frost-rgb) / 0.3);
+  --pill: rgb(var(--surface-rgb) / 0.66);
   --accent: var(--mint);
   --on-light: var(--navy);
   --ground-ink: var(--harbor);
