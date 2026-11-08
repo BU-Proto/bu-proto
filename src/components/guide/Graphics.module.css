@@ -238,7 +238,7 @@
 .segment {
   display: grid;
   place-items: center;
-  border-right: 2px solid rgb(var(--surface-rgb) / 0.9);
+  border-right: 2px solid rgb(var(--navy-rgb) / 0.9);
   background: rgb(var(--mint-rgb) / 0.42);
   color: var(--on-light);
   font-size: 14px;
@@ -361,7 +361,7 @@
   height: 12px;
   border: 2px solid var(--accent);
   border-radius: 50%;
-  background: rgb(var(--surface-rgb));
+  background: rgb(var(--navy-rgb));
 }
 
 .stopName {
@@ -643,7 +643,7 @@
     z-index: 1;
     min-width: 96px;
     max-width: 110px;
-    background: rgb(var(--surface-rgb));
+    background: rgb(var(--navy-rgb));
     white-space: normal;
   }
 
@@ -734,7 +734,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--surface);
+  background: var(--navy);
 }
 
 .pathStep[data-status='real'] .pathMark {

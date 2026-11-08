@@ -40,7 +40,7 @@
   aspect-ratio: 3 / 2;
   overflow: hidden;
   border-radius: 10px;
-  background: var(--surface);
+  background: var(--navy);
   outline: 1px solid rgb(var(--frost-rgb) / 0.14);
   outline-offset: -1px;
   /* The cover throws a win's rose onto the harbor under it. */

@@ -10,7 +10,7 @@
   border: 1px solid rgb(var(--frost-rgb) / 0.12);
   border-radius: 22px;
   /* Navy enough to read its small print over the brightest part of the field. */
-  background: rgb(var(--surface-rgb) / 0.88);
+  background: rgb(var(--navy-rgb) / 0.88);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   color: var(--ink-soft);

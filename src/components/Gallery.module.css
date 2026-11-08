@@ -37,7 +37,7 @@
   overflow: hidden;
   border: 1px solid rgb(var(--frost-rgb) / 0.22);
   border-radius: 16px;
-  background: rgb(var(--surface-rgb) / 0.45);
+  background: rgb(var(--navy-rgb) / 0.45);
   cursor: zoom-in;
 }
 
@@ -69,7 +69,7 @@
   height: 44px;
   border: 1px solid var(--glass-edge);
   border-radius: 999px;
-  background: rgb(var(--surface-rgb) / 0.72);
+  background: rgb(var(--navy-rgb) / 0.72);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   color: var(--ink);
@@ -79,7 +79,7 @@
 }
 
 .stripControl:hover {
-  background: rgb(var(--surface-rgb) / 0.9);
+  background: rgb(var(--navy-rgb) / 0.9);
 }
 
 .stripControl:focus-visible {
@@ -115,12 +115,12 @@
   margin: 0;
   padding: 0;
   border: 0;
-  background: rgb(var(--surface-rgb) / 0.96);
+  background: rgb(var(--harbor-rgb) / 0.94);
   color: var(--ink);
 }
 
 .lightbox::backdrop {
-  background: rgb(var(--surface-rgb) / 0.6);
+  background: rgb(var(--harbor-rgb) / 0.6);
 }
 
 :global(html):has(.lightbox[open]) {

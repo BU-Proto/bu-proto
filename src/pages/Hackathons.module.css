@@ -35,7 +35,7 @@
   overflow: hidden;
   border: 1px solid var(--rule);
   border-radius: 18px;
-  background: var(--surface);
+  background: var(--navy);
   box-shadow: 0 24px 60px -34px rgb(var(--harbor-rgb) / 0.8);
 }
 
@@ -51,7 +51,7 @@
   place-items: center;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: var(--surface-sunk);
+  background: var(--harbor);
 }
 
 /* No photo: harbor with a stretch of the frozen field, lit toward the middle in the trips' iris

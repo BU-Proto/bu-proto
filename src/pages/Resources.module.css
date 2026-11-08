@@ -5,7 +5,7 @@
   padding: clamp(20px, 3vw, 36px);
   border: 1px solid var(--rule);
   border-radius: 22px;
-  background: var(--surface);
+  background: var(--navy);
 }
 
 .cards {
@@ -29,7 +29,7 @@
   overflow: hidden;
   margin-bottom: 8px;
   border-radius: 14px;
-  background: var(--surface-sunk);
+  background: var(--harbor);
 }
 
 .image img {

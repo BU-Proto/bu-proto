@@ -54,7 +54,7 @@
   padding: clamp(20px, 2.6vw, 30px);
   border: 1px solid var(--rule);
   border-radius: 20px;
-  background: var(--surface);
+  background: var(--navy);
 }
 
 /* ---- The photo beside what it is ---- */
@@ -79,7 +79,7 @@
   aspect-ratio: 4 / 3;
   border-radius: 20px;
   object-fit: cover;
-  background: var(--surface);
+  background: var(--navy);
 }
 
 .credit {
@@ -206,7 +206,7 @@ a.need:hover .go {
   padding: 20px 22px 22px;
   border: 1px solid var(--rule);
   border-radius: 18px;
-  background: var(--surface);
+  background: var(--navy);
 }
 
 .program > a {
@@ -264,7 +264,7 @@ a.need:hover .go {
   padding: 18px 22px;
   border: 1px solid var(--rule);
   border-radius: 18px;
-  background: var(--surface);
+  background: var(--navy);
 }
 
 .otherTitle {

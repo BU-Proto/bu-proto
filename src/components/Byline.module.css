@@ -18,9 +18,9 @@
   display: block;
   width: 36px;
   height: 36px;
-  border: 2px solid rgb(var(--surface-rgb) / 0.9);
+  border: 2px solid rgb(var(--navy-rgb) / 0.9);
   border-radius: 50%;
-  background: rgb(var(--surface-rgb) / 0.7);
+  background: rgb(var(--navy-rgb) / 0.7);
   object-fit: cover;
 }
 
