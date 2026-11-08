@@ -1,44 +1,39 @@
 import { Field, Form } from '../components/Form'
 import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
+import { HeroBloom } from '../components/HeroBloom'
 import { MaskLines } from '../components/motion/MaskLines'
-import { PageIntro } from '../components/PageIntro'
 import { PrivacyNote } from '../components/PrivacyNote'
 import { Select } from '../components/Select'
-import ui from '../components/ui.module.css'
+import { BRAND } from '../content/site'
 import { JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS } from '../content/join'
 import { api } from '../lib/api'
 import { TRACKS, YEARS } from '../../shared/constants'
 import styles from './Join.module.css'
 
+/**
+ * Joining, set as a moment: the landing's mountains lit behind the page's title, the sign-up sheet in
+ * frosted glass over them, then what you get as a row of numbered cards.
+ */
 export function Join() {
   return (
-    <div className={ui.page}>
-      <PageIntro intro={JOIN_INTRO} />
+    <div className={styles.page}>
+      <title>{`${JOIN_INTRO.title} · ${BRAND.full}`}</title>
 
-      <div className={styles.layout}>
-        <section className={styles.perks} aria-labelledby="perks">
-          <h2 id="perks" className={ui.h2}>
-            <MaskLines text={JOIN_FORM.perksTitle} />
-          </h2>
-          <ul className={ui.pts}>
-            {PERKS.map((perk, index) => (
-              <li key={perk.title}>
-                <span className={ui.n} aria-hidden="true">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <div className={styles.perk}>
-                  <h3 className={styles.perkTitle}>{perk.title}</h3>
-                  <p className={styles.perkText}>{perk.text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+      <section className={styles.stage} aria-labelledby="join-title">
+        <HeroBloom shape="beacon" />
+        <div className={styles.stageInner}>
+          <header className={styles.head}>
+            <h1 id="join-title" className={styles.title} data-fog-clear>
+              <MaskLines text={JOIN_INTRO.title} delay={100} />
+            </h1>
+            <p className={styles.lede} data-fog-clear>
+              {JOIN_INTRO.lede}
+            </p>
+          </header>
 
-        <div className={styles.side}>
-          <section className={ui.panel} aria-labelledby="join-form">
-            <h2 id="join-form" className={`${ui.h2} ${styles.formTitle}`}>
-              <MaskLines text={JOIN_FORM.title} />
+          <section className={styles.sheet} aria-labelledby="join-form">
+            <h2 id="join-form" className={styles.sheetTitle}>
+              {JOIN_FORM.title}
             </h2>
             <Form
               submitLabel={JOIN_FORM.submit}
@@ -71,7 +66,24 @@ export function Join() {
             <PrivacyNote text={JOIN_FORM.privacy} className={styles.privacy} />
           </section>
         </div>
-      </div>
+      </section>
+
+      <section className={styles.perks} aria-labelledby="perks">
+        <h2 id="perks" className={styles.perksTitle}>
+          <MaskLines text={JOIN_FORM.perksTitle} />
+        </h2>
+        <ol className={styles.cards}>
+          {PERKS.map((perk, index) => (
+            <li key={perk.title} className={styles.card}>
+              <span className={styles.number} aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <h3 className={styles.cardTitle}>{perk.title}</h3>
+              <p className={styles.cardText}>{perk.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
     </div>
   )
 }

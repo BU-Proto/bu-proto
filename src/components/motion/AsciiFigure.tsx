@@ -93,7 +93,7 @@ export function AsciiFigure({ shape, rows = 22, delay = 0, live = false, classNa
   }, [live, settled, shape, rows, ref])
 
   return (
-    <pre ref={ref} className={`${styles.figure} ${className ?? ''}`} aria-hidden="true">
+    <pre ref={ref} className={`${styles.figure} ${className ?? ''}`} aria-hidden="true" data-trail-art>
       {shown}
     </pre>
   )

@@ -55,6 +55,33 @@ export function buildClearMask(
   return blurred
 }
 
+/**
+ * The opposite of the clear mask: where the trail may run at all, as the boxes of the given elements
+ * on the character grid, softened at their edges. 1 = inside, 0 = outside.
+ */
+export function buildAllowMask(
+  elements: Iterable<Element>,
+  cols: number,
+  rows: number,
+  cellW: number,
+  cellH: number,
+): Float32Array {
+  const coverage = new Float32Array(cols * rows)
+  const viewHeight = window.innerHeight
+  for (const element of elements) {
+    const box = element.getBoundingClientRect()
+    if (box.bottom < 0 || box.top > viewHeight || box.width <= 1 || box.height <= 1) continue
+    const i0 = Math.max(0, Math.floor(box.left / cellW))
+    const i1 = Math.min(cols - 1, Math.floor(box.right / cellW))
+    const j0 = Math.max(0, Math.floor(box.top / cellH))
+    const j1 = Math.min(rows - 1, Math.floor(box.bottom / cellH))
+    for (let j = j0; j <= j1; j++) {
+      for (let i = i0; i <= i1; i++) coverage[j * cols + i] = 1
+    }
+  }
+  return boxBlur(coverage, cols, rows, FOG.CLEAR_BLUR)
+}
+
 /** Separable box blur with clamped edges. */
 function boxBlur(src: Float32Array, width: number, height: number, radius: number): Float32Array {
   const tmp = new Float32Array(src.length)

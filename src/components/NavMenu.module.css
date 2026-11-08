@@ -62,7 +62,7 @@
   left: -4px;
   z-index: 3;
   width: 280px;
-  border-radius: 23px;
+  border-radius: var(--radius-menu);
   transform-origin: 66px 0;
 }
 
@@ -88,7 +88,7 @@
   display: grid;
   gap: 6px;
   padding: 12px 13px 13px;
-  border-radius: 17px;
+  border-radius: var(--radius-field);
 }
 
 .link:hover,
@@ -101,7 +101,7 @@
   outline-offset: -2px;
 }
 
-/* The page you're on gets a square pixel. */
+/* The page you're on gets a dot. */
 .name {
   display: inline-flex;
   align-items: center;
@@ -113,6 +113,7 @@
   content: '';
   width: 6px;
   height: 6px;
+  border-radius: 50%;
   background: #fff;
 }
 

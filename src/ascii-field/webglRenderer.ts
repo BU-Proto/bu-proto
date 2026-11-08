@@ -139,20 +139,13 @@ void main() {
     vec4 state = floor(texelFetch(uCells, cell, 0) * 255.0 + 0.5);
     if (state.b > 0.0) {
       float ink = coverage(uTrailBase + state.b - 1.0, local) * state.a / 255.0;
-      // The trail layer, as the field draws it: the art in this cell steps aside for a tile of the
-      // field's dark ground, and the trail's glyph sits on it (straight alpha, tile under glyph).
+      // The trail layer: just the trail's glyph, in white over the art (straight alpha).
       if (uTrailOnly > 0.5) {
-        float tile = 0.85 * state.a / 255.0;
-        float a = 1.0 - (1.0 - tile) * (1.0 - ink);
-        fragColor = vec4((BASE * tile * (1.0 - ink) + uTrailColor * ink) / max(a, 1e-4), a);
+        fragColor = vec4(uTrailColor, ink);
         return;
       }
       rgb = mix(rgb, uTrailColor, ink);
-    } else if (uTrailOnly > 0.5) {
-      // Under the rest of the fog the art dims, as the field's own characters do.
-      fragColor = vec4(BASE, 1.0 - state.g / 255.0);
-      return;
-    } else {
+    } else if (uTrailOnly < 0.5) {
       float glyph = pickGlyph(cell, state.r / 255.0);
       if (glyph > 0.0) rgb = mix(rgb, tint, coverage(glyph, local) * state.g / 255.0);
     }

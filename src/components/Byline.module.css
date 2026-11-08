@@ -19,7 +19,7 @@
   width: 36px;
   height: 36px;
   background: var(--c-line-2);
-  clip-path: var(--px-corners-sm);
+  border-radius: 50%;
   object-fit: cover;
 }
 
@@ -34,9 +34,9 @@
   background: var(--c-navy);
   color: var(--c-paper);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 .large.initials {

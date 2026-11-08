@@ -18,10 +18,9 @@
 
 .monthWeek {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0;
   line-height: 1.6;
-  text-transform: uppercase;
 }
 
 .meta {
@@ -62,7 +61,7 @@
 .agendaTime {
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 

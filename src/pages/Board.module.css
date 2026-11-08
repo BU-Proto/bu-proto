@@ -50,6 +50,7 @@
   place-items: center;
   aspect-ratio: 4 / 5;
   overflow: hidden;
+  border-radius: var(--radius-media);
 }
 
 /* What shows with no photo, and under one while it loads. */
@@ -98,10 +99,9 @@
   margin: 0;
   color: var(--c-body);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0;
   line-height: 1.5;
-  text-transform: uppercase;
 }
 
 /* Where a member's role goes, an open seat says it's open. */

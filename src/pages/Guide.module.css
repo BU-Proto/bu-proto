@@ -287,10 +287,10 @@ h1.title {
   width: 22px;
   height: 22px;
   background: var(--c-navy);
-  clip-path: var(--px-corners-sm);
+  border-radius: var(--radius-sm);
   color: var(--c-paper);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 13px;
   line-height: 1;
 }
 
@@ -345,7 +345,6 @@ h1.title {
 
 .checkMark {
   flex: none;
-  clip-path: var(--px-corners-sm);
   color: var(--c-navy);
 }
 
@@ -709,7 +708,7 @@ a.nextCard {
 }
 
 a.nextCard:hover .nextButton {
-  background: var(--c-sheen);
+  transform: translateY(-2px);
 }
 
 a.nextCard:focus-visible {

@@ -75,7 +75,7 @@ export function About() {
         </div>
       </section>
 
-      <section className={ui.dark} aria-labelledby="why">
+      <section className={`${ui.dark} ${styles.why}`} aria-labelledby="why">
         <div className={`${ui.wrap} ${ui.split}`}>
           <h2 id="why" className={ui.darkTitle}>
             <MaskLines text={WHY.title} />

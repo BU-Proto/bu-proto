@@ -24,8 +24,8 @@
 .route {
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 /* A dotted line grows under the name from the left on hover. */

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { shapeMap } from '../ascii-field/shapes'
+import type { ShapeName } from '../ascii-field/shapes'
 import { createHeroBloom } from '../lib/heroBloom'
 import { GROUNDS } from '../lib/pageGround'
 import { onFrame } from '../lib/smoothScroll'
@@ -9,8 +9,9 @@ import styles from './Hero.module.css'
 /**
  * The hero's ground: the field's blue-to-pink gradient, turning to type in its own light. It's drawn
  * for the eye alone, so screen readers skip it. Without WebGL2 it steps aside and the field stands in.
+ * It takes the landing's shape unless a page asks for its own.
  */
-export function HeroBloom() {
+export function HeroBloom({ shape = GROUNDS.home.field.shape }: { shape?: ShapeName }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const [failed, setFailed] = useState(false)
 
@@ -19,7 +20,7 @@ export function HeroBloom() {
     if (!surface) return
     const bloom = createHeroBloom(
       surface,
-      shapeMap(GROUNDS.home.field.shape),
+      shape,
       () => setFailed(true),
       () => {
         surface.dataset.ready = ''
@@ -78,8 +79,8 @@ export function HeroBloom() {
       window.removeEventListener('scroll', onScroll)
       bloom.destroy()
     }
-  }, [])
+  }, [shape])
 
   if (failed) return null
-  return <canvas ref={canvas} className={styles.bloom} aria-hidden="true" />
+  return <canvas ref={canvas} className={styles.bloom} aria-hidden="true" data-trail-art />
 }

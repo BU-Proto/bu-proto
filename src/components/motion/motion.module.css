@@ -57,7 +57,7 @@
 
 .figure {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-art);
   font-size: var(--figure-size, 9px);
   line-height: 1;
   letter-spacing: 0;

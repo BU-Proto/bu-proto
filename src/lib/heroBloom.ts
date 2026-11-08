@@ -3,7 +3,7 @@
 // at a still before it ever gets in the way of the page.
 
 import { gradientPixels } from '../ascii-field/gradient'
-import type { GradientMap } from '../ascii-field/shapes'
+import { shapeMap, type ShapeName } from '../ascii-field/shapes'
 import { GLYPHS, PICTURE, VERTEX } from './heroBloomShaders'
 import { trailWarp } from '../ascii-field/trailWarp'
 
@@ -54,7 +54,13 @@ export interface HeroBloom {
 }
 
 /** Returns null where WebGL2 or the shaders aren't to be had: the field behind stays as the hero. */
-export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap, onLost: () => void, onReady: () => void): HeroBloom | null {
+/**
+ * Shapes the picture keeps steady instead of folding, and how much (1 = barely stirred): the tides'
+ * lines stay straight, and the summit's mountains keep their outline and size, breathing only a little.
+ */
+const STEADY: Partial<Record<ShapeName, number>> = { tides: 1, summit: 0.82, beacon: 0.88 }
+
+export function createHeroBloom(canvas: HTMLCanvasElement, shape: ShapeName, onLost: () => void, onReady: () => void): HeroBloom | null {
   const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: 'high-performance' })
   if (!gl) return null
   let picture: WebGLProgram
@@ -66,7 +72,7 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
   } catch {
     return null
   }
-  const U = uniforms(gl, picture, ['uMap', 'uT', 'uHeroH', 'uIntro', 'uView'])
+  const U = uniforms(gl, picture, ['uMap', 'uT', 'uHeroH', 'uIntro', 'uView', 'uStreaks'])
   const V = uniforms(gl, glyphs, [
     'uPic',
     'uWarp',
@@ -97,7 +103,9 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
   const texture = gl.createTexture()
   const target = gl.createFramebuffer()
 
-  const map = gradientPixels(gradient)
+  // A moving shape (the tides) hands back a new map as it moves; it's re-uploaded when it does.
+  let mapSource = shapeMap(shape, 0)
+  const map = gradientPixels(mapSource)
   const mapTexture = gl.createTexture()
   gl.activeTexture(gl.TEXTURE1)
   gl.bindTexture(gl.TEXTURE_2D, mapTexture)
@@ -188,6 +196,16 @@ export function createHeroBloom(canvas: HTMLCanvasElement, gradient: GradientMap
         gl.uniform1f(U.uT, time)
         gl.uniform1f(U.uHeroH, box.hero)
         gl.uniform1f(U.uIntro, intro)
+        const next = shapeMap(shape, still ? 0 : time)
+        if (next !== mapSource) {
+          mapSource = next
+          const pixels = gradientPixels(next)
+          gl.activeTexture(gl.TEXTURE1)
+          gl.bindTexture(gl.TEXTURE_2D, mapTexture)
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, pixels.width, pixels.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels.data)
+          gl.activeTexture(gl.TEXTURE0)
+        }
+        gl.uniform1f(U.uStreaks, STEADY[shape] ?? 0)
         gl.uniform1i(U.uMap, 1)
         gl.uniform2f(U.uView, box.width, box.height)
         gl.drawArrays(gl.TRIANGLES, 0, 3)

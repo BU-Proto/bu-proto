@@ -43,7 +43,7 @@ export const GROUNDS: Record<GroundName, PageGround> = {
   // glyphs, shallower ribs, in slightly bigger cells.
   home: {
     name: 'home',
-    field: field({ shape: 'bloom', cellSize: 10, baseColor: 0.82, glyphContrast: 0.42, ribbing: 0.3, drift: 0.55 }),
+    field: field({ shape: 'summit', cellSize: 10, baseColor: 0.82, glyphContrast: 0.42, ribbing: 0.3, drift: 0.55 }),
     light: [1, 1],
     reach: 'full',
   },

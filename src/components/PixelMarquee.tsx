@@ -65,5 +65,5 @@ export function PixelMarquee({ text, speed = 18, className }: { text: string; sp
     }
   }, [text, redraw])
 
-  return <canvas ref={canvas} className={`${styles.marquee} ${className ?? ''}`} aria-hidden="true" />
+  return <canvas ref={canvas} className={`${styles.marquee} ${className ?? ''}`} aria-hidden="true" data-trail-art />
 }

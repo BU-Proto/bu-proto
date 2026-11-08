@@ -19,5 +19,5 @@ export function PixelFlow({ variant = 'helix', className }: { variant?: FlowVari
     still: 4,
     frame: (cells, cols, rows, time) => flowFrame(variant, cells, cols, rows, time),
   })
-  return <canvas ref={canvas} className={`${styles.flow} ${className ?? ''}`} aria-hidden="true" />
+  return <canvas ref={canvas} className={`${styles.flow} ${className ?? ''}`} aria-hidden="true" data-trail-art />
 }

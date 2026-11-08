@@ -19,7 +19,7 @@ precision highp float;
 in vec2 vUv;
 out vec4 o;
 uniform sampler2D uMap;
-uniform float uT, uHeroH, uIntro;
+uniform float uT, uHeroH, uIntro, uStreaks;
 uniform vec2 uView;
 
 
@@ -58,7 +58,8 @@ void main() {
   /* the gradient itself never changes colour: it only folds and moves, slowly, like light through water */
   float n = fbm(p * 1.1 + vec2(t * .02, -t * .014));
   float m = fbm(p * 2.3 - vec2(t * .016, t * .02) + n * 1.4);
-  vec2 warp = vec2(n - .5, m - .5) * .2 + .012 * vec2(sin(p.y * 3. + t * .2), sin(p.x * 2.6 + t * .17));
+  /* streaks keep their lines: they're only stirred a little */
+  vec2 warp = (vec2(n - .5, m - .5) * .2 + .012 * vec2(sin(p.y * 3. + t * .2), sin(p.x * 2.6 + t * .17))) * mix(1., .15, uStreaks);
   vec3 col = smoothMap(clamp(uv + warp, 0., 1.));
 
   /* soft folds, deepening each colour and lifting it, never mixing in another */
@@ -68,7 +69,7 @@ void main() {
 
   /* the map's pale haze goes grey once it's dimmed, so low-chroma colour leans to rose while it's bright */
   float chroma = max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b));
-  col = mix(mix(col, vec3(.86, .55, .68), .62), col, smoothstep(.04, .26, chroma));
+  col = mix(mix(col, vec3(.86, .55, .68), .62 * (1. - uStreaks)), col, smoothstep(.04, .26, chroma));
   o = vec4(clamp(col, 0., 1.), 1.);
 }`
 
@@ -141,7 +142,7 @@ float travelling(vec2 p, float t) {
 /* The deep hues the bloom falls through: indigo, violet, plum, then back to indigo, drifting slowly. */
 vec3 horizon(float x, float t) {
   float u = x + .07 * sin(x * 4. + t * .09) + .04 * sin(t * .05);
-  vec3 c = mix(vec3(.05, .17, .46), vec3(.22, .09, .5), smoothstep(.08, .4, u));
+  vec3 c = mix(vec3(.05, .17, .46), vec3(.13, .12, .5), smoothstep(.08, .4, u));
   c = mix(c, vec3(.46, .08, .34), smoothstep(.36, .62, u));
   return mix(c, vec3(.1, .12, .46), smoothstep(.66, .98, u));
 }
@@ -165,14 +166,15 @@ void main() {
   float depth = px.y / uHeroPx;
   /* the fall into the dark starts lower than the hero's foot, so more of the picture stands */
   float fall = smoothstep(.7, 1.22, (id.y + .5) * uCell / uHeroPx);
-  float L = pow(lum(cs.rgb), 1.45) * (1. + light * .6);
+  /* the travelling bands only nudge the light now, so they don't sweep pale clouds across the blocks */
+  float L = pow(lum(cs.rgb), 1.45) * (1. + light * .15);
   /* saturated darks count as light too, or the raspberry core would stand empty */
   L = max(L, .3 * smoothstep(.3, .7, max(cs.r, max(cs.g, cs.b)) - min(cs.r, min(cs.g, cs.b))));
   float run = floor((id.y + h(vec2(id.x, 4.)) * 9.) / (2. + floor(h(vec2(id.x, 7.)) * 5.)));
   float n = h(vec2(id.x, run)), n2 = h(id + .5);
   /* the shimmer: slow waves of brightness that push cells up a tier as they pass */
   float wave = vn(id * .045 + vec2(uT * .09, -uT * .06)) * .6 + vn(id * .1 - vec2(uT * .07, 0.)) * .4;
-  L *= 1. + .3 * (wave - .5) * 2.;
+  L *= 1. + .1 * (wave - .5) * 2.;
 
   /* the shade for this cell's light: none, light, medium, dark, full, a few cells a step lighter */
   int s = 0;

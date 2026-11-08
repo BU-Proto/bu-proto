@@ -202,10 +202,9 @@ a.other:hover .otherTitle {
   margin: 0;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  letter-spacing: 0;
   line-height: 1.4;
-  text-transform: uppercase;
 }
 
 .example {

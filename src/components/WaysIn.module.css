@@ -51,6 +51,7 @@
   min-width: 0;
   overflow: hidden;
   border-radius: var(--radius);
+  box-shadow: var(--panel-edge);
   background:
     radial-gradient(120% 80% at 50% 100%, rgb(var(--deep) / 0.85), transparent 72%),
     var(--c-raised);

@@ -51,10 +51,9 @@
   padding: 8px var(--inset) 0;
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  letter-spacing: 0;
   text-align: right;
-  text-transform: uppercase;
 }
 
 .credit a {
@@ -132,10 +131,9 @@
 .kicker {
   margin: 0 0 calc(var(--cell) * 1.5);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0;
   line-height: 1.4;
-  text-transform: uppercase;
 }
 
 /* A quieter second line under the kicker. */
@@ -271,11 +269,10 @@
   margin: 0 0 var(--cell);
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 400;
-  letter-spacing: 0.18em;
+  letter-spacing: 0;
   line-height: 1.4;
-  text-transform: uppercase;
 }
 
 /* A ruled list: names, facts, a run of show. Reads like a colophon, not a row of badges. */
@@ -373,10 +370,9 @@
 .neighbourLabel {
   color: var(--c-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0;
   line-height: 1.4;
-  text-transform: uppercase;
 }
 
 .neighbourName {

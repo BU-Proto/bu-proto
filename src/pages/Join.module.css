@@ -1,52 +1,221 @@
-/* The perks as a numbered list on the left, the sign-up sheet on the right. */
-.layout {
+/*
+ * The stage: the landing's mountains (HeroBloom) behind a centred title and the sign-up sheet in
+ * frosted glass. Then the perks as numbered glass cards.
+ */
+.page {
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
-  gap: calc(var(--cell) * 3) calc(var(--cell) * 6);
-  align-items: start;
+  gap: calc(var(--cell) * 6);
+  padding-bottom: calc(var(--cell) * 9);
 }
 
-.perks {
-  display: grid;
-  gap: calc(var(--cell) * 2);
+.stage {
+  position: relative;
+  /* The mountains in plain CSS, for the moment before their shaders are ready, and without WebGL2. */
+  background:
+    radial-gradient(34% 44% at 58% 40%, rgb(218 52 111 / 0.55), transparent 72%),
+    radial-gradient(30% 40% at 30% 46%, rgb(122 92 236 / 0.45), transparent 72%),
+    radial-gradient(60% 60% at 50% 30%, rgb(4 106 168 / 0.6), transparent 72%);
 }
 
-.perk {
+.stageInner {
+  position: relative;
+  z-index: 1;
   display: grid;
-  gap: 4px;
+  justify-items: center;
+  gap: calc(var(--cell) * 3);
+  width: 100%;
+  max-width: calc(var(--maxw) + var(--gutter) * 2);
+  margin: 0 auto;
+  padding: calc(var(--cell) * 11) var(--gutter) calc(var(--cell) * 4);
 }
 
-.perkTitle {
+.head {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  max-width: 720px;
+  text-align: center;
+}
+
+/* A soft pool of the ground behind the words, so they read over any part of the art. */
+.head::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -40% -20%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.5), rgb(0 0 0 / 0));
+  pointer-events: none;
+}
+
+.title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
+  font-size: clamp(48px, 8vw, 112px);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  text-shadow: 0 2px 30px rgb(0 0 0 / 0.45);
 }
 
-.perkText {
+.lede {
+  max-width: 48ch;
   margin: 0;
   color: var(--c-body);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: clamp(16px, 1.3vw, 19px);
+  line-height: 1.55;
   text-wrap: pretty;
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.6);
 }
 
-.side {
-  display: grid;
-  gap: 28px;
+/* The sign-up sheet: frosted glass over the art, its rim lit at the top. */
+.sheet {
+  --field-fill: rgb(0 0 0 / 0.35);
+  width: 100%;
+  max-width: 560px;
+  padding: clamp(22px, 3vw, 34px);
+  border-radius: var(--radius);
+  background: var(--panel-fill);
+  box-shadow: var(--panel-edge), var(--panel-shadow);
+  -webkit-backdrop-filter: var(--panel-filter);
+  backdrop-filter: var(--panel-filter);
 }
 
-.formTitle {
-  margin-bottom: calc(var(--cell) * 1.5);
+.sheetTitle {
+  margin: 0 0 calc(var(--cell) * 1.5);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .privacy {
   margin-top: var(--cell);
 }
 
-@media (max-width: 860px) {
-  .layout {
+/* ---- What you get ---- */
+
+.perks {
+  /* Over the foot of the mountains' canvas, which runs on past the stage into the dark. */
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: calc(var(--cell) * 3);
+  width: 100%;
+  max-width: calc(var(--maxw) + var(--gutter) * 2);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.perksTitle {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 220px;
+  padding: 22px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--panel-fill);
+  box-shadow: var(--panel-edge), var(--panel-shadow);
+  -webkit-backdrop-filter: var(--panel-filter);
+  backdrop-filter: var(--panel-filter);
+  transition: transform 0.42s var(--ease-out);
+}
+
+/* A glow of the mountains' colours rising from the foot of each card, a different one in turn. */
+.card::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: auto -20% -50% -20%;
+  height: 80%;
+  background: radial-gradient(closest-side, var(--glow), transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.card:nth-child(3n + 1) {
+  --glow: rgb(218 52 111 / 0.7);
+}
+
+.card:nth-child(3n + 2) {
+  --glow: rgb(122 92 236 / 0.7);
+}
+
+.card:nth-child(3n) {
+  --glow: rgb(4 106 168 / 0.8);
+}
+
+.card:hover {
+  transform: translateY(-3px);
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.number {
+  margin-bottom: auto;
+  color: var(--c-ink);
+  font-size: 44px;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardTitle {
+  margin: 0;
+  padding-top: 24px;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.cardText {
+  margin: 0;
+  color: var(--c-body);
+  font-size: 14px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .cards {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card {
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
   }
 }

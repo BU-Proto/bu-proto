@@ -161,7 +161,7 @@
   height: 100%;
   margin: 0;
   overflow: hidden;
-  font-family: var(--font-mono);
+  font-family: var(--font-art);
   font-size: calc(100cqw / 62.4);
   font-weight: 700;
   line-height: 1;

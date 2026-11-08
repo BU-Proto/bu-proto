@@ -19,6 +19,8 @@ const TRAIL_OPTIONS: FieldEngineOptions = {
   layer: 'trail',
   // The hero's blocks slide with the trail's wind too (see heroBloom).
   shareWarp: true,
+  // Only over the ASCII art (marked data-trail-art), never the plain ground.
+  onlyOver: '[data-trail-art]',
   // [data-trail-skip]: art that draws the trail itself (the landing's field), cleared as a box.
   clearSelector:
     'h1, h2, h3, h4, h5, p, li, dt, dd, blockquote, figcaption, label, input, textarea, button, [data-fog-clear], [data-trail-skip]',

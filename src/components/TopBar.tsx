@@ -25,12 +25,12 @@ export function TopBar() {
   return (
     <header className={styles.top}>
       <Link className={styles.logo} to="/">
-        <ProtoMark size={18} />
+        <ProtoMark size={22} />
         {BRAND.short}
       </Link>
 
       <div ref={bar} className={styles.bar}>
-        <Glass radius={23} bezel={18} bend={36} />
+        <Glass radius={26} bezel={20} bend={40} />
         <nav ref={nav} className={styles.nav} aria-label="Primary">
           <span ref={plate} className={styles.plate} aria-hidden="true" />
           {NAV_ITEMS.filter((item) => item.inPill).map((item) =>

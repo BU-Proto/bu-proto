@@ -154,19 +154,6 @@ export class CanvasFieldRenderer implements FieldRenderer {
     const { cellPxW, cellPxH } = geometry
     const { slotW, pad } = atlas
     let current = 1
-    // On the trail layer the art steps aside for a tile of the field's dark ground under each glyph.
-    if (this.trailOnly) {
-      ctx.fillStyle = `rgb(${FIELD.BASE_RGB.join(',')})`
-      for (let j = 0; j < rows; j++) {
-        for (let i = 0; i < cols; i++) {
-          const o = (j * cols + i) * 4
-          if (cells[o + 2] === 0) continue
-          const alpha = (0.85 * cells[o + 3]) / 255
-          if (alpha !== current) ctx.globalAlpha = current = alpha
-          ctx.fillRect(i * cellPxW, j * cellPxH, cellPxW, cellPxH)
-        }
-      }
-    }
     for (let j = 0; j < rows; j++) {
       for (let i = 0; i < cols; i++) {
         const o = (j * cols + i) * 4

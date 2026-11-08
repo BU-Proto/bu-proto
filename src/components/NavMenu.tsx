@@ -132,7 +132,7 @@ export function NavMenu({ item }: { item: NavItem }) {
       </div>
 
       <div id={id} className={styles.panel} hidden={!open}>
-        <Glass radius={23} bezel={18} bend={36} />
+        <Glass radius={20} bezel={16} bend={34} />
         <ul ref={listRef} className={styles.list} onKeyDown={onListKey}>
           {item.children?.map((child) => {
             const [path, anchor] = child.to.split('#')

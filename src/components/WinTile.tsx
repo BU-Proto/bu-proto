@@ -107,7 +107,7 @@ function Art({ win, alt, eager }: { win: Win; alt: string; eager: boolean }) {
   const lines = useMemo(() => (win.photo ? null : asciiWord(win.project).join('\n')), [win.photo, win.project])
   if (win.photo) return <img src={win.photo} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
   return (
-    <pre className={`${motion.figure} ${styles.ascii}`} aria-hidden="true">
+    <pre className={`${motion.figure} ${styles.ascii}`} aria-hidden="true" data-trail-art>
       {lines}
     </pre>
   )
