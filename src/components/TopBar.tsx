@@ -24,7 +24,8 @@ export function TopBar() {
 
   return (
     <header className={styles.top}>
-      <Link className={styles.logo} to="/">
+      {/* Marked so the home hero's rings of type keep clear of it: it has nothing behind it. */}
+      <Link className={styles.logo} to="/" data-ring-clear>
         <ProtoMark size={22} />
         {BRAND.short}
       </Link>
