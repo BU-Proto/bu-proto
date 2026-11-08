@@ -1,27 +1,29 @@
+import { useRef } from 'react'
 import { Link } from 'react-router'
 import { HERO_COPY } from '../content/home'
-import { HeroBloom } from './HeroBloom'
+import { HeroRings } from './HeroRings'
 import ui from './ui.module.css'
 import styles from './Hero.module.css'
 
 /**
- * The home hero: the old bloom burning on the dark ground, turning to blocks in its own light, with
- * what Proto is and the way in set in a centred column low on the screen.
+ * The home hero: rings of Proto's words turning round a centre on the black, with what Proto is and
+ * the way in set in a centred column low on the screen, where the rings make room for them.
  */
 export function Hero() {
   const { headline, lede, primaryCta } = HERO_COPY
+  const hero = useRef<HTMLElement>(null)
 
   return (
-    <section className={styles.hero}>
-      <HeroBloom />
+    <section ref={hero} className={styles.hero}>
+      <HeroRings hero={hero} />
       <div className={styles.copy}>
-        <h1 className={styles.headline} data-fog-clear>
+        <h1 className={styles.headline} data-fog-clear data-ring-clear>
           {headline}
         </h1>
-        <p className={styles.lede} data-fog-clear>
+        <p className={styles.lede} data-fog-clear data-ring-clear>
           {lede}
         </p>
-        <Link className={`${ui.primary} ${styles.join}`} to={primaryCta.href}>
+        <Link className={`${ui.primary} ${styles.join}`} to={primaryCta.href} data-ring-clear>
           {primaryCta.label}
         </Link>
       </div>

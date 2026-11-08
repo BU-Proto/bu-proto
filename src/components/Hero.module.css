@@ -1,4 +1,4 @@
-/* One screen tall, all picture. */
+/* One screen tall, all picture, on the page's black. */
 .hero {
   position: relative;
   display: grid;
@@ -6,11 +6,56 @@
   min-height: 100vh;
   min-height: 100svh;
   padding: 0 var(--gutter) clamp(56px, 12vh, 120px);
-  /* The bloom in plain CSS, for the moment before its shaders are ready, and without WebGL2. */
-  background:
-    radial-gradient(34% 44% at 56% 44%, rgb(194 64 122 / 0.85), transparent 72%),
-    radial-gradient(56% 62% at 30% 34%, rgb(26 143 192 / 0.7), transparent 72%),
-    radial-gradient(52% 60% at 84% 34%, rgb(26 143 192 / 0.6), transparent 72%);
+  overflow: hidden;
+  background: var(--c-paper);
+  cursor: default;
+}
+
+/* The rings (HeroRings). They come up as soon as their first frame is drawn, already half-written. */
+.rings {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.rings[data-ready] {
+  opacity: 1;
+}
+
+/* Follows the pointer over the rings: a small white chip in the site's own face. */
+.hold {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  padding: 5px 8px 4px;
+  background: var(--c-ink);
+  color: var(--c-paper);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.hold[data-shown] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .hold {
+    display: none;
+  }
 }
 
 /* Runs past the hero's foot and lands exactly on the page's ground, so the fold is never an edge. */
@@ -85,7 +130,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bloom {
+  .bloom,
+  .rings {
     transition: none;
+  }
+
+  .hold {
+    display: none;
   }
 }
