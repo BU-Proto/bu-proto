@@ -8,7 +8,7 @@ import styles from './Hero.module.css'
 const CONTROLS = 'a, button, input, select, textarea, label, [role="button"]'
 
 /**
- * The hero's rings of type (see ringField). Whatever is marked [data-ring-clear], the hero's words and
+ * The hero's rings of block-shade type (see ringField). Whatever is marked [data-ring-clear], the hero's words and
  * Proto's mark in the top bar, keeps a clear space around it. Pressing and holding anywhere else spins
  * the rings up and dives into them, and a small label follows the pointer to say so. Drawn for the eye
  * alone; without WebGL2 the hero stands on the plain black.

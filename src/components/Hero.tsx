@@ -6,8 +6,9 @@ import ui from './ui.module.css'
 import styles from './Hero.module.css'
 
 /**
- * The home hero: rings of Proto's words turning round a centre on the black, with what Proto is and
- * the way in set in a centred column low on the screen, where the rings make room for them.
+ * The home hero: rings of block-shade type in the bloom's colours, turning round a centre on the
+ * black, with what Proto is and the way in set in a centred column low on the screen, where the rings
+ * make room for them.
  */
 export function Hero() {
   const { headline, lede, primaryCta } = HERO_COPY
