@@ -45,9 +45,12 @@ const FLIP_SEED = 47
 const DUST_SEED = 208
 const LINE_SEED = 46
 
-/** The light's colour where it's a solid cell: the bloom's blues, drifting across the band. */
-const LIGHT_A = [62, 132, 200]
-const LIGHT_B = [72, 178, 214]
+/**
+ * The light's colour where it's a solid cell: the rings' own full blocks of the bloom's deep and sky
+ * blues (see ringField), drifting across the band, so a flipped cell is the same light as the pool.
+ */
+const LIGHT_A = [85, 131, 159]
+const LIGHT_B = [86, 154, 174]
 
 /** What shows behind a cell: the light behind the band, the page's black, or a solid cell of light. */
 const SHOWS_LIGHT = 0
