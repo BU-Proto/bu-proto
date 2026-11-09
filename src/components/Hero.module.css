@@ -55,7 +55,8 @@
 
 .seam canvas {
   position: absolute;
-  top: 0;
+  /* From the bottom, where the rings' tiles are counted from, so the cells land on them. */
+  bottom: 0;
   left: 0;
   display: block;
 }

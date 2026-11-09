@@ -1,5 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import { createGlyphSeam } from '../lib/glyphSeam'
+import { tileFor } from '../lib/ringField'
 import { reducedMotion } from '../lib/useInView'
 import styles from './Hero.module.css'
 
@@ -42,7 +43,7 @@ export function HeroSeam({ hero }: { hero: RefObject<HTMLElement | null> }) {
     }
     const build = () => {
       if (!state.alive || !state.fonts || box.clientWidth === 0) return
-      seam.resize(box.clientWidth, box.clientHeight, crossed())
+      seam.resize(box.clientWidth, box.clientHeight, crossed(), tileFor(box.clientWidth))
       measure()
       box.dataset.ready = ''
     }

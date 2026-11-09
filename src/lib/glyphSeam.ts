@@ -6,12 +6,15 @@
 // the line and reshapes it a row at a time, and every so often a few cells by it re-roll, so the edge
 // never quite sits still.
 //
-// A 2D canvas that only redraws the cells that change.
+// A 2D canvas that only redraws the cells that change. Its cells sit exactly on the rings' tiles, one
+// tile wide and two tall, counted from the same bottom-left corner, so where a cell turns black it
+// takes whole tiles away rather than cutting them in pieces. The noise is scaled to their cells' size
+// (about 7.7 by 14px), so the seam keeps its shape in pixels on any tile.
 
-/** A row's height in CSS px, a column's width against it, and the letters' size in CSS px. */
+/** contentarchitecture.dev's cell, in CSS px, that the noise is scaled to; and a letter's size against a row. */
 const ROW_CSS = 14
-const COLUMN = 0.55
-const FONT_CSS = 10.36
+const COLUMN_CSS = ROW_CSS * 0.55
+const FONT = 0.74
 /** What the cells spell, row after row, each row starting somewhere of its own. */
 const PHRASE =
   'BU PROTO · HACK NIGHT · BUILD · SHIP · DEMO NIGHT · HACKATHONS · GRANTS · WINS · EVENTS · REPEAT · THE HOME BASE FOR BUILDING THINGS AT BU · '
@@ -85,8 +88,11 @@ function noise2(x: number, y: number, seed: number) {
 const reach = (value: number, threshold: number, scale: number) => (value < threshold ? -scale * Math.log(value / threshold) : -1)
 
 export interface GlyphSeam {
-  /** The band's size in CSS px, and how far it has crossed the screen (0 to 1) to draw it at. */
-  resize(width: number, height: number, crossed: number): void
+  /**
+   * The band's size in CSS px, how far it has crossed the screen (0 to 1) to draw it at, and the rings'
+   * tile in CSS px (see tileFor). The band's bottom must sit on the rings canvas's bottom.
+   */
+  resize(width: number, height: number, crossed: number, tile: number): void
   /** How far the band has crossed the screen: 0 as its top comes up, 1 as its bottom leaves. */
   scrolled(crossed: number): void
   /** Boxes, in CSS px from the band's top left, where the cells stay plain: the hero's words. */
@@ -100,7 +106,9 @@ export function createGlyphSeam(canvas: HTMLCanvasElement): GlyphSeam | null {
   if (!ctx) return null
 
   const seam = {
-    dpr: 1, cols: 0, rows: 0, cellH: 1, step: 0,
+    dpr: 1, cols: 0, rows: 0, cellH: 1, step: 0, sx: 1, sy: 1,
+    /** How far the canvas rises above the band's top, in CSS px: it's set from the bottom in whole rows. */
+    rise: 0,
     xs: new Int32Array(1),
     light: [] as string[],
     ink: [] as string[],
@@ -120,8 +128,8 @@ export function createGlyphSeam(canvas: HTMLCanvasElement): GlyphSeam | null {
     const i = row * cols + col
     const phase = seam.phase[i]
     const taper = smoothstep(0, TAPER * rows, Math.min(row, rows - 1 - row))
-    const flipNoise = 0.86 * noise2(0.09 * col, 0.8 * row, FLIP_SEED) + 0.14 * hash(col, row, FLIP_SEED + 1 + phase)
-    const dustNoise = 0.8 * noise2(0.2 * col, row, DUST_SEED) + 0.2 * hash(col, row, DUST_SEED + 1 + phase)
+    const flipNoise = 0.86 * noise2(0.09 * col * seam.sx, 0.8 * row * seam.sy, FLIP_SEED) + 0.14 * hash(col, row, FLIP_SEED + 1 + phase)
+    const dustNoise = 0.8 * noise2(0.2 * col * seam.sx, row * seam.sy, DUST_SEED) + 0.2 * hash(col, row, DUST_SEED + 1 + phase)
     const letter = (col + Math.floor(hash(row, 0, 5) * PHRASE.length) + 7 * phase) % PHRASE.length
     const blank = PHRASE[letter] === ' '
     seam.flip[i] = reach(1 - flipNoise, FLIPS * taper, FLIP_REACH * rows)
@@ -135,7 +143,7 @@ export function createGlyphSeam(canvas: HTMLCanvasElement): GlyphSeam | null {
     const { rows, step } = seam
     let line = rows / 2 + step / 2
     WANDER.forEach(([frequency, spread], octave) => {
-      line += (noise1(col * frequency + 0.045 * step * octave, LINE_SEED + octave) - 0.5) * 2 * spread * rows
+      line += (noise1(col * seam.sx * frequency + 0.045 * step * octave, LINE_SEED + octave) - 0.5) * 2 * spread * rows
     })
     return Math.min(Math.max(line, TAPER * rows), (1 - TAPER) * rows)
   }
@@ -195,13 +203,15 @@ export function createGlyphSeam(canvas: HTMLCanvasElement): GlyphSeam | null {
   const stepFor = (crossed: number) => Math.round((0.5 - crossed) * TRAVEL * 2 * seam.rows)
 
   return {
-    resize(width, height, crossed) {
+    resize(width, height, crossed, tile) {
       const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
-      const cellH = Math.max(1, Math.round(ROW_CSS * dpr))
-      const cols = Math.max(8, Math.round(width / (ROW_CSS * COLUMN)))
+      // The rings' own tile in device px, rounded as they round it.
+      const cellW = Math.max(1, Math.round(tile * dpr))
+      const cellH = cellW * 2
+      const cols = Math.ceil((width * dpr) / cellW)
       const rows = Math.max(1, Math.ceil((height * dpr) / cellH))
-      Object.assign(seam, { dpr, cellH, cols, rows })
-      seam.xs = Int32Array.from({ length: cols + 1 }, (_, col) => Math.round((col * width * dpr) / cols))
+      Object.assign(seam, { dpr, cellH, cols, rows, sx: cellW / dpr / COLUMN_CSS, sy: cellH / dpr / ROW_CSS })
+      seam.xs = Int32Array.from({ length: cols + 1 }, (_, col) => col * cellW)
       const cells = cols * rows
       seam.flip = new Float32Array(cells)
       seam.dust = new Float32Array(cells)
@@ -223,12 +233,13 @@ export function createGlyphSeam(canvas: HTMLCanvasElement): GlyphSeam | null {
       }
       for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) settle(col, row)
 
-      canvas.width = Math.round(width * dpr)
+      canvas.width = cols * cellW
       canvas.height = rows * cellH
-      canvas.style.width = `${width}px`
+      seam.rise = canvas.height / dpr - height
+      canvas.style.width = `${canvas.width / dpr}px`
       canvas.style.height = `${canvas.height / dpr}px`
       const face = getComputedStyle(document.documentElement).getPropertyValue('--font-art').trim() || 'ui-monospace, monospace'
-      ctx.font = `500 ${Math.floor(FONT_CSS * dpr)}px ${face}`
+      ctx.font = `500 ${Math.floor(cellH * FONT)}px ${face}`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       seam.step = stepFor(crossed)
@@ -248,7 +259,7 @@ export function createGlyphSeam(canvas: HTMLCanvasElement): GlyphSeam | null {
       const margin = 10
       for (const box of boxes) {
         for (let row = 0; row < rows; row++) {
-          const top = (row * cellH) / dpr
+          const top = (row * cellH) / dpr - seam.rise
           if (top + cellH / dpr < box.top - margin || top > box.bottom + margin) continue
           for (let col = 0; col < cols; col++) {
             const left = xs[col] / dpr

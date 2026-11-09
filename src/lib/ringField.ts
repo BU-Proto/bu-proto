@@ -29,6 +29,11 @@ const CELL_CSS = 6
 const CELL_CSS_PHONE = 5
 const PHONE_WIDTH = 600
 
+/** A tile's size in CSS px for a canvas this wide. The seam (see glyphSeam) sets its cells on these tiles. */
+export function tileFor(width: number) {
+  return width < PHONE_WIDTH ? CELL_CSS_PHONE : CELL_CSS
+}
+
 /** How long the intro takes to fill in the missing blocks, in ms. */
 const INTRO_MS = 1900
 /** Holding the pointer: how fast the rings spin, against at rest, and how fast it dives, in rings a second. */
@@ -401,7 +406,7 @@ export function createRingField(canvas: HTMLCanvasElement, onLost: () => void): 
       state.seam = seamHeight
       canvas.width = Math.round(width * state.dpr)
       canvas.height = Math.round(height * state.dpr)
-      state.cell = Math.max(1, Math.round((width < PHONE_WIDTH ? CELL_CSS_PHONE : CELL_CSS) * state.dpr))
+      state.cell = Math.max(1, Math.round(tileFor(width) * state.dpr))
       state.cols = Math.ceil(canvas.width / state.cell)
       state.rows = Math.ceil(canvas.height / state.cell)
       gl.bindTexture(gl.TEXTURE_2D, tiles)
