@@ -4,26 +4,23 @@ import ui from './ui.module.css'
 import styles from './Hero.module.css'
 
 /**
- * The home hero: who Proto is and the two ways in, set low over the field in the same column and
- * type as the sections below, so the page reads as one piece from the first screen.
+ * The home hero: the field's light fills the screen, with what Proto is and the way in set in a
+ * centred column low on it, as main lays it out.
  */
 export function Hero() {
-  const { headline, lede, primaryCta, secondaryCta } = HERO_COPY
+  const { headline, lede, primaryCta } = HERO_COPY
 
   return (
     <section className={styles.hero}>
-      <h1 className={styles.headline} data-fog-clear>
-        {headline}
-      </h1>
-      <p className={styles.lede} data-fog-clear>
-        {lede}
-      </p>
-      <div className={styles.ctas}>
+      <div className={styles.copy}>
+        <h1 className={styles.headline} data-fog-clear>
+          {headline}
+        </h1>
+        <p className={styles.lede} data-fog-clear>
+          {lede}
+        </p>
         <Link className={`${ui.primary} ${styles.primary}`} to={primaryCta.href} data-fog-clear="box">
           {primaryCta.label}
-        </Link>
-        <Link className={ui.textLink} to={secondaryCta.href} data-fog-clear>
-          {secondaryCta.label}
         </Link>
       </div>
     </section>

@@ -1,0 +1,62 @@
+/* The words at the head and foot keep to the page's margins; the art runs edge to edge. */
+.section {
+  padding: clamp(96px, 16vh, 180px) 0;
+}
+
+.head {
+  padding: 0 var(--gutter);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(40px, 6vw, 88px);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.line {
+  display: block;
+}
+
+.lede {
+  max-width: 46ch;
+  margin: 28px 0 0;
+  color: var(--ink-soft);
+  font-size: clamp(16px, 1.4vw, 20px);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: clamp(260px, 36vw, 520px);
+  margin: clamp(24px, 4vh, 48px) 0;
+}
+
+.steps {
+  padding: 0 var(--gutter);
+  gap: 28px;
+}
+
+.stepName {
+  margin: 0;
+  font-size: clamp(16px, 1.4vw, 20px);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.stepText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

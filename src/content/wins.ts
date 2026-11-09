@@ -45,3 +45,12 @@ export const WIN_SHOWCASE = {
   /** Over the projects that follow the lead win on /wins. */
   moreTitle: 'More projects that won',
 } as const
+
+/** The sheet the landing's latest wins sit on. */
+export const WIN_SHEET = {
+  title: 'Latest wins',
+  lede: WINS_INTRO.lede,
+  allWins: 'All wins',
+  separator: ' • ',
+  teamOf: (size: number) => `Team of ${size}`,
+} as const

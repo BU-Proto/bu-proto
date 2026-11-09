@@ -1,0 +1,193 @@
+/* The three ways in: navy panels that open into each other, each lit at its foot by its size's
+   light (sky for Start, iris for Build, rose for Launch). Nothing here steps or ticks but the art. */
+
+.ways {
+  --glide: cubic-bezier(0.22, 1, 0.36, 1);
+  padding: calc(var(--cell) * 7) 8px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--cell) * 1) calc(var(--cell) * 4);
+  align-items: flex-end;
+  justify-content: space-between;
+  max-width: var(--maxw);
+  margin: 0 auto calc(var(--cell) * 4);
+  padding-inline: calc(var(--gutter) - 8px);
+  box-sizing: content-box;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(48px, 8vw, 124px);
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+
+.lede {
+  max-width: 26ch;
+  margin: 0 0 0.4em;
+  color: var(--ink-soft);
+  font-size: clamp(16px, 1.4vw, 21px);
+  line-height: 1.35;
+}
+
+.list {
+  display: flex;
+  gap: 8px;
+  height: clamp(560px, 76vh, 680px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.way {
+  /* A navy slab with a pool of the field's light at its foot, not a flat colour. */
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--slab-edge);
+  border-radius: var(--radius);
+  box-shadow: var(--slab-shadow);
+  background:
+    radial-gradient(120% 80% at 50% 100%, rgb(var(--hue-deep-rgb) / 0.72), transparent 72%),
+    var(--navy);
+  color: var(--ink);
+  transition: flex-grow 0.9s var(--glide);
+}
+
+.way[data-open] {
+  flex-grow: 1.7;
+}
+
+/* A fixed width, so the words stay put while the panel opens round them. */
+.words {
+  position: relative;
+  z-index: 1;
+  width: min(280px, calc(100% - 48px));
+  padding: 28px;
+}
+
+.name {
+  margin: 0 0 14px;
+  font-size: clamp(38px, 4.6vw, 68px);
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+
+.who {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.offers {
+  margin: 0;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  line-height: 1.4;
+  list-style: none;
+}
+
+.offers li + li {
+  margin-top: 6px;
+}
+
+/* The glyph, whole, on the panel's centre line and a shared baseline, so all three sit level and the
+   grid of type stays perfectly square. Sized off the screen, not the panel, so it never reflows, and
+   off its height too, so a short window can't push it up into the words. */
+.figure {
+  --figure-size: clamp(8px, min(0.84vw, 1.35vh), 12px);
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  color: rgb(var(--frost-rgb) / 0.72);
+  transition: transform 1.1s var(--glide);
+  transform: translateX(-50%) scale(0.92);
+  transform-origin: 50% 100%;
+}
+
+.way[data-open] .figure {
+  transform: translateX(-50%) scale(1.06);
+}
+
+.art {
+  margin: 0;
+  font-family: var(--font-art);
+  font-size: var(--figure-size);
+  line-height: 1;
+  letter-spacing: 0;
+  /* Mono ligatures would turn runs like => and ~~ into arrows and break the grid. */
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0;
+  white-space: pre;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .head,
+  .way {
+    transition:
+      flex-grow 0.9s var(--glide),
+      transform 1.2s var(--glide) calc(var(--i, 0) * 90ms),
+      opacity 0.9s ease calc(var(--i, 0) * 90ms);
+  }
+
+  .ways:not([data-in]) .head {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  .ways:not([data-in]) .way {
+    opacity: 0;
+    transform: translateY(72px) rotate(calc((var(--i) - 1) * 1.6deg)) scale(0.96);
+  }
+}
+
+@media (max-width: 812px) {
+  .ways {
+    padding-block: calc(var(--cell) * 4);
+  }
+
+  .list {
+    flex-direction: column;
+    height: auto;
+  }
+
+  /* Stacked, the words set each panel's height, so the figure follows them in the flow and can
+     never land on their last line. */
+  .way,
+  .way[data-open] {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    min-height: 400px;
+  }
+
+  .words {
+    width: auto;
+  }
+
+  .way .figure,
+  .way[data-open] .figure {
+    --figure-size: 9px;
+    position: static;
+    align-self: center;
+    margin-top: auto;
+    margin-bottom: 28px;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .way,
+  .figure {
+    transition: none;
+  }
+}

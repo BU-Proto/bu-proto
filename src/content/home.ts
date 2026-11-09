@@ -75,6 +75,18 @@ export interface Beat {
   hue: Hue
 }
 
+/** How a person's time at Proto goes, drawn as the ASCII journey on the landing. */
+export const JOURNEY = {
+  title: 'Show up. Team up.\nBuild. Ship.',
+  lede: 'Nobody arrives with a plan. You come to a hack night with half an idea, find people, and by the end of the semester it’s on a stage.',
+  steps: [
+    { name: 'Show up', text: 'Come to a hack night with an idea, or without one. Everyone starts in the same loose crowd.' },
+    { name: 'Team up', text: 'Ideas narrow down to one, and strangers turn into a team that’s building it.' },
+    { name: 'Build', text: 'Keep what works and cut what doesn’t, week after week, with people around to ask.' },
+    { name: 'Ship', text: 'Take it to a hackathon or to demo night, and put it in front of people.' },
+  ],
+} as const
+
 export const RHYTHM_INTRO = {
   title: 'The rhythm',
   lede: 'Something every week, something bigger every month, something everyone shows up for each semester.',
@@ -114,8 +126,20 @@ export const HOME_EMPTY = {
   deadlines: 'No open deadlines right now.',
 } as const
 
-export const JOIN_CTA: { title: string; lede: string; cta: Link } = {
+export const JOIN_CTA: {
+  title: string
+  tag: string
+  lede: string
+  hint: string
+  aside: readonly string[]
+  footnote: readonly string[]
+  cta: Link
+} = {
   title: 'Come build with us',
+  tag: 'BU Proto',
   lede: 'No application and no experience needed. Tell us your track and we’ll see you at hack night.',
+  hint: 'No application needed',
+  aside: ['Nobody arrives ready.', 'We said come anyway.', 'They built something.'],
+  footnote: ['* Hack night,', 'every week'],
   cta: { label: 'Join Proto', href: '/join' },
 }

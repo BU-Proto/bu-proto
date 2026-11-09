@@ -45,6 +45,46 @@ function scrollsInside(target: EventTarget | null, deltaY: number): boolean {
 const scrollLocked = () =>
   getComputedStyle(document.documentElement).overflowY === 'hidden' || getComputedStyle(document.body).overflowY === 'hidden'
 
+/*
+ * One frame loop for everything drawn from the page's position. The wheel's glide moves the page
+ * first in each frame, then the `onFrame` callbacks run, so they always see where the page is now
+ * rather than where it was a frame ago.
+ */
+const frames = new Set<(time: number) => void>()
+const loop: { id: number; glide: ((time: number) => void) | null } = { id: 0, glide: null }
+
+function tick(time: number) {
+  loop.id = 0
+  const glide = loop.glide
+  loop.glide = null
+  glide?.(time)
+  frames.forEach((frame) => frame(time))
+  if (!loop.id && (loop.glide || frames.size > 0)) loop.id = requestAnimationFrame(tick)
+}
+
+const startLoop = () => {
+  if (!loop.id) loop.id = requestAnimationFrame(tick)
+}
+
+/** Queues the glide's next step (or drops it, with null). Returns whether one is queued. */
+function glideFrame(step: ((time: number) => void) | null): number {
+  loop.glide = step
+  if (step) startLoop()
+  return step ? 1 : 0
+}
+
+/**
+ * Runs `frame` every frame, right after the page has scrolled for that frame, so anything drawn
+ * from the page's position stays locked to it. Returns the way to stop.
+ */
+export function onFrame(frame: (time: number) => void) {
+  frames.add(frame)
+  startLoop()
+  return () => {
+    frames.delete(frame)
+  }
+}
+
 /**
  * Eases a notched mouse wheel into a short glide, on fine pointers only, and never under reduced
  * motion. Anything else that moves the page mid-glide (a key, the scrollbar, find, focus, a link)
@@ -61,7 +101,7 @@ export function useWheelEasing() {
     let trackpadUntil = 0
 
     const stop = () => {
-      cancelAnimationFrame(frame)
+      if (frame) glideFrame(null)
       frame = 0
     }
 
@@ -76,7 +116,7 @@ export function useWheelEasing() {
       // The browser snaps to device pixels; anything further off means the page got shorter
       // under the glide, or something held it, so stop rather than chase an unreachable target.
       if (Math.abs(window.scrollY - current) > 2) return stop()
-      frame = current === target ? 0 : requestAnimationFrame(step)
+      frame = current === target ? 0 : glideFrame(step)
     }
 
     const onWheel = (event: LegacyWheel) => {
@@ -101,7 +141,7 @@ export function useWheelEasing() {
       if (next === target) return
       event.preventDefault()
       target = next
-      if (!frame) frame = requestAnimationFrame(step)
+      if (!frame) frame = glideFrame(step)
     }
 
     window.addEventListener('wheel', onWheel, { passive: false })

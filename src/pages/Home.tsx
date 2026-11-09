@@ -3,18 +3,21 @@ import { Link, useLoaderData, useOutletContext } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { newestWins } from '../components/accolade'
 import { GlyphEdge } from '../components/GlyphEdge'
+import { AsciiJourney } from '../components/AsciiJourney'
+import { EventLedger } from '../components/EventLedger'
 import { Hero } from '../components/Hero'
-import { LogoBand } from '../components/LogoBand'
-import { AsciiFigure } from '../components/motion/AsciiFigure'
 import { ScrubWords } from '../components/motion/ScrubWords'
+import { LogoBand } from '../components/LogoBand'
 import { RevealWords } from '../components/motion/RevealWords'
 import motion from '../components/motion/motion.module.css'
 import { useReveal } from '../components/motion/useReveal'
 import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
-import { ScheduleCard } from '../components/ScheduleCard'
+import lui from '../components/landing.module.css'
 import ui from '../components/ui.module.css'
-import { WinLog } from '../components/WinLog'
+import { WinOrbit } from '../components/WinOrbit'
+import { LatestWins } from '../components/WinSheet'
+import { WaysIn } from '../components/WaysIn'
 import { WinTally } from '../components/WinTally'
 import type { LayoutOutlet } from '../components/Layout'
 import {
@@ -25,24 +28,19 @@ import {
   RHYTHM,
   RHYTHM_INTRO,
   SEMESTER,
-  TRACKS,
-  TRACKS_INTRO,
-  WINS_TITLE,
 } from '../content/home'
 import { KIND_HUE, NEXT_EVENT } from '../content/events'
-import { BRAND, SCHEDULE } from '../content/site'
+import { BRAND } from '../content/site'
 import { WINS_EMPTY } from '../content/wins'
+import { WHY } from '../content/about'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useWheelEasing } from '../lib/smoothScroll'
 import { useRsvp } from '../lib/useRsvp'
-import { glyphTexture, rhythmColumn, type FigureShape } from '../lib/glyphArt'
+import { glyphTexture, rhythmColumn } from '../lib/glyphArt'
 import { GROUND } from '../lib/pageGround'
 import styles from './Home.module.css'
-
-/** The trail glyph each track already carries, drawn as a figure. */
-const FIGURES: Record<string, FigureShape> = { '○': 'ring', '>': 'chevron', _: 'bar' }
 
 const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 
@@ -75,11 +73,12 @@ function weekArt(week: number): string {
   return rhythmColumn(beat?.height ?? 0, beat?.weight ?? 0, SCORE_ROWS, COLUMN_WIDTH, week).join('\n')
 }
 
-/** A small piece of each beat's column, for the key; year two gets a few loose dots. */
-const SWATCHES = RHYTHM.map((_, row) => {
-  const beat = BEATS[row]
-  return rhythmColumn(beat ? 3 : 1, beat?.weight ?? 0.1, 3, 5, row + 40).join('\n')
-})
+/** The opening lead: the first sentence in full ink, the rest in the softer second voice. */
+const LEAD_BREAK = WHY.text.indexOf('. ') + 1
+const LEAD = { open: WHY.text.slice(0, LEAD_BREAK), rest: WHY.text.slice(LEAD_BREAK + 1) }
+
+/** Step numbers as main shows them: 01, 02. */
+const stepNumber = (index: number) => String(index + 1).padStart(2, '0')
 
 /** Staggers the parts of a block as it settles in. */
 const after = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
@@ -194,7 +193,7 @@ export function Home() {
     .filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
     .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
     .slice(0, 3)
-  const latest = newestWins(wins, 3)
+  const latest = newestWins(wins, 12)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   const revealRef = useReveal<HTMLDivElement>()
@@ -211,46 +210,18 @@ export function Home() {
       {/* Harbor: the field drains into it, and the three ways in stand on it. */}
       <div className={`${styles.bleed} ${styles.ink} ${styles.afterHero}`}>
         <GlyphEdge color={GROUND.harbor} mode="drain" rows={44} cell={10} />
-        <div className={styles.column}>
-          <section className={styles.tracks} aria-labelledby="tracks">
-            <header className={styles.sectionHead}>
-              <h2 id="tracks" className={styles.title} data-reveal="words">
-                <RevealWords text={TRACKS_INTRO.title} />
-              </h2>
-              <p className={styles.lede} data-reveal="rise" style={after(220)}>
-                {TRACKS_INTRO.lede}
-              </p>
-            </header>
-
-            <ol className={styles.trackList}>
-              {TRACKS.map((track, index) => (
-                <li
-                  key={track.name}
-                  className={styles.track}
-                  data-hue={track.hue}
-                  data-shape={FIGURES[track.glyph] ?? 'ring'}
-                  style={{ '--step': index } as CSSProperties}
-                >
-                  <AsciiFigure
-                    shape={FIGURES[track.glyph] ?? 'ring'}
-                    className={styles.figure}
-                    rows={24}
-                    delay={index * 160}
-                  />
-                  <div className={styles.trackCopy} data-reveal="slide">
-                    <h3 className={styles.trackName}>{track.name}</h3>
-                    <p className={styles.who}>{track.who}</p>
-                  </div>
-                  <ul className={styles.offers} data-reveal="slide" style={after(140)}>
-                    {track.offers.map((offer) => (
-                      <li key={offer}>{offer}</li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ol>
-          </section>
+        {/* The opening lead, as on main: what Proto is for, in two voices. */}
+        <div className={lui.tight}>
+          <div className={lui.wrap}>
+            <p className={lui.lead} data-reveal="rise">
+              {LEAD.open} <em>{LEAD.rest}</em>
+            </p>
+          </div>
         </div>
+        {/* Main's order: the three ways in, how a semester goes, then what's on. */}
+        <WaysIn />
+        <AsciiJourney />
+        <EventLedger events={events} />
       </div>
 
       {/* Harbor still, now with the field frozen into it: the rhythm and what's next on it, then
@@ -265,11 +236,11 @@ export function Home() {
         }
       >
         <section className={`${styles.column} ${styles.rhythm}`} aria-labelledby="rhythm">
-          <header className={styles.sectionHead}>
+          <header className={lui.split}>
             <h2 id="rhythm" className={styles.title} data-reveal="words">
               <RevealWords text={RHYTHM_INTRO.title} />
             </h2>
-            <p className={styles.lede} data-reveal="rise" style={after(220)}>
+            <p className={lui.body} data-reveal="rise" style={after(220)}>
               {RHYTHM_INTRO.lede}
             </p>
           </header>
@@ -298,22 +269,25 @@ export function Home() {
             <figcaption className={styles.caption}>{SEMESTER.caption}</figcaption>
           </figure>
 
-          <ol className={styles.key}>
+          {/* Four-up steps, as on main: the number and the beat, when it is, then what happens. */}
+          <ol className={lui.steps}>
             {RHYTHM.map((beat, row) => (
               <li
                 key={beat.what}
-                className={styles.beat}
+                className={`${lui.step} ${styles.beat}`}
                 data-hue={beat.hue}
                 data-later={beat.later || undefined}
                 data-reveal="rise"
                 style={after(row * 90)}
               >
-                <pre className={styles.swatch} data-beat={BEATS[row]?.name ?? 'later'} aria-hidden="true">
-                  {SWATCHES[row]}
-                </pre>
+                <div className={lui.stepHead}>
+                  <span className={lui.badge} aria-hidden="true">
+                    {stepNumber(row)}
+                  </span>
+                  <h3 className={lui.stepTitle}>{beat.what}</h3>
+                </div>
                 <p className={styles.when}>{beat.later ? SEMESTER.later : beat.when}</p>
-                <h3 className={styles.beatWhat}>{beat.what}</h3>
-                <p className={styles.beatDetail}>
+                <p className={lui.stepText}>
                   {beat.detail}
                   {row === TRIP_ROW && (
                     <>
@@ -341,15 +315,6 @@ export function Home() {
                 </Link>
               </div>
               {nextEvent ? <NextEvent event={nextEvent} /> : <NoEvent />}
-              {/* The room and times aren't booked yet: a sample locally, left off the deployed site. */}
-              {(import.meta.env.DEV || !SCHEDULE.placeholder) && (
-                <ScheduleCard
-                  className={styles.schedule}
-                  location={SCHEDULE.location}
-                  slots={SCHEDULE.slots}
-                  placeholder={SCHEDULE.placeholder}
-                />
-              )}
             </section>
 
             <section className={styles.applyBy} data-hue="iris" aria-labelledby="apply-by">
@@ -405,18 +370,23 @@ export function Home() {
           </div>
         </section>
 
-        {/* The record: the running tally, then the newest wins under it. */}
-        <section className={`${styles.column} ${styles.wins}`} data-hue="rose" aria-labelledby="latest-wins">
-          <WinTally wins={wins} />
-          <div className={styles.nextHead} data-reveal="rise">
-            <h2 id="latest-wins" className={styles.subTitle}>
-              {WINS_TITLE}
-            </h2>
-            <Link className={ui.textLink} to="/wins">
-              All wins
-            </Link>
+        {/* The record, as on main: the running tally, the wins in orbit, then the newest as cards. */}
+        <section className={styles.wins} data-hue="rose" aria-labelledby="latest-wins">
+          <div className={styles.tally}>
+            <div className={lui.wrap}>
+              <WinTally wins={wins} />
+            </div>
           </div>
-          {latest.length === 0 ? <p className={styles.lede}>{WINS_EMPTY}</p> : <WinLog wins={latest} />}
+          {latest.length === 0 ? (
+            <div className={styles.tally}>
+              <p className={`${lui.wrap} ${lui.body}`}>{WINS_EMPTY}</p>
+            </div>
+          ) : (
+            <>
+              <WinOrbit wins={latest} />
+              <LatestWins wins={latest.slice(0, 3)} id="latest-wins" />
+            </>
+          )}
         </section>
 
         <LogoBand />

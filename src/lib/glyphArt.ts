@@ -63,6 +63,68 @@ export function asciiFigure(shape: FigureShape, rows = 22, aspect = 0.6): string
   return lines
 }
 
+/** Split a long name across two lines, at the space nearest its middle. */
+function wordLines(word: string): string[] {
+  const middle = word.length / 2
+  const spaces = [...word.matchAll(/ /g)].map((match) => match.index)
+  if (word.length < 9 || spaces.length === 0) return [word]
+  const split = spaces.reduce((best, at) => (Math.abs(at - middle) < Math.abs(best - middle) ? at : best))
+  return [word.slice(0, split), word.slice(split + 1)]
+}
+
+const wordCache = new Map<string, string[]>()
+
+/**
+ * A word rasterized into the fine ramp, as rows of text: dense in the letters, with a few loose
+ * glyphs around them and the field's fluted-glass ribs running down through it. The default grid
+ * fills a 20:13 box, given mono cells 0.6 as wide as they are tall.
+ */
+export function asciiWord(word: string, cols = 156, rows = 61, aspect = 0.6): string[] {
+  const key = `${word}|${cols}|${rows}`
+  const cached = wordCache.get(key)
+  if (cached) return cached
+  const canvas = typeof document === 'undefined' ? null : document.createElement('canvas')
+  const ctx = canvas?.getContext('2d', { willReadFrequently: true })
+  if (!canvas || !ctx) return []
+  canvas.width = cols
+  canvas.height = rows
+  const lines = wordLines(word)
+  const font = (size: number) => `600 ${size}px Inter, system-ui, sans-serif`
+  ctx.font = font(100)
+  const widest = Math.max(...lines.map((line) => ctx.measureText(line).width), 1)
+  // Canvas pixels are square and the cells aren't, so the letters are drawn squashed to come out true.
+  const size = Math.min((100 * cols * 0.88) / widest, (rows * 0.62) / (lines.length * aspect * 1.1))
+  ctx.scale(1, aspect)
+  ctx.font = font(size)
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#fff'
+  // A stroke on top, since Inter's 600 goes thin once it's only a few cells wide.
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = size * 0.035
+  lines.forEach((line, index) => {
+    const y = rows / aspect / 2 + (index - (lines.length - 1) / 2) * size * 1.1
+    ctx.fillText(line, cols / 2, y)
+    ctx.strokeText(line, cols / 2, y)
+  })
+  const { data } = ctx.getImageData(0, 0, cols, rows)
+  const top = FINE_RAMP.length - 1
+  const out: string[] = []
+  for (let j = 0; j < rows; j++) {
+    let line = ''
+    for (let i = 0; i < cols; i++) {
+      const ink = data[(j * cols + i) * 4 + 3] / 255
+      const rib = 0.86 + 0.14 * Math.cos(i * 1.15)
+      const grain = (hash(i, j) - 0.5) * 0.2
+      const v = ink > 0.25 ? clamp01((0.68 + 0.32 * ink) * rib + grain) : hash(j, i) < 0.05 ? 0.1 : 0
+      line += FINE_RAMP[Math.round(v * top)]
+    }
+    out.push(line)
+  }
+  wordCache.set(key, out)
+  return out
+}
+
 export type EdgeMode = 'dissolve' | 'steps'
 
 /** Which of the four 2×2 pixels a shade fills: ░ one, ▒ two (a checker), ▓ three, █ all. */

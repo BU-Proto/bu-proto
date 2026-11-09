@@ -28,13 +28,6 @@
   line-height: 0.98;
 }
 
-.lede {
-  max-width: 46ch;
-  margin: 0;
-  font-size: 17px;
-  line-height: 1.55;
-  text-wrap: pretty;
-}
 
 /* ---- Harbor --------------------------------------------------------------------------------- */
 
@@ -70,27 +63,6 @@
   pointer-events: none;
 }
 
-/* The three ways in walk down and to the right, a step per track: Start, then Build, then Launch. */
-.tracks {
-  display: grid;
-  gap: clamp(40px, 7vh, 72px);
-  padding: clamp(64px, 10vh, 112px) 0 clamp(72px, 12vh, 140px);
-}
-
-/* A section's title, with its lede across from it. */
-.sectionHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  justify-content: space-between;
-  gap: 16px 48px;
-}
-
-.sectionHead .lede {
-  max-width: 34ch;
-  color: var(--ink-soft);
-}
-
 /* A heading inside a section: the next beat, the latest wins. */
 .subTitle {
   margin: 0;
@@ -98,72 +70,6 @@
   font-weight: 300;
   letter-spacing: -0.03em;
   line-height: 1.05;
-}
-
-.trackList {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.track {
-  display: grid;
-  /* The name's column never narrows below the name itself: further down the stair there's less
-     room, and an even split let "Launch" run into its list. */
-  grid-template-columns: auto minmax(min-content, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(20px, 3.2vw, 56px);
-  margin-left: calc(var(--step) * clamp(0px, 9vw, 132px));
-  padding: clamp(22px, 4vh, 40px) 0;
-  /* The rule takes the track's colour, faintly, so each step reads as its own. */
-  border-top: 1px solid rgb(var(--hue-rgb) / 0.3);
-}
-
-/* The figure in its track's colour, lit from inside: a pool of the deep tone behind the glyphs,
-   gone by the figure's own edges, and the glyphs glowing a little, like the field's. */
-.figure {
-  --figure-size: clamp(6px, 0.84vw, 11px);
-  color: var(--hue);
-  font-weight: 500;
-  background: radial-gradient(closest-side, rgb(var(--hue-deep-rgb) / 0.34), rgb(var(--hue-deep-rgb) / 0));
-  text-shadow: 0 0 10px rgb(var(--hue-deep-rgb) / 0.9);
-}
-
-/* The underscore sits on the baseline, so its light lies low and flat under it, not mid-air. */
-.track[data-shape='bar'] .figure {
-  background: radial-gradient(54% 30% at 50% 84%, rgb(var(--hue-deep-rgb) / 0.4), rgb(var(--hue-deep-rgb) / 0));
-}
-
-.trackCopy {
-  display: grid;
-  gap: 12px;
-}
-
-.trackName {
-  margin: 0;
-  font-size: clamp(48px, 7.4vw, 108px);
-  font-weight: 300;
-  letter-spacing: -0.045em;
-  line-height: 0.92;
-}
-
-.who {
-  margin: 0;
-  color: var(--ink);
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.offers {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  color: var(--ink-soft);
-  font-size: 16px;
-  line-height: 1.4;
-  list-style: none;
 }
 
 /* ---- The rhythm, drawn in the field's characters ------------------------------------------ */
@@ -188,8 +94,7 @@
   gap: 0 1.2cqi;
 }
 
-.week,
-.swatch {
+.week {
   margin: 0;
   font-family: var(--font-mono);
   letter-spacing: 0;
@@ -232,52 +137,11 @@
   font-size: 13px;
 }
 
-/* The key: each beat under a scrap of its own column. */
-.key {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 32px clamp(24px, 3vw, 48px);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.beat {
-  display: grid;
-  align-content: start;
-  gap: 4px;
-}
-
-.swatch {
-  justify-self: start;
-  margin-bottom: 12px;
-  color: var(--hue);
-  text-shadow: 0 0 8px rgb(var(--hue-deep-rgb) / 0.85);
-  font-size: 11px;
-  line-height: 1;
-}
-
+/* A beat in the four-up steps (landing.module.css): when it is, in its colour, under its name. */
 .when {
-  margin: 0;
+  margin: 0 0 10px;
   color: var(--hue);
   font-size: 14px;
-}
-
-.beatWhat {
-  margin: 0;
-  font-size: clamp(24px, 2.4vw, 32px);
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1.08;
-}
-
-.beatDetail {
-  max-width: 30ch;
-  margin: 2px 0 0;
-  color: var(--ink-soft);
-  font-size: 15px;
-  line-height: 1.5;
-  text-wrap: pretty;
 }
 
 .beat[data-later] {
@@ -441,11 +305,6 @@
   text-wrap: balance;
 }
 
-.schedule {
-  max-width: 380px;
-  margin-top: 8px;
-}
-
 .quiet {
   margin: 0;
   color: var(--ink-soft);
@@ -573,16 +432,18 @@
   pointer-events: none;
 }
 
-/* The record: the tally large, the newest wins logged under it. */
+/* The record, laid out as on main: the tally in the column, then the orbit and the cards full width. */
 .wins {
   position: relative;
   display: grid;
-  gap: clamp(28px, 5vh, 48px);
-  padding: 0 0 clamp(64px, 10vh, 120px);
+  /* minmax, so a wide tally on a small phone can't stretch the column past the screen. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--cell) * 3);
+  padding-block: calc(var(--cell) * 7);
 }
 
-.wins .nextHead {
-  margin-top: clamp(24px, 5vh, 56px);
+.tally {
+  padding-inline: var(--gutter);
 }
 
 /* The tally stands in the warm light of the field's core: the record is the peak. */
@@ -650,15 +511,6 @@
 /* ---- Narrow screens ------------------------------------------------------------------------- */
 
 @media (max-width: 900px) {
-  .track {
-    grid-template-columns: auto minmax(0, 1fr);
-    margin-left: calc(var(--step) * 6vw);
-  }
-
-  .offers {
-    grid-column: 2;
-  }
-
   /* Stacked: the next event, then the deadlines, with real room between. */
   .next {
     grid-template-columns: minmax(0, 1fr);
@@ -667,32 +519,12 @@
 }
 
 @media (max-width: 720px) {
-  /* The key two by two; the score keeps all fourteen weeks across. */
-  .key {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .axis {
     font-size: 10px;
   }
 }
 
 @media (max-width: 560px) {
-  /* The figure beside the name, the offers under both. */
-  .track {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 16px 18px;
-    margin-left: 0;
-  }
-
-  .offers {
-    grid-column: 1 / -1;
-  }
-
-  .figure {
-    --figure-size: 5.5px;
-  }
-
   .deadline {
     grid-template-columns: 88px minmax(0, 1fr);
     gap: 2px 14px;
