@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>r1/19 tides: two planes, fog</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#061a2e;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%;display:block}</style>
+</head><body><canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+(function(){'use strict';
+var Pal=LabPalette,cv=document.getElementById('c');
+var gl=cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true});
+if(!gl){document.body.style.background='#0b2a46';return;}
+var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* glyph atlas: row0 density ramp ordered by measured coverage, row1 edge glyphs */
+var GW=16,GH=32,RAMP=' .,:;-+=xo*#%@'.split(''),EDGE=['-','/','|','\\','+','x'];
+var ac=document.createElement('canvas'),ax=ac.getContext('2d',{willReadFrequently:true});
+function paint(ch,i,row){ax.fillStyle='#fff';ax.font='bold 26px ui-monospace,Menlo,monospace';ax.textAlign='center';ax.textBaseline='middle';ax.fillText(ch,i*GW+GW/2,row*GH+GH/2+1);}
+ac.width=16*GW;ac.height=2*GH;
+var meas=RAMP.map(function(ch){ax.clearRect(0,0,ac.width,ac.height);paint(ch,0,0);var d=ax.getImageData(0,0,GW,GH).data,s=0;for(var i=3;i<d.length;i+=4)s+=d[i];return{ch:ch,s:s};});
+meas.sort(function(a,b){return a.s-b.s;});
+ax.clearRect(0,0,ac.width,ac.height);
+meas.forEach(function(m,i){paint(m.ch,i,0);});
+EDGE.forEach(function(ch,i){paint(ch,i,1);});
+var NR=meas.length;
+/* arc LUT */
+var lut=Pal.lut(256);
+var vs='#version 300 es\nvoid main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;gl_Position=vec4(p*2.-1.,0,1);}';
+var fs='#version 300 es\nprecision highp float;out vec4 o;uniform vec2 R,CF,CN,M;uniform float T;uniform sampler2D atlas,ramp;const int NR='+NR+';\n'+
+'vec3 H=vec3(.024,.102,.18),RS=vec3(.043,.165,.275),F=vec3(.965,.984,1.),MINT=vec3(.616,.941,.659),ID=vec3(.478,.431,.878),RO=vec3(.957,.635,.753);\n'+
+'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n'+
+'float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+1.),f.x),f.y);}\n'+
+'vec3 arc(float u){return texture(ramp,vec2(mix(.02,.99,clamp(u,0.,1.)),.5)).rgb;}\n'+
+'float glyph(vec2 inC,vec2 CELL,float row,float ri){vec2 uv=(vec2(ri,row)+inC/CELL)*vec2(16.,32.)/vec2(256.,64.);return texture(atlas,uv).r;}\n'+
+/* horizon at y=hz (0 top..1 bottom). Far plane: swell lines compress toward the horizon. */
+'const float HZ=.46;\n'+
+'vec4 farPlane(vec2 px,float t){\n'+
+' vec2 off=vec2(t*3.+M.x*-14.,M.y*-6.);\n'+
+' vec2 q=px+off;vec2 cell=floor(q/CF),inC=q-cell*CF;vec2 cc=(cell+.5)*CF-off;\n'+
+' vec2 uv=cc/R;float yy=uv.y;\n'+
+' float below=yy-HZ;\n'+
+' if(below<0.){ /* sky: sparse sky-colour dots that thin upward, a dawn glow at the horizon */\n'+
+'  float g=smoothstep(.0,-.14,below);\n'+
+'  float s=step(.93-.05*g,h21(cell+floor(t*.3+cell.x*.07)));\n'+
+'  float m=glyph(inC,CF,0.,1.+floor(h21(cell)*3.));\n'+
+'  return vec4(arc(.1+.3*g),s*m*(.25+.6*g)*step(-.3,below));}\n'+
+' float z=1./(below*5.+.12);\n'+  /* perspective depth */
+' float w=vn(vec2(uv.x*z*3.+t*.05,z*.8-t*.12))-.5;\n'+
+' float ph=z*2.2-t*.9+w*3.+.6*sin(uv.x*z*4.+t*.2);\n'+
+' float crest=smoothstep(.55,1.,.5+.5*sin(ph*6.283));\n'+
+' float cov=clamp(.18+crest*.7+(1.-smoothstep(0.,.35,below))*.35,0.,1.);\n'+
+' cov*=.55+.45*vn(cell*.35+t*.03);\n'+
+' float ri=floor(cov*float(NR)*.999);\n'+
+' float m=glyph(inC,CF,0.,ri);\n'+
+' float u=.04+.42*(1.-smoothstep(0.,.5,below))*(.6+.4*vn(uv*6.+t*.02))+.12*crest;\n'+
+' vec3 ink=arc(u);\n'+
+' float a=m*(.35+.65*crest)*step(.12,cov);\n'+
+' return vec4(ink,a);}\n'+
+/* near plane: a foreground swell whose crest travels; thickness below the surface sets hue. */
+'vec4 nearPlane(vec2 px,float t,out float bodyA){\n'+
+' vec2 off=vec2(t*22.+M.x*40.,M.y*18.);\n'+
+' vec2 q=px+off;vec2 cell=floor(q/CN),inC=q-cell*CN;vec2 cc=(cell+.5)*CN-off;\n'+
+' vec2 uv=cc/R;float asp=R.x/R.y;\n'+
+' float x=uv.x*asp;\n'+
+' float w=vn(vec2(x*.9+t*.07,t*.05))-.5;\n'+
+' float surf=.74+.1*sin(x*1.6-t*.35+w*3.)+.05*sin(x*4.1+t*.6)+.14*sin(t*.11)+.05*w;\n'+
+' /* a curling lip: raise the surface sharply on the lee side of each swell */\n'+
+' float sw=sin(x*2.3-t*.4+w*2.)*.5+.5;float lip=.07*pow(sw,3.);\n'+
+' surf-=lip;\n'+
+' float th=uv.y-surf;\n'+ /* >0 below surface */
+' bodyA=smoothstep(-.01,.02,th);\n'+
+' if(th<-.02)return vec4(0);\n'+
+' float rim=1.-smoothstep(0.,.07,abs(th));\n'+
+' float thin=exp(-max(th,0.)*5.);\n'+      /* near surface = thin = bright */
+' float cov=clamp(.14+thin*.5+rim*.4,0.,1.);\n'+
+' cov*=.7+.3*vn(cell*.5+vec2(0,t*.2));\n'+
+' float ri=floor(cov*float(NR)*.999);\n'+
+' float m=glyph(inC,CN,0.,ri);\n'+
+' bool foam=rim>.7;\n'+
+' if(foam){float ei=mod(floor(cell.x+t*2.),3.)<1.?0.:mod(cell.x,2.)<1.?2.:5.;m=glyph(inC,CN,1.,ei);}\n'+
+' float u=.38+.62*(1.-thin);u=mix(u,.72,.0);\n'+     /* deep = raspberry side via darken; thin = peach */
+' u=.5+.3*thin+.15*rim;\n'+
+' vec3 ink=arc(u);\n'+
+' ink=mix(ink*.55+ID*.25,ink,smoothstep(.0,.5,thin+rim));\n'+
+' ink=mix(ink,F,smoothstep(.75,1.,rim)*.85);\n'+
+' float deepRow=step(.82,h21(cell*1.3+floor(t*.25)));\n'+
+' float a=m*clamp(.45+thin*.6+rim,0.,1.)*mix(1.,.8,deepRow);\n'+
+' return vec4(ink,a);}\n'+
+'void main(){\n'+
+' vec2 px=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y);float t=T;\n'+
+' vec2 uv=px/R;\n'+
+' vec3 col=mix(H,RS,smoothstep(.0,.55,uv.y));\n'+
+' float dawn=exp(-pow((uv.y-HZ)*5.2,2.));col=mix(col,ID*.5+RS*.5,dawn*.45);col+=RO*.10*dawn*exp(-pow((uv.x-.62)*2.2,2.));\n'+
+' vec4 f=farPlane(px,t);\n'+
+' col=mix(col,f.rgb,f.a);\n'+
+/* fog between planes: smooth, not on the grid, drifting, wraps the horizon and pools low */
+' float fx=vn(vec2(uv.x*3.2-t*.04,uv.y*6.+t*.02))*.6+vn(vec2(uv.x*7.-t*.07,uv.y*13.))*.4;\n'+
+' float fog=smoothstep(.55,.0,abs(uv.y-HZ-.06)*2.4)*(.45+.7*fx)+smoothstep(.62,1.,uv.y)*.3*fx;\n'+
+' fog=clamp(fog,0.,.88);\n'+
+' vec3 fc=mix(ID*.75+RS*.35,RO*.55+ID*.4,smoothstep(.3,.9,fx+dawn*.3));\n'+
+' col=mix(col,fc*.62+RS*.2,fog*.6);\n'+
+' float bA;vec4 n=nearPlane(px,t,bA);\n'+
+' /* water body of the near plane: a veil that lets the fogged far plane show through */\n'+
+' col=mix(col,mix(RS,H,.5)*1.0+ID*.06,bA*.55);\n'+
+' col=mix(col,n.rgb,n.a);\n'+
+' /* mint: one live cell skimming the waterline */\n'+
+' vec2 mc=floor(px/CF);if(mc.y==floor(R.y*HZ/CF.y)+1.&&abs(mc.x-floor(mod(t*2.,R.x/CF.x)))<.5)col=MINT;\n'+
+' col=mix(col,H,smoothstep(.55,1.2,length((uv-.5)*vec2(1.,1.1)))*.5);\n'+
+' o=vec4(col,1.);}';
+function sh(t,s){var x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x;}
+var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+function tex(u,w,h,src,fmt,filter){var x=gl.createTexture();gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,x);
+ if(fmt==='c')gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,src);else gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,src);
+ [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER].forEach(function(k){gl.texParameteri(gl.TEXTURE_2D,k,filter);});
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+tex(0,0,0,ac,'c',gl.LINEAR);tex(1,256,1,lut,'r',gl.LINEAR);
+['atlas','ramp'].forEach(function(n,i){gl.uniform1i(gl.getUniformLocation(pr,n),i);});
+var uR=gl.getUniformLocation(pr,'R'),uF=gl.getUniformLocation(pr,'CF'),uN=gl.getUniformLocation(pr,'CN'),uM=gl.getUniformLocation(pr,'M'),uT=gl.getUniformLocation(pr,'T');
+var mx=0,my=0,sx=0,sy=0;
+addEventListener('pointermove',function(e){mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5;});
+function size(){var d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);
+ var h=cv.height/d,nh=Math.max(20,Math.round(h/30)),fh=Math.max(9,Math.round(h/80));
+ gl.viewport(0,0,cv.width,cv.height);gl.uniform2f(uR,cv.width,cv.height);
+ gl.uniform2f(uC(),0,0);}
+function uC(){return uF;}
+function size2(){size();var d=Math.min(devicePixelRatio||1,2),h=cv.height/d,nh=Math.max(20,Math.round(h/30)),fh=Math.max(9,Math.round(h/80));
+ gl.uniform2f(uF,Math.round(fh*.5*d),Math.round(fh*d));gl.uniform2f(uN,Math.round(nh*.5*d),Math.round(nh*d));}
+function draw(t){sx+=(mx-sx)*.06;sy+=(my-sy)*.06;gl.uniform2f(uM,sx,sy);gl.uniform1f(uT,t);gl.drawArrays(gl.TRIANGLES,0,3);}
+addEventListener('resize',function(){size2();if(still)draw(30);});
+size2();
+if(still){draw(30);return;}
+(function loop(ms){draw(30+ms/1000);requestAnimationFrame(loop);})(0);
+})();
+</script></body></html>

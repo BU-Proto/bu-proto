@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/01 Mushroom, reflected arc</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #u { image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<canvas id="u"></canvas><canvas id="g"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Gradient map posterised into flat cells; glyphs on the same strict grid take the arc REFLECTION
+   of what is under them (t' = 1 - t): rose under, sky/lagoon over, and the reverse. Where the
+   reflection lands near the same lightness (iris maps to itself) lightness flips instead.
+   Dark ground: glyphs thin to dashes and fade; shadows get harbor ticks, highlights frost strokes. */
+(function () {
+  'use strict';
+  var S = LabSubjects, P = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var HB = 24, LB = 7;                      /* hue bins along the arc, lum bands */
+  var GL = ' .:-=+x/|\\*#%';                /* atlas glyphs; index 0 empty */
+  var G = {}; for (var i = 0; i < GL.length; i++) G[GL[i]] = i;
+  var harbor = P.resolve('harbor'), frost = P.resolve('frost');
+
+  var uc = document.getElementById('u'), gc = document.getElementById('g');
+  var gx = gc.getContext('2d'), ux = uc.getContext('2d');
+  var cols, rows, cw, ch, dpr, buf, under, uimg, atlas, under8, rowsHalf;
+
+  function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function lightness(c) { return P.toOklch(c)[0]; }
+
+  /* per (hue bin, lum band): under colour, glyph colour */
+  var UN = [], GC = [];
+  (function () {
+    for (var h = 0; h < HB; h++) for (var l = 0; l < LB; l++) {
+      var t = (h + 0.5) / HB, lum = l / (LB - 1);
+      var u = P.mix(harbor, P.arc(t), Math.min(1, Math.pow(lum, 0.8) * 1.05 + 0.06));
+      if (l === LB - 1) u = lerp3(u, frost, 0.55);
+      var uL = lightness(u), r = P.arc(1 - t), rL = lightness(r), g = r;
+      if (Math.abs(rL - uL) < 0.3) {         /* reflection too close: flip lightness */
+        g = uL > 0.6 ? lerp3(P.resolve('irisDeep'), harbor, 0.55) : lerp3(r, frost, 0.55);
+      }
+      if (uL > 0.8) g = lerp3(P.resolve('raspberry'), harbor, 0.5);
+      if (uL < 0.4) g = P.mix(u, g, 0.55 + lum * 0.6);   /* glyphs sink into dark ground */
+      UN.push(u); GC.push(g);
+    }
+  })();
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = innerWidth, H = innerHeight;
+    cw = Math.max(8, Math.round(W / 170)); ch = Math.round(cw * 1.8);
+    cols = Math.ceil(W / cw); rows = Math.ceil(H / ch);
+    gc.width = cols * cw * dpr; gc.height = rows * ch * dpr;
+    gc.style.width = cols * cw + 'px'; gc.style.height = rows * ch + 'px';
+    uc.width = cols; uc.height = rows; uc.style.width = cols * cw + 'px'; uc.style.height = rows * ch + 'px';
+    buf = S.create(cols, rows, cw / ch);
+    uimg = ux.createImageData(cols, rows);
+    /* atlas: rows = key, columns = glyph */
+    var pw = Math.round(cw * dpr), ph = Math.round(ch * dpr);
+    atlas = document.createElement('canvas'); atlas.width = pw * GL.length; atlas.height = ph * HB * LB;
+    var ax = atlas.getContext('2d');
+    ax.font = '700 ' + Math.round(ch * 0.78 * dpr) + 'px ui-monospace, "SF Mono", Menlo, monospace';
+    ax.textAlign = 'center'; ax.textBaseline = 'middle';
+    for (var k = 0; k < HB * LB; k++) {
+      ax.fillStyle = P.toCss(GC[k]);
+      for (var q = 1; q < GL.length; q++) ax.fillText(GL[q], q * pw + pw / 2, k * ph + ph / 2 + 1);
+    }
+    atlas.pw = pw; atlas.ph = ph;
+  }
+
+  var T0 = 4;
+  function frame(t) {
+    S.fill('mushroom', buf, t);
+    var L = buf.lum, Hh = buf.hint, E = buf.edge, M = buf.mask, d = uimg.data;
+    var pw = atlas.pw, ph = atlas.ph, cwp = cw * dpr, chp = ch * dpr;
+    gx.clearRect(0, 0, gc.width, gc.height);
+    var frostCss = P.toCss(frost), k = 0, rk = 0;
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++, k++) {
+        var lum = L[k], hint = Hh[k];
+        if (M[k] <= 0.5) { lum *= 0.62; hint = hint * 0.55; }  /* ground stays deep, blue-led */
+        var hb = Math.min(HB - 1, Math.max(0, Math.floor(hint * HB)));
+        var lb = Math.min(LB - 1, Math.max(0, Math.floor(lum * (LB - 0.001))));
+        var key = hb * LB + lb, u = UN[key], j = k * 4;
+        d[j] = u[0] * 255; d[j + 1] = u[1] * 255; d[j + 2] = u[2] * 255; d[j + 3] = 255;
+
+        var inside = M[k] > 0.5, e = E[k];
+        var ci = lum * 0.85 + e * 0.5, gi = 0;
+        if (inside) {
+          if (lum > 0.9) { gx.fillStyle = frostCss; gx.fillRect(x * cwp, y * chp, cwp, chp - dpr); continue; }
+          if (e > 0.3 && lum > 0.42 && x > 0 && x < cols - 1 && y > 0 && y < rows - 1) {
+            var gX = L[k + 1] - L[k - 1], gY = L[k + cols] - L[k - cols];  /* edge runs across the gradient */
+            var a = Math.atan2(gY * 1.8, gX) ; a = ((a % Math.PI) + Math.PI) % Math.PI;
+            var s = Math.floor(a / (Math.PI / 4) + 0.5) % 4;
+            gi = G[['|', '\\', '-', '/'][s]];
+          } else {
+            gi = 1 + Math.floor(Math.min(0.999, ci) * 11);   /* . : - = + x / | \ * # */
+            gi = Math.min(gi, G['%']);
+          }
+        } else {
+          /* dissolving ground: sparse dashes, thinner toward the dark */
+          var hsh = ((x * 73856093) ^ (y * 19349663)) & 255;
+          if (lum * 255 + 40 > hsh * 1.15 && lum > 0.12) gi = hsh & 1 ? G['-'] : G['='];
+          else if (lum > 0.3 && hsh < 90) gi = G['.'];
+        }
+        if (gi) gx.drawImage(atlas, gi * pw, key * ph, pw, ph, x * cwp, y * chp, cwp, chp);
+      }
+    }
+    ux.putImageData(uimg, 0, 0);
+  }
+
+  function boot() { setup(); frame(T0); }
+  boot();
+  addEventListener('resize', function () { setup(); frame(T0); });
+  if (!still) (function loop(ms) { frame((ms || 0) / 1000 + T0); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

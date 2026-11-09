@@ -1,16 +1,95 @@
-/* One screen tall, all picture. */
+/* One screen tall, all picture, on the page's black. */
 .hero {
   position: relative;
   display: grid;
-  place-items: end center;
+  place-items: center;
   min-height: 100vh;
   min-height: 100svh;
-  padding: 0 var(--gutter) clamp(56px, 12vh, 120px);
-  /* The bloom in plain CSS, for the moment before its shaders are ready, and without WebGL2. */
-  background:
-    radial-gradient(34% 44% at 56% 44%, rgb(194 64 122 / 0.85), transparent 72%),
-    radial-gradient(56% 62% at 30% 34%, rgb(26 143 192 / 0.7), transparent 72%),
-    radial-gradient(52% 60% at 84% 34%, rgb(26 143 192 / 0.6), transparent 72%);
+  padding: 0 var(--gutter);
+  /* Clipped at the sides only: the rings run on below the hero's foot (see .rings). */
+  overflow-x: clip;
+  background: var(--c-paper);
+  cursor: default;
+}
+
+/*
+ * The rings (HeroRings). They come up as soon as their first frame is drawn, already half-written, and
+ * run on past the hero's foot into the gap the page leaves under it (Home's .afterHero, 37vh), where
+ * the seam gives them way to the page.
+ */
+.rings {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: calc(100% + 37vh);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.rings[data-ready] {
+  opacity: 1;
+}
+
+/* The seam (HeroSeam): a band over the hero's foot and the gap below it, ending where the rings do.
+   As tall as contentarchitecture.dev's, a little shorter on narrow screens. */
+.seam {
+  --seam: 360px;
+  position: absolute;
+  z-index: 0;
+  top: calc(100% + 37vh - var(--seam));
+  left: 0;
+  width: 100%;
+  height: var(--seam);
+  overflow: clip;
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .seam {
+    --seam: 520px;
+  }
+}
+
+.seam canvas {
+  position: absolute;
+  /* From the bottom, where the rings' tiles are counted from, so the cells land on them. */
+  bottom: 0;
+  left: 0;
+  display: block;
+}
+
+/* Follows the pointer over the rings: a small white chip in the site's own face. */
+.hold {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  padding: 5px 8px 4px;
+  background: var(--c-ink);
+  color: var(--c-paper);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.hold[data-shown] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .hold {
+    display: none;
+  }
 }
 
 /* Runs past the hero's foot and lands exactly on the page's ground, so the fold is never an edge. */
@@ -29,63 +108,29 @@
   opacity: 1;
 }
 
-/*
- * What Proto is and the way in, centred low on the screen where the light has thinned. A soft pool of
- * the ground sits behind it, wider than the words and gone well before its edges, so they read over
- * any part of the picture without a box.
- */
-.copy {
+/* Proto's title, alone at the centre of the rings. */
+.headline {
   position: relative;
   z-index: 1;
-  display: grid;
-  justify-items: center;
-  gap: 18px;
-  max-width: 760px;
-  text-align: center;
-}
-
-.copy::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: -30% -25%;
-  background: radial-gradient(closest-side, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0));
-  pointer-events: none;
-}
-
-.headline {
-  max-width: 18ch;
+  max-width: 16ch;
   margin: 0;
   color: var(--c-ink);
-  font-size: clamp(36px, 5vw, 64px);
+  font-size: clamp(40px, 6.4vw, 96px);
   font-weight: 400;
   letter-spacing: -0.035em;
   line-height: 1.02;
+  text-align: center;
   text-wrap: balance;
   text-shadow: 0 2px 30px rgb(0 0 0 / 0.5);
 }
 
-.lede {
-  max-width: 46ch;
-  margin: 0;
-  color: var(--c-body);
-  font-size: clamp(16px, 1.3vw, 19px);
-  line-height: 1.55;
-  text-wrap: pretty;
-  text-shadow: 0 1px 14px rgb(0 0 0 / 0.6);
-}
-
-.join {
-  margin-top: 8px;
-}
-
-/* It lifts under the cursor (see ui.primary); its colour stays put. */
-.join::after {
-  display: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .bloom {
+  .bloom,
+  .rings {
     transition: none;
+  }
+
+  .hold {
+    display: none;
   }
 }

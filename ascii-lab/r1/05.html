@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>05 Mushroom, polarity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* 05: mushroom, soft light beneath, glyphs that flip polarity with tone.
+   Shadow: harbor ticks carved into the glow. Midtone: sparse pinpricks. Highlight: line glyphs turned to
+   follow the edge, coloured by arc reflection (t' = 1 - t), blowing out to frost blocks. Outside the
+   subject the grid thins to stretched dashes. One mint cell walks the rim: live. */
+(function () {
+  'use strict';
+  var S = window.LabSubjects, Pal = window.LabPalette;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+
+  var harbor = Pal.resolve('harbor'), frost = Pal.resolve('frost'), mint = Pal.resolve('mint');
+  var Q = 24, GL = ['-', '/', '|', '\\', '+', 'x', '*', ':', '.', '=', '#'];
+  var G = { H: 0, D: 1, V: 2, B: 3, PLUS: 4, X: 5, STAR: 6, COLON: 7, DOT: 8, EQ: 9, HASH: 10 };
+  var ROW_FROST = Q, ROW_INK = Q + 1, ROW_MINT = Q + 2;
+
+  var W, H, dpr, CWd, CHd, cols, rows, buf, under, uctx, uimg, atlas, hash;
+  var rim = null;
+
+  function build() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(1, Math.floor(innerWidth * dpr)); H = Math.max(1, Math.floor(innerHeight * dpr));
+    cv.width = W; cv.height = H;
+    var CW = Math.max(8, Math.round(innerWidth / 170)), CH = Math.round(CW * 1.75);
+    CWd = Math.round(CW * dpr); CHd = Math.round(CH * dpr);
+    cols = Math.ceil(W / CWd); rows = Math.ceil(H / CHd);
+    buf = S.create(cols, rows, CW / CH);
+    under = document.createElement('canvas'); under.width = cols; under.height = rows;
+    uctx = under.getContext('2d'); uimg = uctx.createImageData(cols, rows);
+    rim = new Int32Array(cols * rows);
+    hash = new Float32Array(cols * rows);
+    for (var i = 0, s = 987654; i < hash.length; i++) { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; hash[i] = s / 4294967296; }
+    /* atlas: one glyph per column, one colour per row */
+    atlas = document.createElement('canvas'); atlas.width = GL.length * CWd; atlas.height = (Q + 3) * CHd;
+    var a = atlas.getContext('2d');
+    a.font = '600 ' + Math.round(CHd * 0.78) + 'px ' + FONT; a.textAlign = 'center'; a.textBaseline = 'middle';
+    for (var r = 0; r < Q + 3; r++) {
+      var rgb = r < Q ? Pal.arc(r / (Q - 1)) : r === ROW_FROST ? frost : r === ROW_INK ? harbor : mint;
+      a.fillStyle = Pal.toCss(rgb);
+      for (var g = 0; g < GL.length; g++) a.fillText(GL[g], g * CWd + CWd / 2, r * CHd + CHd / 2 + 1);
+    }
+  }
+
+  function sm(a, b, x) { x = Math.max(0, Math.min(1, (x - a) / (b - a))); return x * x * (3 - 2 * x); }
+
+  function frame(t) {
+    S.fill('mushroom', buf, t);
+    var L = buf.lum, Hh = buf.hint, E = buf.edge, M = buf.mask, d = uimg.data, n = cols * rows, i, k;
+    /* soft image beneath: arc colour, sinks to harbor, blows out to frost */
+    for (i = 0; i < n; i++) {
+      var h = Hh[i]; h = h < 0.5 ? h : 0.5 + (h - 0.5) * 0.72;      /* lean to rose, peach only at the core */
+      var c = Pal.arc(h), l = L[i];
+      var dd = Math.min(1, Math.pow(Math.min(1, l * 1.35), 1.35)), w = Math.max(0, l - 0.8) / 0.2;
+      for (k = 0; k < 3; k++) {
+        var v = harbor[k] + (c[k] - harbor[k]) * dd;
+        d[i * 4 + k] = (v + (frost[k] - v) * w) * 255;
+      }
+      d[i * 4 + 3] = 255;
+    }
+    uctx.putImageData(uimg, 0, 0);
+    cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
+    cx.fillStyle = '#061a2e'; cx.fillRect(0, 0, W, H);
+    cx.drawImage(under, 0, 0, cols * CWd, rows * CHd);
+
+    var nrim = 0, row, col, x, y;
+    for (row = 0; row < rows; row++) {
+      var up = row > 0 ? row - 1 : row, dn = row < rows - 1 ? row + 1 : row;
+      for (col = 0; col < cols; col++) {
+        i = row * cols + col;
+        var l = L[i], e = E[i], m = M[i], hs = hash[i];
+        x = col * CWd; y = row * CHd;
+        var lf = col > 0 ? i - 1 : i, rt = col < cols - 1 ? i + 1 : i;
+        var gx = L[rt] - L[lf], gy = L[dn * cols + col] - L[up * cols + col];
+        var gm = Math.sqrt(gx * gx + gy * gy);
+        var ang = Math.atan2(gy, gx) + Math.PI / 2;
+        ang = ang - Math.PI * Math.floor(ang / Math.PI);               /* 0..pi, screen space */
+        var line = (ang < 0.39 || ang >= 2.75) ? G.H : ang < 1.18 ? G.D : ang < 1.96 ? G.V : G.B;
+        var tint = Math.max(0, Math.min(Q - 1, Math.round((1 - Hh[i]) * (Q - 1))));  /* arc reflection */
+        var gi = -1, row2 = tint;
+
+        if (e > 0.85 && m > 0.5 && l > 0.5) rim[nrim++] = i;
+
+        if (l > 0.88 && (e > 0.25 || hs > 0.35) || l > 0.97) {
+          /* blow-out: frost blocks */
+          cx.fillStyle = '#f6fbff';
+          var bw = CWd * (0.55 + 0.45 * hs), bh = CHd * (0.45 + 0.55 * ((hs * 7) % 1));
+          cx.fillRect(x, y + (CHd - bh) / 2, bw, bh);
+          continue;
+        } else if (l > 0.42) {
+          /* highlight: line glyphs follow the edge, frost where hot, reflected arc elsewhere */
+          gi = (gm > 0.03 || e > 0.3) ? line : (hs < 0.4 ? G.PLUS : hs < 0.7 ? G.X : G.STAR);
+          row2 = l > 0.66 ? ROW_FROST : tint;
+          if (hs > 0.9 + 0.1 * Math.sin(t * 3 + hs * 90)) gi = G.HASH;  /* local, staggered glint */
+        } else if (m > 0.3 && l < 0.3) {
+          /* shadow: harbor ticks, vertical, dense toward the darkest */
+          if (hs < 0.4 + (0.3 - l) * 2.4) { gi = e > 0.35 ? line : G.V; row2 = ROW_INK; }
+        } else if (m > 0.3) {
+          /* midtone: sparse pinpricks, nothing where it should be quiet */
+          if (hs < 0.3 + 0.3 * e) { gi = hs < 0.07 ? G.COLON : G.DOT; row2 = tint; }
+        } else {
+          /* outside: the grid dissolves into dashes, thicker toward the light */
+          var dens = sm(0.08, 0.5, l) * 1.2 + e * 0.5;
+          if (hs < dens * 0.8) { gi = hs < dens * 0.25 ? G.EQ : G.H; row2 = tint; }
+          else if (hs > 0.985) { gi = G.DOT; row2 = tint; }
+        }
+        if (gi >= 0) cx.drawImage(atlas, gi * CWd, row2 * CHd, CWd, CHd, x, y, CWd, CHd);
+      }
+    }
+    /* mint: one live cell walking the rim, two cells long */
+    if (nrim > 1) {
+      var mi = rim[Math.floor(t * 2.2) % nrim], mr = (mi / cols) | 0, mc = mi % cols;
+      cx.drawImage(atlas, G.PLUS * CWd, ROW_MINT * CHd, CWd, CHd, mc * CWd, mr * CHd, CWd, CHd);
+      cx.drawImage(atlas, G.H * CWd, ROW_MINT * CHd, CWd, CHd, Math.min(cols - 1, mc + 1) * CWd, mr * CHd, CWd, CHd);
+    }
+    /* vignette back into harbor so the field never ends hard */
+    var gr = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.75);
+    gr.addColorStop(0, 'rgba(6,26,46,0)'); gr.addColorStop(1, 'rgba(6,26,46,0.55)');
+    cx.fillStyle = gr; cx.fillRect(0, 0, W, H);
+  }
+
+  var raf = 0, t0 = performance.now();
+  function loop(now) { frame(3 + (now - t0) / 1000); raf = requestAnimationFrame(loop); }
+  function start() {
+    cancelAnimationFrame(raf); build();
+    if (still) frame(3); else raf = requestAnimationFrame(loop);
+  }
+  var rz = 0;
+  addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(start, 120); });
+  start();
+})();
+</script>
+</body>
+</html>

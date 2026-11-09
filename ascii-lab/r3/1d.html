@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mushroom, dissolving cells, fast</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #061a2e; }
+  /* still fallback: pure CSS, shown if canvas is unavailable or the page is too slow to animate */
+  #still { position: fixed; inset: 0; background:
+    radial-gradient(ellipse 30% 26% at 50% 40%, #f6fbff 0, rgba(244,162,192,.95) 28%, rgba(194,64,122,.85) 62%, rgba(122,110,224,0) 100%),
+    radial-gradient(ellipse 36% 30% at 50% 50%, rgba(194,64,122,.5), rgba(6,26,46,0) 100%),
+    #061a2e; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #hud { position: fixed; left: 8px; bottom: 8px; font: 11px ui-monospace, Menlo, monospace; color: #f4a2c0; display: none; }
+</style>
+</head>
+<body>
+<div id="still"></div>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = LabSubjects, Pal = LabPalette;
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d', { alpha: false, desynchronized: true });
+  var hud = document.getElementById('hud'), stillEl = document.getElementById('still');
+  if (!cx) { cv.style.display = 'none'; return; }
+
+  /* ---- styles: every drawn colour is an opaque, pre-blended CSS string; one path fill per style per frame ---- */
+  var HARBOR = '#061a2e', HRGB = [6 / 255, 26 / 255, 46 / 255];
+  var ALPHAS = [0.5, 0.67, 0.84, 1];
+  var LV = 32;                                  /* ink levels, was 128 */
+  function inkRgb(t) {
+    return t < 0.18 ? Pal.mix('iris deep', 'raspberry', t / 0.18) : t < 0.62 ? Pal.mix('raspberry', 'rose', (t - 0.18) / 0.44) : Pal.mix('rose', 'peach', (t - 0.62) / 0.38);
+  }
+  function blend(rgb, a) { return Pal.toCss([rgb[0] * a + HRGB[0] * (1 - a), rgb[1] * a + HRGB[1] * (1 - a), rgb[2] * a + HRGB[2] * (1 - a)]); }
+  var colorsRgb = [], i0;
+  for (i0 = 0; i0 < LV; i0++) colorsRgb.push(inkRgb(i0 / (LV - 1)));
+  colorsRgb.push(Pal.resolve('rose'));          /* LV   */
+  colorsRgb.push(Pal.resolve('raspberry'));     /* LV+1 */
+  var C_ROSE = LV, C_RASP = LV + 1, NC = LV + 2;
+  var styles = [];                              /* id = color*4 + alphaLevel */
+  for (i0 = 0; i0 < NC; i0++) for (var al = 0; al < 4; al++) styles.push(blend(colorsRgb[i0], ALPHAS[al]));
+  var S_FROST = styles.length; styles.push('#f6fbff');
+  var S_HARBOR = styles.length; styles.push(HARBOR);
+  var S_RAISEDHI = styles.length; styles.push('#123a5c');
+  var NS = styles.length;
+  var lists = []; for (i0 = 0; i0 < NS; i0++) lists.push([]);
+  var used = new Uint8Array(NS);
+  /* layers keep the original paint order: 0 body/dissolve/ghost, 1 harbor slits, 2 rim bars */
+  var LAYERS = 3, layerLists = [lists, [], []];
+  for (var L = 1; L < LAYERS; L++) for (i0 = 0; i0 < NS; i0++) layerLists[L].push([]);
+  var layerUsed = [used, new Uint8Array(NS), new Uint8Array(NS)];
+
+  /* ---- grid state, all static per-cell values precomputed at setup ---- */
+  var W, H, CW, CH, cols, rows, buf, dpr, HH, HV;
+  var tier = 0, maxDpr = 2, colDiv = 84;
+  function hash(i, j) { var s = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return s - Math.floor(s); }
+
+  function setup() {
+    dpr = Math.min(maxDpr, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    CW = Math.max(10, Math.round(W / colDiv)); CH = Math.max(5, Math.round(CW * 0.5));
+    cols = Math.ceil(W / CW) + 1; rows = Math.ceil(H / CH) + 1;
+    buf = S.create(cols, rows, CW / CH);
+    HH = new Float32Array(cols * rows); HV = new Float32Array(cols * rows);
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) { HH[r * cols + c] = hash(c, r); HV[r * cols + c] = hash(r + 91, c + 17); }
+  }
+
+  function push(layer, style, x, y, w, h) { var a = layerLists[layer][style]; a.push(x, y, w, h); layerUsed[layer][style] = 1; }
+
+  function draw(t) {
+    var B = buf, i, r, c, lum = B.lum, hint = B.hint, mask = B.mask, edge = B.edge;
+    S.fill('mushroom', B, t);
+    for (r = 0; r < rows; r++) {
+      var y0 = r * CH;
+      for (c = 0; c < cols; c++) {
+        i = r * cols + c;
+        var l = lum[i], m = mask[i];
+        var mass = (l - 0.1) * 1.55 + m * 0.15; mass = mass < 0 ? 0 : mass > 1 ? 1 : mass;
+        if (m < 0.5) mass *= 0.6 + 0.4 * m;
+        var hh = HH[i], hv = HV[i], x0 = c * CW;
+        if (mass > 0.07) {
+          var drift = S.noise(c * 0.22 + t * 0.07, r * 0.4 - t * 0.05);
+          var q = 0.14 + 0.78 * hint[i] + 0.06 * (drift - 0.5); q = q < 0 ? 0 : q > 1 ? 1 : q;
+          var ti = Math.min(LV - 1, (q * LV) | 0);
+          if (mass > 0.62) {
+            var e = edge[i], gap = 1 + (0.8 - mass) * 3;
+            var ww = CW - (mass > 0.8 ? 1 : 1 + (0.8 - mass) * CW * 0.8);
+            push(0, l > 0.86 ? S_FROST : ti * 4 + 3, x0 + (CW - ww) * hh, y0, ww, CH - (gap > 2 ? 2 : 1));
+            if (l < 0.42 && m > 0.5 && e < 0.5 && hh < 0.7) push(1, S_HARBOR, x0 + CW * 0.15, y0 + CH * 0.38, CW * 0.7, Math.max(1, CH * 0.16));
+            if (e > 0.55 && l > 0.5 && hv < e) push(2, l > 0.7 ? S_FROST : C_ROSE * 4 + 3, x0 + CW * 0.1, y0 + CH * 0.4, CW * 0.8, Math.max(1, CH * 0.2));
+          } else {
+            var k = mass / 0.62, keep = k * 1.7 + (drift - 0.5) * 0.9;
+            if (hh > keep) {
+              if (hv < 0.35 * k + 0.05) push(0, hv < 0.2 ? C_RASP * 4 + 3 : S_RAISEDHI, x0 + CW * 0.1, y0 + CH * 0.42, CW * 0.8, 1);
+              continue;
+            }
+            var th = Math.max(1, CH * (0.14 + 0.7 * k * k));
+            var wd = CW * (0.35 + 0.65 * Math.min(1, k * 1.3));
+            var sh = (1 - k) * CW * 1.9 * (hv - 0.5) * 2 + (1 - k) * 6 * Math.sin(t * 0.6 + r * 0.7);
+            var a = 0.45 + 0.55 * Math.min(1, k * 1.4), al2 = a < 0.585 ? 0 : a < 0.755 ? 1 : a < 0.92 ? 2 : 3;
+            var col = ti;
+            if (k < 0.5 && hv > 0.8) col = hv > 0.9 ? C_ROSE : C_RASP;
+            push(0, col * 4 + al2, x0 + (CW - wd) / 2 + sh, y0 + (CH - th) / 2, wd, th);
+          }
+        } else if (hh > 0.985) {
+          push(0, hh > 0.993 ? C_ROSE * 4 + 3 : S_RAISEDHI, x0 + CW * 0.25, y0 + CH * 0.45, CW * 0.5, 1);
+        }
+      }
+    }
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = HARBOR; cx.fillRect(0, 0, W, H);
+    for (var Ly = 0; Ly < LAYERS; Ly++) {
+      var LL = layerLists[Ly], UU = layerUsed[Ly];
+      for (var s = 0; s < NS; s++) {
+        if (!UU[s]) continue;
+        var A = LL[s], n = A.length; UU[s] = 0;
+        cx.fillStyle = styles[s]; cx.beginPath();
+        for (var j = 0; j < n; j += 4) cx.rect(A[j], A[j + 1], A[j + 2], A[j + 3]);
+        cx.fill(); A.length = 0;
+      }
+    }
+  }
+
+  var T0 = 6;
+  function drawStill() { draw(T0); }
+  setup();
+  addEventListener('resize', function () { setup(); if (frozen) drawStill(); });
+  var frozen = false;
+  if (reduced) { frozen = true; drawStill(); stillEl.style.display = 'none'; return; }
+
+  /* ---- frame loop with a cost monitor. Cost is measured around draw() (CPU side); the budget is 6ms so a
+     weaker GPU still has headroom inside 16.7ms. Tiers: 0 full; 1 dpr 1; 2 coarser grid; 3 draw every 2nd frame;
+     4 freeze on the still. Recheck every 45 frames, step down one tier when the median is over budget. ---- */
+  var showHud = location.hash.indexOf('perf') >= 0; if (showHud) hud.style.display = 'block';
+  var BUDGET = 6, win = [], frame = 0, last = 0, skip = false, firstDone = false, hold = 0, running = true, rafId = 0, fps = 0, fpsT = 0, fpsN = 0;
+  window.__perf = { tier: 0, medianMs: 0, frames: 0, fps: 0 };
+  function median(a) { var b = a.slice().sort(function (x, y) { return x - y; }); return b[b.length >> 1]; }
+  function stepDown() {
+    tier++;
+    if (tier === 1) { maxDpr = 1; setup(); }
+    else if (tier === 2) { colDiv = 64; setup(); }
+    else if (tier === 3) { /* handled by skip */ }
+    else { frozen = true; running = false; drawStill(); stillEl.style.display = 'none'; }
+    window.__perf.tier = tier; win.length = 0; hold = 30;
+  }
+  function loop(ms) {
+    if (!running) return;
+    rafId = requestAnimationFrame(loop);
+    frame++;
+    if (tier >= 3 && (frame & 1)) return;
+    var p0 = performance.now();
+    draw(ms / 1000 + T0);
+    var cost = performance.now() - p0;
+    if (!firstDone) { firstDone = true; stillEl.style.display = 'none'; }
+    if (hold > 0) { hold--; } else { win.push(cost); }
+    if (win.length >= 45) {
+      var md = median(win); window.__perf.medianMs = +md.toFixed(2);
+      if (md > BUDGET * (tier >= 3 ? 2 : 1) && tier < 4) stepDown(); else win.length = 0;
+    }
+    fpsN++; if (ms - fpsT > 1000) { fps = fpsN * 1000 / (ms - fpsT); fpsN = 0; fpsT = ms; window.__perf.fps = +fps.toFixed(1); }
+    window.__perf.frames = frame;
+    if (showHud) hud.textContent = 'tier ' + tier + '  draw ' + cost.toFixed(1) + 'ms  med ' + window.__perf.medianMs + 'ms  ' + window.__perf.fps + 'fps  cells ' + cols * rows;
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { running = false; cancelAnimationFrame(rafId); }
+    else if (!frozen) { running = true; win.length = 0; hold = 10; rafId = requestAnimationFrame(loop); }
+  });
+  rafId = requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

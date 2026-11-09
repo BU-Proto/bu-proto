@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>r1/20 two planes, fog between</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#061a2e;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%;display:block}</style>
+</head><body><canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script type="x-shader/x-fragment" id="fs">#version 300 es
+precision highp float;
+out vec4 o;
+uniform vec2 R,CF,CN;
+uniform float T,CAMF,CAMN,CYF,CYN;
+uniform sampler2D atlas,ramp;
+const float NR=14.;
+const vec3 H=vec3(.024,.102,.18),RS=vec3(.043,.165,.275),RH=vec3(.071,.227,.361),F=vec3(.965,.984,1.),
+  MINT=vec3(.616,.941,.659),ID=vec3(.478,.431,.878),RASP=vec3(.761,.251,.478),PEACH=vec3(.973,.573,.541);
+float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+1.),f.x),f.y);}
+float gly(float row,float idx,vec2 gp){return texture(atlas,(vec2(idx,row)+clamp(gp,.001,.999))*vec2(16.,32.)/vec2(256.,64.)).r;}
+vec3 arc(float u){return texture(ramp,vec2(mix(.02,.98,clamp(u,0.,1.)),.5)).rgb;}
+/* three hill ranges, far to near; each slides at its own rate */
+float ridge(float x,int k){float fk=float(k);float xs=x*(1.1+.5*fk)+fk*11.;
+  return .56-.1*fk+.2*(vn(vec2(xs*1.3,fk))*.65+vn(vec2(xs*3.7,fk+4.))*.35-.5);}
+
+/* FAR plane: small cells. Sky, sun, three ranges, mist. Hue stays on the cool half of the arc, rose only as the sun's light. */
+vec3 farPlane(vec2 px){
+  float asp=R.x/R.y;
+  vec2 pc=vec2(px.x+CAMF*R.y,px.y+CYF*R.y);
+  vec2 cell=floor(pc/CF),inC=pc/CF-cell;
+  vec2 cc=(cell+.5)*CF;
+  vec2 q=vec2(cc.x/R.y,1.-cc.y/R.y);
+  float e=CF.x/R.y;
+  float sx=q.x-CAMF,sdx=sx-asp*.5,hy=q.y;
+  float g=exp(-pow((hy-.6)*3.4,2.));
+  float glow=g*(.5+.5*exp(-sdx*sdx*1.5));
+  float cl=vn(vec2(sx*2.2+T*.03,hy*9.))*vn(vec2(sx*.8-T*.01,hy*3.));
+  float lum=.04+.5*glow*(.55+.7*cl),u=mix(.1,.86,glow)+(cl-.4)*.18;
+  float au=smoothstep(.5,.85,vn(vec2(sx*1.7+T*.02,hy*5.5+sin(sx*2.6+T*.07)*1.1)))*smoothstep(.52,.8,hy)*(1.-smoothstep(.9,1.05,hy));
+  lum+=au*.34;u=mix(u,.3,au*.8);
+  float sd=length(vec2(sdx,hy-.6));float sun=smoothstep(.078,.05,sd);
+  lum=mix(lum,1.05,sun);u=mix(u,.98,sun);
+  float inside=0.,dd=0.,sl=0.,fog=.0;
+  vec3 bg=mix(H,RS,glow*.75)+ID*.07*glow;
+  float mist=smoothstep(.45,.85,vn(vec2(q.x*.9-T*.035,hy*3.+T*.01)))*exp(-pow((hy-.3)*3.,2.));
+  for(int k=0;k<3;k++){
+    float fk=float(k),xk=q.x+CAMF*.6*fk;
+    float h=ridge(xk,k);
+    if(hy<h){
+      inside=1.;dd=h-hy;sl=(ridge(xk+e,k)-ridge(xk-e,k))/(2.*e);
+      float rim=exp(-dd*(7.+3.*fk));
+      lum=.14+.62*rim+.2*vn(vec2(xk*11.,hy*16.));
+      float lit=exp(-sdx*sdx*.7);
+      u=.07+.11*fk+.34*exp(-dd*14.)*lit;
+      fog=.66-.24*fk;
+      bg=mix(RS,RH,clamp(lum*.7,0.,1.));
+    }
+  }
+  fog=clamp(fog+mist*.4,0.,.93);
+  lum=max(lum,mist*.4);u=mix(u,.3,mist*.7);
+  float cov=clamp(lum*(1.-fog*.5)+(h21(cell)-.5)*.17,0.,1.);
+  float ri=floor(cov*NR*.999);
+  vec3 ink=arc(u);
+  ink=mix(ink,ID,fog*.65);
+  ink=mix(ink,F,smoothstep(.85,1.05,lum)*.9);
+  float a=(.3+.7*cov)*(1.-fog*.4);
+  vec2 gp=vec2(inC.x,inC.y);
+  float m=gly(0.,ri,gp);
+  vec3 col;
+  float dark=inside*(1.-smoothstep(.2,.32,lum));
+  float ridgeLine=inside*step(dd,1.1*CF.y/R.y);
+  if(ridgeLine>.5){
+    float ei=sl>.3?1.:sl<-.3?3.:0.;
+    float me=gly(1.,ei,gp);
+    vec3 rc=mix(arc(u+.1),F,.25*(1.-fog));
+    rc=mix(rc,ID,fog*.5);
+    col=mix(bg,rc,me*(.85-fog*.35));
+  }else if(dark>.5&&fog<.6){
+    col=mix(bg,H,gly(0.,2.+floor(h21(cell+3.)*3.),gp)*.8);
+    col=mix(col,ink,m*a*(1.-dark));
+  }else col=mix(bg,ink,m*a);
+  col+=(ID-H)*mist*.12;
+  /* mint: one live cell wandering the dark sky */
+  vec2 mc=floor(vec2(.5+.34*sin(T*.21)+.08*sin(T*.9),.74+.1*sin(T*.33))*vec2(R.x/CF.x,R.y/CF.y));
+  mc.y=floor(R.y/CF.y)-mc.y*0.+0.;
+  vec2 mw=vec2(floor((asp*.5+.38*sin(T*.21)+CAMF)*R.y/CF.x),floor((1.-(.8+.08*sin(T*.33)))*R.y/CF.y));
+  if(inside<.5&&cell==mw)col=mix(col,MINT,gly(1.,4.,gp)*.95);
+  return col;
+}
+
+/* NEAR plane: cells four times larger. Swaying stalks in rose to peach, a raspberry bank, drifting spores. */
+void nearPlane(vec2 px,out vec3 ink,out float na,out float scrim){
+  vec2 pc=vec2(px.x+CAMN*R.y,R.y-px.y+CYN*R.y);
+  vec2 cell=floor(pc/CN);
+  vec2 f=pc/CN-cell;
+  vec2 gp=vec2(f.x,1.-f.y);
+  float r=cell.y,j=cell.x;
+  ink=vec3(0.);na=0.;scrim=0.;
+  float bm=.15+1.3*pow(vn(vec2(j*.13,3.)),2.)+.25*sin(T*.3+j*.2);
+  /* blades */
+  float best=-1.,bh=0.,bl=0.,bt=0.;
+  for(int d=-4;d<=4;d++){
+    float jb=j+float(d);
+    if(h21(vec2(jb,2.3))<.58)continue;
+    float hh=2.2+6.5*pow(h21(vec2(jb,5.1)),1.3)*(.55+.45*vn(vec2(jb*.17,1.)));
+    float lean=(sin(T*.5+jb*.37)+.6*sin(T*1.05+jb*1.3))*.5+(h21(vec2(jb,8.))-.5)*.7;
+    float pos=jb+floor(lean*r*.3+.5);
+    if(pos==j&&r<hh&&r>=bm-.5){best=jb;bh=hh;bl=lean;bt=r;}
+  }
+  if(best>-.5){
+    float tipr=floor(bh-.0001);
+    float t=bt/bh;
+    if(bt>=tipr){
+      float pick=h21(vec2(best,1.7));
+      float idx=pick<.5?4.:5.;
+      float m=gly(1.,idx,gp);
+      float pulse=.5+.5*sin(T*1.6+best*2.1);
+      ink=mix(arc(.9+.1*pulse),F,.35+.5*pulse*step(.8,pick));
+      na=m;scrim=.6;
+    }else{
+      float s=bl*.3;
+      float idx=s>.2?1.:s<-.2?3.:2.;
+      float m=gly(1.,idx,gp);
+      ink=arc(mix(.58,.84,t));
+      na=m*(.8+.2*t);scrim=.5;
+    }
+  }else if(r<bm){
+    float tr=r/bm;
+    float idx=NR-1.-floor(h21(cell+1.)*3.)-(tr>.6?2.:0.);
+    float m=gly(0.,idx,gp);
+    ink=mix(RASP,arc(.62),tr*.55);
+    na=m*(.9-.25*tr);scrim=.8;
+  }
+  if(na<.01){
+    float y2=pc.y+T*(20.+26.*h21(vec2(j,7.)));
+    vec2 sc=vec2(j,floor(y2/CN.y));
+    float hs=h21(sc*vec2(1.3,.7)+4.);
+    if(hs>.984&&r>bm+1.){
+      float tw=.55+.45*sin(T*2.+hs*90.);
+      float idx=hs>.993?4.:hs>.989?1.:0.;
+      vec2 g2=vec2(f.x,fract(y2/CN.y));
+      float m=gly(1.,idx>1.5?0.:idx,g2)*(idx==0.?0.:1.);
+      m=max(m,gly(0.,5.+floor(h21(sc)*3.),g2)*step(idx,.5));
+      ink=arc(.72+.28*h21(sc+9.));na=m*tw*.8;scrim=.15;
+    }
+  }
+}
+void main(){
+  vec2 px=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y);
+  vec3 col=farPlane(px);
+  /* fog between the planes: a lit bank low on the screen, then the near plane stands in front of it */
+  vec2 uv=px/R.y;float asp=R.x/R.y;
+  float fb=vn(vec2(uv.x*1.4+T*.05+CAMN*.5,uv.y*2.6-T*.02))*exp(-pow((1.-uv.y-.2)*3.,2.));
+  col=mix(col,mix(RS,ID,.35),fb*.32);
+  vec3 ink;float na,scrim;
+  nearPlane(px,ink,na,scrim);
+  col=mix(col,mix(col,H,.8),scrim);
+  col=mix(col,ink,na);
+  vec2 v=gl_FragCoord.xy/R-.5;
+  col*=1.-.55*dot(v,v);
+  o=vec4(col,1.);
+}
+</script>
+<script>
+(function(){'use strict';
+var Pal=LabPalette,cv=document.getElementById('c');
+var gl=cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true});
+if(!gl){document.body.style.background='#0b2a46';return;}
+var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var GW=16,GH=32,RAMP=' .,:;-+=xo*#%@'.split(''),EDGE=['-','/','|','\\','+','x'];
+var ac=document.createElement('canvas'),ax=ac.getContext('2d',{willReadFrequently:true});
+function paint(ch,i,row){ax.fillStyle='#fff';ax.font='bold 26px ui-monospace,Menlo,monospace';ax.textAlign='center';ax.textBaseline='middle';ax.fillText(ch,i*GW+GW/2,row*GH+GH/2+1);}
+ac.width=16*GW;ac.height=2*GH;
+var meas=RAMP.map(function(ch){ax.clearRect(0,0,ac.width,ac.height);paint(ch,0,0);var d=ax.getImageData(0,0,GW,GH).data,s=0;for(var i=3;i<d.length;i+=4)s+=d[i];return{ch:ch,s:s};});
+meas.sort(function(a,b){return a.s-b.s;});
+ax.clearRect(0,0,ac.width,ac.height);
+meas.forEach(function(m,i){paint(m.ch,i,0);});
+EDGE.forEach(function(ch,i){paint(ch,i,1);});
+var lut=Pal.lut(256);
+function sh(t,s){var x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x;}
+var vs='#version 300 es\nvoid main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;gl_Position=vec4(p*2.-1.,0,1);}';
+var fs=document.getElementById('fs').textContent.replace(/^\s+/,'');
+var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+function tex(u,w,h,src,c){var x=gl.createTexture();gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,x);
+ if(c)gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,src);else gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,src);
+ [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER].forEach(function(k){gl.texParameteri(gl.TEXTURE_2D,k,gl.LINEAR);});
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+tex(0,0,0,ac,true);tex(1,256,1,lut,false);
+['atlas','ramp'].forEach(function(n,i){gl.uniform1i(gl.getUniformLocation(pr,n),i);});
+var U={};['R','CF','CN','T','CAMF','CAMN','CYF','CYN'].forEach(function(n){U[n]=gl.getUniformLocation(pr,n);});
+var mx=0,my=0,tx=0,ty=0;
+function aim(x,y){tx=x/innerWidth*2-1;ty=y/innerHeight*2-1;}
+addEventListener('pointermove',function(e){aim(e.clientX,e.clientY);});
+function size(){var d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);
+ var chf=Math.round(Math.max(11,innerHeight/80)*d),cwf=Math.round(chf*.5);
+ var chn=chf*4,cwn=chn*.5;
+ gl.viewport(0,0,cv.width,cv.height);gl.uniform2f(U.R,cv.width,cv.height);gl.uniform2f(U.CF,cwf,chf);gl.uniform2f(U.CN,cwn,chn);}
+function draw(t){
+ var sx=still?0:mx+Math.sin(t*.07)*.5,sy=still?0:my+Math.sin(t*.05)*.25;
+ gl.uniform1f(U.T,t);
+ gl.uniform1f(U.CAMF,t*.006+sx*.05);gl.uniform1f(U.CAMN,t*.045+sx*.3);
+ gl.uniform1f(U.CYF,sy*.01);gl.uniform1f(U.CYN,sy*.06);
+ gl.drawArrays(gl.TRIANGLES,0,3);}
+addEventListener('resize',function(){size();if(still)draw(30);});
+size();
+if(still){draw(30);return;}
+(function loop(ms){mx+=(tx-mx)*.05;my+=(ty-my)*.05;draw(30+ms/1000);requestAnimationFrame(loop);})(0);
+})();
+</script></body></html>

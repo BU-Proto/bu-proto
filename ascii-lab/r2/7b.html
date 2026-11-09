@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>7b Partitive Mushroom, Round Vocabulary</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Partitive colour. Every cell holds exactly two inks, both pure palette stops: a flat tile of one and a
+   glyph of its ladder neighbour. The glyph is chosen by measured coverage, so coverage = mix ratio. Nothing
+   is ever interpolated; the gradient exists only when the eye is far enough away. A drifting lens blurs a
+   disc of the field to the distance view, so the two readings sit side by side. */
+(function () {
+  'use strict';
+  var Pal = LabPalette, S = LabSubjects;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+  var C = Pal.colors;
+  /* ladder of pure stops, dark to light: tone and arc position fold into one scalar along it */
+  var LADDER = ['harbor', 'raisedHi', 'cerulean', 'irisDeep', 'raspberry', 'rose', 'peach', 'frost'].map(function (k) { return Pal.toCss(Pal.resolve(k)); });
+  /* the cool, light-rail variant for small marks: sky and iris slot in where the hue hint is low */
+  var LADDER_COOL = ['harbor', 'raisedHi', 'cerulean', 'sky', 'iris', 'rose', 'peach', 'frost'].map(function (k) { return Pal.toCss(Pal.resolve(k)); });
+  var mintC = Pal.toCss(Pal.resolve('mint'));
+  var W, H, dpr, unit, cols, rows, buf;
+  var GL = [];            /* glyphs sorted by measured coverage: {ch, cov, line} */
+  var lensX = 0.5, lensY = 0.5, pointer = null, lensOn = true;
+
+  function buildAtlas() {
+    var s = 32, c = document.createElement('canvas'); c.width = c.height = s;
+    var g = c.getContext('2d', { willReadFrequently: true });
+    var set = ' ·∙•◦○◌◍◎●◉╱╲│─╳┼▒▓', out = [];
+    for (var i = 0; i < set.length; i++) {
+      g.clearRect(0, 0, s, s); g.fillStyle = '#fff'; g.font = '700 ' + s + 'px ' + FONT;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      if (set[i] !== ' ') g.fillText(set[i], s / 2, s / 2 + s * 0.04);
+      var d = g.getImageData(0, 0, s, s).data, a = 0;
+      for (var k = 3; k < d.length; k += 4) a += d[k];
+      out.push({ ch: set[i], cov: a / 255 / (s * s), line: '╱╲│─╳┼'.indexOf(set[i]) >= 0 });
+    }
+    out.push({ ch: '█', cov: 1, block: true });         /* solid block: full ink */
+    out.sort(function (p, q) { return p.cov - q.cov; });
+    var mx = 0; for (var j = 0; j < out.length; j++) if (!out[j].block && out[j].cov > mx) mx = out[j].cov;
+    for (j = 0; j < out.length; j++) if (!out[j].block) out[j].cov = out[j].cov / (mx * 1.02);
+    GL = out;
+  }
+  function pick(f, wantLine) {
+    var best = 0, bd = 9;
+    for (var i = 0; i < GL.length; i++) {
+      var d = Math.abs(GL[i].cov - f) - (wantLine && GL[i].line ? 0.07 : 0);
+      if (d < bd) { bd = d; best = i; }
+    }
+    return GL[best];
+  }
+
+  function resize() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    unit = Math.max(8, Math.ceil(Math.max(W, H) / 170));
+    cols = Math.ceil(W / unit); rows = Math.ceil(H / unit);
+    buf = S.create(cols, rows, 1);
+  }
+
+  /* 4x4 Bayer, stable in motion; used only to break ties on the mix ratio so coverage bands do not ring */
+  var BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
+  function frame(tm) {
+    var t = still ? 6 : tm / 1000 * 0.5;
+    S.fill('mushroom', buf, t);
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = LADDER[0]; cx.fillRect(0, 0, W, H);
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    var fs = unit * 1.05, sx = unit / (fs * 0.6);
+    cx.font = '700 ' + fs + 'px ' + FONT;
+    var n = LADDER.length - 1;
+    /* one live cell, mint, chosen from bright edge cells by time */
+    var liveIdx = -1, cand = [];
+    for (var q = 0; q < cols * rows; q += 3) if (buf.edge[q] > 0.75 && buf.lum[q] > 0.5) cand.push(q);
+    if (cand.length) liveIdx = cand[Math.floor(t * 0.7) % cand.length];
+
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < cols; x++) {
+        var i = y * cols + x, L = buf.lum[i], hint = buf.hint[i], E = buf.edge[i];
+        /* scalar along the ladder: tone leads, the photo's hue position leans it toward rose, pink-heavy */
+        var tone = Math.min(1, L * 1.1);
+        var s = Math.min(1, Math.max(0, Math.pow(tone, 1.35) * (0.62 + 0.5 * hint) + 0.06 * E * tone));
+        if (L < 0.12) s *= L / 0.12;           /* the ground sinks fully */
+        var p = s * n, k = Math.min(n - 1, Math.floor(p)), f = p - k;
+        var lad = hint < 0.45 && s > 0.2 && s < 0.6 ? LADDER_COOL : LADDER;
+        var bay = (BAY[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+        f = Math.min(1, Math.max(0, f + (bay - 0.5) * 0.12));
+        var px = x * unit, py = y * unit;
+        /* ink B = tile, ink A = glyph. Whole cell is one pair of pure stops. */
+        cx.fillStyle = lad[k]; cx.fillRect(px, py, unit + 0.5, unit + 0.5);
+        if (i === liveIdx) { cx.fillStyle = lad[0]; cx.fillRect(px, py, unit + .5, unit + .5); cx.fillStyle = mintC; cx.fillText('◆', px + unit / 2, py + unit / 2); continue; }
+        if (f < 0.04) continue;
+        var g = pick(f, E > 0.3 && L > 0.45);
+        if (g.ch === ' ') continue;
+        cx.fillStyle = lad[k + 1];
+        if (g.block) { cx.fillRect(px, py, unit + 0.5, unit + 0.5); continue; }
+        cx.save(); cx.translate(px + unit / 2, py + unit / 2 + unit * 0.04); cx.scale(sx, 1);
+        cx.fillText(g.ch, 0, 0); cx.restore();
+      }
+    }
+    lens(t);
+  }
+
+  /* the distance view: a disc of the same field, blurred to the point where the two inks fuse */
+  function lens(t) {
+    if (!lensOn) return;
+    var r = Math.min(W, H) * 0.2;
+    var lx = pointer ? pointer[0] : W * (0.5 + 0.34 * Math.sin(t * 0.21 + 0.6)) ;
+    var ly = pointer ? pointer[1] : H * (0.5 + 0.30 * Math.sin(t * 0.17 + 2.1));
+    if (still && !pointer) { lx = W * 0.27; ly = H * 0.34; }
+    cx.save();
+    cx.beginPath(); cx.arc(lx, ly, r, 0, 6.2832); cx.clip();
+    cx.filter = 'blur(' + (unit * 1.35) + 'px)';
+    cx.drawImage(cv, 0, 0, cv.width, cv.height, 0, 0, W, H);
+    cx.filter = 'none';
+    cx.restore();
+    cx.beginPath(); cx.arc(lx, ly, r, 0, 6.2832);
+    cx.strokeStyle = Pal.toCss(Pal.resolve('frost'), 0.55); cx.lineWidth = 1; cx.stroke();
+  }
+
+  var last = 0;
+  function loop(tm) {
+    if (tm - last > 66) { last = tm; frame(tm); }
+    requestAnimationFrame(loop);
+  }
+  buildAtlas(); resize();
+  window.addEventListener('resize', function () { resize(); frame(performance.now()); });
+  window.addEventListener('pointermove', function (e) { pointer = [e.clientX, e.clientY]; });
+  window.addEventListener('pointerleave', function () { pointer = null; });
+  if (still) frame(0); else requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

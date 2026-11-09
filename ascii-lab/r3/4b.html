@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>4b Poster and Sticker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Partitive colour mushroom, laid out as a square poster and a die-cut sticker. Same material as r2/7a: every
+   cell is a tile of one pure ladder stop with a glyph of its neighbour, chosen by measured coverage. The field
+   is drawn once per piece into an offscreen canvas, then composited. The sticker is a tight crop of the cap. */
+(function () {
+  'use strict';
+  var Pal = LabPalette, S = LabSubjects;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FONT = 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace';
+  var css = function (k, a) { return Pal.toCss(Pal.resolve(k), a); };
+  var LADDER = ['harbor', 'raised', 'raisedHi', 'irisDeep', 'raspberry', 'rose', 'peach', 'frost'].map(function (k) { return css(k); });
+  var LADDER_COOL = ['harbor', 'raised', 'raisedHi', 'irisDeep', 'iris', 'rose', 'peach', 'frost'].map(function (k) { return css(k); });
+  var mintC = css('mint'), frost = css('frost'), harbor = css('harbor'), raisedHi = css('raisedHi'), roseC = css('rose');
+  var W, H, dpr, GL = [];
+  function buildAtlas() {
+    var s = 32, c = document.createElement('canvas'); c.width = c.height = s;
+    var g = c.getContext('2d', { willReadFrequently: true });
+    var set = ' .,:;-=+*/\\|xoO#%@8', out = [];
+    for (var i = 0; i < set.length; i++) {
+      g.clearRect(0, 0, s, s); g.fillStyle = '#fff'; g.font = '700 ' + s + 'px ' + FONT;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      if (set[i] !== ' ') g.fillText(set[i], s / 2, s / 2 + s * 0.04);
+      var d = g.getImageData(0, 0, s, s).data, a = 0;
+      for (var k = 3; k < d.length; k += 4) a += d[k];
+      out.push({ ch: set[i], cov: a / 255 / (s * s), line: '/\\|-x'.indexOf(set[i]) >= 0 });
+    }
+    out.push({ ch: '#', cov: 1, block: true });         /* solid block: full ink */
+    out.sort(function (p, q) { return p.cov - q.cov; });
+    var mx = 0; for (var j = 0; j < out.length; j++) if (!out[j].block && out[j].cov > mx) mx = out[j].cov;
+    for (j = 0; j < out.length; j++) if (!out[j].block) out[j].cov = out[j].cov / (mx * 1.02);
+    GL = out;
+  }
+  function pick(f, wantLine) {
+    var best = 0, bd = 9;
+    for (var i = 0; i < GL.length; i++) {
+      var d = Math.abs(GL[i].cov - f) - (wantLine && GL[i].line ? 0.07 : 0);
+      if (d < bd) { bd = d; best = i; }
+    }
+    return GL[best];
+  }
+
+  var BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
+  /* draw the field into a fresh size x size canvas; zoom>1 crops toward the centre by shrinking the cell count */
+  function field(size, unit, t, zoomed) {
+    var c = document.createElement('canvas'); c.width = c.height = Math.round(size * dpr);
+    var g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var cols = Math.ceil(size / unit), rows = cols, buf = S.create(cols, rows, 1);
+    S.fill('mushroom', buf, t);
+    g.fillStyle = LADDER[0]; g.fillRect(0, 0, size, size);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    var fs = unit * 1.05, sx = unit / (fs * 0.6); g.font = '700 ' + fs + 'px ' + FONT;
+    var n = LADDER.length - 1, liveIdx = -1, cand = [];
+    for (var q = 0; q < cols * rows; q += 3) if (buf.edge[q] > 0.75 && buf.lum[q] > 0.5) cand.push(q);
+    if (cand.length) liveIdx = cand[Math.floor(t * 0.7) % cand.length];
+    for (var y = 0; y < rows; y++) for (var x = 0; x < cols; x++) {
+      var i = y * cols + x, L = buf.lum[i], hint = buf.hint[i], E = buf.edge[i];
+      var tone = Math.min(1, L * 1.1);
+      var s = Math.min(1, Math.max(0, Math.pow(tone, 1.1) * (0.8 + 0.4 * hint) + 0.06 * E * tone));
+      if (L < 0.12) s *= L / 0.12;
+      var p = s * n, k = Math.min(n - 1, Math.floor(p)), f = p - k;
+      var lad = hint < 0.3 && s > 0.3 && s < 0.55 ? LADDER_COOL : LADDER;
+      f = Math.min(1, Math.max(0, f + ((BAY[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5) * 0.12));
+      var px = x * unit, py = y * unit;
+      g.fillStyle = lad[k]; g.fillRect(px, py, unit + 0.5, unit + 0.5);
+      if (i === liveIdx) { g.fillStyle = lad[0]; g.fillRect(px, py, unit + .5, unit + .5); g.fillStyle = mintC; g.fillText('*', px + unit / 2, py + unit / 2); continue; }
+      if (f < 0.04) continue;
+      var gl = pick(f, E > 0.3 && L > 0.45);
+      if (gl.ch === ' ') continue;
+      g.fillStyle = lad[k + 1];
+      if (gl.block) { g.fillRect(px, py, unit + 0.5, unit + 0.5); continue; }
+      g.save(); g.translate(px + unit / 2, py + unit / 2 + unit * 0.04); g.scale(sx, 1); g.fillText(gl.ch, 0, 0); g.restore();
+    }
+    return c;
+  }
+
+  function label(g, text, x, y, size, color, track) {
+    g.font = '700 ' + size + 'px ' + FONT; g.fillStyle = color; g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+    var cxp = x;
+    for (var i = 0; i < text.length; i++) { g.fillText(text[i], cxp, y); cxp += g.measureText(text[i]).width + track; }
+    return cxp - track - x;
+  }
+  function measure(g, text, size, track) {
+    g.font = '700 ' + size + 'px ' + FONT; var w = 0;
+    for (var i = 0; i < text.length; i++) w += g.measureText(text[i]).width + track;
+    return w - track;
+  }
+
+  function draw(tm) {
+    var t = still ? 6 : tm / 1000 * 0.5;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = harbor; cx.fillRect(0, 0, W, H);
+    var P = Math.floor(Math.min(H * 0.84, W * 0.52, 760));
+    var px = Math.round((W - P) / 2 - P * 0.17), py = Math.round((H - P) / 2);
+    /* soft table shadow */
+    cx.fillStyle = css('harbor'); cx.fillRect(0, 0, 0, 0);
+    /* poster: field, then a raised-hi band for the copy so frost keeps 11:1 */
+    var pf = field(P, Math.max(6, Math.round(P / 110)), t);
+    cx.save(); cx.shadowColor = 'rgba(0,0,0,0.45)'; cx.shadowBlur = P * 0.04; cx.shadowOffsetY = P * 0.015;
+    cx.fillStyle = LADDER[1]; cx.fillRect(px, py, P, P); cx.restore();
+    cx.drawImage(pf, px, py, P, P);
+    var band = P * 0.17;
+    cx.fillStyle = raisedHi; cx.fillRect(px, py + P - band, P, band);
+    cx.fillStyle = roseC; cx.fillRect(px, py + P - band, P, Math.max(2, P * 0.006));
+    var m = P * 0.05, ts = P * 0.085;
+    label(cx, 'BU PROTO', px + m, py + P - band + band * 0.62, ts, frost, ts * 0.12);
+    label(cx, 'BUILDERS AT TROV', px + m, py + P - band + band * 0.62 + ts * 0.52, ts * 0.36, roseC, ts * 0.1);
+    label(cx, '01', px + m, py + m + ts * 0.4, ts * 0.42, frost, ts * 0.1);
+    cx.strokeStyle = frost; cx.globalAlpha = 0.55; cx.lineWidth = 1; cx.strokeRect(px + P * 0.02, py + P * 0.02, P * 0.96, P * 0.96 - band); cx.globalAlpha = 1;
+
+    /* sticker: circular die-cut, frost border, rotated, overlapping the poster corner */
+    var D = P * 0.5, bw = D * 0.045;
+    var sc = field(D, Math.max(5, Math.round(D / 70)), t + 3.1);
+    var scx = px + P + D * 0.02 - P * 0.04, scy = py + P * 0.72;
+    if (scx + D / 2 > W - 12) scx = W - 12 - D / 2;
+    cx.save(); cx.translate(scx, scy); cx.rotate(-0.13);
+    cx.shadowColor = 'rgba(0,0,0,0.5)'; cx.shadowBlur = D * 0.06; cx.shadowOffsetY = D * 0.025;
+    cx.fillStyle = frost; cx.beginPath(); cx.arc(0, 0, D / 2, 0, 6.2832); cx.fill();
+    cx.shadowColor = 'transparent';
+    var r = D / 2 - bw;
+    cx.save(); cx.beginPath(); cx.arc(0, 0, r, 0, 6.2832); cx.clip();
+    cx.drawImage(sc, -D / 2, -D / 2, D, D);
+    cx.fillStyle = raisedHi; cx.fillRect(-r, r * 0.52, 2 * r, r);
+    cx.fillStyle = roseC; cx.fillRect(-r, r * 0.52, 2 * r, Math.max(2, D * 0.008));
+    var s1 = D * 0.092, w1 = measure(cx, 'BU PROTO', s1, s1 * 0.12);
+    label(cx, 'BU PROTO', -w1 / 2, r * 0.52 + (r * 0.48) * 0.62, s1, frost, s1 * 0.12);
+    cx.restore();
+    cx.strokeStyle = LADDER[3]; cx.globalAlpha = 0.5; cx.lineWidth = 1; cx.beginPath(); cx.arc(0, 0, r, 0, 6.2832); cx.stroke(); cx.globalAlpha = 1;
+    cx.restore();
+  }
+
+  function resize() { dpr = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  var last = 0;
+  function loop(tm) { if (tm - last > 100) { last = tm; draw(tm); } requestAnimationFrame(loop); }
+  buildAtlas(); resize();
+  addEventListener('resize', function () { resize(); draw(performance.now()); });
+  if (still) draw(0); else requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

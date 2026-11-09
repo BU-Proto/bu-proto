@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>r1/14 gill arc</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#061a2e;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%;display:block}</style>
+</head><body><canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Tight crop on the gills and rim. Shape = edge field + orientation, tone = luminance, hue = a separate
+   OKLCH arc travelling across space (its own field, not the photo's colour). Pink-weighted. */
+(function(){'use strict';
+var Pal=LabPalette,S=LabSubjects,cv=document.getElementById('c');
+var gl=cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true});
+if(!gl){document.body.style.background='#0b2a46';return;}
+var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var GW=16,GH=32,RAMP=' .,:;-+=xo*#%@'.split(''),EDGE=['-','/','|','\\','+','x'];
+var ac=document.createElement('canvas'),ax=ac.getContext('2d',{willReadFrequently:true});
+function paint(ch,i,row){ax.fillStyle='#fff';ax.font='bold 26px ui-monospace,Menlo,monospace';ax.textAlign='center';ax.textBaseline='middle';ax.fillText(ch,i*GW+GW/2,row*GH+GH/2+1);}
+ac.width=16*GW;ac.height=2*GH;
+var meas=RAMP.map(function(ch){ax.clearRect(0,0,ac.width,ac.height);paint(ch,0,0);var d=ax.getImageData(0,0,GW,GH).data,s=0;for(var i=3;i<d.length;i+=4)s+=d[i];return{ch:ch,s:s};});
+meas.sort(function(a,b){return a.s-b.s;});
+ax.clearRect(0,0,ac.width,ac.height);
+meas.forEach(function(m,i){paint(m.ch,i,0);});
+EDGE.forEach(function(ch,i){paint(ch,i,1);});
+var NR=meas.length,lut=Pal.lut(256);
+/* subject: one fill, big, then cropped by the shader */
+var BW=1000,BH=625,buf=S.create(BW,BH,1);S.fill('mushroom',buf,6);
+var sub=S.toRGBA(buf);
+var vs='#version 300 es\nvoid main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;gl_Position=vec4(p*2.-1.,0,1);}';
+var fs='#version 300 es\nprecision highp float;out vec4 o;uniform vec2 R,CELL;uniform float T;uniform sampler2D atlas,ramp,subj;const int NR='+NR+';\n'+
+'const vec3 H=vec3(.024,.102,.18),F=vec3(.965,.984,1.),LG=vec3(.247,.722,.816);\n'+
+'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n'+
+'float bayer(vec2 c){c=mod(c,4.);float a=mod(c.x,2.),b=mod(c.y,2.),x=floor(c.x/2.),y=floor(c.y/2.);float m=(a*2.+b*3.-a*b*4.)*4.;float k=(x*2.+y*3.-x*y*4.);return (m+k)/16.+.03;}\n'+
+'vec4 S(vec2 w){return texture(subj,vec2((w.x+1.6)/3.2,1.-(w.y+1.)/2.));}\n'+
+'void main(){\n'+
+' vec2 px=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y);\n'+
+' vec2 cell=floor(px/CELL),inC=px-cell*CELL;\n'+
+' vec2 cc=(cell+.5)*CELL;float asp=R.x/R.y;\n'+
+' vec2 q=(cc/R-.5);\n'+
+' float wh=.42;vec2 ctr=vec2(.4,.02);\n'+
+' vec2 w=ctr+vec2(q.x*asp,-q.y)*wh;\n'+
+' vec2 step_=CELL/R*vec2(asp,1.)*wh;\n'+
+' vec4 s=S(w);float L=clamp(pow(s.r,.8)*1.12,0.,1.),hint=s.g,E=s.b,M=s.a;\n'+
+' float lx=S(w+vec2(step_.x,0.)).r-S(w-vec2(step_.x,0.)).r,ly=S(w+vec2(0.,step_.y)).r-S(w-vec2(0.,step_.y)).r;\n'+
+' float ed=clamp(max(E,length(vec2(lx,ly))*2.2),0.,1.);\n'+
+/* hue arc: a diagonal wave plus slow warp, drifting; independent of the picture's colour */
+' vec2 p=vec2(q.x*asp,q.y);\n'+
+' float ph=dot(p,vec2(.82,.57))*2.1+T*.09+1.1*sin(p.y*2.3-T*.06)+.7*sin(p.x*1.7+T*.045)+(L-.5)*.9;\n'+
+' float a=.5+.5*sin(ph);\n'+
+' float pos=.04+.94*pow(a,.9);\n'+
+' pos=min(1.,pos+.16*smoothstep(.72,1.,L));\n'+
+' vec3 hue=texture(ramp,vec2(pos,.5)).rgb;\n'+
+' float rim=smoothstep(.55,.9,ed)*smoothstep(.4,.7,L)*step(hint,.24);\n'+
+' float band=bayer(cell);\n'+
+' float tone=clamp(L,0.,1.);\n'+
+' vec3 under=mix(H,hue,.1+.3*tone);under=mix(under,H,.35*(1.-M));\n'+
+' float cov=clamp(tone*.85+ed*.2+(band-.5)*.14,0.,1.);\n'+
+' float polar=smoothstep(.3,.12,tone);\n'+  /* shadow: dark ticks, sparse */
+' cov=mix(cov,.18+.3*h21(cell*1.7),polar*.0);\n'+
+' float ri=floor(clamp(cov,0.,.999)*float(NR));\n'+
+' bool isEdge=ed>.3&&tone>.12;\n'+
+' float ang=atan(ly,lx);float u=mod(ang+6.28318,3.14159)/3.14159;\n'+
+' float ei=u<.125||u>.875?2.:u<.375?3.:u<.625?0.:1.;\n'+
+' ei=(ei==4.)?4.:ei;\n'+
+' if(ed>.8&&tone>.5&&h21(cell)>.55)ei=h21(cell+3.)>.5?4.:5.;\n'+
+' vec2 gp=inC/CELL;vec2 uvg=isEdge?(vec2(ei,1.)+gp)*vec2(16.,32.)/vec2(256.,64.):(vec2(ri,0.)+gp)*vec2(16.,32.)/vec2(256.,64.);\n'+
+' float m=texture(atlas,uvg).r;\n'+
+' vec3 col=under;\n'+
+' vec3 ink=hue;\n'+
+' ink=mix(ink,F,.18+.5*smoothstep(.62,1.,tone));\n'+
+/* shadows: harbor ticks over the tinted under-colour */
+' vec3 dark=mix(H,hue,.18);\n'+
+' if(tone<.3){col=mix(under,hue*.55+H*.45,.5*smoothstep(.0,.3,tone));col=mix(col,dark,m*polar*.9);}\n'+
+' else col=mix(under,ink,m*(.65+.35*smoothstep(.3,.7,tone)));\n'+
+' col=mix(col,mix(LG,F,.25),rim*m*.85);\n'+
+/* blow-out: solid frost blocks on the brightest cells, harbor mark knocked out */
+' float blow=step(.97,tone+ed*.06)*step(.35,h21(cell+7.));\n'+
+' if(blow>.5){col=mix(F,hue,.12);col=mix(col,H,m*.18);}\n'+
+/* outside the subject: sparse dashes of the arc dissolving to ground */
+' float dash=step(.9,h21(cell+floor(T*.4)*.07))*step(mod(cell.y,2.),.5)*(1.-M);\n'+
+' col=mix(col,hue*.8,dash*m*.6);\n'+
+' o=vec4(col,1.);}';
+function sh(t,s){var x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x;}
+var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+function tex(u,w,h,src,fmt,filter){var x=gl.createTexture();gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,x);
+ if(fmt==='c')gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,src);else gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,src);
+ [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER].forEach(function(k){gl.texParameteri(gl.TEXTURE_2D,k,filter);});
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+tex(0,0,0,ac,'c',gl.LINEAR);tex(1,256,1,lut,'r',gl.LINEAR);tex(2,BW,BH,sub,'r',gl.LINEAR);
+['atlas','ramp','subj'].forEach(function(n,i){gl.uniform1i(gl.getUniformLocation(pr,n),i);});
+var uR=gl.getUniformLocation(pr,'R'),uC=gl.getUniformLocation(pr,'CELL'),uT=gl.getUniformLocation(pr,'T');
+function size(){var d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);
+ var ch=Math.max(14,Math.round(cv.height/d/46))*d;ch=Math.round(ch);var cw=Math.round(ch*.5);
+ gl.viewport(0,0,cv.width,cv.height);gl.uniform2f(uR,cv.width,cv.height);gl.uniform2f(uC,cw,ch);}
+function draw(t){gl.uniform1f(uT,t);gl.drawArrays(gl.TRIANGLES,0,3);}
+addEventListener('resize',function(){size();if(still)draw(30);});
+size();
+if(still){draw(30);return;}
+(function loop(ms){draw(30+ms/1000);requestAnimationFrame(loop);})(0);
+})();
+</script></body></html>

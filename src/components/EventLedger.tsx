@@ -95,19 +95,30 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
         scrolled()
         if (still) field.frame(performance.now())
       }
-      // The cursor's own wake is off here: the site-wide ASCII trail (see Layout) is the drag now.
+      const onMove = (event: PointerEvent) => {
+        if (still || event.pointerType === 'touch' || !state.onScreen) return
+        const rect = surface.getBoundingClientRect()
+        field.point(event.clientX - rect.left, event.clientY - rect.top)
+      }
+      const onOut = (event: PointerEvent) => {
+        if (!event.relatedTarget) field.point(null, 0)
+      }
       const onVisibility = () => {
         state.visible = !document.hidden
         if (state.visible) start()
         else stop()
       }
       window.addEventListener('scroll', onScroll, { passive: true })
+      window.addEventListener('pointermove', onMove, { capture: true, passive: true })
+      window.addEventListener('pointerout', onOut, { passive: true })
       document.addEventListener('visibilitychange', onVisibility)
       cleanup.run = () => {
         stop()
         sizes.disconnect()
         screen.disconnect()
         window.removeEventListener('scroll', onScroll)
+        window.removeEventListener('pointermove', onMove, { capture: true })
+        window.removeEventListener('pointerout', onOut)
         document.removeEventListener('visibilitychange', onVisibility)
         field.destroy()
       }

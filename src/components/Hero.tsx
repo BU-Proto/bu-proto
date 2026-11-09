@@ -1,30 +1,25 @@
-import { Link } from 'react-router'
+import { useRef } from 'react'
 import { HERO_COPY } from '../content/home'
-import { HeroBloom } from './HeroBloom'
-import ui from './ui.module.css'
+import { HeroRings } from './HeroRings'
+import { HeroSeam } from './HeroSeam'
 import styles from './Hero.module.css'
 
 /**
- * The home hero: the old bloom burning on the dark ground, turning to blocks in its own light, with
- * what Proto is and the way in set in a centred column low on the screen.
+ * The home hero: rings of block-shade type in the bloom's colours filling the screen, turning round
+ * Proto's title at its centre, where the rings make room for it. The way in is Join in the top bar.
+ * Below the hero's foot the light breaks off into the page along a seam of text cells.
  */
 export function Hero() {
-  const { headline, lede, primaryCta } = HERO_COPY
+  const { headline } = HERO_COPY
+  const hero = useRef<HTMLElement>(null)
 
   return (
-    <section className={styles.hero}>
-      <HeroBloom />
-      <div className={styles.copy}>
-        <h1 className={styles.headline} data-fog-clear>
-          {headline}
-        </h1>
-        <p className={styles.lede} data-fog-clear>
-          {lede}
-        </p>
-        <Link className={`${ui.primary} ${styles.join}`} to={primaryCta.href}>
-          {primaryCta.label}
-        </Link>
-      </div>
+    <section ref={hero} className={styles.hero}>
+      <HeroRings hero={hero} />
+      <HeroSeam hero={hero} />
+      <h1 className={styles.headline} data-fog-clear data-ring-clear>
+        {headline}
+      </h1>
     </section>
   )
 }

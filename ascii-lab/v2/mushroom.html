@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luminous Mushroom</title>
+<style>
+  :root { --ground: #061a2e; --ink: #f6fbff; --focus: #9df0a8; }
+  html, body { margin: 0; height: 100%; background: var(--ground); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  button { position: fixed; right: max(14px, env(safe-area-inset-right, 0px)); bottom: 14px; z-index: 2; padding: 8px 12px;
+    border: 1px solid rgb(246 251 255 / .4); border-radius: 6px; background: rgb(6 26 46 / .72); color: var(--ink);
+    font: 500 12px/1 ui-monospace, Menlo, monospace; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="A luminous mushroom seen from below, drawn in soft light with a layer of glyphs over it" role="img"></canvas>
+<button id="ground" type="button">Harbor ground</button>
+<script>
+/* A luminous mushroom, original and fully procedural. Two passes:
+   1. The picture: a soft 2D shading of cap, gills, stem and light, at low resolution and a slow rate. It stays visible.
+   2. The glyphs: every pixel finds its cell, reads the picture at the cell's centre, and draws one mark from line
+      segments in the shader. Dark cells get faint ticks, mid tones slashes and crosses, highlights diamonds and solid
+      blocks. Ink colour is the picture's own colour lifted toward frost, so glyph and light are one material. */
+(function () {
+  'use strict';
+  var cv = document.getElementById('c'), btn = document.getElementById('ground');
+  var gl = cv.getContext('webgl2', { antialias: false, alpha: false, powerPreference: 'low-power' });
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function fallback() { document.body.style.background = 'radial-gradient(90% 80% at 55% 45%, #7a2f62, #5b4fa8 45%, #f8c9a0 78%)'; cv.remove(); btn.remove(); }
+  if (!gl) { fallback(); return; }
+
+  var VS = '#version 300 es\nout vec2 vUv; void main(){ vec2 p = vec2((gl_VertexID<<1)&2, gl_VertexID&2); vUv = p; gl_Position = vec4(p*2.-1., 0., 1.); }';
+
+  var SCENE = `#version 300 es
+  precision highp float;
+  in vec2 vUv; out vec4 o;
+  uniform float uT, uAspect, uHarbor; uniform vec2 uLight;
+  const vec3 HARBOR=vec3(.024,.102,.180), RAISED=vec3(.071,.227,.361), FROST=vec3(.965,.984,1.),
+    LAGOON=vec3(.247,.722,.816), SKY=vec3(.486,.780,.957), IRIS=vec3(.714,.667,1.), DEEP=vec3(.478,.431,.878),
+    ROSE=vec3(.957,.635,.753), RASP=vec3(.761,.251,.478), PEACH=vec3(.973,.573,.541), GOLD=vec3(1.,.827,.541);
+  float h21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+  float vn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+    return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y); }
+  float fbm(vec2 p){ float v=0.,a=.5; for(int i=0;i<4;i++){ v+=a*vn(p); p=p*2.03+vec2(7.1,3.7); a*=.5; } return v/.9375; }
+  float seg(vec2 p,vec2 a,vec2 b,out float h){ vec2 pa=p-a,ba=b-a; h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.); return length(pa-ba*h); }
+  float smax(float a,float b,float k){ float h=max(k-abs(a-b),0.)/k; return max(a,b)+h*h*k*.25; }
+  vec3 over(vec3 a,vec3 b,float t){ return mix(a,b,clamp(t,0.,1.)); }
+
+  vec3 ground(vec2 p,float t){
+    float n=fbm(p*.75+vec2(t*.012,-t*.009));
+    if(uHarbor>.5){
+      vec3 g=mix(HARBOR,RAISED,smoothstep(.25,.85,n)*.8);
+      g=over(g,RASP*.5,exp(-dot(p-vec2(1.1,-.75),p-vec2(1.1,-.75))*.8)*.65);
+      g=over(g,DEEP*.42,exp(-dot(p-vec2(1.1,.8),p-vec2(1.1,.8))*.9)*.6);
+      return g;
+    }
+    vec3 cream=mix(mix(FROST,GOLD,.3),PEACH,.12), peach=mix(mix(PEACH,GOLD,.46),FROST,.3), dusk=mix(ROSE,RASP,.34)*.86;
+    vec3 g=mix(peach,cream,smoothstep(-.7,1.1,p.x*.5+p.y*.85+(n-.5)*.7));
+    g=over(g,dusk,smoothstep(.95,2.1,p.x*.72-p.y*.8)*.88);
+    g=over(g,mix(FROST,GOLD,.12),exp(-dot(p-vec2(1.05,.72),p-vec2(1.05,.72))*2.4)*.55);
+    g=over(g,mix(GOLD,PEACH,.45)*.92,exp(-dot(p-vec2(-.55,-.8),p-vec2(-.55,-.8))*2.6)*.62);
+    return g;
+  }
+
+  void main(){
+    vec2 p=(vUv*2.-1.)*vec2(uAspect,1.); float t=uT;
+    p*=min(3.4,max(1.,1.5/uAspect));
+    p+=.006*vec2(sin(p.y*1.7+t*.21),sin(p.x*1.4+t*.17));
+    vec3 col=ground(p,t); float rimFlag=0.;
+
+    /* out-of-focus points of light low in the frame */
+    for(int i=0;i<18;i++){
+      float fi=float(i), s=h21(vec2(fi,3.1));
+      vec2 c=vec2(-1.1+h21(vec2(fi,9.))*1.25,-1.02+h21(vec2(fi,5.))*.72)+.01*vec2(sin(t*.3+fi),cos(t*.23+fi*2.));
+      float r=.02+.05*s;
+      col=over(col,mix(GOLD,FROST,.3+.4*s),smoothstep(r,r*.3,length(p-c))*(.3+.5*s)*(uHarbor>.5?.5:1.));
+    }
+
+    /* the bank, dark and far out of focus */
+    float bd=length((p-vec2(-1.78,-1.08))*vec2(1.,.96))-.97+.16*(fbm(p*2.4)-.5);
+    float ba=smoothstep(.2,-.1,bd);
+    if(ba>0.){
+      float mo=fbm(p*3.2+2.);
+      vec3 mc=mix(HARBOR*.3,DEEP*.34+RASP*.2,smoothstep(.4,.62,mo));
+      mc=over(mc,HARBOR*.22,smoothstep(.48,.72,fbm(p*2.6+3.))*.8);
+      mc=over(mc,PEACH*.45,smoothstep(.66,.8,fbm(p*5.+9.))*.55*smoothstep(-.25,.05,bd));
+      col=over(col,mc,ba);
+    }
+
+    const vec2 C=vec2(-.075,.095), D=vec2(.914,-.406), N=vec2(.406,.914), HUB=vec2(-.47,.05);
+    vec2 r=p-C; float u=dot(r,D), v=dot(r,N);
+    float ang=atan(v,u);
+    float lobe=1.+.014*sin(ang*4.+1.2)+.009*sin(ang*9.+t*.04);
+    float cs=(length(vec2(u/1.44,v/.67))/lobe-1.)*.67;
+    float bh; float bite=seg(p,vec2(-1.62,-.05),vec2(-.6,-.7),bh)-.6;
+    float sd=smax(cs,-bite,.14);
+
+    /* the stem sits behind the cap, and dissolves into the gills at the hub */
+    float s1,s2; vec2 SM=vec2(-.93,-.07), SE=vec2(-1.75,-.3);
+    float d1=seg(p,HUB,SM,s1), d2=seg(p,SM,SE,s2);
+    float s=d1<d2?s1*.5:.5+s2*.5, d=min(d1,d2);
+    float w=.135+.26*exp(-s*5.5);
+    float stem=smoothstep(w+.05,w-.07,d);
+
+    float cap=smoothstep(.016,-.016,sd);
+    /* a pale halo of scattered light just outside the edge */
+    float hal=exp(-max(sd,0.)/.07)*(1.-cap);
+    col=over(col,mix(FROST,mix(SKY,IRIS,.4),.35),hal*.62);
+
+    if(stem>0.){
+      vec2 dir=normalize(SE-HUB), nor=vec2(-dir.y,dir.x);
+      float side=dot(p-mix(HUB,SE,s),nor)/max(w,.01);
+      vec3 sc=mix(RASP*.4+DEEP*.08,RASP*.32+DEEP*.44,smoothstep(.1,.8,s));
+      sc=mix(sc,mix(IRIS,DEEP,.5),smoothstep(.55,1.,abs(side))*.75);
+      sc=over(sc,mix(ROSE,FROST,.35),smoothstep(.8,1.12,side)*.75);
+      sc=over(sc,mix(FROST,ROSE,.3),smoothstep(-.8,-1.12,side)*.6);
+      sc*=.9+.2*fbm(vec2(s*9.,side*2.));
+      col=over(col,sc,stem);
+    }
+
+    if(cap>0.){
+      vec2 hv=p-HUB; float hu=dot(hv,D), hw=dot(hv,N);
+      float rr=length(vec2(hu/1.75,hw/.86));
+      float th=atan(hw,hu*.62)+.22*rr*sin(rr*2.1+.6);
+      float wob=fbm(vec2(th*1.7,rr*1.8)+t*.008);
+      float rib=.5+.5*sin(th*30.+wob*5.5);
+      float fine=.5+.5*sin(th*71.+wob*7.);
+      float ribs=pow(rib,1.4)*.68+fine*.32;
+      float edge=smoothstep(-.2,-.015,sd);
+      float lit=smoothstep(-.95,.75,hu*.5-hw*.95);
+      float x=.06+smoothstep(.1,1.,rr)*.34+lit*.32+(ribs-.5)*.34*smoothstep(.1,.42,rr);
+      vec3 gc=mix(RASP*.3+DEEP*.05,RASP*.56+DEEP*.07,smoothstep(.12,.42,x));
+      gc=mix(gc,mix(RASP,DEEP,.32)*.84,smoothstep(.38,.62,x));
+      gc=mix(gc,mix(ROSE,IRIS,.42),smoothstep(.56,.82,x));
+      gc=mix(gc,mix(RASP,ROSE,.55)*.95+(ribs-.5)*.12,smoothstep(-.46,-.2,sd)*.82);
+      gc=mix(gc,mix(ROSE,IRIS,.34),smoothstep(-.28,-.12,sd)*.86);
+      gc=mix(gc,mix(ROSE,FROST,.62),edge*.9);
+      gc=mix(gc,mix(FROST,GOLD,.16),smoothstep(-.14,-.02,sd)*smoothstep(.1,.55,lit));
+
+      /* the outer skin, narrow and mottled, above the line */
+      float k=clamp(u/1.44,-1.,1.);
+      float vs=.385*(1.-k*k)+.012*sin(u*2.7+t*.08);
+      float above=smoothstep(-.012,.012,v-vs);
+      float mott=fbm(vec2(u*2.3+5.,v*5.)+vec2(t*.008,0.));
+      vec3 tc=mix(RASP*.32+DEEP*.42,DEEP*.98,smoothstep(.32,.68,mott));
+      tc=mix(tc,mix(IRIS,ROSE,.22),smoothstep(.56,.84,mott)*.75);
+      tc=mix(tc,mix(FROST,IRIS,.5),smoothstep(-.15,-.03,sd)*.9);
+      gc*=1.-.42*exp(-pow((v-vs)/.11,2.))*(1.-above);
+      vec3 cc=mix(gc,tc,above);
+
+      float line=exp(-pow((v-vs)/.013,2.))*smoothstep(1.,.74,abs(k));
+      float mod_=smoothstep(.3,.68,vn(vec2(u*3.+t*.04,1.7)));
+      vec3 cyan=mix(LAGOON,SKY,.5)+.16;
+      cc=over(cc,cyan,line*mod_*.8);
+      col=over(col,cc,cap);
+
+      /* the lit margin: cyan inside, frost at the very edge */
+      float band=exp(-pow((sd+.03)/.017,2.))*cap;
+      float pick=smoothstep(.3,.62,fbm(vec2(ang*2.2,1.)));
+      col=over(col,cyan,band*pick*.72);
+      col=over(col,mix(FROST,IRIS,.12),exp(-pow((sd+.008)/.014,2.))*cap*.9);
+      rimFlag=max(line*mod_,band*pick);
+    }
+
+    float pl=exp(-dot(p-uLight,p-uLight)*3.4);
+    col+=mix(ROSE,FROST,.45)*pl*.14;
+    o=vec4(clamp(col,0.,.96),rimFlag);
+  }
+`;
+
+  var GLYPH = `#version 300 es
+  precision highp float;
+  in vec2 vUv; out vec4 o;
+  uniform sampler2D uPic; uniform vec2 uRes; uniform float uCell, uT, uHarbor;
+  const vec3 FROST=vec3(.965,.984,1.), SKY=vec3(.486,.780,.957), LAGOON=vec3(.247,.722,.816), CREAM=vec3(1.,.965,.875);
+  float h(vec2 p){ p=fract(p*vec2(233.34,851.73)); p+=dot(p,p+23.45); return fract(p.x*p.y); }
+  float vn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+    return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+  float lum(vec3 c){ return dot(c,vec3(.2126,.7152,.0722)); }
+  float line(vec2 p,vec2 a,vec2 b,float w,float px){ vec2 pa=p-a,ba=b-a; float k=clamp(dot(pa,ba)/dot(ba,ba),0.,1.); return 1.-smoothstep(w-px,w+px,length(pa-ba*k)); }
+  float diamond(vec2 p,float r,float px){ return 1.-smoothstep(r-px,r+px,abs(p.x)+abs(p.y)); }
+  /* the alphabet, drawn with segments in a -.5 to .5 cell */
+  float glyph(int k,vec2 q,float px){
+    float w=.075;
+    if(k==1) return line(q,vec2(0,-.34),vec2(0,.34),w*.8,px);
+    if(k==2) return line(q,vec2(-.32,-.5),vec2(.32,.5),w,px);
+    if(k==3) return max(line(q,vec2(-.5,-.5),vec2(.06,.5),w,px),line(q,vec2(-.06,-.5),vec2(.5,.5),w,px));
+    if(k==4) return max(line(q,vec2(0,-.44),vec2(0,.44),w*1.3,px),line(q,vec2(-.44,0),vec2(.44,0),w*1.3,px));
+    if(k==5) return max(line(q,vec2(0,-.5),vec2(0,.5),w*1.4,px),line(q,vec2(-.34,.16),vec2(.34,.16),w*1.4,px));
+    if(k==6) return diamond(q,.36,px)-diamond(q,.2,px);
+    if(k==7) return diamond(q,.34,px);
+    if(k==8) return 1.-smoothstep(.1-px,.1+px,length(q));
+    if(k==9) return max(line(q,vec2(-.2,-.5),vec2(-.2,.5),w,px),line(q,vec2(.2,-.5),vec2(.2,.5),w,px));
+    if(k==10) return 1.-smoothstep(.44-px,.44+px,max(abs(q.x),abs(q.y)));
+    if(k==11) return 1.-smoothstep(.2-px,.2+px,abs(q.x));
+    return 0.;
+  }
+  void main(){
+    vec2 px=vec2(vUv.x,1.-vUv.y)*uRes;
+    vec2 id=floor(px/uCell), f=fract(px/uCell)-.5;
+    vec2 cuv=(id+.5)*uCell/uRes; cuv.y=1.-cuv.y;
+    vec4 cs=texture(uPic,cuv);
+    vec3 base=textureLod(uPic,vUv,.8).rgb;
+    /* a fine tile inside each cell puts the picture on the same grid as the type */
+    vec2 sub=(floor(px/(uCell/4.))+.5)*(uCell/4.)/uRes; sub.y=1.-sub.y;
+    base=mix(base,texture(uPic,sub).rgb,.42);
+    float L=lum(cs.rgb), rim=cs.a;
+    /* marks run in columns, which gives the vertical grain */
+    float run=floor((id.y+h(vec2(id.x,4.))*9.)/(2.+floor(h(vec2(id.x,7.))*5.)));
+    float n=h(vec2(id.x,run)), n2=h(id+.5);
+    if(L<.42) n=n2;
+    float cl=vn(id*.13+vec2(uT*.03,0.))*.65+vn(id*.41+7.)*.35;
+    float tw=fract(n2*7.+uT*.1*(.4+n));
+    int k=0; float a=1.; vec3 ink=FROST;
+    vec3 lift=mix(cs.rgb*1.3+.08,FROST,smoothstep(.62,.95,L));
+    if(rim>.3){
+      ink=mix(LAGOON,SKY,.55)+.2; k=n2>.5?7:(n2>.25?4:(n2>.1?2:6)); a=.9;
+      if(rim>.72&&n2>.86){ ink=FROST; k=11; }
+    } else if(L<.26){
+      ink=cs.rgb*(uHarbor>.5?1.9:.3)+.01;
+      k=n>.72?1:(n>.6?8:0); a=.62;
+    } else if(L<.42){
+      ink=uHarbor>.5?lift:cs.rgb*.5;
+      k=n>.76?1:(n>.68?6:(n>.6?2:0)); a=.6;
+    } else if(L<.58){
+      ink=mix(cs.rgb*1.5+.05,FROST,.12);
+      k=n>.76?7:(n>.66?2:(n>.58?4:(n>.5?6:0))); a=.8;
+    } else if(L<.72){
+      ink=lift;
+      k=n>.7?2:(n>.48?7:(n>.3?5:(n>.16?6:0))); a=.86;
+      if(cl>.62&&n2>.84){ k=11; ink=FROST; a=.95; }
+    } else {
+      /* the bright pass: two inks, one above the tone and one below */
+      bool dusk=n2<.5&&L<.9;
+      ink=dusk?mix(cs.rgb,vec3(.58,.3,.28),.55):mix(CREAM,FROST,.6);
+      k=n>.68?3:(n>.42?5:(n>.26?2:(n>.12?7:4))); a=dusk?.78:.96;
+      if(cl>.56&&n2>.72){ k=n2>.92?10:11; ink=FROST; a=1.; }
+    }
+    if(tw>.97&&L>.4){ k=n2>.5?7:5; ink=FROST; a=1.; }
+    float pxs=1.05/uCell;
+    float g=clamp(glyph(k,f,pxs),0.,1.);
+    vec3 col=mix(base,ink,g*a);
+    /* a little light spills from the rim into the picture around it */
+    col+=textureLod(uPic,vUv,3.).a*vec3(.2,.4,.45)*.5;
+    vec2 e=abs(vUv-.5)*2.; col*=1.-.32*smoothstep(.97,1.,max(e.x,e.y));
+    o=vec4(col,1.);
+  }
+`;
+
+  function sh(t, s) { var x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x);
+    if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; }
+  function pr(fs) { var p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); return p; }
+  var scene, glyphs;
+  try { scene = pr(SCENE); glyphs = pr(GLYPH); } catch (e) { fallback(); return; }
+  function u(p, names) { var o = {}; names.forEach(function (n) { o[n] = gl.getUniformLocation(p, n); }); return o; }
+  var US = u(scene, ['uT', 'uAspect', 'uHarbor', 'uLight']), UG = u(glyphs, ['uPic', 'uRes', 'uCell', 'uT', 'uHarbor']);
+  gl.bindVertexArray(gl.createVertexArray());
+
+  var tex = gl.createTexture(), fbo = gl.createFramebuffer(), PW = 0, PH = 0;
+  var W, H, dpr, cell, harbor = location.hash === '#harbor' ? 1 : 0, light = [9, 9], target = [9, 9];
+  function size() {
+    dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    W = cv.width = Math.round(innerWidth * dpr); H = cv.height = Math.round(innerHeight * dpr);
+    cell = Math.max(6, Math.round(Math.max(W, H) / 150));
+    var s = Math.min(1, 1100 / Math.max(W, H));
+    PW = Math.round(W * s); PH = Math.round(H * s);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, PW, PH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  }
+  function drawScene(t) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.viewport(0, 0, PW, PH); gl.useProgram(scene);
+    gl.uniform1f(US.uT, t); gl.uniform1f(US.uAspect, W / H); gl.uniform1f(US.uHarbor, harbor); gl.uniform2fv(US.uLight, light);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindTexture(gl.TEXTURE_2D, tex); gl.generateMipmap(gl.TEXTURE_2D);
+  }
+  function drawGlyphs(t) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H); gl.useProgram(glyphs);
+    gl.uniform1i(UG.uPic, 0); gl.uniform2f(UG.uRes, W, H); gl.uniform1f(UG.uCell, cell); gl.uniform1f(UG.uT, t); gl.uniform1f(UG.uHarbor, harbor);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  var last = 0, start = performance.now(), STILL_T = 7;
+  function once() { drawScene(STILL_T); drawGlyphs(STILL_T); }
+  function loop(now) {
+    requestAnimationFrame(loop);
+    var t = (now - start) / 1000 + STILL_T;
+    light[0] += (target[0] - light[0]) * .05; light[1] += (target[1] - light[1]) * .05;
+    if (now - last > 66) { last = now; drawScene(t); }
+    drawGlyphs(t);
+  }
+  function label() { btn.textContent = harbor ? 'Dawn ground' : 'Harbor ground'; }
+  btn.addEventListener('click', function () { harbor = 1 - harbor; label(); if (reduce) once(); });
+  addEventListener('resize', function () { size(); if (reduce) once(); });
+  addEventListener('pointermove', function (e) {
+    var a = innerWidth / innerHeight;
+    target = [(e.clientX / innerWidth * 2 - 1) * a, 1 - e.clientY / innerHeight * 2];
+    if (light[0] > 8) light = target.slice();
+  }, { passive: true });
+  label(); size();
+  if (reduce) once(); else requestAnimationFrame(loop);
+  window.__still = once;
+})();
+</script>
+</body>
+</html>

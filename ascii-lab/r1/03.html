@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>r1/03 tides</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#061a2e;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%;display:block}</style>
+</head><body><canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+(function(){'use strict';
+var Pal=LabPalette,cv=document.getElementById('c');
+var gl=cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true});
+if(!gl){document.body.style.background='#0b2a46';return;}
+var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* glyph atlas: row0 density ramp ordered by measured coverage, row1 edge glyphs */
+var GW=16,GH=32,RAMP=' .,:;-+=xo*#%@'.split(''),EDGE=['-','/','|','\\','+','x'];
+var ac=document.createElement('canvas'),ax=ac.getContext('2d',{willReadFrequently:true});
+function paint(ch,i,row){ax.fillStyle='#fff';ax.font='bold 26px ui-monospace,Menlo,monospace';ax.textAlign='center';ax.textBaseline='middle';ax.fillText(ch,i*GW+GW/2,row*GH+GH/2+1);}
+ac.width=16*GW;ac.height=2*GH;
+var meas=RAMP.map(function(ch){ax.clearRect(0,0,ac.width,ac.height);paint(ch,0,0);var d=ax.getImageData(0,0,GW,GH).data,s=0;for(var i=3;i<d.length;i+=4)s+=d[i];return{ch:ch,s:s};});
+meas.sort(function(a,b){return a.s-b.s;});
+ax.clearRect(0,0,ac.width,ac.height);
+meas.forEach(function(m,i){paint(m.ch,i,0);});
+EDGE.forEach(function(ch,i){paint(ch,i,1);});
+var NR=meas.length;
+/* arc LUT */
+var lut=Pal.lut(256);
+var vs='#version 300 es\nvoid main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;gl_Position=vec4(p*2.-1.,0,1);}';
+var fs='#version 300 es\nprecision highp float;out vec4 o;uniform vec2 R,CELL;uniform float T;uniform sampler2D atlas,ramp;const int NR='+NR+';\n'+
+'vec3 H=vec3(.024,.102,.18),F=vec3(.965,.984,1.);\n'+
+'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n'+
+'float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+1.),f.x),f.y);}\n'+
+'float bayer(vec2 c){c=mod(c,4.);float a=mod(c.x,2.),b=mod(c.y,2.),x=floor(c.x/2.),y=floor(c.y/2.);float m=(a*2.+b*3.-a*b*4.)*4.;/*2x2*/float k=(x*2.+y*3.-x*y*4.);return (m+k)/16.+.03;}\n'+
+/* depth: 0 on the dry shore, 1 deep. Moon tide drags the whole shoreline; swell runs ahead as long crests. */
+'float field(vec2 p,float t){\n'+
+' vec2 w=vec2(vn(p*1.3+vec2(t*.05,0.)),vn(p*1.3+7.+vec2(0.,t*.04)))-.5;\n'+
+' float tide=.5+.5*sin(t*.11)*.8+.12*sin(t*.31);\n'+
+' float s=p.y*.9+.16*sin(p.x*2.2+t*.25+w.x*5.)+.10*sin(p.x*5.1-t*.4+w.y*4.)-.12*p.x;\n'+
+' float d=s+.5-tide*.9;\n'+
+' float ripple=sin(d*30.-t*1.6+w.x*6.)*.5+.5;\n'+
+' d+= .09*ripple*smoothstep(.0,.4,d)*(1.-smoothstep(.9,1.6,d));\n'+
+' return d;}\n'+
+'void main(){\n'+
+' vec2 px=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y);\n'+
+' vec2 cell=floor(px/CELL),inC=px-cell*CELL;\n'+
+' vec2 cc=(cell+.5)*CELL;float asp=R.x/R.y;\n'+
+' vec2 p=(cc/R-.5)*vec2(asp,1.)*2.;\n'+
+' float t=T;\n'+
+' vec2 e=vec2(CELL.x,0.)/R*vec2(asp,1.)*2.,f=vec2(0.,CELL.y)/R*vec2(asp,1.)*2.;\n'+
+' float d=field(p,t),dx=field(p+e,t)-field(p-e,t),dy=field(p+f,t)-field(p-f,t);\n'+
+' float ed=length(vec2(dx,dy))*2.6;\n'+
+/* tone v: shallows warm (t high), deep cool. Pink-weighted via curve. */
+' float v=1.-smoothstep(-.05,1.1,d);v=pow(v,.8);\n'+
+' float band=bayer(cell);\n'+
+' float q=floor(clamp(v,0.,.999)*6.+band-.5)/5.;q=clamp(q,0.,1.);\n'+  /* posterised, dithered between stops */
+' float dry=smoothstep(.02,-.12,d);\n'+ /* above shoreline: sand, drains into harbor */
+' vec3 under=texture(ramp,vec2(mix(.04,.97,q),.5)).rgb;\n'+
+' float lum=mix(.22,.66,smoothstep(0.,1.,v));\n'+
+' under=mix(H,under,lum*(1.-dry*.9));\n'+
+' under=mix(under,H,smoothstep(.55,1.0,d)*.55);\n'+ /* deep water sinks into harbor */
+/* glyph hue = arc reflection of what is under */
+' vec3 ink=texture(ramp,vec2(mix(.03,.98,1.-q),.5)).rgb;\n'+
+' ink=mix(ink,F,.32);\n'+
+/* glyph choice: ramp by tone, edge glyphs where gradient is steep (swash lines) */
+' float cov=clamp(v*.62+ed*.45,0.,.8);cov*=1.-dry*.93;\n'+
+' cov=clamp(cov+(band-.5)*.12,0.,1.);\n'+
+' float ri=floor(cov*float(NR)*.999);\n'+
+' bool isEdge=ed>.34&&dry<.5&&v>.05;\n'+
+' float ang=atan(dy,dx);float a=mod(ang+3.14159*2.,3.14159)/3.14159;\n'+ /* 0..1 over half turn */
+' float ei=a<.125||a>.875?2.:a<.375?3.:a<.625?0.:1.;\n'+ /* normal dir -> stroke perpendicular */
+' vec2 uvg;vec4 g;\n'+
+' vec2 gp=vec2(inC.x/CELL.x,inC.y/CELL.y);\n'+
+' if(isEdge){uvg=(vec2(ei,1.)+gp)*vec2(16.,32.)/vec2(256.,64.);}else{uvg=(vec2(ri,0.)+gp)*vec2(16.,32.)/vec2(256.,64.);}\n'+
+' float m=texture(atlas,uvg).r;\n'+
+' vec3 col=under;\n'+
+/* hottest crest: blow out to frost blocks */
+' float foam=smoothstep(.78,1.,ed*1.4+v*.35)*step(.04,d)*(1.-dry);\n'+
+' vec3 gc=mix(ink,F,foam);\n'+
+' if(foam>.7){col=mix(col,F,.85);col=mix(col,H,m*.25);}else col=mix(col,gc,m*(.7+.3*smoothstep(0.,.5,v+ed)));\n'+
+/* dry sand: sparse dashes dissolving to ground */
+' float dash=step(.88,h21(cell+floor(t*.5)*.1))*step(mod(cell.y,2.),.5);\n'+
+' col=mix(col,ink,dry*dash*m*.7);\n'+
+' o=vec4(col,1.);}';
+function sh(t,s){var x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x;}
+var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+function tex(u,w,h,src,fmt,filter){var x=gl.createTexture();gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,x);
+ if(fmt==='c')gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,src);else gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,src);
+ [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER].forEach(function(k){gl.texParameteri(gl.TEXTURE_2D,k,filter);});
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+tex(0,0,0,ac,'c',gl.LINEAR);tex(1,256,1,lut,'r',gl.LINEAR);
+['atlas','ramp'].forEach(function(n,i){gl.uniform1i(gl.getUniformLocation(pr,n),i);});
+var uR=gl.getUniformLocation(pr,'R'),uC=gl.getUniformLocation(pr,'CELL'),uT=gl.getUniformLocation(pr,'T');
+function size(){var d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);
+ var ch=Math.max(14,Math.round(cv.height/d/58))*d;ch=Math.round(ch);var cw=Math.round(ch*.5);
+ gl.viewport(0,0,cv.width,cv.height);gl.uniform2f(uR,cv.width,cv.height);gl.uniform2f(uC,cw,ch);}
+function draw(t){gl.uniform1f(uT,t);gl.drawArrays(gl.TRIANGLES,0,3);}
+addEventListener('resize',function(){size();if(still)draw(30);});
+size();
+if(still){draw(30);return;}
+(function loop(ms){draw(30+ms/1000);requestAnimationFrame(loop);})(0);
+})();
+</script></body></html>

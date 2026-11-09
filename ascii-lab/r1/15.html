@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>r1/15 tides: arc hue</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#061a2e;overflow:hidden}canvas{position:fixed;inset:0;width:100%;height:100%;display:block}</style>
+</head><body><canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script>
+(function(){'use strict';
+var Pal=LabPalette,cv=document.getElementById('c');
+var gl=cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true});
+if(!gl){document.body.style.background='#0b2a46';return;}
+var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* glyph atlas: row0 density ramp ordered by measured coverage, row1 edge glyphs */
+var GW=16,GH=32,RAMP=' .,:;-+=xo*#%@'.split(''),EDGE=['-','/','|','\\','+','x'];
+var ac=document.createElement('canvas'),ax=ac.getContext('2d',{willReadFrequently:true});
+function paint(ch,i,row){ax.fillStyle='#fff';ax.font='bold 26px ui-monospace,Menlo,monospace';ax.textAlign='center';ax.textBaseline='middle';ax.fillText(ch,i*GW+GW/2,row*GH+GH/2+1);}
+ac.width=16*GW;ac.height=2*GH;
+var meas=RAMP.map(function(ch){ax.clearRect(0,0,ac.width,ac.height);paint(ch,0,0);var d=ax.getImageData(0,0,GW,GH).data,s=0;for(var i=3;i<d.length;i+=4)s+=d[i];return{ch:ch,s:s};});
+meas.sort(function(a,b){return a.s-b.s;});
+ax.clearRect(0,0,ac.width,ac.height);
+meas.forEach(function(m,i){paint(m.ch,i,0);});
+EDGE.forEach(function(ch,i){paint(ch,i,1);});
+var NR=meas.length;
+/* arc LUT */
+var lut=Pal.lut(256);
+var vs='#version 300 es\nvoid main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;gl_Position=vec4(p*2.-1.,0,1);}';
+var fs='#version 300 es\nprecision highp float;out vec4 o;uniform vec2 R,CELL;uniform float T;uniform sampler2D atlas,ramp;const int NR='+NR+';\n'+
+'vec3 H=vec3(.024,.102,.18),RS=vec3(.043,.165,.275),F=vec3(.965,.984,1.),MINT=vec3(.616,.941,.659);\n'+
+'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n'+
+'float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+1.),f.x),f.y);}\n'+
+/* geometry: water depth. Shore on the left rises to the right; long swell crests. */
+'float depth(vec2 p,float t){\n'+
+' vec2 w=vec2(vn(p*1.2+vec2(t*.04,0.)),vn(p*1.2+7.+vec2(0.,t*.03)))-.5;\n'+
+' float tide=.5+.4*sin(t*.09)+.1*sin(t*.27);\n'+
+' float s=p.y*.8+.14*sin(p.x*2.1+t*.22+w.x*5.)+.09*sin(p.x*5.3-t*.37+w.y*4.)-.1*p.x;\n'+
+' float d=s+.45-tide*.8;\n'+
+' d+=.08*(sin(d*28.-t*1.5+w.x*6.)*.5+.5)*smoothstep(0.,.4,d)*(1.-smoothstep(.9,1.6,d));\n'+
+' return d;}\n'+
+/* colour: a SEPARATE field. A hue arc position u in 0..1 carried by two slow travelling swells, independent of the water.
+   Triangle fold so it sweeps blue>iris>rose>peach and back, never wraps. */
+'float hue(vec2 p,float t){\n'+
+' vec2 w=vec2(vn(p*.7+t*.02),vn(p*.7+3.-t*.015))-.5;\n'+
+' float ph=dot(p,vec2(.62,-.34))*1.15-t*.045+w.x*1.6+.35*sin(p.y*1.6+t*.06);\n'+
+' float tri=abs(fract(ph*.5)*2.-1.);\n'+       /* 0..1..0 */
+' return pow(tri,.78);}\n'+      /* pink-weighted: more time at the high end */
+'void main(){\n'+
+' vec2 px=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y);\n'+
+' vec2 cell=floor(px/CELL),inC=px-cell*CELL;\n'+
+' vec2 cc=(cell+.5)*CELL;float asp=R.x/R.y;\n'+
+' vec2 p=(cc/R-.5)*vec2(asp,1.)*2.;\n'+
+' float t=T;\n'+
+' vec2 e=vec2(CELL.x,0.)/R*vec2(asp,1.)*2.,f=vec2(0.,CELL.y)/R*vec2(asp,1.)*2.;\n'+
+' float d=depth(p,t),dx=depth(p+e,t)-depth(p-e,t),dy=depth(p+f,t)-depth(p-f,t);\n'+
+' float ed=length(vec2(dx,dy))*2.4;\n'+
+' float u=hue(p,t);\n'+
+' float v=pow(1.-smoothstep(-.05,1.15,d),.85);\n'+       /* shallow=dense */
+' float dry=smoothstep(.03,-.12,d);\n'+
+' float band=h21(cell*1.7)*.5+.25;\n'+
+' float cov=clamp(v*.7+ed*.5,0.,1.);cov*=1.-dry*.92;\n'+
+' cov=clamp(cov+(band-.5)*.14,0.,1.);\n'+
+' float ri=floor(cov*float(NR)*.999);\n'+
+' bool isEdge=ed>.3&&dry<.5&&v>.06;\n'+
+' float a=mod(atan(dy,dx)+6.28318,3.14159)/3.14159;\n'+
+' float ei=a<.125||a>.875?2.:a<.375?3.:a<.625?0.:1.;\n'+
+' vec2 gp=inC/CELL,uvg;\n'+
+' if(isEdge)uvg=(vec2(ei,1.)+gp)*vec2(16.,32.)/vec2(256.,64.);else uvg=(vec2(ri,0.)+gp)*vec2(16.,32.)/vec2(256.,64.);\n'+
+' float m=texture(atlas,uvg).r;\n'+
+/* the hue arc is the glyph colour; ground carries only a whisper of the same hue so the arc reads as light on water */
+' vec3 ink=texture(ramp,vec2(mix(.02,.99,u),.5)).rgb;\n'+
+' float lift=smoothstep(.35,1.,v+ed*.6);\n'+
+' ink=mix(ink,F,lift*.22);\n'+
+' vec3 col=mix(H,RS,smoothstep(.0,1.,v)*.6);\n'+
+' col=mix(col,ink*.18+H*.82,v*.5*(1.-dry));\n'+
+' float foam=smoothstep(.8,1.,ed*1.3+v*.3)*step(.04,d)*(1.-dry);\n'+
+' if(foam>.7){col=mix(col,mix(ink,F,.8),.9);col=mix(col,H,m*.3);}else col=mix(col,ink,m*(.55+.45*smoothstep(0.,.5,v+ed)));\n'+
+/* dry shore: dashes in the arc colour, sparse, dissolving */
+' float dash=step(.86,h21(cell+floor(t*.4)*.1))*step(mod(cell.y,2.),.5);\n'+
+' col=mix(col,ink,dry*dash*m*.75);\n'+
+/* mint: one live cell riding the waterline of one row */
+' float rowc=floor(R.y/CELL.y*.62);\n'+
+' if(cell.y==rowc){float mx=floor(mod(t*1.3,R.x/CELL.x));if(abs(cell.x-mx)<.5)col=mix(col,MINT,m*.9+.1*(1.-m));}\n'+
+' o=vec4(col,1.);}';
+function sh(t,s){var x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(x));return x;}
+var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+function tex(u,w,h,src,fmt,filter){var x=gl.createTexture();gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,x);
+ if(fmt==='c')gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,src);else gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,src);
+ [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER].forEach(function(k){gl.texParameteri(gl.TEXTURE_2D,k,filter);});
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+tex(0,0,0,ac,'c',gl.LINEAR);tex(1,256,1,lut,'r',gl.LINEAR);
+['atlas','ramp'].forEach(function(n,i){gl.uniform1i(gl.getUniformLocation(pr,n),i);});
+var uR=gl.getUniformLocation(pr,'R'),uC=gl.getUniformLocation(pr,'CELL'),uT=gl.getUniformLocation(pr,'T');
+function size(){var d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);
+ var ch=Math.max(14,Math.round(cv.height/d/58))*d;ch=Math.round(ch);var cw=Math.round(ch*.5);
+ gl.viewport(0,0,cv.width,cv.height);gl.uniform2f(uR,cv.width,cv.height);gl.uniform2f(uC,cw,ch);}
+function draw(t){gl.uniform1f(uT,t);gl.drawArrays(gl.TRIANGLES,0,3);}
+addEventListener('resize',function(){size();if(still)draw(30);});
+size();
+if(still){draw(30);return;}
+(function loop(ms){draw(30+ms/1000);requestAnimationFrame(loop);})(0);
+})();
+</script></body></html>

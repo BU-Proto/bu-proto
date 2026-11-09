@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/10 Gill Rim Dashes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* r1/10  mushroom, close crop of gills and rim.
+   Stretched rectangular cells (about 2.6:1). The cap's own light fills them; toward the edges
+   cells thin into sparse horizontal dashes that drift, leaning rose. Procedural render, no photo. */
+(function () {
+  'use strict';
+  var S = window.LabSubjects, Pal = window.LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c');
+  var gl = cv.getContext('webgl2', { antialias: false });
+  if (!gl) { document.body.style.background = '#061a2e'; return; }
+
+  /* source render: whole mushroom once, then the shader crops into the gill plate's front rim */
+  var SW = 640, SH = 400, buf = S.create(SW, SH, 1);
+  S.fill('mushroom', buf, 3.0);
+  var bytes = S.toRGBA(buf);
+  var SASP = SW / SH; /* subject x runs -SASP..SASP, y -1..1 */
+
+  var vs = '#version 300 es\nout vec2 uv;void main(){vec2 p=vec2(gl_VertexID&1,gl_VertexID>>1&1)*2.;uv=p;gl_Position=vec4(p*2.-1.,0,1);}';
+  var fs = '#version 300 es\nprecision highp float;out vec4 o;\n' +
+  'uniform vec2 res,cell,ctr;uniform float t,winH,rot,sasp;uniform sampler2D buf,ramp;\n' +
+  'const vec3 HARBOR=vec3(.0235,.102,.1804),RAISED=vec3(.0431,.1647,.2745),RAISEDHI=vec3(.0706,.2275,.3608);\n' +
+  'const vec3 FROST=vec3(.9647,.9843,1.),ROSE=vec3(.9569,.6353,.7529),MINT=vec3(.6157,.9412,.6588);\n' +
+  'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n' +
+  'vec4 src(vec2 cuv){vec2 q=(cuv-.5);q.x*=res.x/res.y;q*=winH;float c=cos(rot),s=sin(rot);q=vec2(c*q.x-s*q.y,s*q.x+c*q.y);q+=ctr;\n' +
+  '  return texture(buf,vec2((q.x/sasp+1.)*.5,(1.-q.y)*.5));}\n' +
+  'void main(){\n' +
+  '  vec2 p=vec2(gl_FragCoord.x,res.y-gl_FragCoord.y);\n' +
+  '  vec2 id=floor(p/cell),f=fract(p/cell);\n' +
+  '  vec2 cuv=(id+.5)*cell/res;\n' +
+  '  vec2 dx=vec2(cell.x*.3/res.x,0.),dy=vec2(0.,cell.y*.3/res.y);\n' +
+  '  vec4 a=src(cuv),b=src(cuv-dx),c=src(cuv+dx),d=src(cuv-dy),e=src(cuv+dy);\n' +
+  '  float lum=(a.r*2.+b.r+c.r+d.r+e.r)/6.,hint=(a.g*2.+b.g+c.g+d.g+e.g)/6.;\n' +
+  '  float edge=max(max(a.b,b.b),max(c.b,max(d.b,e.b)));\n' +
+  '  float hs=h21(id),hs2=h21(id+17.3),hs3=h21(id+3.7),hs4=h21(id.yx+9.1);\n' +
+  /* dissolve field: elliptical distance, broken by noise and slow ripple along rows */
+  '  vec2 r2=(cuv-vec2(.46,.5))*vec2(1.,1.05);\n' +
+  '  float rr=length(r2)+.06*(hs-.5)+.045*sin(t*.55+id.y*.21+id.x*.05)+.035*sin(t*.31-id.x*.11);\n' +
+  '  float keep=1.-smoothstep(.30,.74,rr);\n' +
+  '  float prob=mix(.22,1.,keep*keep);\n' +
+  '  float alive=step(hs2,prob);\n' +
+  /* rect geometry: thin dashes at the edge, full cells inside */
+  '  float wf=mix(.22+.5*hs3,.93,pow(keep,.7));\n' +
+  '  float hf=mix(1.6/cell.y,.84,smoothstep(.0,.55,keep));\n' +
+  '  float xo=(1.-wf)*fract(hs4+t*.012*(hs3-.5)*(1.-keep)*4.);\n' +
+  '  vec2 rp=vec2((f.x-xo)/wf,(f.y-.5)/hf+.5);\n' +
+  '  float inside=step(0.,rp.x)*step(rp.x,1.)*step(0.,rp.y)*step(rp.y,1.)*alive;\n' +
+  /* colour: arc by hint, tide shift leaning pink toward the edge, tone from lum */
+  '  float tide=.05*sin(t*.4+cuv.x*5.+cuv.y*3.);\n' +
+  '  float hh=clamp(hint*.9-.04+tide+(1.-keep)*.12,0.,.8);\n' +
+  '  vec3 col=texture(ramp,vec2(hh,.5)).rgb;\n' +
+  '  float lc=clamp((lum-.2)*1.7,0.,1.);float tone=smoothstep(.03,.5,lc);\n' +
+  '  vec3 dark=mix(RAISED,RAISEDHI,smoothstep(0.,.2,lum));\n' +
+  '  col=mix(dark,col,tone);\n' +
+  '  float hot=smoothstep(.8,1.,lc+.12*edge)*smoothstep(.2,.4,hint);\n' +
+  '  col=mix(col,FROST,hot*keep);\n' +
+  /* gill slit: in mid tones a harbor cut through each cell makes an equals-sign texture */
+  '  float slit=step(abs(rp.y-.5),.07)*smoothstep(.2,.45,lum)*(1.-smoothstep(.55,.7,lum))*smoothstep(.35,.7,keep);\n' +
+  '  col=mix(col,HARBOR,slit*.0);\n' +
+  /* dashes at the far edge lean rose and brighten with light under them */
+  '  col=mix(col,mix(ROSE,col,.4),(1.-keep)*.6*step(.25,lum+.1));\n' +
+  '  vec3 bg=mix(HARBOR,RAISED,.55*keep*smoothstep(.0,.3,lum+.12)+.12*keep);\n' +
+  '  vec3 outc=mix(bg,col,inside);\n' +
+  /* one mint cell, live: top left, blinking */
+  '  vec2 mid=floor(vec2(res.x*.07,res.y*.09)/cell);\n' +
+  '  if(id==mid&&f.y>.4&&f.y<.6&&f.x<.8){outc=mix(outc,MINT,step(0.,sin(t*3.)));}\n' +
+  '  o=vec4(outc,1.);\n' +
+  '}';
+
+  function mk(type, src) {
+    var sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+    return sh;
+  }
+  var pr = gl.createProgram();
+  gl.attachShader(pr, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, mk(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  function tex(unit, w, h, data) {
+    var tx = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tx);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+  tex(0, SW, SH, bytes); tex(1, 256, 1, Pal.lut(256));
+  var U = {};
+  ['res', 'cell', 'ctr', 't', 'winH', 'rot', 'sasp', 'buf', 'ramp'].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+  gl.uniform1i(U.buf, 0); gl.uniform1i(U.ramp, 1);
+  gl.uniform2f(U.ctr, 0.46, -0.1); gl.uniform1f(U.winH, 0.62); gl.uniform1f(U.rot, -0.3); gl.uniform1f(U.sasp, SASP);
+
+  function size() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+    var H = Math.max(7, Math.round(cv.height / 88)), W = Math.round(H * 2.6);
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.uniform2f(U.res, cv.width, cv.height); gl.uniform2f(U.cell, W, H);
+  }
+  function frame(ms) {
+    gl.uniform1f(U.t, ms / 1000);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (!still) requestAnimationFrame(frame);
+  }
+  addEventListener('resize', function () { size(); if (still) frame(4000); });
+  size();
+  if (still) frame(4000); else requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

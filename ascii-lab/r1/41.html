@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/41 Mushroom, strokes from segments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* No font. Every mark is built in the fragment shader from line segments. The stroke direction of each cell is
+   perpendicular to the local gradient of the subject (quantised to 16 angles), so marks trace contours.
+   Tone climbs a ladder: dot, dash, stroke, crossed strokes, diamond outline, solid block.
+   Polarity flips with tone: harbor ticks in shadow, reflected-arc strokes between, frost in highlights. */
+(function () {
+  'use strict';
+  var S = LabSubjects, P = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c');
+  var gl = cv.getContext('webgl2', { antialias: false, alpha: false });
+  if (!gl) { document.body.style.background = '#0b2a46'; return; }
+
+  var VS = '#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  var FS = '#version 300 es\nprecision highp float;\n' +
+  'uniform sampler2D T; uniform sampler2D L; uniform vec2 R; uniform vec2 C; uniform vec2 N; uniform float t;\n' +
+  'out vec4 o;\n' +
+  'float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n' +
+  /* distance to segment a-b */
+  'float sg(vec2 p,vec2 a,vec2 b){vec2 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-5),0.,1.);return length(pa-ba*h);}\n' +
+  'vec4 tx(ivec2 c){c=clamp(c,ivec2(0),ivec2(N)-1);return texelFetch(T,c,0);}\n' +
+  'vec3 arc(float x){return texture(L,vec2(clamp(x,0.,1.),.5)).rgb;}\n' +
+  'void main(){\n' +
+  '  vec2 px=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y);\n' +
+  '  vec2 cf=px/C; ivec2 ci=ivec2(floor(cf));\n' +
+  '  vec2 lp=(fract(cf)-.5)*C/C.y;\n' +                                   /* units of cell height, y down */
+  '  vec4 s=tx(ci);\n' +
+  '  float lum=s.r,hint=s.g,edge=s.b,mask=s.a;\n' +
+  '  float lx=tx(ci+ivec2(1,0)).r-tx(ci-ivec2(1,0)).r, ly=tx(ci+ivec2(0,1)).r-tx(ci-ivec2(0,1)).r;\n' +
+  '  vec2 g=vec2(lx/C.x,ly/C.y);\n' +
+  '  float gm=length(g);\n' +
+  '  float hs=h21(vec2(ci)+7.);\n' +
+  '  vec2 d;\n' +
+  '  if(gm>0.0012){ d=normalize(vec2(-g.y,g.x)); } else { float a0=hs*3.14159+t*.05*(hs-.5); d=vec2(cos(a0),sin(a0)); }\n' +
+  '  float ang=atan(d.y,d.x); ang=floor(ang/3.14159*8.+.5)/8.*3.14159; d=vec2(cos(ang),sin(ang));\n' +
+  '  vec2 q=vec2(-d.y,d.x);\n' +
+  '  float tmax=min(.25/max(abs(d.x),1e-3),.46/max(abs(d.y),1e-3));\n' +
+  /* tone value with a stable threshold and a slow local shimmer */
+  '  float v=lum*.82+edge*.45+(hs-.5)*.16+.05*sin(t*.9+hs*40.+float(ci.x)*.2);\n' +
+  '  float pw=1./C.y;\n' +
+  '  float w=mix(.05,.1,clamp(lum,0.,1.));\n' +
+  '  float dist=9.; float fill=0.;\n' +
+  '  if(v>.12&&v<.26){ dist=length(lp)-.02; }\n' +                          /* dot */
+  '  else if(v<.42){ dist=sg(lp,-d*tmax*.3,d*tmax*.3); }\n' +             /* dash */
+  '  else if(v<.56){ dist=sg(lp,-d*tmax*.92,d*tmax*.92); }\n' +           /* stroke */
+  '  else if(v<.7){ dist=min(sg(lp,-d*tmax*.9,d*tmax*.9),sg(lp,-q*.2,q*.2)); w*=.9; }\n' + /* crossed */
+  '  else if(v<.84){ vec2 a=vec2(-.22,0.),b=vec2(0.,-.42),c=vec2(.22,0.),e=vec2(0.,.42);\n' +
+  '    dist=min(min(sg(lp,a,b),sg(lp,b,c)),min(sg(lp,c,e),sg(lp,e,a))); w*=.85; }\n' + /* diamond */
+  '  else { vec2 bq=abs(lp)-vec2(.2,.38); fill=1.-smoothstep(-pw,pw,max(bq.x,bq.y)); dist=9.; }\n' + /* block */
+  '  float ink=1.-smoothstep(w-pw,w+pw,dist); ink=max(ink,fill);\n' +
+  /* colours */
+  '  vec3 harbor=vec3(.0235,.102,.1804), frost=vec3(.9647,.9843,1.);\n' +
+  '  vec3 hue=arc(clamp(hint*1.15+.08,0.,1.));\n' +
+  '  vec3 under=mix(harbor,hue,pow(clamp(lum,0.,1.),.85)*.5+.03);\n' +
+  '  under=mix(under,vec3(.0431,.1647,.2745),.25);\n' +
+  '  vec3 refl=arc(mix(1.-hint,.98,.38));\n' +
+  '  vec3 gcol=mix(refl,frost,smoothstep(.55,.9,v)*.85);\n' +
+  '  float rim=smoothstep(.35,.8,edge)*(1.-smoothstep(.6,.95,lum));\n' +
+  '  gcol=mix(gcol,vec3(.2471,.7216,.8157),rim*.6);\n' +                   /* lagoon rim */
+  '  if(v<.26) gcol=mix(under,harbor,.85);\n' +                            /* shadow ticks: dark ink */
+  '  if(v>=.84) gcol=mix(frost,hue,.12);\n' +
+  '  vec3 col=mix(under,gcol,ink);\n' +
+  /* quiet outside the subject */
+  '  float fade=smoothstep(.0,.6,mask+lum*.5);\n' +
+  '  col=mix(mix(harbor,under,.6),col,.35+.65*fade);\n' +
+  '  vec2 uv=px/R; col*=1.-.35*dot(uv-.5,uv-.5)*1.6;\n' +
+  '  o=vec4(col,1.);\n' +
+  '}';
+
+  function sh(type, src) {
+    var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  var pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  var vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  function tex(unit) {
+    var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, unit ? gl.LINEAR : gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+  }
+  var tT = tex(0), tL = tex(1);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, P.lut(256));
+  gl.uniform1i(gl.getUniformLocation(pr, 'T'), 0); gl.uniform1i(gl.getUniformLocation(pr, 'L'), 1);
+  var uR = gl.getUniformLocation(pr, 'R'), uC = gl.getUniformLocation(pr, 'C'), uN = gl.getUniformLocation(pr, 'N'), ut = gl.getUniformLocation(pr, 't');
+
+  var buf, data, cols, rows, cw, ch, dpr, last = -1e9, t0 = performance.now();
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = innerWidth, H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    cw = Math.max(7, W / 150); ch = cw * 1.8;
+    cols = Math.ceil(W / cw); rows = Math.ceil(H / ch);
+    buf = S.create(cols, rows, cw / ch); data = new Uint8Array(cols * rows * 4);
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.uniform2f(uR, cv.width, cv.height); gl.uniform2f(uC, cw * dpr, ch * dpr); gl.uniform2f(uN, cols, rows);
+    last = -1e9;
+  }
+  function frame(now) {
+    var t = still ? 14 : (now - t0) / 1000 + 14;
+    if (t - last > 0.045 || still) {
+      S.fill('mushroom', buf, t); S.toRGBA(buf, data); last = t;
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tT);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, cols, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    }
+    gl.uniform1f(ut, t);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (!still) requestAnimationFrame(frame);
+  }
+  setup(); requestAnimationFrame(frame);
+  addEventListener('resize', function () { setup(); if (still) requestAnimationFrame(frame); });
+})();
+</script>
+</body>
+</html>

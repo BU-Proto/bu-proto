@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>3b Gill Beads</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* 38: negative space. Gradient fills the ground; line glyphs are cut out of it in harbor.
+   Subject: a tight crop of mushroom gills and cap rim, seen from below. Gills are radial blades that branch
+   as they fan out. Toward the hub the polarity flips (harbor ground, gradient glyphs); past the rim the
+   gradient dissolves into sparse dashes. Light is a heat field: peach, haze, then frost at the hottest point. */
+(function () {
+  'use strict';
+  var Pal = window.LabPalette, S = window.LabSubjects, noise = S.noise, fbm = S.fbm, smooth = S.smooth;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d', { alpha: false });
+  var TAU = Math.PI * 2;
+  var harbor = Pal.resolve('harbor'), raised = Pal.resolve('raised'), frost = Pal.resolve('frost'), haze = Pal.resolve('haze');
+  var lagoon = Pal.resolve('lagoon'), sky = Pal.resolve('sky'), mint = Pal.colors.mint;
+  var LUTN = 128, inks = Pal.cssLut(LUTN), arcRgb = [];
+  for (var q = 0; q < LUTN; q++) arcRgb.push(Pal.arc(q / (LUTN - 1)));
+  var BAY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
+  function hash(i, j) {
+    var h = Math.imul(i | 0, 374761393) + Math.imul(j | 0, 668265263);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+  function css(c) { return 'rgb(' + (c[0] * 255 + 0.5 | 0) + ',' + (c[1] * 255 + 0.5 | 0) + ',' + (c[2] * 255 + 0.5 | 0) + ')'; }
+  function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+
+  var GL = [':', 'x', '+', 'o', '@'], atlas, dpr, W, H, CW, CH, cols, rows, N, geo;
+  var harborCss = css(harbor);
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    CW = Math.max(7, Math.round(W / 150)); CH = Math.round(CW * 1.75);
+    cols = Math.ceil(W / CW); rows = Math.ceil(H / CH);
+    /* glyph atlas: harbor glyphs on transparent, drawn once */
+    atlas = document.createElement('canvas'); atlas.width = Math.ceil(CW * dpr) * GL.length; atlas.height = Math.ceil(CH * dpr);
+    var a = atlas.getContext('2d'); a.scale(dpr, dpr); a.fillStyle = harborCss; a.textBaseline = 'alphabetic';
+    a.font = '700 ' + Math.round(CH * 0.86) + 'px ui-monospace, "SF Mono", Menlo, Consolas, monospace'; a.textAlign = 'center';
+    for (var i = 0; i < GL.length; i++) {
+      a.fillText(GL[i], i * CW + CW / 2, CH * 0.76);
+    }
+    /* geometry: hub off-screen low left, rim crossing the upper right */
+    var h2 = H / 2, asp = W / H;
+    geo = { h2: h2, cwW: CW / h2, cxW: -0.78 * asp - 0.25, cyW: -1.55 };
+    var px = 0.62 * asp, py = 0.62, dd = Math.hypot(px - geo.cxW, py - geo.cyW);
+    geo.R = dd; geo.th0 = Math.atan2(py - geo.cyW, px - geo.cxW);
+    N = Math.max(16, Math.round(TAU * geo.R / (geo.cwW * 2.9) / 16) * 16);
+    geo.mx = 0.2 * asp; geo.my = 0.9;
+  }
+
+  /* glyph orientation index from the radial direction on screen */
+  function orient(ux, uy) {
+    var f = Math.atan2(uy, ux); if (f < 0) f += Math.PI; if (f >= Math.PI) f -= Math.PI;
+    var d = Math.abs(f - Math.PI / 2);
+    if (d < 0.42) return 0;
+    if (f < 0.42 || f > Math.PI - 0.42) return 3;
+    return (ux * uy > 0) ? 2 : 1;
+  }
+
+  function draw(t) {
+    var g = geo, R = g.R;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = harborCss; cx.fillRect(0, 0, W, H);
+    cx.textBaseline = 'alphabetic'; cx.textAlign = 'center';
+    cx.font = '700 ' + Math.round(CH * 0.86) + 'px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+    var acw = Math.ceil(CW * dpr), ach = Math.ceil(CH * dpr);
+    var th0 = g.th0 + 0.07 * Math.sin(t * 0.21) - 0.05;
+    var hx = g.cxW + R * Math.cos(th0), hy = g.cyW + R * Math.sin(th0); /* hot point on the rim */
+    var mintDone = false;
+
+    for (var row = 0; row < rows; row++) {
+      var py = row * CH, wy = (H / 2 - (py + CH / 2)) / g.h2;
+      for (var col = 0; col < cols; col++) {
+        var pxx = col * CW, wx = (pxx + CW / 2 - W / 2) / g.h2;
+        var dx = wx - g.cxW, dy = wy - g.cyW, r = Math.sqrt(dx * dx + dy * dy), th = Math.atan2(dy, dx);
+        var bay = BAY[(row & 3) * 4 + (col & 3)] / 16 - 0.5;
+
+        /* rim radius wobbles slowly with angle; sd is signed distance to it in cell widths */
+        var Rt = R * (1 + 0.012 * Math.sin(th * 23 + 1.1) + 0.02 * (noise(th * 9 + 3, 4.4 + t * 0.03) - 0.5));
+        var sd = (r - Rt) / g.cwW;
+
+        /* heat: how close this spot is to the hot point, strongest on the rim, falling inward */
+        var hd = Math.hypot(wx - hx, wy - hy);
+        var heat = Math.exp(-hd * hd / 0.55) * (0.35 + 0.65 * smooth(-26, -2, sd)) * smooth(14, 2, sd);
+
+        if (sd > 1.2) {
+          /* beyond the rim: gradient dissolving into harbor as horizontal dashes, dragged outward */
+          var far = sd / 60;
+          var p = 0.78 * Math.exp(-sd / 11) + 0.04;
+          var seg = 1 + (hash(row, 9) * 5 | 0), hv = hash(row * 7 + 1, Math.floor((col + hash(row, 3) * 40 + t * 0.6 * (0.4 + hash(row, 5))) / seg));
+          if (hv < p) {
+            var to = Math.max(0.5, 0.96 - 0.5 * Math.min(1, far * 1.4) + (hash(row, 11) - 0.5) * 0.14 + heat * 0.1);
+            var c = arcRgb[Math.round(Math.min(1, to) * (LUTN - 1))];
+            var th2 = hash(row, col) > 0.7 ? 3 : 2;
+            cx.fillStyle = css(c);
+            cx.beginPath(); cx.arc(pxx + CW / 2, py + CH * 0.5, th2 * 0.6, 0, TAU); cx.fill();
+          } else if (sd < 22 && hash(col, row) < 0.04) {
+            cx.fillStyle = css(raised); cx.fillRect(pxx, py, CW, CH);
+          }
+          if (!mintDone && col === (cols * 0.86 | 0) && row === (rows * 0.2 | 0) && sd > 3) {
+            mintDone = true;
+            if (Math.sin(t * 2.4) > -0.4) { cx.fillStyle = mint; cx.fillText('*', pxx + CW / 2, py + CH * 0.76); }
+          }
+          continue;
+        }
+
+        if (sd > -0.9) {
+          /* the rim itself: a thin lit lip, lagoon to sky, blowing out to frost near the hot point */
+          var rc = lerp3(lagoon, sky, noise(col * 0.21, row * 0.17 + t * 0.05));
+          if (heat > 0.2) rc = lerp3(rc, haze, Math.min(1, (heat - 0.2) * 2));
+          if (heat > 0.5 + bay * 0.2) rc = lerp3(rc, frost, Math.min(1, (heat - 0.45) * 2.6));
+          cx.fillStyle = css(rc); cx.fillRect(pxx, py, CW, CH);
+          if (sd < -0.1 && hash(col, row) < 0.45) cx.drawImage(atlas, orient(dx, -dy) * acw, 0, acw, ach, pxx, py, CW, CH);
+          continue;
+        }
+
+        /* inside: gill blades. Branching level coarsens toward the hub so spacing stays above ~2.6 cells. */
+        var base = TAU * r / N / g.cwW, L = 1;
+        while (base * L < 2.7 && L < 16) L *= 2;
+        var ph = th / TAU * N;
+        ph += (fbm(ph * 0.11, r * 1.4, 2) - 0.5) * 1.1 + 0.18 * Math.sin(r * 6.5 - t * 0.8 + ph * 0.04);
+        var ph2 = ph / L, dd = Math.abs(ph2 - Math.round(ph2)) * L * base; /* blade distance in cells */
+        var rn = Math.min(1, Math.max(0, r / R));
+        var wBlade = 0.55 + 0.5 * smooth(0.4, 1, rn) + 0.2 * heat;
+
+        /* depth: how far into shadow, toward the hub and in moving pockets */
+        var shade = smooth(0.78, 0.3, rn) + 0.45 * (fbm(wx * 1.7 + 3, wy * 1.7 - t * 0.02, 3) - 0.5);
+        shade += 0.14 * Math.sin(th * 3 + t * 0.15);
+        var ink = shade > 0.5 + (hash(col + 5, row + 9) - 0.5) * 0.32;
+
+        /* gradient position: blue in the hub, iris, a long rose middle, peach toward the lip */
+        var tc = 0.2 + 0.72 * smooth(0.28, 1.0, rn) + 0.1 * (noise(wx * 2.1, wy * 2.1 + t * 0.04) - 0.5) + 0.2 * heat + bay * 0.05;
+        tc += 0.08 * Math.sin(th * 5.0 - t * 0.2);
+        tc = Math.min(0.99, Math.max(0.02, tc));
+        var gc = arcRgb[Math.round(tc * (LUTN - 1))];
+        if (heat > 0.18) gc = lerp3(gc, haze, Math.min(0.85, (heat - 0.18) * 1.5));
+        if (heat > 0.62 + bay * 0.25) gc = lerp3(gc, frost, Math.min(1, (heat - 0.55) * 3));
+        var onBlade = dd < wBlade;
+
+        if (!ink) {
+          /* negative space: gradient ground, harbor glyph cut out of it */
+          if (onBlade && heat < 0.5) gc = lerp3(gc, arcRgb[Math.max(0, Math.round((tc - 0.16) * (LUTN - 1)))], 0.8);
+          cx.fillStyle = css(gc); cx.fillRect(pxx, py, CW, CH);
+          if (onBlade) {
+            var gi = (dd < 0.2 && rn > 0.9 && heat < 0.4) ? 4 : orient(dx, -dy);
+            cx.drawImage(atlas, gi * acw, 0, acw, ach, pxx, py, CW, CH);
+          } else if (dd < wBlade + 0.6 && hash(col * 3, row) < 0.3) {
+            cx.drawImage(atlas, orient(dx, -dy) * acw, 0, acw, ach, pxx, py, CW, CH);
+          }
+        } else {
+          /* shadow polarity: harbor ground, gradient glyph on the blade only */
+          if (hash(col, row * 5) < 0.3) { cx.fillStyle = css(raised); cx.fillRect(pxx, py, CW, CH); }
+          if (onBlade) {
+            cx.fillStyle = css(gc);
+            cx.fillText(GL[orient(dx, -dy)], pxx + CW / 2, py + CH * 0.76);
+          }
+        }
+      }
+    }
+  }
+
+  setup();
+  window.addEventListener('resize', function () { setup(); draw(still ? 4 : performance.now() / 1000 + 4); });
+  if (still) { draw(4); return; }
+  (function loop(ms) { draw((ms || 0) / 1000 + 4); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/33 Mushroom, glyph bloom</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; left: 0; top: 0; display: block; }
+</style>
+</head>
+<body>
+<canvas id="b"></canvas><canvas id="g"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Glyph bloom. The ground is flat harbor. Only the densest glyphs emit: each hot cell throws light that
+   disperses with distance like light through glass. Near it keeps the emitter's own hue (rose, peach at the
+   core), mid range it turns iris, far range cerulean. So the halo reads as a spectrum fanning out of the
+   marks, not a gradient painted behind them. Quiet glyphs are unlit ink: faint on dark ground, and where
+   the glow reaches them they flip to harbor silhouettes cut out of the light. */
+(function () {
+  'use strict';
+  var S = LabSubjects, P = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var bc = document.getElementById('b'), gc = document.getElementById('g');
+  var bx = bc.getContext('2d'), gx = gc.getContext('2d');
+  var cols, rows, cw, ch, dpr, buf, img, atlas, pw, ph, bsmall, bsx;
+  var ER, EG, EB, E0, T1, F1, F2, F3, R1, G1, B1, W2, W3;
+
+  var GL = ' .:-=+*x%#@';
+  var GN = GL.length;
+  /* atlas colours: 0 frost, 1 rose, 2 peach, 3 iris, 4 sky, 5 harbor ink, 6 raised ink, 7 iris deep */
+  var AC = ['frost', 'rose', 'peach', 'iris', 'sky', 'harbor', '#123a5c', 'irisDeep'];
+  var harbor = P.resolve('harbor'), raised = P.resolve('raised');
+  var iris = P.resolve('irisDeep'), cer = P.resolve('cerulean'), lag = P.resolve('lagoon');
+  var frost = P.resolve('frost'), rose = P.resolve('rose'), peach = P.resolve('peach');
+  var arcLut = []; for (var i = 0; i < 64; i++) arcLut.push(P.arc(0.42 + 0.58 * i / 63));
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = innerWidth, H = innerHeight;
+    cw = Math.max(7, Math.round(W / 150)); ch = Math.round(cw * 1.8);
+    cols = Math.ceil(W / cw); rows = Math.ceil(H / ch);
+    var n = cols * rows;
+    [gc, bc].forEach(function (c) { c.style.width = cols * cw + 'px'; c.style.height = rows * ch + 'px'; });
+    gc.width = cols * cw * dpr; gc.height = rows * ch * dpr;
+    bc.width = cols * 3; bc.height = rows * 3;            /* 3x3 per cell, smoothed up for soft light */
+    bsmall = document.createElement('canvas'); bsmall.width = cols; bsmall.height = rows; bsx = bsmall.getContext('2d');
+    img = bsx.createImageData(cols, rows);
+    buf = S.create(cols, rows, cw / ch);
+    ER = new Float32Array(n); EG = new Float32Array(n); EB = new Float32Array(n); E0 = new Float32Array(n);
+    T1 = new Float32Array(n); F1 = new Float32Array(n); F2 = new Float32Array(n); F3 = new Float32Array(n);
+    R1 = new Float32Array(n); G1 = new Float32Array(n); B1 = new Float32Array(n);
+    W2 = new Float32Array(n); W3 = new Float32Array(n);
+    pw = Math.round(cw * dpr); ph = Math.round(ch * dpr);
+    atlas = document.createElement('canvas'); atlas.width = pw * GN; atlas.height = ph * AC.length;
+    var ax = atlas.getContext('2d');
+    ax.font = '700 ' + Math.round(ch * 0.8 * dpr) + 'px ui-monospace, "SF Mono", Menlo, monospace';
+    ax.textAlign = 'center'; ax.textBaseline = 'middle';
+    for (var k = 0; k < AC.length; k++) {
+      ax.fillStyle = P.toCss(P.resolve(AC[k]));
+      for (var q = 1; q < GN; q++) ax.fillText(GL[q], q * pw + pw / 2, k * ph + ph / 2 + 1);
+    }
+  }
+
+  /* separable box blur, radius r, edge clamped; src -> dst via tmp */
+  function blur(src, dst, tmp, r) {
+    var x, y, k, s, inv = 1 / (2 * r + 1), o;
+    for (y = 0; y < rows; y++) {
+      o = y * cols; s = 0;
+      for (k = -r; k <= r; k++) s += src[o + Math.min(cols - 1, Math.max(0, k))];
+      for (x = 0; x < cols; x++) {
+        tmp[o + x] = s * inv;
+        s += src[o + Math.min(cols - 1, x + r + 1)] - src[o + Math.max(0, x - r)];
+      }
+    }
+    /* vertical radius scaled by cell aspect so halos stay round */
+    var rv = Math.max(1, Math.round(r * cw / ch)), iv = 1 / (2 * rv + 1);
+    for (x = 0; x < cols; x++) {
+      s = 0;
+      for (k = -rv; k <= rv; k++) s += tmp[Math.min(rows - 1, Math.max(0, k)) * cols + x];
+      for (y = 0; y < rows; y++) {
+        dst[y * cols + x] = s * iv;
+        s += tmp[Math.min(rows - 1, y + rv + 1) * cols + x] - tmp[Math.max(0, y - rv) * cols + x];
+      }
+    }
+  }
+  function soft(x) { return 1 - Math.exp(-x); }
+
+  function frame(t) {
+    S.fill('mushroom', buf, t);
+    var L = buf.lum, Hn = buf.hint, E = buf.edge, M = buf.mask, n = cols * rows, k, x, y;
+    var dens = new Float32Array(n);
+    for (k = 0; k < n; k++) {
+      var d = M[k] > 0.5 ? L[k] * 0.78 + E[k] * 0.45 : 0;
+      dens[k] = d;
+      var x0 = k % cols, y0 = (k / cols) | 0;
+      /* breathing: each hot cell pulses on its own slow phase */
+      var pulse = 0.78 + 0.22 * Math.sin(t * 1.3 + x0 * 0.37 + y0 * 0.51);
+      var e = d > 0.58 ? Math.pow((d - 0.58) / 0.42, 1.4) * pulse : 0;
+      E0[k] = e;
+      var c = arcLut[Math.min(63, (Hn[k] * 63) | 0)];
+      /* the hottest cells burn toward peach */
+      var hot = Math.min(1, Math.max(0, (d - 0.9) * 8));
+      ER[k] = e * (c[0] + (peach[0] - c[0]) * hot);
+      EG[k] = e * (c[1] + (peach[1] - c[1]) * hot);
+      EB[k] = e * (c[2] + (peach[2] - c[2]) * hot);
+    }
+    blur(ER, R1, T1, 1); blur(EG, G1, T1, 1); blur(EB, B1, T1, 1);
+    blur(E0, F1, T1, 4); blur(F1, F2, T1, 4);               /* mid */
+    blur(E0, W2, T1, 9); blur(W2, F3, T1, 9);               /* far */
+    var dd = img.data, gl = new Float32Array(n);
+    var br = Math.sin(t * 0.5) * 0.08;
+    for (k = 0; k < n; k++) {
+      x = k % cols; y = (k / cols) | 0;
+      var v = 1 - 0.55 * Math.abs(y / rows - 0.5) * 2;       /* ground eases to raised toward the middle */
+      var gr = harbor[0] + (raised[0] - harbor[0]) * 0.3 * v;
+      var gg = harbor[1] + (raised[1] - harbor[1]) * 0.3 * v;
+      var gb = harbor[2] + (raised[2] - harbor[2]) * 0.3 * v;
+      var nn = (0.8 + br) * 1.2, mm = 2.2 * (1 + br), ff = 3.2 * (1 + br);
+      var a1 = R1[k] * nn, b1 = G1[k] * nn, c1 = B1[k] * nn;
+      var m = F2[k] * mm, f = F3[k] * ff;
+      var lr = a1 * 0.8 + m * iris[0] * 0.8 + f * cer[0] * 0.45;
+      var lg = b1 * 0.7 + m * iris[1] * 0.8 + f * cer[1] * 0.45;
+      var lb = c1 * 0.8 + m * iris[2] * 0.8 + f * cer[2] * 0.45;
+      var j = k * 4;
+      dd[j] = Math.min(1, gr + soft(lr) * (1 - gr)) * 255;
+      dd[j + 1] = Math.min(1, gg + soft(lg) * (1 - gg)) * 255;
+      dd[j + 2] = Math.min(1, gb + soft(lb) * (1 - gb)) * 255;
+      dd[j + 3] = 255;
+      gl[k] = soft((lr + lg + lb) * 0.33);
+    }
+    bsx.putImageData(img, 0, 0);
+    bx.imageSmoothingEnabled = true; bx.imageSmoothingQuality = 'high';
+    bx.drawImage(bsmall, 0, 0, bc.width, bc.height);
+
+    var cwp = cw * dpr, chp = ch * dpr;
+    gx.clearRect(0, 0, gc.width, gc.height);
+    for (y = 0; y < rows; y++) for (x = 0; x < cols; x++) {
+      k = y * cols + x;
+      var dn = dens[k], inside = M[k] > 0.5, gi = 0, ci = 0;
+      if (inside && dn > 0.58) {
+        /* the emitters: densest glyphs, frost at the core, rose around it */
+        var q = (dn - 0.58) / 0.42;
+        gi = q > 0.85 ? GN - 1 : q > 0.6 ? GN - 2 : q > 0.35 ? GN - 3 : GN - 4;
+        ci = q > 0.8 ? 0 : q > 0.55 ? 1 : 2 - 1;
+        if (q > 0.97) ci = 0;
+      } else if (inside) {
+        /* unlit ink: sparse, light-ramp glyphs; harbor silhouettes where the glow reaches */
+        var lvl = Math.min(1, dn / 0.58);
+        var h = ((x * 73856093) ^ (y * 19349663)) & 255;
+        if (lvl * 255 * 0.9 + 30 > h && lvl > 0.1) {
+          gi = 1 + Math.min(5, (lvl * 6) | 0);
+          ci = gl[k] > 0.42 ? 5 : lvl > 0.5 ? 7 : 6;
+          if (ci === 6 && gl[k] > 0.15) ci = 7;
+        }
+      } else {
+        /* outside the subject: a few stray marks catch the far light */
+        var h2 = ((x * 2654435761) ^ (y * 40503)) >>> 0 & 255;
+        if (gl[k] > 0.14 && h2 < gl[k] * 190) { gi = h2 & 1 ? 3 : 2; ci = gl[k] > 0.55 ? 5 : 6; if (gl[k] <= 0.55 && gl[k] > 0.3) ci = 7; }
+      }
+      if (gi) gx.drawImage(atlas, gi * pw, ci * ph, pw, ph, x * cwp, y * chp, cwp, chp);
+    }
+  }
+
+  function boot() { setup(); frame(4); }
+  boot();
+  addEventListener('resize', boot);
+  if (!still) (function loop(ms) { frame((ms || 0) / 1000 + 4); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

@@ -1,9 +1,12 @@
 // The events section's ground: giant words, barely there, and a cursor that stirs a real fluid over
 // them. The letters never move. They're a window: inside one the fluid's film shows at full strength
 // in hard bands of colour, its edge catches a hairline split of colour, and out on the ground there
-// are only the film's thin contour lines. The hero uses the simpler wake buffer in this file.
+// are only the film's thin contour lines. Every few seconds a glare crosses the words on a diagonal,
+// right to left, catching their edges the way light runs across glass lettering. The hero uses the
+// simpler wake buffer in this file.
 
 import { createFluid } from './fluidField'
+import { reducedMotion } from './useInView'
 
 export const VERTEX = `#version 300 es
 out vec2 vUv;
@@ -61,7 +64,7 @@ in vec2 vUv;
 out vec4 o;
 uniform sampler2D uAtlas, uDye, uVel;
 uniform vec2 uRes;
-uniform float uPitch, uRow, uScroll, uShift, uSkew, uT, uDpr, uCount;
+uniform float uPitch, uRow, uScroll, uShift, uSkew, uT, uDpr, uCount, uGlare;
 uniform float uWidths[8];
 
 const vec3 SKY = vec3(.486, .78, .957), RASP = vec3(.95, .16, .56), FROST = vec3(.961, .965, .98);
@@ -110,6 +113,15 @@ void main() {
   float line = 1. - abs(c * 2. - 1.);
   vec3 col = FROST * c * .03 + mix(SKY, RASP, vUv.x) * line * .1 + FROST * line * .07;
 
+  /* the glare: a soft diagonal band, warm on its leading side and cool behind, that lights the
+     letters' edges as it passes and lifts their fill a touch. uGlare runs 0 to 1 across, then rests. */
+  float across = dot(vec2(vUv.x * uRes.x / uRes.y, vUv.y), vec2(.88, .47));
+  float at = mix(uRes.x / uRes.y * .88 + .47 + .5, -.5, uGlare);
+  float off = (across - at) / .2;
+  float glare = exp(-off * off) * step(uGlare, 1.);
+  vec3 glint = mix(vec3(1., .52, .36), vec3(.42, .6, 1.), smoothstep(-1., 1., off));
+  col += glint * glare * (line * .55 + clamp(abs(c - soft) * 1.6, 0., 1.) * .16 + c * .03);
+
   float t = film * 1.15 + speed * .35 + vUv.x * .22 - vUv.y * .16 + uT * .02;
   vec3 tint = bands(t);
   float body = smoothstep(.015, .16, film);
@@ -133,6 +145,13 @@ const POINTER_POWER = 0.9
 const MAX_DPR = 1.5
 /** How long to keep drawing after the last move, while the wake dies. */
 const SETTLE_MS = 1800
+/** The glare takes this long to cross the words, then they rest dark for the rest of the cycle. */
+const GLARE_CROSS_S = 5
+const GLARE_CYCLE_S = 9
+/** It's slow and soft, so half the frame rate is plenty while the glare is all that moves. */
+const GLARE_FRAME_MS = 1000 / 30
+/** Under reduced motion it holds still, part way across. */
+const GLARE_STILL = 0.42
 const FRAME_WAKE = 1 / 60
 const SKEW_PER_PX = 0.9
 const SHIFT_PER_PX = 0.16
@@ -293,7 +312,8 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
     return null
   }
   if (!fluid) return null
-  const P = location(gl, picture, ['uAtlas', 'uDye', 'uVel', 'uRes', 'uPitch', 'uRow', 'uScroll', 'uShift', 'uSkew', 'uT', 'uDpr', 'uCount', 'uWidths'])
+  const P = location(gl, picture, ['uAtlas', 'uDye', 'uVel', 'uRes', 'uPitch', 'uRow', 'uScroll', 'uShift', 'uSkew', 'uT', 'uDpr', 'uCount', 'uWidths', 'uGlare'])
+  const still = reducedMotion()
 
   const atlasSize = Math.min(4096, gl.getParameter(gl.MAX_TEXTURE_SIZE) as number)
   const atlas = drawAtlas(words, atlasSize)
@@ -314,6 +334,9 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
     inside: false, moved: false,
     awakeUntil: 0,
     scroll: 0, drawnScroll: NaN, skew: 0, startedAt: 0, lastAt: 0,
+    drawnAt: 0, glareLit: false,
+    // A resize clears the canvas, so the next frame must draw whatever else it finds.
+    cleared: true,
   }
 
   const onContextLost = (event: Event) => {
@@ -331,6 +354,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       canvas.height = Math.round(height * box.dpr)
       fluid.resize(width, height)
       state.drawnScroll = NaN
+      state.cleared = true
     },
     point(x, y) {
       if (x === null) {
@@ -356,7 +380,10 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
     frame(now) {
       if (!state.startedAt) state.startedAt = now
       const awake = now < state.awakeUntil
-      if (!awake && state.scroll === state.drawnScroll) return false
+      const glare = still ? GLARE_STILL : (((now - state.startedAt) / 1000) % GLARE_CYCLE_S) / GLARE_CROSS_S
+      // While the glare crosses, draw at its own pace; once it's past, one more frame clears it.
+      const glareDue = !still && (glare < 1 ? now - state.drawnAt >= GLARE_FRAME_MS : state.glareLit)
+      if (!awake && !glareDue && !state.cleared && state.scroll === state.drawnScroll) return false
       const elapsed = state.lastAt ? Math.min(now - state.lastAt, 100) / 1000 : FRAME_WAKE
       state.lastAt = now
       const delta = Number.isNaN(state.drawnScroll) ? 0 : state.scroll - state.drawnScroll
@@ -366,7 +393,7 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
 
       const stepped = fluid.advance(elapsed, [state.lastX, state.lastY], [state.x, state.y], state.moved)
       // Nothing's changed between fluid steps on a 120Hz screen, so there's nothing new to draw.
-      if (!stepped && delta === 0) return true
+      if (!stepped && delta === 0 && !glareDue && !state.cleared) return true
       if (stepped) {
         state.lastX = state.x
         state.lastY = state.y
@@ -396,6 +423,10 @@ export function createWakeField(canvas: HTMLCanvasElement, words: readonly strin
       gl.uniform1f(P.uShift, state.scroll * SHIFT_PER_PX * px)
       gl.uniform1f(P.uSkew, state.skew * px)
       gl.uniform1f(P.uT, (now - state.startedAt) / 1000)
+      gl.uniform1f(P.uGlare, glare)
+      state.drawnAt = now
+      state.glareLit = !still && glare < 1
+      state.cleared = false
       gl.uniform1f(P.uDpr, px)
       gl.uniform1f(P.uCount, words.length)
       gl.uniform1fv(P.uWidths, new Float32Array([...atlas.widths, ...Array<number>(8).fill(1)].slice(0, 8)))

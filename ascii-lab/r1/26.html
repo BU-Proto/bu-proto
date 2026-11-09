@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>r1/26 Mushroom, partitive gills</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+/* Partitive colour. Every 2x2 cell holds four marks in only TWO pure ink hues (two neighbouring stops of a track).
+   The Bayer threshold sets the ratio, so the gradient exists only as optical mixing at a distance. Close up it is
+   hard-edged rose, raspberry, iris, lagoon. Tight crop: gill fan under a cap, rim as a lagoon-to-frost bead.
+   Colour comes from blade thickness (lit face vs crevice), not brightness. */
+(function () {
+  'use strict';
+  var S = LabSubjects, P = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d', { alpha: false });
+  var names = ['raisedHi', 'cerulean', 'irisDeep', 'raspberry', 'rose', 'peach', 'frost', 'iris', 'lagoon', 'sky', 'mint'];
+  var N = {}; names.forEach(function (n, i) { N[n] = i; });
+  var TRACKS = {
+    gill: [N.raisedHi, N.irisDeep, N.raspberry, N.rose, N.peach, N.frost],
+    rim:  [N.raisedHi, N.cerulean, N.lagoon, N.sky, N.frost],
+    skin: [N.raisedHi, N.cerulean, N.irisDeep, N.iris, N.rose]
+  };
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  var DIRS = ['-', '/', '|', '\\'];
+  var W, H, dpr, sw, sh, cols, rows, sprites, mintAt = 0;
+
+  function buildSprites() {
+    var pw = Math.round(sw * dpr), ph = Math.round(sh * dpr);
+    sprites = [];
+    var fonts = [300, 600, 800];
+    for (var c = 0; c < names.length; c++) {
+      var cvs = document.createElement('canvas'); cvs.width = pw * 12; cvs.height = ph;
+      var g = cvs.getContext('2d');
+      g.fillStyle = P.toCss(P.resolve(names[c])); g.textAlign = 'center'; g.textBaseline = 'middle';
+      for (var w = 0; w < 3; w++) for (var d = 0; d < 4; d++) {
+        g.font = fonts[w] + ' ' + Math.round(sh * dpr * (w ? 0.98 : 0.8)) + 'px ui-monospace, "SF Mono", Menlo, monospace';
+        g.fillText(w === 0 ? '.' : DIRS[d], (w * 4 + d + 0.5) * pw, ph * (w === 0 ? 0.62 : 0.54));
+      }
+      sprites.push(cvs);
+    }
+  }
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    sw = Math.max(5, Math.round(Math.max(W, H) / 230)); sh = Math.round(sw * 1.8);
+    cols = Math.ceil(W / sw); rows = Math.ceil(H / sh);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    buildSprites();
+  }
+
+  function sstep(a, b, x) { x = (x - a) / (b - a); x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); }
+
+  function frame(t) {
+    cx.fillStyle = '#061a2e'; cx.fillRect(0, 0, cv.width, cv.height);
+    var asp = W / H, CX = asp * 0.46, CY = 1.42, R0 = 1.02, NG = 84;
+    var pw = Math.round(sw * dpr), ph = Math.round(sh * dpr);
+    var ix = 0;
+    for (var sy = 0; sy < rows; sy++) {
+      var y = (sy + 0.5) * sh / H;
+      for (var sx = 0; sx < cols; sx++) {
+        var x = (sx + 0.5) * sw / H;
+        var dx = x - CX, dy = y - CY, r = Math.sqrt(dx * dx + dy * dy);
+        var th = Math.atan2(dx, -dy);
+        var rx = dx / r, ry = dy / r;
+        /* cap margin wanders a little */
+        var rim = R0 + 0.035 * Math.sin(th * 9 + 0.8 + t * 0.05) + 0.05 * (S.fbm(th * 3 + 7, 1.3, 2) - 0.5);
+        var e = r - rim;                         /* negative = gill side */
+        var track, T, ci, wgt, dirI, thr = (BAYER[(sy & 3) * 4 + (sx & 3)] + 0.5) / 16;
+        /* cell centre quantised colour decision uses the 2x2 cell's centre */
+        var cxn = ((sx >> 1) * 2 + 1) * sw / H, cyn = ((sy >> 1) * 2 + 1) * sh / H;
+        var cdx = cxn - CX, cdy = cyn - CY, cr = Math.sqrt(cdx * cdx + cdy * cdy), cth = Math.atan2(cdx, -cdy);
+        var ce = cr - rim, lum, empty = false, tilt = false;
+        if (e < -0.07) {
+          /* gills: blades fanning from the stem, spacing opens toward the rim */
+          var tw = 0.05 * (S.fbm(r * 4 + 3, th * 6, 2) - 0.5) + 0.012 * Math.sin(r * 14 + th * 3);
+          var gcoord = (th + tw) * NG / 6.2831853;
+          var f = gcoord - Math.floor(gcoord);
+          var gid = Math.floor(gcoord);
+          var gvar = S.noise(gid * 0.37, 4.1);
+          var depth = sstep(R0 - 0.9, R0 - 0.06, r);          /* 0 near stem, 1 toward rim */
+          var crev = sstep(0.0, 0.16, f) * sstep(1.0, 0.86, f); /* dark crevice either side of the blade */
+          var lit = Math.pow(f, 1.35);                          /* lit face brightens across the blade */
+          var sweep = 0.5 + 0.5 * Math.sin(t * 0.22 - th * 2.4 + r * 1.2);
+          lum = crev * (0.15 + 0.85 * lit) * (0.35 + 0.65 * depth) * (0.78 + 0.22 * gvar);
+          T = 0.06 + 0.3 * (0.5 + 0.5 * Math.sin(th * 1.3 + 0.6)) + 0.5 * lit * crev + 0.22 * depth + 0.12 * (sweep - 0.5) + 0.1 * (gvar - 0.5) - 0.12 * (1 - crev);
+          var coreHeat = sstep(0.55, 0.0, Math.abs(th - 0.18 * Math.sin(t * 0.12))) * sstep(-0.1, -0.45, e) * 0.3;
+          T += coreHeat;
+          track = TRACKS.gill;
+          dirI = Math.abs(rx) < 0.38 ? 2 : Math.abs(ry) < 0.38 ? 0 : (rx * ry < 0 ? 1 : 3);
+        } else if (e < 0.04) {
+          /* rim: a beaded lagoon-to-frost band, marks run along the margin */
+          var bead = 0.5 + 0.5 * Math.sin(th * 150 + t * 0.4);
+          var m = 1 - Math.abs(e + 0.015) / 0.055;
+          lum = 0.5 + 0.5 * m;
+          T = 0.35 + 0.5 * m * (0.55 + 0.45 * bead) + 0.12 * Math.sin(th * 4 - t * 0.2);
+          track = TRACKS.rim;
+          /* tangent direction: perpendicular to radial */
+          var tx = -ry, ty = rx;
+          dirI = Math.abs(tx) < 0.38 ? 2 : Math.abs(ty) < 0.38 ? 0 : (tx * ty < 0 ? 1 : 3);
+          tilt = true;
+        } else {
+          /* cap skin above the rim: sparse, violet, thinning to harbor */
+          var u = e - 0.04;
+          var sk = S.fbm(x * 3 + 5, y * 3 + t * 0.01, 3);
+          var fade = Math.exp(-u * 3.2);
+          lum = fade * (0.25 + 0.5 * sk) - 0.08;
+          T = 0.15 + 0.7 * sk * fade + 0.2 * (1 - fade) * 0 + 0.15 * Math.sin(th * 3 + sk * 4);
+          track = TRACKS.skin;
+          dirI = Math.abs(ry) > 0.8 ? 0 : 1;
+          if (S.noise(x * 31 + 3, y * 31 + t * 0.05) > 0.8) { lum += 0.35; }
+        }
+        lum = lum < 0 ? 0 : lum > 1 ? 1 : lum;
+        if (lum < 0.06 + thr * 0.2) continue;            /* dissolve into harbor as sparse marks */
+        /* partitive: A and B are adjacent stops; ratio from the cell-level T, dithered per mark */
+        T = T < 0 ? 0 : T > 0.999 ? 0.999 : T;
+        var pos = T * (track.length - 1), k = Math.floor(pos), fr = pos - k;
+        /* the cell shares A and B; the 4x4 Bayer decides which mark gets B */
+        ci = (thr < fr) ? track[k + 1] : track[k];
+        wgt = lum > 0.72 ? 2 : lum > 0.28 ? 1 : 0;
+        if (wgt === 0 && ci === N.raisedHi && thr > 0.5) continue;
+        /* highlights blow out to frost on a few bright gill edges */
+        cx.drawImage(sprites[ci], (wgt * 4 + dirI) * pw, 0, pw, ph, Math.round(sx * sw * dpr), Math.round(sy * sh * dpr), pw, ph);
+      }
+    }
+    /* one live cell: mint, 2x2 marks, creeping along a gill tip */
+    var ma = t * 0.15, mx = Math.floor(cols * (0.3 + 0.4 * ((Math.sin(ma) + 1) / 2))), my = Math.floor(rows * 0.8);
+    mx &= ~1; my &= ~1;
+    if (Math.floor(t * 2) % 2 === 0 || still) for (var a = 0; a < 2; a++) for (var b = 0; b < 2; b++)
+      cx.drawImage(sprites[N.mint], 8 * pw, 0, pw, ph, Math.round((mx + a) * sw * dpr), Math.round((my + b) * sh * dpr), pw, ph);
+  }
+
+  function run() {
+    setup();
+    if (still) { frame(4); return; }
+    var t0 = performance.now(), last = 0;
+    (function loop(now) {
+      if (now - last > 30) { last = now; frame(4 + (now - t0) / 1000); }
+      requestAnimationFrame(loop);
+    })(t0);
+  }
+  var rs; addEventListener('resize', function () { clearTimeout(rs); rs = setTimeout(function () { setup(); if (still) frame(4); }, 120); });
+  run();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Two Planes, Fog Between</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #061a2e; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Pal = window.LabPalette, S = window.LabSubjects;
+  var cv = document.getElementById('c'), g = cv.getContext('2d', { alpha: false });
+  var reduce = false;
+  try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var FONT = 'ui-monospace, "SF Mono", Menlo, monospace';
+  var FOGN = 8, HN = 48;
+  var harbor = Pal.hexToRgb('#061a2e'), raised = Pal.hexToRgb('#0b2a46'), frost = Pal.hexToRgb('#f6fbff');
+  var irisDeep = Pal.hexToRgb('#7a6ee0');
+
+  function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+
+  /* colour tables [fog level][hue step]; fog pulls colour toward the ground, far plane toward iris deep first */
+  var nearLut = [], farLut = [], frostLut = [];
+  for (var f = 0; f < FOGN; f++) {
+    var k = f / (FOGN - 1), nl = [], fl = [];
+    for (var h = 0; h < HN; h++) {
+      var t = h / (HN - 1), c = Pal.arc(t);
+      nl.push(Pal.toCss(lerp3(c, harbor, Math.pow(k, 0.8) * 0.92)));
+      /* far plane: lean to rose and raspberry, deepen with fog */
+      var fc = Pal.mix(Pal.mix('irisDeep', 'raspberry', Math.min(1, t * 1.15)), 'rose', Math.pow(t, 2) * 0.55);
+      fl.push(Pal.toCss(lerp3(Pal.mix(fc, 'iris', 0.25), harbor, 0.12 + k * 0.6)));
+    }
+    nearLut.push(nl); farLut.push(fl);
+    frostLut.push(Pal.toCss(lerp3(frost, lerp3(irisDeep, harbor, 0.2), k * 0.9)));
+  }
+  var mint = '#9df0a8';
+
+  var W = 0, H = 0, dpr = 1;
+  var near, far, fogCv, fogCtx, fogImg, FW = 56, FH = 36;
+  var px = 0, py = 0, tx = 0, ty = 0;
+
+  function mkPlane(cw, ch, zoom, flip, ox) {
+    var sc = zoom > 1.2 ? 1 : 1 / 0.94, cols = Math.ceil(W * zoom * sc / cw) + 4, rows = Math.ceil(H * zoom * sc / ch) + 4;
+    return { cw: cw, ch: ch, cols: cols, rows: rows, zoom: zoom, flip: flip, ox: ox,
+             buf: S.create(cols, rows, cw / ch), frame: -9 };
+  }
+
+  function resize() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    var short = Math.min(W, H);
+    var ncw = short < 520 ? 10 : 11, nch = Math.round(ncw * 16 / 9);
+    var fcw = Math.round(Math.max(18, Math.min(30, W / 52))), fch = Math.round(fcw * 5 / 3);
+    far = mkPlane(fcw, fch, 1.55, true, -0.12);
+    near = mkPlane(ncw, nch, 1.0, false, 0);
+    fogCv = document.createElement('canvas'); fogCv.width = FW; fogCv.height = FH;
+    fogCtx = fogCv.getContext('2d'); fogImg = fogCtx.createImageData(FW, FH);
+    draw(performance.now() / 1000, true);
+  }
+
+  var cache = {};
+  function glyphFor(lum, gx, gy, edge) {
+    var m = Math.sqrt(gx * gx + gy * gy);
+    if (edge > 0.32 && m > 0.02) {
+      var a = Math.atan2(gy, gx); /* gradient direction; line runs across it */
+      var d = ((a + Math.PI * 2.5) % Math.PI) / Math.PI; /* 0..1 */
+      var q = Math.floor(d * 4 + 0.5) & 3;
+      return '|/-\\'.charAt(q === 0 ? 0 : q === 1 ? 1 : q === 2 ? 2 : 3);
+    }
+    return null;
+  }
+  var RAMP = ' .·:-=+*xo%#@';
+
+  /* plane draw: field plane with fog sampled per cell */
+  function drawPlane(P, t, far_, fogAt) {
+    var b = P.buf, w = b.width, h = b.height, cw = P.cw, ch = P.ch;
+    var offX = (W - (w - 4) * cw) / 2 - 2 * cw, offY = (H - (h - 4) * ch) / 2 - 2 * ch;
+    offX += P.ox * W + px * (far_ ? -14 : 40) + (far_ ? Math.sin(t * 0.11) * 10 : 0);
+    offY += py * (far_ ? -9 : 26) + (far_ ? Math.cos(t * 0.09) * 6 : 0);
+    var lum = b.lum, hint = b.hint, edge = b.edge, mask = b.mask, sx = P.flip;
+    g.font = (far_ ? Math.round(ch * 0.82) : Math.round(ch * 0.9)) + 'px ' + FONT;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    var lut = far_ ? farLut : nearLut, lastStyle = '';
+    for (var r = 1; r < h - 1; r++) {
+      var y = offY + r * ch + ch / 2;
+      if (y < -ch || y > H + ch) continue;
+      for (var c = 1; c < w - 1; c++) {
+        var x = offX + c * cw + cw / 2;
+        if (x < -cw || x > W + cw) continue;
+        var cc = sx ? w - 1 - c : c, i = r * w + cc;
+        var L = lum[i], E = edge[i], M = mask[i];
+        var fog = fogAt(x, y, M);
+        var fi = Math.min(FOGN - 1, Math.max(0, Math.round(fog * (FOGN - 1))));
+        var ch_ = null, style;
+        if (far_) {
+          /* far: big sparse marks, only where light is present; fog eats the low end */
+          var v = L * (1 - fog * 0.5);
+          if (v < 0.34 || ((r + c) & 1)) continue;
+          ch_ = RAMP.charAt(Math.min(RAMP.length - 1, Math.floor(v * RAMP.length * 0.95)));
+          if (ch_ === ' ') continue;
+          style = lut[fi][Math.max(0, Math.min(HN - 1, Math.round((hint[i] * 0.5 + 0.5) * (HN - 1))))];
+        } else {
+          var gx = (lum[i + 1] - lum[i - 1]) * (sx ? -1 : 1), gy = lum[i + w] - lum[i - w];
+          var v2 = L - fog * 0.18;
+          var hi = L > 0.82 && M > 0.5;
+          var lineG = L > 0.42 ? glyphFor(L, gx, gy, E) : null;
+          if (hi) { ch_ = (E > 0.4 && lineG) ? lineG : (L > 0.93 ? '#' : '+'); style = frostLut[fi]; }
+          else if (lineG) { ch_ = lineG; style = lut[fi][Math.round(Math.min(1, 0.42 + hint[i] * 0.7) * (HN - 1))]; }
+          else if (v2 > 0.12) {
+            ch_ = RAMP.charAt(Math.min(RAMP.length - 1, Math.floor(v2 * RAMP.length)));
+            if (ch_ === ' ') continue;
+            style = lut[fi][Math.round(Math.min(1, 0.42 + hint[i] * 0.7) * (HN - 1))];
+          } else {
+            /* shadow polarity: faint harbor-raised ticks, only in sparse cells */
+            if (((r * 7 + c * 13) & 3) !== 0 || M < 0.4) continue;
+            ch_ = '.'; style = 'rgb(18,58,92)';
+          }
+        }
+        if (style !== lastStyle) { g.fillStyle = style; lastStyle = style; }
+        g.fillText(ch_, x, y);
+      }
+    }
+  }
+
+  function draw(t, still) {
+    var s = dpr;
+    g.setTransform(s, 0, 0, s, 0, 0);
+    /* ground */
+    var gr = g.createRadialGradient(W * 0.55, H * 0.45, 0, W * 0.55, H * 0.45, Math.max(W, H) * 0.8);
+    gr.addColorStop(0, '#0b2a46'); gr.addColorStop(0.55, '#082139'); gr.addColorStop(1, '#061a2e');
+    g.fillStyle = gr; g.fillRect(0, 0, W, H);
+
+    /* fog density field, low res; also sampled per cell */
+    var fd = new Float32Array(FW * FH), i = 0;
+    for (var j = 0; j < FH; j++) for (var k = 0; k < FW; k++, i++) {
+      var u = k / FW, v = j / FH;
+      var n = S.fbm(u * 3.2 + t * 0.018, v * 2.4 - t * 0.012 + 7, 4);
+      var band = Math.exp(-Math.pow((v - 0.62 - 0.06 * Math.sin(t * 0.07 + u * 3)) * 2.6, 2));
+      fd[i] = Math.max(0, Math.min(1, (n - 0.28) * 1.7 * (0.35 + band * 0.9)));
+    }
+    function fogAt(x, y, m) {
+      var u = Math.min(FW - 1, Math.max(0, Math.floor(x / W * FW))), v = Math.min(FH - 1, Math.max(0, Math.floor(y / H * FH)));
+      return fd[v * FW + u];
+    }
+    var tt = t;
+    /* fill buffers every other frame to keep the budget */
+    var fr = still ? 0 : Math.floor(t * 30);
+    if (far.frame !== fr && (still || fr % 3 === 0)) { S.fill('mushroom', far.buf, tt * 0.7 + 40); far.frame = fr; }
+    if (near.frame !== fr && (still || fr % 2 === 0)) { S.fill('mushroom', near.buf, tt); near.frame = fr; }
+
+    drawPlane(far, t, true, function (x, y) { return Math.min(1, fogAt(x, y) * 0.6 + 0.12); });
+
+    /* fog sheet between the planes: ground to iris deep to rose, smooth scaled */
+    var d = fogImg.data;
+    for (i = 0; i < FW * FH; i++) {
+      var f = fd[i], col = f < 0.5 ? lerp3(harbor, irisDeep, f * 1.1) : lerp3(irisDeep, Pal.hexToRgb('#f4a2c0'), (f - 0.5) * 0.7);
+      d[i * 4] = col[0] * 255; d[i * 4 + 1] = col[1] * 255; d[i * 4 + 2] = col[2] * 255; d[i * 4 + 3] = Math.pow(f, 1.3) * 150;
+    }
+    fogCtx.putImageData(fogImg, 0, 0);
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(fogCv, -W * 0.03, -H * 0.03, W * 1.06, H * 1.06);
+
+    g.save(); g.translate(W / 2, H * 0.54); g.scale(0.94, 0.94); g.translate(-W / 2, -H / 2);
+    drawPlane(near, t, false, fogAt);
+    g.restore();
+
+    /* mint: one live cell at a slow pulse near the fog line */
+    var mx = W * (0.5 + 0.08 * Math.sin(t * 0.4)), my = H * 0.2;
+    g.font = Math.round(near.ch * 0.9) + 'px ' + FONT; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = (still || Math.sin(t * 3) > -0.2) ? mint : '#0b2a46';
+    g.fillText('+', Math.round(mx / near.cw) * near.cw, Math.round(my / near.ch) * near.ch);
+
+    /* vignette to ground at the edges */
+    var vg = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.78);
+    vg.addColorStop(0, 'rgba(6,26,46,0)'); vg.addColorStop(1, 'rgba(6,26,46,0.7)');
+    g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  }
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('pointermove', function (e) {
+    tx = e.clientX / window.innerWidth - 0.5; ty = e.clientY / window.innerHeight - 0.5;
+  });
+  resize();
+  if (!reduce) {
+    var t0 = performance.now();
+    (function loop(now) {
+      px += (tx - px) * 0.05; py += (ty - py) * 0.05;
+      var t = (now - t0) / 1000 + 3 + Math.sin((now - t0) / 9000) * 0;
+      /* idle drift when pointer is still */
+      if (tx === 0 && ty === 0) { px = 0.35 * Math.sin(t * 0.23); py = 0.25 * Math.cos(t * 0.17); }
+      draw(t, false);
+      requestAnimationFrame(loop);
+    })(t0);
+  }
+})();
+</script>
+</body>
+</html>

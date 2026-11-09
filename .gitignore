@@ -27,3 +27,11 @@ dist-ssr
 .wrangler
 .dev.vars*
 !.dev.vars.example
+
+# The ASCII lab keeps its renders and reference images local: only its source and notes are tracked.
+ascii-lab/**/*.png
+ascii-lab/**/*.jpg
+ascii-lab/**/*.jpeg
+ascii-lab/**/*.webp
+ascii-lab/**/*.gif
+ascii-lab/**/*.mp4

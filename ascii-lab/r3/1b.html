@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mushroom poster and sticker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #061a2e; }
+  canvas { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../kit/palette.js"></script>
+<script src="../kit/subjects.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = LabSubjects, Pal = LabPalette;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cv = document.getElementById('c'), cx = cv.getContext('2d');
+  var inks = (function(){ var o=[],i,t,c; for(i=0;i<128;i++){ t=i/127;
+    c = t<0.18 ? Pal.mix('iris deep','raspberry',t/0.18) : t<0.62 ? Pal.mix('raspberry','rose',(t-0.18)/0.44) : Pal.mix('rose','peach',(t-0.62)/0.38);
+    o.push(Pal.toCss(c)); } return o; })();
+  var HARBOR='#061a2e', FROST='#f6fbff', RAISED='#0b2a46', RAISEDHI='#123a5c', ROSE='#f4a2c0', RASP='#c2407a', IRISD='#7a6ee0', MINT='#9df0a8', PEACH='#f8928a';
+  var MONO = 'ui-monospace, Menlo, Consolas, monospace';
+  var N, dpr;
+  var bufs = {};
+
+  function hash(i, j) { var s = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return s - Math.floor(s); }
+
+  /* cells: mushroom into rect (ox,oy,w,h); dim 0..1 scales alpha; flip raises ghost visibility */
+  function cells(key, ox, oy, w, h, cols, t, dim, seed) {
+    var CW = w / cols, CH = CW * 0.5, rows = Math.ceil(h / CH) + 1;
+    var B = bufs[key]; if (!B || B.width !== cols || B.height !== rows) B = bufs[key] = S.create(cols, rows, 2);
+    S.fill('mushroom', B, t);
+    var r, c, i;
+    cx.save(); cx.globalAlpha = dim;
+    for (r = 0; r < rows; r++) {
+      var y0 = oy + r * CH;
+      for (c = 0; c < cols; c++) {
+        i = r * cols + c;
+        var l = B.lum[i], hn = B.hint[i], m = B.mask[i], e = B.edge[i];
+        var mass = Math.max(0, Math.min(1, (l - 0.1) * 1.55 + m * 0.15)); if (m < 0.5) mass *= 0.6 + 0.4 * m;
+        var drift = S.noise(c * 0.22 + t * 0.07 + seed, r * 0.4 - t * 0.05);
+        var hh = hash(c + seed * 7, r), hv = hash(r + 91, c + 17 + seed * 3);
+        var x0 = ox + c * CW;
+        var tint = inks[Math.min(127, Math.floor(Math.max(0, Math.min(1, 0.14 + 0.78 * hn + 0.06 * (drift - 0.5))) * 127))];
+        if (mass > 0.62) {
+          var gap = 1 + (0.8 - mass) * 3;
+          var ww = CW - (mass > 0.8 ? 1 : 1 + (0.8 - mass) * CW * 0.8), xo = (CW - ww) * hh;
+          cx.fillStyle = l > 0.86 ? FROST : tint;
+          cx.fillRect(x0 + xo, y0, ww, CH - (gap > 2 ? 2 : 1));
+          if (l < 0.42 && m > 0.5 && e < 0.5 && hh < 0.7) { cx.fillStyle = HARBOR; cx.fillRect(x0 + CW * 0.15, y0 + CH * 0.38, CW * 0.7, Math.max(1, CH * 0.16)); }
+          if (e > 0.55 && l > 0.5 && hv < e) { cx.fillStyle = l > 0.7 ? FROST : ROSE; cx.fillRect(x0 + CW * 0.1, y0 + CH * 0.4, CW * 0.8, Math.max(1, CH * 0.2)); }
+        } else if (mass > 0.07) {
+          var k = mass / 0.62, keep = k * 1.7 + (drift - 0.5) * 0.9;
+          if (hh > keep) { if (hv < 0.35 * k + 0.05) { cx.fillStyle = hv < 0.2 ? RASP : RAISEDHI; cx.fillRect(x0 + CW * 0.1, y0 + CH * 0.42, CW * 0.8, 1); } continue; }
+          var th = Math.max(1, CH * (0.14 + 0.7 * k * k)), wd = CW * (0.35 + 0.65 * Math.min(1, k * 1.3));
+          var sh = (1 - k) * CW * 1.9 * (hv - 0.5) * 2 + (1 - k) * 6 * Math.sin(t * 0.6 + r * 0.7);
+          cx.globalAlpha = dim * (0.45 + 0.55 * Math.min(1, k * 1.4));
+          cx.fillStyle = (k < 0.5 && hv > 0.8) ? (hv > 0.9 ? ROSE : RASP) : tint;
+          cx.fillRect(x0 + (CW - wd) / 2 + sh, y0 + (CH - th) / 2, wd, th);
+          cx.globalAlpha = dim;
+        }
+      }
+    }
+    cx.restore();
+  }
+
+  function setup() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    N = Math.floor(Math.min(innerWidth, innerHeight));
+    cv.style.width = cv.style.height = N + 'px';
+    cv.width = cv.height = Math.round(N * dpr);
+  }
+
+  function draw(t) {
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.fillStyle = HARBOR; cx.fillRect(0, 0, N, N);
+    /* poster: dim field of the same cells across the whole square */
+    cx.save(); cx.beginPath(); cx.rect(0, 0, N, N); cx.clip();
+    cells('bg', -N * 0.1, N * 0.0, N * 1.2, N, 70, t + 3, 0.34, 5);
+    cx.restore();
+    /* frame rule */
+    cx.strokeStyle = RAISEDHI; cx.lineWidth = Math.max(1, N / 500);
+    cx.strokeRect(N * 0.03, N * 0.03, N * 0.94, N * 0.94);
+
+    /* sticker: die-cut disc, slightly turned */
+    var R = N * 0.34, cxs = N * 0.5, cys = N * 0.43, rot = -0.07;
+    cx.save(); cx.translate(cxs, cys); cx.rotate(rot);
+    /* offset shadow */
+    cx.fillStyle = '#041321'; cx.beginPath(); cx.arc(N * 0.014, N * 0.02, R + N * 0.022, 0, 7); cx.fill();
+    /* white die-cut border */
+    cx.fillStyle = FROST; cx.beginPath(); cx.arc(0, 0, R + N * 0.022, 0, 7); cx.fill();
+    /* face */
+    cx.save(); cx.beginPath(); cx.arc(0, 0, R, 0, 7); cx.clip();
+    cx.fillStyle = RAISED; cx.fillRect(-R, -R, 2 * R, 2 * R);
+    var g = cx.createRadialGradient(0, R * 0.1, R * 0.1, 0, R * 0.1, R * 1.1);
+    g.addColorStop(0, 'rgba(122,110,224,0.30)'); g.addColorStop(0.55, 'rgba(194,64,122,0.14)'); g.addColorStop(1, 'rgba(6,26,46,0.5)');
+    cx.fillStyle = g; cx.fillRect(-R, -R, 2 * R, 2 * R);
+    cells('st', -R * 1.05, -R * 1.0, R * 2.1, R * 2.0, 62, t, 1, 0);
+    cx.restore();
+    /* inner ring */
+    cx.strokeStyle = ROSE; cx.lineWidth = Math.max(1, N / 400); cx.beginPath(); cx.arc(0, 0, R - N * 0.012, 0, 7); cx.stroke();
+    /* sheen peel edge: soft frost arc */
+    cx.strokeStyle = 'rgba(246,251,255,0.55)'; cx.lineWidth = Math.max(1.5, N / 250);
+    cx.beginPath(); cx.arc(0, 0, R + N * 0.011, Math.PI * 1.08, Math.PI * 1.32); cx.stroke();
+    cx.restore();
+
+    /* type */
+    var ts = N * 0.105;
+    cx.textBaseline = 'alphabetic'; cx.textAlign = 'left';
+    cx.fillStyle = FROST; cx.font = '800 ' + ts + 'px ' + MONO;
+    cx.fillText('BU PROTO', N * 0.08, N * 0.915);
+    cx.fillStyle = ROSE; cx.fillRect(N * 0.08, N * 0.935, N * 0.34, Math.max(2, N * 0.008));
+    cx.fillStyle = RASP; cx.fillRect(N * 0.42, N * 0.935, N * 0.1, Math.max(2, N * 0.008));
+    cx.fillStyle = IRISD; cx.fillRect(N * 0.52, N * 0.935, N * 0.05, Math.max(2, N * 0.008));
+    var ss = N * 0.02;
+    cx.font = '600 ' + ss + 'px ' + MONO; cx.fillStyle = ROSE;
+    cx.fillText('BUILDERS  /  BOSTON UNIVERSITY', N * 0.08, N * 0.968 - 0);
+    cx.textAlign = 'right'; cx.fillStyle = '#7cc7f4';
+    cx.fillText('STICKER 01 / 100', N * 0.92, N * 0.968);
+    cx.fillStyle = MINT; cx.beginPath(); cx.arc(N * 0.92 - ss * 0.4, N * 0.915 - ts * 0.3, ss * 0.35, 0, 7); cx.fill();
+    cx.textAlign = 'left'; cx.fillStyle = FROST; cx.font = '600 ' + ss + 'px ' + MONO;
+    cx.fillText('we build.', N * 0.08, N * 0.075);
+  }
+
+  setup();
+  addEventListener('resize', function () { setup(); draw(6); });
+  if (still) { draw(6); return; }
+  (function loop(ms) { draw((ms || 0) / 1000 + 6); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>
