@@ -226,11 +226,10 @@ void main() {
      folding slowly like light through water, and darker along the lanes between rings. */
   float folds = vn(p / 160. + vec2(uT * .03, -uT * .02)) * .6 + vn(p / 70. - vec2(uT * .02, 0.)) * .4;
   float glow = (.1 + .3 * exp(-max(at, 0.) / 7.)) * (.7 + .6 * folds) * mix(.5, 1., smoothstep(0., .3, lane));
-  /* Over the seam's band at the canvas's foot the light thickens, tier by tier, into solid tiles: a
-     flat surface wherever the seam's line can fall, so the seam (see glyphSeam) cuts it cleanly, the
-     way its cream breaks against dark, instead of chopping a dither on a grid of its own. */
-  float pool = smoothstep(uSeam * (1.3 + .3 * (folds - .5)), uSeam * .72, centre.y) * step(.5, uSeam);
-  glow = max(glow, pool);
+  /* The light gathers over the seam's band at the canvas's foot into a near-solid wash of tiles, so the
+     seam (see glyphSeam) breaks it off along a clear skyline, the way its cream breaks against dark. */
+  float pool = smoothstep(uSeam * .95, uSeam * .42, centre.y) * step(.5, uSeam);
+  glow = max(glow, pool * (.34 + .16 * folds));
   glow *= open * mix(.55, 1., uIntro);
 
   /* The dotted circle between rings: a brighter tile every so often along each ring's edge. */
@@ -244,8 +243,7 @@ void main() {
   /* At the very foot of the canvas the tiles thin out, dropping away one by one, under the seam's black
      (see glyphSeam) or, without it, into the page. */
   light *= step(hash(id + .37), smoothstep(0., .08, id.y / uRows));
-  /* the pool a shade deeper than the light above it, so the band doesn't glare */
-  o = vec4(bloom(at, theta) * mix(1., .72, pool), clamp(light, 0., 1.));
+  o = vec4(bloom(at, theta), clamp(light, 0., 1.));
 }`
 
 const BLOCKS = `#version 300 es
@@ -315,8 +313,7 @@ void main() {
     a = .9;
   } else {
     ink = mix(lift, FROST, .15);
-    /* full light is a solid block, every tile, so a pool of it reads as one surface */
-    s = n > .3 || L > .9 ? 4 : 3;
+    s = n > .3 ? 4 : 3;
     a = .97;
   }
   float g = block(s, f) * a;
