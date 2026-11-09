@@ -36,6 +36,14 @@ const LETTERED = 0.82
 const GLITCHES = 12
 const GLITCH_SPAN = 0.4
 const MAX_DPR = 2
+/**
+ * Seeds for the noise behind the flips, the dust and the line. Any seeds make the same kind of seam;
+ * these draw one as busy as contentarchitecture.dev's, measured frame by frame across a scroll: about
+ * 150 flipped cells and 490 dusted at a time, and a line as rough, on a 168-column band.
+ */
+const FLIP_SEED = 47
+const DUST_SEED = 208
+const LINE_SEED = 46
 
 /** The light's colour where it's a solid cell: the bloom's blues, drifting across the band. */
 const LIGHT_A = [62, 132, 200]
@@ -112,8 +120,8 @@ export function createGlyphSeam(canvas: HTMLCanvasElement): GlyphSeam | null {
     const i = row * cols + col
     const phase = seam.phase[i]
     const taper = smoothstep(0, TAPER * rows, Math.min(row, rows - 1 - row))
-    const flipNoise = 0.86 * noise2(0.09 * col, 0.8 * row, 3) + 0.14 * hash(col, row, 4 + phase)
-    const dustNoise = 0.8 * noise2(0.2 * col, row, 6) + 0.2 * hash(col, row, 7 + phase)
+    const flipNoise = 0.86 * noise2(0.09 * col, 0.8 * row, FLIP_SEED) + 0.14 * hash(col, row, FLIP_SEED + 1 + phase)
+    const dustNoise = 0.8 * noise2(0.2 * col, row, DUST_SEED) + 0.2 * hash(col, row, DUST_SEED + 1 + phase)
     const letter = (col + Math.floor(hash(row, 0, 5) * PHRASE.length) + 7 * phase) % PHRASE.length
     const blank = PHRASE[letter] === ' '
     seam.flip[i] = reach(1 - flipNoise, FLIPS * taper, FLIP_REACH * rows)
@@ -127,7 +135,7 @@ export function createGlyphSeam(canvas: HTMLCanvasElement): GlyphSeam | null {
     const { rows, step } = seam
     let line = rows / 2 + step / 2
     WANDER.forEach(([frequency, spread], octave) => {
-      line += (noise1(col * frequency + 0.045 * step * octave, 10 + octave) - 0.5) * 2 * spread * rows
+      line += (noise1(col * frequency + 0.045 * step * octave, LINE_SEED + octave) - 0.5) * 2 * spread * rows
     })
     return Math.min(Math.max(line, TAPER * rows), (1 - TAPER) * rows)
   }
