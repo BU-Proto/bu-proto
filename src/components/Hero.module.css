@@ -2,10 +2,10 @@
 .hero {
   position: relative;
   display: grid;
-  place-items: end center;
+  place-items: center;
   min-height: 100vh;
   min-height: 100svh;
-  padding: 0 var(--gutter) clamp(56px, 12vh, 120px);
+  padding: 0 var(--gutter);
   /* Clipped at the sides only: the rings run on below the hero's foot (see .rings). */
   overflow-x: clip;
   background: var(--c-paper);
@@ -108,59 +108,20 @@
   opacity: 1;
 }
 
-/*
- * What Proto is and the way in, centred low on the screen where the light has thinned. A soft pool of
- * the ground sits behind it, wider than the words and gone well before its edges, so they read over
- * any part of the picture without a box.
- */
-.copy {
+/* Proto's title, alone at the centre of the rings. */
+.headline {
   position: relative;
   z-index: 1;
-  display: grid;
-  justify-items: center;
-  gap: 18px;
-  max-width: 760px;
-  text-align: center;
-}
-
-.copy::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: -30% -25%;
-  background: radial-gradient(closest-side, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0));
-  pointer-events: none;
-}
-
-.headline {
-  max-width: 18ch;
+  max-width: 16ch;
   margin: 0;
   color: var(--c-ink);
-  font-size: clamp(36px, 5vw, 64px);
+  font-size: clamp(40px, 6.4vw, 96px);
   font-weight: 400;
   letter-spacing: -0.035em;
   line-height: 1.02;
+  text-align: center;
   text-wrap: balance;
   text-shadow: 0 2px 30px rgb(0 0 0 / 0.5);
-}
-
-.lede {
-  max-width: 46ch;
-  margin: 0;
-  color: var(--c-body);
-  font-size: clamp(16px, 1.3vw, 19px);
-  line-height: 1.55;
-  text-wrap: pretty;
-  text-shadow: 0 1px 14px rgb(0 0 0 / 0.6);
-}
-
-.join {
-  margin-top: 8px;
-}
-
-/* It lifts under the cursor (see ui.primary); its colour stays put. */
-.join::after {
-  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

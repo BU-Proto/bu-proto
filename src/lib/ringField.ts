@@ -84,6 +84,11 @@ const vec3 VIOLET = vec3(.478, .361, .925), SKY = vec3(.012, .604, .784), DEEP =
 float hash(vec2 p) { p = fract(p * vec2(233.34, 851.73)); p += dot(p, p + 23.45); return fract(p.x * p.y); }
 float radiusAt(float u) { return R0 * pow(max(u, 0.), 1. / Q); }
 float boxDistance(vec2 p, vec4 b) { vec2 c = (b.xy + b.zw) * .5, e = (b.zw - b.xy) * .5; vec2 d = abs(p - c) - e; return length(max(d, 0.)) + min(max(d.x, d.y), 0.); }
+/* The same, round-cornered: as far as it can round, so a wide box reads as a soft oval. */
+float roundDistance(vec2 p, vec4 b) {
+  float round = .5 * min(b.z - b.x, b.w - b.y);
+  return boxDistance(p, b + vec4(round, round, -round, -round)) - round;
+}
 
 /* The words a ring holds resting in place k: as many whole ones as its letters have room for. */
 float wordsAt(float k) {
@@ -217,13 +222,13 @@ void main() {
   float lane = min(fract(ringPos), 1. - fract(ringPos));
 
   /* The hero's words and Proto's mark sit on the black: round them the glow's tiles drop away one by
-     one, thinning a long way out, so it reads as the light dissolving rather than a panel behind them. */
+     one, thinning a short way out, so it reads as the light dissolving rather than a panel behind them. */
   float open = 1.;
   /* the edge wanders, so no straight side of a box shows in it */
   float wander = (vn(centre / (110. * uDpr) + 3.7) - .5) * 130. * uDpr;
   for (int b = 0; b < ${MAX_CLEAR}; b++) {
     if (uClear[b].z <= uClear[b].x) continue;
-    open = min(open, smoothstep(-24. * uDpr, 170. * uDpr, boxDistance(centre, uClear[b]) + wander));
+    open = min(open, smoothstep(-40. * uDpr, 170. * uDpr, roundDistance(centre, uClear[b]) + wander));
   }
   open = step(hash(id + .91), open * open * (3. - 2. * open));
 
@@ -464,8 +469,8 @@ export function createRingField(canvas: HTMLCanvasElement, onLost: () => void): 
       gl.bindFramebuffer(gl.FRAMEBUFFER, target)
       gl.viewport(0, 0, state.cols, state.rows)
       gl.useProgram(type)
-      // A touch above the hero's middle, so its words sit out on the wide rings. In device px, y up.
-      gl.uniform2f(T.uCentre, canvas.width * 0.5, canvas.height - state.hero * state.dpr * 0.44)
+      // The hero's middle, where its title stands, so the rings turn round it. In device px, y up.
+      gl.uniform2f(T.uCentre, canvas.width * 0.5, canvas.height - state.hero * state.dpr * 0.5)
       gl.uniform1f(T.uCell, state.cell)
       gl.uniform1f(T.uSpin, state.spin)
       gl.uniform1f(T.uDive, state.dive)
