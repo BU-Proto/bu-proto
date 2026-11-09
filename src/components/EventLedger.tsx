@@ -3,14 +3,17 @@ import { Link } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { EVENT_LEDGER, KIND_HUE } from '../content/events'
 import { dateParts, daysUntil } from '../lib/dates'
+import { createLedgerWords } from '../lib/ledgerWords'
 import { onFrame } from '../lib/smoothScroll'
 import { reducedMotion } from '../lib/useInView'
-import { createWakeField } from '../lib/wakeField'
-import { MaskLines } from './motion/MaskLines'
+import { RevealWords } from './motion/RevealWords'
 import styles from './EventLedger.module.css'
 
 /** Each size of night, by its glyph from the trail: small ○, medium >, big _. */
 const HUE_GLYPH = { sky: '○', iris: '>', rose: '_' } as const
+
+/** The giant words are set in the site's own face, light, as the big type is everywhere else. */
+const WORDS_FONT = '300 {size} Inter, system-ui, sans-serif'
 
 const byDate = (a: ProtoEvent, b: ProtoEvent) => a.date.localeCompare(b.date) || a.id - b.id
 
@@ -35,8 +38,8 @@ function byKind(events: readonly ProtoEvent[]) {
   return [...groups]
 }
 
-/** The giant words and the cursor's wake, stuck to the screen while the section passes under it. */
-function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
+/** The giant words, stuck to the screen while the section passes under it. */
+function WordStage({ section }: { section: RefObject<HTMLElement | null> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const [failed, setFailed] = useState(false)
 
@@ -47,18 +50,21 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
     const alive = { current: true }
     const cleanup: { run: (() => void) | null } = { run: null }
 
-    // Built only as the section nears the screen: its big atlas shouldn't hold up the hero's opening.
-    // It's drawn from the display face, so it waits for that too.
-    const near = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return
-      near.disconnect()
-      void document.fonts.load('400 120px "Host Grotesk"', 'HACK').then(build)
-    }, { rootMargin: '100% 0px' })
+    // Built only as the section nears the screen: its big atlas shouldn't hold up the page's
+    // opening. It's drawn from Inter, so it waits for that too.
+    const near = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return
+        near.disconnect()
+        void document.fonts.load('300 120px Inter', EVENT_LEDGER.words.join('')).then(build, build)
+      },
+      { rootMargin: '100% 0px' },
+    )
     near.observe(box)
 
     const build = () => {
       if (!alive.current) return
-      const field = createWakeField(surface, EVENT_LEDGER.words, () => setFailed(true))
+      const field = createLedgerWords(surface, EVENT_LEDGER.words, WORDS_FONT, () => setFailed(true))
       if (!field) {
         setFailed(true)
         return
@@ -85,8 +91,8 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
       })
       sizes.observe(surface)
       const screen = new IntersectionObserver(([entry]) => {
-        state.onScreen = entry.isIntersecting
-        if (entry.isIntersecting) start()
+        state.onScreen = entry?.isIntersecting ?? false
+        if (state.onScreen) start()
         else stop()
       })
       screen.observe(box)
@@ -95,7 +101,6 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
         scrolled()
         if (still) field.frame(performance.now())
       }
-      // The cursor's own wake is off here: the site-wide ASCII trail (see Layout) is the drag now.
       const onVisibility = () => {
         state.visible = !document.hidden
         if (state.visible) start()
@@ -128,7 +133,7 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
   )
 }
 
-/** Proto's nights as a ledger, over giant words that catch colour in the cursor's wake. */
+/** Proto's nights as a ledger, over giant words that slide as the page scrolls. */
 export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
   const section = useRef<HTMLElement>(null)
   const head = useRef<HTMLElement>(null)
@@ -154,11 +159,11 @@ export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
 
   return (
     <section ref={section} className={styles.section} aria-labelledby="event-ledger">
-      <WakeStage section={section} />
+      <WordStage section={section} />
       <div className={styles.body}>
         <header ref={head} className={styles.head}>
-          <h2 id="event-ledger" className={styles.title}>
-            <MaskLines text={EVENT_LEDGER.title} />
+          <h2 id="event-ledger" className={styles.title} data-reveal="words">
+            <RevealWords text={EVENT_LEDGER.title} />
           </h2>
           <p className={styles.count} data-reveal="rise">
             <span className={styles.icon} aria-hidden="true">

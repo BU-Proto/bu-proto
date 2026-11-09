@@ -2,8 +2,7 @@ import { FOG } from './settings'
 
 /**
  * Elements the trail should step back from so the copy stays legible.
- * `data-fog-clear="box"` clears the element's whole box (pills, buttons), as does
- * `data-trail-skip` (a region whose own art draws the trail);
+ * `data-fog-clear="box"` clears the element's whole box (pills, buttons);
  * any other value clears just the line boxes of its text.
  */
 export const CLEAR_SELECTOR = '[data-fog-clear]'
@@ -33,14 +32,10 @@ export function buildClearMask(
     }
   }
 
-  const viewHeight = window.innerHeight
   for (const element of elements) {
-    // Off screen: nothing to clear, and no need to pay for its style.
-    const box = element.getBoundingClientRect()
-    if (box.bottom < -pad || box.top > viewHeight + pad || box.width <= 1 || box.height <= 1) continue
     if (getComputedStyle(element).visibility !== 'visible') continue
-    if (element.getAttribute('data-fog-clear') === 'box' || element.hasAttribute('data-trail-skip')) {
-      fill(box)
+    if (element.getAttribute('data-fog-clear') === 'box') {
+      fill(element.getBoundingClientRect())
     } else {
       const range = document.createRange()
       range.selectNodeContents(element)
@@ -53,33 +48,6 @@ export function buildClearMask(
     blurred[k] = Math.min(1, blurred[k] * FOG.CLEAR_GAIN)
   }
   return blurred
-}
-
-/**
- * The opposite of the clear mask: where the trail may run at all, as the boxes of the given elements
- * on the character grid, softened at their edges. 1 = inside, 0 = outside.
- */
-export function buildAllowMask(
-  elements: Iterable<Element>,
-  cols: number,
-  rows: number,
-  cellW: number,
-  cellH: number,
-): Float32Array {
-  const coverage = new Float32Array(cols * rows)
-  const viewHeight = window.innerHeight
-  for (const element of elements) {
-    const box = element.getBoundingClientRect()
-    if (box.bottom < 0 || box.top > viewHeight || box.width <= 1 || box.height <= 1) continue
-    const i0 = Math.max(0, Math.floor(box.left / cellW))
-    const i1 = Math.min(cols - 1, Math.floor(box.right / cellW))
-    const j0 = Math.max(0, Math.floor(box.top / cellH))
-    const j1 = Math.min(rows - 1, Math.floor(box.bottom / cellH))
-    for (let j = j0; j <= j1; j++) {
-      for (let i = i0; i <= i1; i++) coverage[j * cols + i] = 1
-    }
-  }
-  return boxBlur(coverage, cols, rows, FOG.CLEAR_BLUR)
 }
 
 /** Separable box blur with clamped edges. */

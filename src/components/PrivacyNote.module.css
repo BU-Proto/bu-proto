@@ -1,37 +1,24 @@
 .note {
   max-width: 52ch;
   margin: 0;
-  color: var(--c-body);
-  font-size: 14px;
+  color: var(--ink-soft);
+  font-size: 13px;
   line-height: 1.5;
   text-wrap: pretty;
 }
 
-/* Ink at rest; a dotted line grows under it from the left on hover. */
 .link {
-  padding-bottom: 3px;
-  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 0 3px;
-  color: var(--c-ink);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.4);
+  color: var(--ink);
   font-weight: 500;
   white-space: nowrap;
-  transition: background-size 0.45s var(--ease-out);
 }
 
-.link:hover,
-.link:focus-visible {
-  background-size: 100% 3px;
+.link:hover {
+  border-bottom-color: var(--frost);
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .link {
-    transition: none;
-  }
 }

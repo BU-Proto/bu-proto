@@ -40,7 +40,7 @@ export const TRACKS: readonly Track[] = [
     name: 'Start',
     glyph: '○',
     hue: 'sky',
-    who: 'Any BU student, no projects yet.',
+    who: 'Any CS student, no projects yet.',
     offers: [
       'Beginner workshops',
       '"First hackathon" squads paired with a veteran',
@@ -115,6 +115,8 @@ export const NEXT_UP = {
   closes: 'Closes',
 } as const
 
+export const WINS_TITLE = 'Latest wins'
+
 export const HOME_EMPTY = {
   next: {
     title: 'Nothing on the calendar yet',
@@ -134,7 +136,7 @@ export const JOIN_CTA: {
   cta: Link
 } = {
   title: 'Come build with us',
-  tag: 'BU PROTO',
+  tag: 'BU Proto',
   lede: 'No application and no experience needed. Tell us your track and we’ll see you at hack night.',
   hint: 'No application needed',
   aside: ['Nobody arrives ready.', 'We said come anyway.', 'They built something.'],

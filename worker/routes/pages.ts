@@ -34,7 +34,7 @@ function render(doc: LegalDoc): string {
     (section) =>
       `<section id="${section.id}"><h2>${escapeHtml(section.title)}</h2>${section.body.map(block).join('')}</section>`,
   )
-  return `<main class="static-page" style="max-width:72ch;margin:0 auto;padding:48px 20px;font-family:'Host Grotesk',system-ui,sans-serif;line-height:1.7;color:#f6fbff;background:#061a2e">
+  return `<main class="static-page" style="max-width:72ch;margin:0 auto;padding:48px 20px;font-family:Inter,system-ui,sans-serif;line-height:1.7;color:#f6fbff;background:#061a2e">
 <p><a href="/" style="color:#9df0a8">BU Proto</a></p>
 <h1>${escapeHtml(doc.intro.title)}</h1>
 <p>${escapeHtml(doc.intro.lede)}</p>

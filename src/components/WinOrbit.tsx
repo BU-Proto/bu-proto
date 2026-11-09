@@ -10,7 +10,7 @@ import styles from './WinOrbit.module.css'
 // under it, so the two halves read as one ring turning. Every item is laid out at its largest size
 // and scaled down, which keeps photos and glyph art sharp at the top and bottom of the ring.
 
-/** One run of words in the statement. Muted runs are the grey ones. */
+/** One run of words in the statement. Muted runs are in the dim ink. */
 export interface OrbitPhrase {
   text: string
   muted?: boolean
@@ -23,27 +23,31 @@ const STATEMENT: OrbitStatement = [
   [{ text: 'and', muted: true }, { text: 'each team took' }, { text: 'a prize', muted: true }, { text: 'home.' }],
 ]
 
-const NAVY = '#061a2e'
-const BLUE = '#7cc7f4'
-const GOLD = '#9d8bff'
-const RED = '#ff6eb0'
-const NEON = '#9df0a8'
+// The stamps are drawn in the field's light (sky, iris, rose) and frost, with harbor ink, plus one
+// navy disc lettered in frost. Mint stays out: it means what's live or yours, not decoration.
+const HARBOR = 'var(--harbor)'
+const NAVY = 'var(--navy)'
+const FROST = 'var(--frost)'
+const SKY = 'var(--sky)'
+const IRIS = 'var(--iris)'
+const ROSE = 'var(--rose)'
 
 type StampMark = 'ring' | 'chevron' | 'prompt'
 
 interface Stamp {
   ground: string
   ink: string
+  /** Ring lettering: artwork, set round the disc, so it stays in capitals. */
   words: string
   mark: StampMark
 }
 
 const STAMPS: readonly Stamp[] = [
-  { ground: BLUE, ink: NAVY, words: 'PROTO • PROTO • PROTO • ', mark: 'prompt' },
-  { ground: GOLD, ink: NAVY, words: 'PROTO • BOSTON • PROTO • ', mark: 'ring' },
-  { ground: RED, ink: NAVY, words: 'PROTO • PROTO • PROTO • ', mark: 'chevron' },
-  { ground: NEON, ink: NAVY, words: 'HACK • DEMO • PROTO • ', mark: 'prompt' },
-  { ground: NAVY, ink: NEON, words: 'PROTO • PROTO • PROTO • ', mark: 'ring' },
+  { ground: SKY, ink: HARBOR, words: 'PROTO • PROTO • PROTO • ', mark: 'prompt' },
+  { ground: IRIS, ink: HARBOR, words: 'PROTO • BOSTON • PROTO • ', mark: 'ring' },
+  { ground: ROSE, ink: HARBOR, words: 'PROTO • PROTO • PROTO • ', mark: 'chevron' },
+  { ground: FROST, ink: HARBOR, words: 'HACK • DEMO • PROTO • ', mark: 'prompt' },
+  { ground: NAVY, ink: FROST, words: 'PROTO • PROTO • PROTO • ', mark: 'ring' },
 ]
 
 /** The ring wants this many cards to feel full, so a short list of wins repeats. */
@@ -175,7 +179,7 @@ export function WinOrbit({
   spinSeconds = 18,
 }: {
   wins: readonly Win[]
-  /** The statement's lines, each a run of black and grey phrases. */
+  /** The statement's lines, each a run of phrases in full or dim ink. */
   statement?: OrbitStatement
   /** Seconds for a stamp's text to go round once, or 0 to hold it still. */
   spinSeconds?: number

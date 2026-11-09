@@ -3,7 +3,7 @@ import type { Author } from '../content/guides/authors'
 import { BuMark } from './BuMark'
 import styles from './Byline.module.css'
 
-/** A square author photo with stepped corners, or their initials when there's no photo. Decorative: the name says who. */
+/** A round author photo, or their initials when there's no photo. Decorative: the name says who. */
 export function AuthorPhoto({ author, size = 'small' }: { author: Author; size?: 'small' | 'large' }) {
   const className = `${styles.photo} ${size === 'large' ? styles.large : ''}`
   if (!author.photo) {
@@ -43,7 +43,7 @@ interface BylineProps {
 /** "By Andres Lopez and Jose Cruz", their photos overlapping before it, the date under it. */
 export function Byline({ authors, updated, copy }: BylineProps) {
   return (
-    <div className={styles.byline}>
+    <div className={styles.byline} data-fog-clear>
       <span className={styles.photos}>
         {authors.map((author) => (
           <AuthorPhoto key={author.href} author={author} />

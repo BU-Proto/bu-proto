@@ -38,12 +38,15 @@ export const WIN_TALLY = {
   link: 'See every win',
 } as const
 
-/** Copy for the wins' tiles, on the home page and /wins. */
+/** Copy for the showcase on /wins, the home page and each hackathon's page. */
 export const WIN_SHOWCASE = {
+  at: 'at',
   builtBy: 'Built by',
+  /** Over the projects that follow the lead win on /wins. */
+  moreTitle: 'More projects that won',
 } as const
 
-/** The light sheet the wins sit on. */
+/** The sheet the landing's latest wins sit on. */
 export const WIN_SHEET = {
   title: 'Latest wins',
   lede: WINS_INTRO.lede,

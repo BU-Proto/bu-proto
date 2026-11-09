@@ -9,28 +9,19 @@ import { ApiError } from '../lib/api'
 import { paragraphs } from '../lib/detail'
 import { BuMark } from './BuMark'
 import { Gallery } from './Gallery'
-import { MaskLines } from './motion/MaskLines'
-import motion from './motion/motion.module.css'
-import { useReveal } from './motion/useReveal'
 import { LoadError } from './RouteStates'
 import { SampleTag } from './SampleTag'
 import ui from './ui.module.css'
 import styles from './DetailPage.module.css'
 
 export function DetailPage({ children }: { children: ReactNode }) {
-  const revealRef = useReveal<HTMLElement>()
-  return (
-    <article ref={revealRef} className={`${styles.page} ${motion.reveal}`}>
-      {children}
-    </article>
-  )
+  return <article className={styles.page}>{children}</article>
 }
 
 /**
- * The first screen, built like the home hero: the cover photo from the very top of the page down
- * to the copy, or the name set large on the harbor ground when there's no photo. In the copy, the first child
- * and the title take the left column and everything else the right. `hugeName: false` keeps the
- * photo-size title without a photo, for names that run to a sentence (event titles).
+ * The first screen: the cover photo edge to edge, or the name set huge on the field when there's
+ * none. `hugeName: false` keeps the photo-size title without a photo, for names that run to a
+ * sentence (event titles), where the huge setting would fill the screen on its own.
  */
 export function DetailOpener({
   photo,
@@ -55,24 +46,22 @@ export function DetailOpener({
         </div>
       )}
       {photo && credit && (
-        <p className={styles.credit}>
+        <p className={styles.credit} data-fog-clear>
           Photo by {credit.author},{' '}
           <a href={credit.source} target="_blank" rel="noopener noreferrer">
             {credit.license} via Wikimedia Commons
           </a>
         </p>
       )}
-      <div className={styles.openerText}>
-        <div className={styles.openerGrid}>{children}</div>
-      </div>
+      <div className={styles.openerText}>{children}</div>
     </header>
   )
 }
 
-export function DetailTitle({ children, sample }: { children: string; sample: boolean }) {
+export function DetailTitle({ children, sample }: { children: ReactNode; sample: boolean }) {
   return (
-    <h1 className={styles.title}>
-      <MaskLines text={children} delay={100} />
+    <h1 className={styles.title} data-fog-clear>
+      {children}
       <SampleTag show={sample} />
     </h1>
   )
@@ -83,7 +72,7 @@ export function Prose({ text }: { text: string }) {
   return (
     <div className={styles.prose}>
       {paragraphs(text).map((part, index) => (
-        <p key={index}>
+        <p key={index} data-fog-clear>
           {part}
         </p>
       ))}
@@ -92,24 +81,16 @@ export function Prose({ text }: { text: string }) {
 }
 
 /**
- * The write-up, as an editorial split: the side column (`aside`) on the left, pinned while the text
- * scrolls, and the main column (`main`) on the right. Either may be empty; with only one, it takes
- * the full width, and a main column on its own sets each section's title to the left of its text.
+ * The write-up: the main column (`main`) in deep glass, and the side column (`aside`) beside it on
+ * the field, pinned while the text scrolls, so the glass is only as tall as the words in it.
+ * Either may be empty; with only one, it takes the full width.
  */
 export function WriteUp({ main, aside }: { main?: ReactNode; aside?: ReactNode }) {
   if (!main && !aside) return null
   return (
     <div className={styles.sheet}>
-      {main && (
-        <div className={styles.main} data-reveal>
-          {main}
-        </div>
-      )}
-      {aside && (
-        <aside className={styles.aside} data-reveal>
-          {aside}
-        </aside>
-      )}
+      {main && <div className={`${ui.panelDeep} ${styles.main}`}>{main}</div>}
+      {aside && <aside className={styles.aside}>{aside}</aside>}
     </div>
   )
 }
@@ -118,7 +99,7 @@ export function WriteUp({ main, aside }: { main?: ReactNode; aside?: ReactNode }
 export function WriteUpSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section className={styles.section} aria-labelledby={id}>
-      <h2 id={id} className={ui.sectionTitle}>
+      <h2 id={id} className={ui.sectionTitle} data-fog-clear>
         {title}
       </h2>
       {children}
@@ -130,7 +111,7 @@ export function WriteUpSection({ id, title, children }: { id: string; title: str
 export function AsideSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section aria-labelledby={id}>
-      <h2 id={id} className={styles.asideTitle}>
+      <h2 id={id} className={styles.asideTitle} data-fog-clear>
         {title}
       </h2>
       {children}
@@ -151,7 +132,7 @@ export function PeopleList({ people }: { people: readonly Person[] }) {
     <ul className={styles.ruled}>
       {people.map((person, i) => (
         <li key={`${person.name}-${i}`}>
-          {person.href ? <OutLink href={person.href}>{person.name}</OutLink> : <span>{person.name}</span>}
+          {person.href ? <OutLink href={person.href}>{person.name}</OutLink> : <span data-fog-clear>{person.name}</span>}
           {person.bu && <BuMark />}
         </li>
       ))}
@@ -162,7 +143,7 @@ export function PeopleList({ people }: { people: readonly Person[] }) {
 /** A link out of the site, set like a name with a small arrow after it. */
 export function OutLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <a className={styles.person} href={href} target="_blank" rel="noopener noreferrer">
+    <a className={styles.person} href={href} target="_blank" rel="noopener noreferrer" data-fog-clear>
       {children}
       <span className={styles.arrow} aria-hidden="true">
         ↗
@@ -174,8 +155,8 @@ export function OutLink({ href, children }: { href: string; children: ReactNode 
 export function DetailGallery({ title, images, label }: { title: string; images: readonly string[]; label: string }) {
   if (images.length === 0) return null
   return (
-    <section className={styles.gallery} aria-labelledby="gallery" data-reveal>
-      <h2 id="gallery" className={ui.sectionTitle}>
+    <section className={styles.gallery} aria-labelledby="gallery">
+      <h2 id="gallery" className={ui.sectionTitle} data-fog-clear>
         {title}
       </h2>
       <Gallery images={images} label={label} />
@@ -183,11 +164,11 @@ export function DetailGallery({ title, images, label }: { title: string; images:
   )
 }
 
-/** A ruled panel of its own, for a part that reads after the photos. */
+/** A smaller glass panel of its own, for a part that reads after the photos. */
 export function DetailPanel({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section className={`${ui.panelDeep} ${styles.panel}`} aria-labelledby={id} data-reveal>
-      <h2 id={id} className={ui.sectionTitle}>
+    <section className={`${ui.panelDeep} ${styles.panel}`} aria-labelledby={id}>
+      <h2 id={id} className={ui.sectionTitle} data-fog-clear>
         {title}
       </h2>
       {children}
@@ -213,9 +194,9 @@ interface DetailNavProps {
 /** The bar at the foot of the page: the one before, the way back to the list, the one after. */
 export function DetailNav({ label, previous, next, previousLabel, nextLabel, all }: DetailNavProps) {
   return (
-    <nav className={styles.neighbours} aria-label={label} data-reveal>
+    <nav className={styles.neighbours} aria-label={label}>
       {previous ? <NeighbourLink item={previous} label={previousLabel} direction="previous" /> : <span />}
-      <Link className={`${ui.textLink} ${styles.all}`} to={all.to}>
+      <Link className={`${ui.textLink} ${styles.all}`} to={all.to} data-fog-clear>
         {all.label}
       </Link>
       {next ? <NeighbourLink item={next} label={nextLabel} direction="next" /> : <span />}
@@ -225,7 +206,7 @@ export function DetailNav({ label, previous, next, previousLabel, nextLabel, all
 
 function NeighbourLink({ item, label, direction }: { item: Neighbour; label: string; direction: 'previous' | 'next' }) {
   return (
-    <Link className={`${styles.neighbour} ${direction === 'next' ? styles.toNext : ''}`} to={item.to}>
+    <Link className={`${styles.neighbour} ${direction === 'next' ? styles.toNext : ''}`} to={item.to} data-fog-clear>
       <span className={styles.neighbourLabel}>
         {direction === 'previous' && <span aria-hidden="true">← </span>}
         {label}
@@ -253,13 +234,13 @@ export function DetailLoadError({ copy, to }: { copy: NotFoundCopy; to: string }
     <div className={ui.page}>
       <title>{`${copy.title} · ${BRAND.full}`}</title>
       <section className={styles.missing}>
-        <h1 className={ui.introTitle}>
+        <h1 className={ui.introTitle} data-fog-clear>
           {copy.title}
         </h1>
-        <p className={ui.introLede}>
+        <p className={ui.introLede} data-fog-clear>
           {copy.text}
         </p>
-        <Link className={ui.primary} to={to}>
+        <Link className={ui.primary} to={to} data-fog-clear="box">
           {copy.back}
         </Link>
       </section>

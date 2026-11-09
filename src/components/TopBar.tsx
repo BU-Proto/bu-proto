@@ -1,56 +1,44 @@
-import { useRef } from 'react'
 import { Link, NavLink } from 'react-router'
 import { BRAND, NAV_ITEMS } from '../content/site'
-import { Glass } from './Glass'
 import { MenuSheet } from './MenuSheet'
 import { NavMenu } from './NavMenu'
-import { ProtoMark } from './ProtoMark'
-import { useGlassLight } from './useGlassLight'
-import { useNavPlate } from './useNavPlate'
+import ui from './ui.module.css'
 import styles from './TopBar.module.css'
 
 /**
- * The bar fixed to the top of every page, in three parts as the old site had it: Proto's mark on the
- * left, the main pages on a glass tab in the centre, and Join on its own at the right. A tab item
- * with pages under it (About) opens them in a small menu. On phones the items don't fit, so the tab
- * holds just the menu sheet, which carries every page and Join; the footer lists the rest on desktop.
+ * Seal and name, the centered nav pill, and Join on the right. A pill item with pages under it
+ * (About) opens them in a small menu. On phones the pill doesn't fit, so the menu sheet takes
+ * Join's place and carries every page; the footer lists the rest on desktop.
  */
 export function TopBar() {
-  const bar = useRef<HTMLDivElement>(null)
-  const nav = useRef<HTMLElement>(null)
-  const plate = useRef<HTMLSpanElement>(null)
-  useGlassLight(bar)
-  useNavPlate(nav, plate)
-
   return (
     <header className={styles.top}>
-      <Link className={styles.logo} to="/">
-        <ProtoMark size={22} />
+      <Link className={styles.logo} to="/" data-fog-clear>
+        {/* A filled flat mark: shown as-is, not through the stroked icon helper. */}
+        <img src={BRAND.seal} alt="" width={24} height={24} />
         {BRAND.short}
       </Link>
 
-      <div ref={bar} className={styles.bar}>
-        <Glass radius={26} bezel={20} bend={40} />
-        <nav ref={nav} className={styles.nav} aria-label="Primary">
-          <span ref={plate} className={styles.plate} aria-hidden="true" />
-          {NAV_ITEMS.filter((item) => item.inPill).map((item) =>
-            item.children ? (
-              <NavMenu key={item.to} item={item} />
-            ) : (
-              <NavLink key={item.to} to={item.to} data-plate="">
-                {item.label}
-              </NavLink>
-            ),
-          )}
-        </nav>
+      <nav className={styles.nav} aria-label="Primary">
+        {NAV_ITEMS.filter((item) => item.inPill).map((item) =>
+          item.children ? (
+            <NavMenu key={item.to} item={item} />
+          ) : (
+            <NavLink key={item.to} to={item.to} data-fog-clear="box">
+              {item.label}
+            </NavLink>
+          ),
+        )}
+      </nav>
+
+      <div className={styles.actions}>
+        <Link className={`${ui.primary} ${styles.join}`} to="/join" data-fog-clear="box">
+          Join Proto
+        </Link>
         <div className={styles.menu}>
           <MenuSheet />
         </div>
       </div>
-
-      <Link className={styles.join} to="/join">
-        Join Proto
-      </Link>
     </header>
   )
 }

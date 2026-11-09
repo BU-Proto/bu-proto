@@ -8,7 +8,6 @@ import {
   type KeyboardEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { Glass } from './Glass'
 import { inputClass } from './formFields'
 import styles from './Select.module.css'
 
@@ -35,9 +34,6 @@ interface SelectProps<T extends string> {
   'aria-label'?: string
   'aria-labelledby'?: string
 }
-
-/** The list's corner, --radius-menu in index.css: the glass's maps are cut to it. */
-const MENU_RADIUS = 20
 
 /** Tallest the list grows before it scrolls. */
 const MAX_HEIGHT = 288
@@ -316,18 +312,19 @@ export function Select<T extends string>({
         onInvalid={() => setMissed(true)}
       />
       {createPortal(
-        // The list floats over the page, so it's the same liquid glass as the top bar's menus: the
-        // glass on the outer box, the options scrolling inside it.
         <div
-          className={styles.menu}
+          ref={listRef}
+          id={listId}
+          role="listbox"
+          className={styles.list}
           style={listStyle}
           data-up={place?.up || undefined}
           hidden={!open}
+          tabIndex={-1}
+          data-fog-ignore
           // Keep focus (and the highlight) on the trigger while choosing with a pointer.
           onMouseDown={(event) => event.preventDefault()}
         >
-          <Glass radius={MENU_RADIUS} bezel={14} bend={28} />
-          <div ref={listRef} id={listId} role="listbox" className={styles.list} tabIndex={-1}>
           {items.map((item, index) => (
             <div
               key={item.value}
@@ -352,7 +349,6 @@ export function Select<T extends string>({
               </svg>
             </div>
           ))}
-          </div>
         </div>,
         document.body,
       )}

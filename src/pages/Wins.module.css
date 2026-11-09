@@ -1,13 +1,21 @@
-/* The wins sit in the page's own column, lined up with the title above them. */
+/* The showcase itself is in components/Accolades.module.css; this paces it on the page. */
 
-.bleed {
-  width: 100%;
-  max-width: calc(var(--maxw) + var(--gutter) * 2);
-  margin: calc(var(--cell) * -3) auto 0;
-  padding: 0 var(--gutter) calc(var(--cell) * 5);
+.showcase {
+  display: grid;
+  gap: clamp(96px, 16vh, 180px);
+  padding-top: clamp(24px, 6vh, 64px);
 }
 
-/* The sheet's own side padding is for when it runs edge to edge; here the column's gutter does it. */
-.bleed > * {
-  padding-inline: 0;
+.more {
+  display: grid;
+  gap: clamp(36px, 6vh, 64px);
+}
+
+.moreTitle {
+  margin: 0;
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-shadow: var(--on-field-shadow);
 }

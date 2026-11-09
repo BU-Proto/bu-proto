@@ -1,51 +1,71 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router'
-import { AsciiField, DEFAULT_FIELD_SETTINGS, type AsciiFieldHandle, type FieldEngineOptions, type FieldSettings } from '../ascii-field'
-import { useSmoothScroll } from '../lib/smoothScroll'
+import { AsciiField, SHAPES, type AsciiFieldHandle, type ShapeName } from '../ascii-field'
+import { glyphTexture } from '../lib/glyphArt'
+import { GROUND, GROUNDS, groundFor, lightFilter, type GroundName } from '../lib/pageGround'
+import { useSmoothAnchors } from '../lib/smoothScroll'
+import { reducedMotion } from '../lib/useInView'
 import { Footer } from './Footer'
+import { GlyphEdge } from './GlyphEdge'
 import { TopBar } from './TopBar'
 import styles from './Layout.module.css'
 
 const CONTROLS = 'a, button, input, select, textarea, label, summary, [role="button"], [role="tab"]'
 
-/** The cursor trail as the field drew it before the redesign, in the landing's glyph size. */
-const TRAIL: FieldSettings = { ...DEFAULT_FIELD_SETTINGS, cellSize: 10 }
+/** How long the field dims before it takes the next page's settings (see the CSS for the rise). */
+const DIM_MS = 200
+
+/** The drain from the field into harbor: its glyph rows and cell size, and the air between the
+    page's intro and where it begins. */
+const DRAIN_ROWS = 12
+const DRAIN_CELL = 10
+const DRAIN_GAP = 12
 
 /**
- * The trail steps back from the copy so it stays legible, as it did from the old field's marked
- * text. Line boxes only, so it still runs right up to the words.
+ * Every page: the ASCII field mounted once behind everything, tuned to the page's ground, then the
+ * top bar, the page and the footer.
  */
-const TRAIL_OPTIONS: FieldEngineOptions = {
-  layer: 'trail',
-  // The hero's blocks slide with the trail's wind too (see heroBloom).
-  shareWarp: true,
-  // Only over the ASCII art (marked data-trail-art), never the plain ground.
-  onlyOver: '[data-trail-art]',
-  // [data-trail-skip]: art that draws the trail itself (the landing's field), cleared as a box.
-  clearSelector:
-    'h1, h2, h3, h4, h5, p, li, dt, dd, blockquote, figcaption, label, input, textarea, button, [data-fog-clear], [data-trail-skip]',
-}
-
-/** Every public page, on the one dark ground: the fixed top tab, the page and, except on the landing, the footer. */
 export function Layout() {
-  useSmoothScroll()
-  const trailRef = useRef<AsciiFieldHandle>(null)
+  const fieldRef = useRef<AsciiFieldHandle>(null)
   const shellRef = useRef<HTMLDivElement>(null)
   const { pathname } = useLocation()
+  const target = groundFor(pathname).name
+  // The ground the field is showing. It trails the route by a beat: the field dims, swaps its
+  // settings while it can't be seen (a new glyph size rebuilds its grid), then comes back up.
+  const [trailing, setTrailing] = useState<GroundName>(target)
+  // Under reduced motion there's no dim: the field takes the new page's settings at once.
+  const shown = reducedMotion() ? target : trailing
+  const dimmed = shown !== target
+  const ground = GROUNDS[shown]
+  // A page can ask for another shape for a stretch of it (the landing does, for its last word).
+  const [pageShape, setPageShape] = useState<ShapeName | null>(null)
+  const shape = useShapePreview() ?? pageShape
+  const field = useMemo(() => (shape ? { ...ground.field, shape } : ground.field), [ground.field, shape])
+  const outlet = useMemo<LayoutOutlet>(() => ({ setFieldShape: setPageShape }), [])
+  const texture = useMemo(() => glyphTexture(GROUND.texture), [])
+  const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
+  useSmoothAnchors()
   // Moving to a page that loads data keeps the old page up until the data lands; a line along
   // the top says the click registered.
   const navigating = useNavigation().state === 'loading'
 
-  // A click splashes the trail and a move draws it, which is right over the art but noisy on a
-  // button. The trail skips pointer-downs inside [data-fog-ignore], so mark whichever control was
-  // pressed before its own (bubbling) listener reads the event. Moves over a control never reach
-  // it either; entering one tells it the pointer left, so moving off again starts a fresh trail
-  // instead of drawing a streak from where the pointer went in.
+  useEffect(() => {
+    if (trailing === target) return
+    const timer = window.setTimeout(() => setTrailing(target), reducedMotion() ? 0 : DIM_MS)
+    return () => window.clearTimeout(timer)
+  }, [trailing, target])
+
+  // A click splashes the field and a move draws its trail, which is right on open ground but noisy
+  // on a button. The field skips pointer-downs inside [data-fog-ignore], so mark whichever control
+  // was pressed before the field's own (bubbling) listener reads the event.
   useEffect(() => {
     const markControl = (event: PointerEvent) => {
       if (!(event.target instanceof Element)) return
       event.target.closest(CONTROLS)?.setAttribute('data-fog-ignore', '')
     }
+    // The trail too: moves over a control never reach the field's window listener. Entering one
+    // tells the field the pointer left, so moving off it again starts a fresh trail instead of
+    // drawing a streak from where the pointer went in.
     let overControl = false
     const holdTrail = (event: PointerEvent) => {
       const over = event.target instanceof Element && event.target.closest(CONTROLS) !== null
@@ -61,8 +81,46 @@ export function Layout() {
     }
   }, [])
 
-  // The trail re-measures the copy on scroll and resize, but not when a new page or a form's
-  // thank-you mounts new text. Tell it whenever the content changes.
+  // The harbor starts under the page's intro, so the drain into it never runs over the title or
+  // lede. Measured, not a fixed height: intros wrap to different lengths on every page and width.
+  const groundRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const shell = shellRef.current
+    const groundEl = groundRef.current
+    if (!shell || !groundEl) return
+    const watch: { intro: Element | null; frame: number } = { intro: null, frame: 0 }
+    const place = () => {
+      watch.frame = 0
+      const found = shell.querySelector('[data-ground-after]')
+      if (found !== watch.intro) {
+        if (watch.intro) sizes.unobserve(watch.intro)
+        if (found) sizes.observe(found)
+        watch.intro = found
+      }
+      if (!found) {
+        groundEl.style.removeProperty('--ground-top')
+        return
+      }
+      const end = found.getBoundingClientRect().bottom - shell.getBoundingClientRect().top
+      groundEl.style.setProperty('--ground-top', `${Math.round(end + DRAIN_GAP + DRAIN_ROWS * DRAIN_CELL)}px`)
+    }
+    const schedule = () => {
+      if (!watch.frame) watch.frame = requestAnimationFrame(place)
+    }
+    const sizes = new ResizeObserver(schedule)
+    const mounts = new MutationObserver(schedule)
+    mounts.observe(shell, { childList: true, subtree: true })
+    sizes.observe(shell)
+    place()
+    return () => {
+      cancelAnimationFrame(watch.frame)
+      sizes.disconnect()
+      mounts.disconnect()
+    }
+  }, [])
+
+  // The field re-measures marked text on scroll and resize, but not when a new page or a
+  // form's thank-you state mounts new text. Tell it whenever the content changes.
   useEffect(() => {
     const shell = shellRef.current
     if (!shell) return
@@ -71,7 +129,7 @@ export function Layout() {
       if (pending.frame) return
       pending.frame = requestAnimationFrame(() => {
         pending.frame = 0
-        trailRef.current?.refreshClearMask()
+        fieldRef.current?.refreshClearMask()
       })
     })
     observer.observe(shell, { childList: true, subtree: true })
@@ -83,17 +141,57 @@ export function Layout() {
 
   return (
     <>
-      <div ref={shellRef} className={styles.shell} data-site="public">
+      <div
+        className={styles.fieldLight}
+        data-dimmed={dimmed || undefined}
+        style={{ filter: lightFilter(ground.light) }}
+      >
+        <AsciiField ref={fieldRef} settings={field} className={styles.field} />
+      </div>
+      <div
+        ref={shellRef}
+        className={styles.shell}
+        data-ground={shown}
+        style={{ '--drain-h': `${DRAIN_GAP + DRAIN_ROWS * DRAIN_CELL}px` } as CSSProperties}
+      >
+        {/* Below the intro the field drains into solid harbor (see pageGround). */}
+        <div
+          ref={groundRef}
+          className={styles.ground}
+          data-reach={GROUNDS[target].reach}
+          style={
+            {
+              '--texture': texture ? `url(${texture})` : 'none',
+              '--texture-mask': textureMask ? `url(${textureMask})` : 'none',
+            } as CSSProperties
+          }
+          aria-hidden="true"
+        >
+          <GlyphEdge color={GROUND.harbor} mode="drain" rows={DRAIN_ROWS} cell={DRAIN_CELL} />
+          <span className={styles.groundTexture} />
+        </div>
         <span className={styles.progress} data-active={navigating || undefined} aria-hidden="true" />
-        <AsciiField ref={trailRef} settings={TRAIL} options={TRAIL_OPTIONS} className={styles.trail} />
         <TopBar />
         <main className={styles.main}>
-          <Outlet />
+          <Outlet context={outlet} />
         </main>
-        {/* The landing ends on its own join frame, which carries the footer's links. */}
-        {pathname !== '/' && <Footer />}
+        <Footer />
       </div>
       <ScrollRestoration />
     </>
   )
+}
+
+/** What Layout hands its pages (read with useOutletContext). */
+export interface LayoutOutlet {
+  /** Show the field in another shape, or null for the page's own. Reset it when leaving. */
+  setFieldShape: (shape: ShapeName | null) => void
+}
+
+/** In development, `?shape=ripple` (any name in SHAPES) shows that shape on every page. */
+function useShapePreview(): ShapeName | null {
+  const { search } = useLocation()
+  if (!import.meta.env.DEV) return null
+  const name = new URLSearchParams(search).get('shape')
+  return SHAPES.find((shape) => shape === name) ?? null
 }

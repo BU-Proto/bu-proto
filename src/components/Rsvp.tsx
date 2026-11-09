@@ -36,6 +36,8 @@ export function RsvpButton({ rsvp, className, prominent }: { rsvp: RsvpState; cl
         href={registerUrl}
         target="_blank"
         rel="noopener noreferrer"
+        data-fog-clear="box"
+        data-fog-ignore
       >
         {RSVP.registerOn(siteName(registerUrl))} <span aria-hidden="true">↗</span>
         <span className={ui.srOnly}> (opens in a new tab)</span>
@@ -45,7 +47,7 @@ export function RsvpButton({ rsvp, className, prominent }: { rsvp: RsvpState; cl
   if (going) {
     // Already in: nothing left to do here, but it stays focusable so the change is announced.
     return (
-      <button ref={buttonRef} type="button" className={`${ui.primary}${extra}`} aria-disabled="true">
+      <button ref={buttonRef} type="button" className={`${ui.primary}${extra}`} aria-disabled="true" data-fog-clear="box" data-fog-ignore>
         {RSVP.going}
       </button>
     )
@@ -58,6 +60,8 @@ export function RsvpButton({ rsvp, className, prominent }: { rsvp: RsvpState; cl
       aria-expanded={open}
       aria-controls={open ? formId : undefined}
       onClick={() => (open ? close() : setOpen(true))}
+      data-fog-clear="box"
+      data-fog-ignore
     >
       {RSVP.label}
     </button>
@@ -83,7 +87,7 @@ export function RsvpForm({ rsvp, className }: { rsvp: RsvpState; className?: str
         turnstile="rsvp"
         onSubmit={submit}
         actions={
-          <button type="button" className={ui.secondary} onClick={close}>
+          <button type="button" className={ui.secondary} onClick={close} data-fog-clear="box">
             {RSVP.cancel}
           </button>
         }

@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { Link, useLocation } from 'react-router'
 import { navItemHolds, type NavItem } from '../content/site'
-import { Glass } from './Glass'
 import styles from './NavMenu.module.css'
 
 /** How long the panel waits after the pointer leaves before it closes, so a slightly crooked path
@@ -9,7 +8,7 @@ import styles from './NavMenu.module.css'
 const CLOSE_DELAY = 180
 
 /**
- * A tab item with pages under it. Its name is a link to its own page, like the tab's other
+ * A pill item with pages under it. Its name is a link to its own page, like the pill's other
  * links; beside it a chevron button opens a short list of the pages under it. With a mouse the
  * list opens on hover over either and closes shortly after the pointer leaves. Clicking the chevron
  * or ArrowDown/ArrowUp on either opens it; the arrow keys, Home and End move through the links, Tab
@@ -103,7 +102,7 @@ export function NavMenu({ item }: { item: NavItem }) {
         if (open && !rootRef.current?.contains(event.relatedTarget as Node | null)) setOpen(false)
       }}
     >
-      <div className={styles.trigger} data-plate="" data-open={open || undefined} data-current={current || undefined}>
+      <div className={styles.trigger} data-open={open || undefined} data-current={current || undefined} data-fog-clear="box">
         <Link
           className={styles.label}
           to={item.to}
@@ -126,13 +125,12 @@ export function NavMenu({ item }: { item: NavItem }) {
           onKeyDown={onButtonKey}
         >
           <svg className={styles.chevron} viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       </div>
 
-      <div id={id} className={styles.panel} hidden={!open}>
-        <Glass radius={20} bezel={16} bend={34} />
+      <div id={id} className={styles.panel} hidden={!open} data-fog-ignore>
         <ul ref={listRef} className={styles.list} onKeyDown={onListKey}>
           {item.children?.map((child) => {
             const [path, anchor] = child.to.split('#')

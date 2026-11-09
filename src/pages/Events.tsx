@@ -1,16 +1,12 @@
 import { Link, useLoaderData } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
-import { KindTag } from '../components/KindTag'
-import { MaskLines } from '../components/motion/MaskLines'
-import motion from '../components/motion/motion.module.css'
-import { useReveal } from '../components/motion/useReveal'
 import { PageIntro } from '../components/PageIntro'
 import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { EVENT_COVERS, type CoverPhoto } from '../content/covers'
-import { EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, HACK_NIGHT, NEXT_EVENT } from '../content/events'
-import { dateParts, daysUntil } from '../lib/dates'
+import { EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, HACK_NIGHT, KIND_HUE, NEXT_EVENT } from '../content/events'
+import { dateParts, daysUntil, formatMonth } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useRsvp } from '../lib/useRsvp'
 import styles from './Events.module.css'
@@ -18,8 +14,8 @@ import styles from './Events.module.css'
 const HACK_NIGHT_COVER = EVENT_COVERS['Hack night']
 
 /**
- * What's coming up: the next event set large with its photo, then the rest as a grid of cards, each
- * with its date at the top. Past events are left off; each event's own page links to its neighbours.
+ * What's coming up: the next event set large with its photo, then the rest as one ruled list
+ * grouped by month. Past events are left off; each event's own page links to its neighbours.
  */
 export function Events() {
   const events = useLoaderData<ProtoEvent[]>()
@@ -28,27 +24,42 @@ export function Events() {
     .sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id)
   const [next, ...later] = upcoming
   const nextHackNight = upcoming.find((event) => event.kind === 'Hack night')
-  const root = useReveal<HTMLDivElement>()
+
+  const months = new Map<string, ProtoEvent[]>()
+  for (const event of later) {
+    const month = formatMonth(event.date)
+    months.set(month, [...(months.get(month) ?? []), event])
+  }
 
   return (
-    <div ref={root} className={`${ui.page} ${motion.reveal} ${styles.page}`}>
-      <div className={styles.head}>
-        <PageIntro intro={EVENTS_INTRO} />
+    <div className={`${ui.page} ${styles.page}`}>
+      {/* The intro and hack night's note side by side: the ground drains in under both. */}
+      <div className={styles.head} data-ground-after="">
+        <PageIntro intro={EVENTS_INTRO} groundAfter={false} />
         <HackNight next={nextHackNight} />
       </div>
 
       {next ? <NextEvent key={next.id} event={next} /> : <Empty />}
 
-      {later.length > 0 && (
+      {months.size > 0 && (
         <section className={styles.later} aria-labelledby="later">
-          <h2 id="later" className={ui.sectionTitle}>
-            <MaskLines text={EVENTS_LATER} />
+          <h2 id="later" className={ui.sectionTitle} data-fog-clear>
+            {EVENTS_LATER}
           </h2>
-          <ol className={styles.cards} data-reveal>
-            {later.map((event) => (
-              <EventCard key={event.id} event={event} />
+          <div className={`${ui.panel} ${styles.sheet}`}>
+            {[...months].map(([month, monthEvents]) => (
+              <section key={month} className={styles.month} aria-label={month}>
+                <h3 className={styles.monthName} data-fog-clear>
+                  {month}
+                </h3>
+                <ol className={styles.list}>
+                  {monthEvents.map((event) => (
+                    <EventRow key={event.id} event={event} />
+                  ))}
+                </ol>
+              </section>
             ))}
-          </ol>
+          </div>
         </section>
       )}
     </div>
@@ -59,11 +70,15 @@ export function Events() {
 function HackNight({ next }: { next: ProtoEvent | undefined }) {
   const date = next && dateParts(next.date)
   return (
-    <aside className={styles.rhythm} aria-label={HACK_NIGHT.title} data-reveal>
-      <p className={styles.rhythmTitle}>{HACK_NIGHT.title}</p>
-      <p className={styles.rhythmText}>{HACK_NIGHT.text}</p>
+    <aside className={styles.rhythm} data-hue={KIND_HUE['Hack night']} aria-label={HACK_NIGHT.title}>
+      <p className={styles.rhythmTitle} data-fog-clear>
+        {HACK_NIGHT.title}
+      </p>
+      <p className={styles.rhythmText} data-fog-clear>
+        {HACK_NIGHT.text}
+      </p>
       {next && date && (
-        <p className={styles.rhythmText}>
+        <p className={styles.rhythmText} data-fog-clear>
           {HACK_NIGHT.next}{' '}
           <Link className={ui.textLink} to={`/events/${next.id}`}>
             {date.weekdayLong}, {date.monthLong} {date.day}
@@ -99,7 +114,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
   const stock = EVENT_COVERS[event.kind] ?? HACK_NIGHT_COVER
 
   return (
-    <article className={styles.lead} aria-labelledby="next-event" data-reveal>
+    <article className={styles.lead} data-hue={KIND_HUE[event.kind]} aria-labelledby="next-event">
       {event.photo ? <Cover src={event.photo} alt="" /> : <Cover src={stock.src} alt={stock.alt} credit={stock} />}
 
       <div className={styles.leadBody}>
@@ -120,7 +135,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
         </h2>
         {/* Kind, time and place, set apart by space and tone rather than separators. */}
         <p className={styles.meta}>
-          {kindAddsInfo(event.kind, event.title) && <KindTag kind={event.kind} />}
+          {kindAddsInfo(event.kind, event.title) && <span className={styles.kind}>{event.kind}</span>}
           <span>{event.time}</span>
           <span className={styles.place}>{event.place}</span>
         </p>
@@ -142,10 +157,10 @@ function NextEvent({ event }: { event: ProtoEvent }) {
 /** Nothing scheduled: the same frame as the lead, with hack night's room and a way to hear first. */
 function Empty() {
   return (
-    <section className={styles.lead} aria-labelledby="no-events" data-reveal>
+    <section className={styles.lead} aria-labelledby="no-events">
       <Cover src={HACK_NIGHT_COVER.src} alt={HACK_NIGHT_COVER.alt} credit={HACK_NIGHT_COVER} />
-      <div className={styles.leadBody}>
-        <h2 id="no-events" className={ui.h2}>
+      <div className={`${styles.leadBody} ${styles.emptyBody}`}>
+        <h2 id="no-events" className={styles.emptyTitle}>
           {EVENTS_EMPTY.title}
         </h2>
         <p className={styles.leadText}>{EVENTS_EMPTY.text}</p>
@@ -162,35 +177,36 @@ function Empty() {
   )
 }
 
-/** One later event as a card: its date, what and where, and an RSVP at the foot. */
-function EventCard({ event }: { event: ProtoEvent }) {
+/** One later event: the day to scan by, what and where, and a quiet RSVP. */
+function EventRow({ event }: { event: ProtoEvent }) {
   const rsvp = useRsvp(event)
-  const { day, monthLong, weekday } = dateParts(event.date)
+  const { day, weekday } = dateParts(event.date)
 
   return (
-    <li className={styles.event}>
-      <time className={styles.rowDate} dateTime={event.date}>
+    <li className={styles.event} data-hue={KIND_HUE[event.kind]}>
+      <time className={styles.rowDate} dateTime={event.date} data-fog-clear>
         <span className={styles.rowDay}>{day}</span>
-        <span className={styles.rowWhen}>
-          <span>{monthLong}</span>
-          <span className={styles.rowWeekday}>{weekday}</span>
-        </span>
+        <span className={styles.rowWeekday}>{weekday}</span>
       </time>
 
       <div className={styles.body}>
-        <h4 className={styles.title}>
-          {/* Stretched over the whole card, so a click anywhere opens the event's page. */}
+        <h4 className={styles.title} data-fog-clear>
+          {/* Stretched over the whole row, so a click anywhere opens the event's page. */}
           <Link className={styles.rowLink} to={`/events/${event.id}`}>
             {event.title}
           </Link>
           <SampleTag show={event.placeholder} />
         </h4>
-        <p className={styles.meta}>
-          {kindAddsInfo(event.kind, event.title) && <KindTag kind={event.kind} />}
+        <p className={styles.meta} data-fog-clear>
+          {kindAddsInfo(event.kind, event.title) && <span className={styles.kind}>{event.kind}</span>}
           <span>{event.time}</span>
           <span className={styles.place}>{event.place}</span>
         </p>
-        {event.text && <p className={styles.text}>{event.text}</p>}
+        {event.text && (
+          <p className={styles.text} data-fog-clear>
+            {event.text}
+          </p>
+        )}
       </div>
 
       <RsvpButton rsvp={rsvp} className={styles.above} />

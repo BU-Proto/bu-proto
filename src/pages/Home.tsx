@@ -1,45 +1,46 @@
-import type { CSSProperties } from 'react'
-import { Link, useLoaderData } from 'react-router'
+import { useEffect, useMemo, type CSSProperties, type RefObject } from 'react'
+import { Link, useLoaderData, useOutletContext } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { newestWins } from '../components/accolade'
+import { GlyphEdge } from '../components/GlyphEdge'
 import { AsciiJourney } from '../components/AsciiJourney'
 import { EventLedger } from '../components/EventLedger'
 import { Hero } from '../components/Hero'
-import { JoinFrame } from '../components/JoinFrame'
-import { KindTag } from '../components/KindTag'
+import { ScrubWords } from '../components/motion/ScrubWords'
 import { LogoBand } from '../components/LogoBand'
-import { MaskLines } from '../components/motion/MaskLines'
+import { RevealWords } from '../components/motion/RevealWords'
 import motion from '../components/motion/motion.module.css'
 import { useReveal } from '../components/motion/useReveal'
-import { WaysIn } from '../components/WaysIn'
 import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
-import { ScheduleCard } from '../components/ScheduleCard'
+import lui from '../components/landing.module.css'
 import ui from '../components/ui.module.css'
 import { WinOrbit } from '../components/WinOrbit'
 import { LatestWins } from '../components/WinSheet'
+import { WaysIn } from '../components/WaysIn'
 import { WinTally } from '../components/WinTally'
-import { WHY } from '../content/about'
+import type { LayoutOutlet } from '../components/Layout'
 import {
   FUND_NOTE,
   HOME_EMPTY,
+  JOIN_CTA,
   NEXT_UP,
   RHYTHM,
   RHYTHM_INTRO,
   SEMESTER,
 } from '../content/home'
-import { NEXT_EVENT } from '../content/events'
-import { BRAND, SCHEDULE } from '../content/site'
+import { KIND_HUE, NEXT_EVENT } from '../content/events'
+import { BRAND } from '../content/site'
+import { WINS_EMPTY } from '../content/wins'
+import { WHY } from '../content/about'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil, formatDay } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
+import { useWheelEasing } from '../lib/smoothScroll'
 import { useRsvp } from '../lib/useRsvp'
-import { rhythmColumn } from '../lib/glyphArt'
+import { glyphTexture, rhythmColumn } from '../lib/glyphArt'
+import { GROUND } from '../lib/pageGround'
 import styles from './Home.module.css'
-
-/** The opening lead: the first sentence in ink, the rest in the muted second voice. */
-const LEAD_BREAK = WHY.text.indexOf('. ') + 1
-const LEAD = { open: WHY.text.slice(0, LEAD_BREAK), rest: WHY.text.slice(LEAD_BREAK + 1) }
 
 const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 
@@ -56,12 +57,6 @@ const TRIP_ROW = 1
 const SCORE_ROWS = 14
 const COLUMN_WIDTH = 8
 
-/** One score cell in the svg's units; a unit of it is left as the white gap between cells. */
-const CELL = 10
-
-/** Each beat's tag in the key, in the colour of its column. */
-const BEAT_TAGS = [ui.tagBlue, ui.tagGold, ui.tagRed, ui.tagNavy]
-
 function beatIndex(week: number): number {
   let index = -1
   RHYTHM.forEach((beat, row) => {
@@ -71,21 +66,18 @@ function beatIndex(week: number): number {
 }
 
 const beatOf = (week: number) => BEATS[beatIndex(week)]?.name
+const hueOf = (week: number) => RHYTHM[beatIndex(week)]?.hue
 
-/** A week's column as one path: every mark rhythmColumn lays down becomes a square cell. */
-function weekPath(week: number): string {
+function weekArt(week: number): string {
   const beat = BEATS[beatIndex(week)]
-  const size = CELL - 1
-  return rhythmColumn(beat?.height ?? 0, beat?.weight ?? 0, SCORE_ROWS, COLUMN_WIDTH, week)
-    .flatMap((line, row) =>
-      [...line].map((mark, column) =>
-        mark === ' ' ? '' : `M${column * CELL} ${row * CELL}h${size}v${size}h-${size}z`,
-      ),
-    )
-    .join('')
+  return rhythmColumn(beat?.height ?? 0, beat?.weight ?? 0, SCORE_ROWS, COLUMN_WIDTH, week).join('\n')
 }
 
-/** Step numbers as the badges show them: 01, 02. */
+/** The opening lead: the first sentence in full ink, the rest in the softer second voice. */
+const LEAD_BREAK = WHY.text.indexOf('. ') + 1
+const LEAD = { open: WHY.text.slice(0, LEAD_BREAK), rest: WHY.text.slice(LEAD_BREAK + 1) }
+
+/** Step numbers as main shows them: 01, 02. */
 const stepNumber = (index: number) => String(index + 1).padStart(2, '0')
 
 /** Staggers the parts of a block as it settles in. */
@@ -96,7 +88,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
   const rsvp = useRsvp(event)
   const { day, monthLong, weekdayLong } = dateParts(event.date)
   return (
-    <article className={styles.event}>
+    <article className={styles.event} data-hue={KIND_HUE[event.kind]}>
       <p className={styles.date} data-reveal="rise">
         <span className={styles.dateDay}>{day}</span>
         <span className={styles.dateRest}>
@@ -108,19 +100,17 @@ function NextEvent({ event }: { event: ProtoEvent }) {
         </span>
       </p>
       <h4 className={styles.eventTitle} data-reveal="rise" style={after(80)}>
-        <Link className={ui.textLink} to={`/events/${event.id}`}>
-          {event.title}
-        </Link>
+        <Link to={`/events/${event.id}`}>{event.title}</Link>
         <SampleTag show={event.placeholder} />
       </h4>
-      {/* Kind, time and place, in one line of labels. */}
+      {/* Kind, time and place, set apart by space and tone rather than separators. */}
       <p className={styles.eventMeta} data-reveal="rise" style={after(140)}>
-        {kindAddsInfo(event.kind, event.title) && <KindTag kind={event.kind} />}
+        {kindAddsInfo(event.kind, event.title) && <span className={styles.kind}>{event.kind}</span>}
         <span>{event.time}</span>
-        <span>{event.place}</span>
+        <span className={styles.place}>{event.place}</span>
       </p>
       {event.text && (
-        <p className={`${ui.body} ${styles.eventText}`} data-reveal="rise" style={after(200)}>
+        <p className={styles.eventText} data-reveal="rise" style={after(200)}>
           {event.text}
         </p>
       )}
@@ -143,7 +133,7 @@ function NoEvent() {
       <p className={styles.emptyTitle} data-reveal="rise">
         {HOME_EMPTY.next.title}
       </p>
-      <p className={`${ui.body} ${styles.eventText}`} data-reveal="rise" style={after(80)}>
+      <p className={styles.eventText} data-reveal="rise" style={after(80)}>
         {HOME_EMPTY.next.text}
       </p>
       <p className={styles.actions} data-reveal="rise" style={after(160)}>
@@ -156,9 +146,44 @@ function NoEvent() {
 }
 
 /**
- * The landing, on black: the hero, an opening lead, then one job per section. The ways in, the journey,
- * the events, the rhythm and its next beat, the record, the names we build with, the ask.
+ * The landing. The hero keeps the field; below it the field drains into one long harbor ground,
+ * which takes on a frozen texture of the field partway down and fills back up with the live field
+ * for the ask. Each section has one job: the ways in, the rhythm and its next beat, the record.
  */
+/**
+ * The field rises back up for the ask in a shape of its own: dawn, light coming up from the foot
+ * of the page. It changes over halfway down the harbor stretch between the hero and the ask, where
+ * the field is out of sight, so neither the hero nor the ask ever sees it switch.
+ */
+function useClosingShape(harborRef: RefObject<HTMLElement | null>) {
+  const { setFieldShape } = useOutletContext<LayoutOutlet>()
+  useEffect(() => {
+    const state: { frame: number; closing: boolean | null } = { frame: 0, closing: null }
+    const check = () => {
+      state.frame = 0
+      const harbor = harborRef.current
+      if (!harbor) return
+      const box = harbor.getBoundingClientRect()
+      const next = box.top + box.height / 2 < window.innerHeight / 2
+      if (next === state.closing) return
+      state.closing = next
+      setFieldShape(next ? 'dawn' : null)
+    }
+    const schedule = () => {
+      if (!state.frame) state.frame = requestAnimationFrame(check)
+    }
+    check()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => {
+      cancelAnimationFrame(state.frame)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+      setFieldShape(null)
+    }
+  }, [harborRef, setFieldShape])
+}
+
 export function Home() {
   const { events, hackathons, wins } = useLoaderData<HomeData>()
   const nextEvent = events
@@ -169,7 +194,11 @@ export function Home() {
     .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
     .slice(0, 3)
   const latest = newestWins(wins, 12)
+  const texture = useMemo(() => glyphTexture(GROUND.texture), [])
+  const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   const revealRef = useReveal<HTMLDivElement>()
+  useWheelEasing()
+  useClosingShape(revealRef)
 
   return (
     <>
@@ -177,180 +206,208 @@ export function Home() {
       <Hero />
 
       {/* Everything below the hero settles in as it comes up the screen (see motion/useReveal). */}
-      <div ref={revealRef} className={`${motion.reveal} ${styles.afterHero}`} data-field-cover>
-        <div className={ui.tight}>
-          <div className={ui.wrap}>
-            <p className={ui.lead}>
-              <MaskLines text={LEAD.open} />
-              <em>
-                <MaskLines text={LEAD.rest} delay={220} />
-              </em>
+      <div ref={revealRef} className={motion.reveal}>
+      {/* Harbor: the field drains into it, and the three ways in stand on it. */}
+      <div className={`${styles.bleed} ${styles.ink} ${styles.afterHero}`}>
+        <GlyphEdge color={GROUND.harbor} mode="drain" rows={44} cell={10} />
+        {/* The opening lead, as on main: what Proto is for, in two voices. */}
+        <div className={lui.tight}>
+          <div className={lui.wrap}>
+            <p className={lui.lead} data-reveal="rise">
+              {LEAD.open} <em>{LEAD.rest}</em>
             </p>
           </div>
         </div>
-
+        {/* Main's order: the three ways in, how a semester goes, then what's on. */}
         <WaysIn />
-
         <AsciiJourney />
-
         <EventLedger events={events} />
+      </div>
 
-        <section className={ui.proc} aria-labelledby="rhythm">
-          <div className={ui.wrap}>
-            <header className={ui.split}>
-              <h2 id="rhythm" className={ui.h2}>
-                <MaskLines text={RHYTHM_INTRO.title} />
-              </h2>
-              <p className={ui.body} data-reveal="rise" style={after(220)}>
-                {RHYTHM_INTRO.lede}
-              </p>
-            </header>
+      {/* Harbor still, now with the field frozen into it: the rhythm and what's next on it, then
+          the record. The field comes back by degrees: plain harbor, its texture, then the field. */}
+      <div
+        className={`${styles.bleed} ${styles.ink} ${styles.inkTextured}`}
+        style={
+          {
+            '--texture': texture ? `url(${texture})` : 'none',
+            '--texture-mask': textureMask ? `url(${textureMask})` : 'none',
+          } as CSSProperties
+        }
+      >
+        <section className={`${styles.column} ${styles.rhythm}`} aria-labelledby="rhythm">
+          <header className={lui.split}>
+            <h2 id="rhythm" className={styles.title} data-reveal="words">
+              <RevealWords text={RHYTHM_INTRO.title} />
+            </h2>
+            <p className={lui.body} data-reveal="rise" style={after(220)}>
+              {RHYTHM_INTRO.lede}
+            </p>
+          </header>
 
-            <figure className={styles.score}>
-              <div className={styles.weeks} aria-hidden="true">
-                {WEEKS.map((week) => (
-                  // The semester fills in week by week as the score comes into view.
-                  <svg
-                    key={week}
-                    className={styles.week}
-                    viewBox={`0 0 ${COLUMN_WIDTH * CELL} ${SCORE_ROWS * CELL}`}
-                    data-beat={beatOf(week)}
-                    data-reveal="rise"
-                    style={after((week - 1) * 45)}
-                  >
-                    <path d={weekPath(week)} />
-                  </svg>
-                ))}
-              </div>
-              <div className={styles.axis} aria-hidden="true">
-                {WEEKS.map((week) => (
-                  <span key={week}>{week}</span>
-                ))}
-              </div>
-              <figcaption className={ui.kicker}>{SEMESTER.caption}</figcaption>
-            </figure>
-
-            <ol className={ui.steps}>
-              {RHYTHM.map((beat, row) => (
-                <li key={beat.what} className={ui.step}>
-                  <div data-reveal="rise" style={after(row * 90)}>
-                    <div className={ui.stepHead}>
-                      <span className={ui.badge} aria-hidden="true">
-                        {stepNumber(row)}
-                      </span>
-                      <h3 className={ui.stepTitle}>{beat.what}</h3>
-                    </div>
-                    <p className={styles.when}>
-                      <span className={`${ui.tag} ${BEAT_TAGS[row]}`}>{beat.later ? SEMESTER.later : beat.when}</span>
-                    </p>
-                    <p className={ui.stepText}>
-                      {beat.detail}
-                      {row === TRIP_ROW && (
-                        <>
-                          {' '}
-                          {FUND_NOTE.text}{' '}
-                          <Link className={ui.textLink} to={FUND_NOTE.link.href}>
-                            {FUND_NOTE.link.label}
-                          </Link>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                </li>
+          <figure className={styles.score}>
+            <div className={styles.weeks} aria-hidden="true">
+              {WEEKS.map((week) => (
+                // The semester fills in week by week as the score comes into view.
+                <pre
+                  key={week}
+                  className={styles.week}
+                  data-beat={beatOf(week)}
+                  data-hue={hueOf(week)}
+                  data-reveal="column"
+                  style={after((week - 1) * 45)}
+                >
+                  {weekArt(week)}
+                </pre>
               ))}
-            </ol>
-
-            {/* The rhythm's next real beat from the calendar, beside the next deadlines to go with it. */}
-            <div className={styles.next}>
-              <section className={styles.nextEvent} aria-labelledby="next-event">
-                <div className={styles.nextHead} data-reveal="rise">
-                  <h3 id="next-event" className={ui.h2}>
-                    {NEXT_UP.title}
-                  </h3>
-                  <Link className={ui.textLink} to="/events">
-                    {NEXT_UP.allEvents}
-                  </Link>
-                </div>
-                {nextEvent ? <NextEvent event={nextEvent} /> : <NoEvent />}
-                {/* The room and times aren't booked yet: a sample locally, left off the deployed site. */}
-                {(import.meta.env.DEV || !SCHEDULE.placeholder) && (
-                  <ScheduleCard
-                    className={styles.schedule}
-                    location={SCHEDULE.location}
-                    slots={SCHEDULE.slots}
-                    placeholder={SCHEDULE.placeholder}
-                  />
-                )}
-              </section>
-
-              <section className={styles.applyBy} aria-labelledby="apply-by">
-                <div className={styles.nextHead} data-reveal="rise">
-                  <h3 id="apply-by" className={ui.h2}>
-                    {NEXT_UP.applyBy}
-                  </h3>
-                  <Link className={ui.textLink} to="/hackathons">
-                    {NEXT_UP.allHackathons}
-                  </Link>
-                </div>
-                {deadlines.length === 0 ? (
-                  <p className={ui.small} data-reveal="rise">
-                    {HOME_EMPTY.deadlines}
-                  </p>
-                ) : (
-                  <ol className={styles.deadlineList}>
-                    {deadlines.map((hackathon, index) => {
-                      const days = daysUntil(hackathon.applyBy)
-                      return (
-                        <li
-                          key={hackathon.id}
-                          className={styles.deadline}
-                          data-reveal="rise"
-                          style={{ '--d': `${index * 90}ms` } as CSSProperties}
-                        >
-                          <span className={styles.countdown}>
-                            {days}
-                            <small>{days === 1 ? 'day' : 'days'}</small>
-                          </span>
-                          <span className={styles.deadlineName}>
-                            {/* Hackathons have no page of their own: straight to its site, else the list. */}
-                            {hackathon.href ? (
-                              <a className={styles.stretch} href={hackathon.href} target="_blank" rel="noopener noreferrer">
-                                {hackathon.name}
-                              </a>
-                            ) : (
-                              <Link className={styles.stretch} to="/hackathons">
-                                {hackathon.name}
-                              </Link>
-                            )}
-                            <SampleTag show={hackathon.placeholder} />
-                          </span>
-                          <span className={styles.deadlineDate}>
-                            {NEXT_UP.closes} {formatDay(hackathon.applyBy)}
-                          </span>
-                        </li>
-                      )
-                    })}
-                  </ol>
-                )}
-              </section>
             </div>
+            <div className={styles.axis} aria-hidden="true">
+              {WEEKS.map((week) => (
+                <span key={week}>{week}</span>
+              ))}
+            </div>
+            <figcaption className={styles.caption}>{SEMESTER.caption}</figcaption>
+          </figure>
+
+          {/* Four-up steps, as on main: the number and the beat, when it is, then what happens. */}
+          <ol className={lui.steps}>
+            {RHYTHM.map((beat, row) => (
+              <li
+                key={beat.what}
+                className={`${lui.step} ${styles.beat}`}
+                data-hue={beat.hue}
+                data-later={beat.later || undefined}
+                data-reveal="rise"
+                style={after(row * 90)}
+              >
+                <div className={lui.stepHead}>
+                  <span className={lui.badge} aria-hidden="true">
+                    {stepNumber(row)}
+                  </span>
+                  <h3 className={lui.stepTitle}>{beat.what}</h3>
+                </div>
+                <p className={styles.when}>{beat.later ? SEMESTER.later : beat.when}</p>
+                <p className={lui.stepText}>
+                  {beat.detail}
+                  {row === TRIP_ROW && (
+                    <>
+                      {' '}
+                      {FUND_NOTE.text}{' '}
+                      <Link className={ui.textLink} to={FUND_NOTE.link.href}>
+                        {FUND_NOTE.link.label}
+                      </Link>
+                    </>
+                  )}
+                </p>
+              </li>
+            ))}
+          </ol>
+
+          {/* The rhythm's next real beat from the calendar, beside the next deadlines to go with it. */}
+          <div className={styles.next}>
+            <section className={styles.nextEvent} aria-labelledby="next-event">
+              <div className={styles.nextHead} data-reveal="rise">
+                <h3 id="next-event" className={styles.subTitle}>
+                  {NEXT_UP.title}
+                </h3>
+                <Link className={ui.textLink} to="/events">
+                  {NEXT_UP.allEvents}
+                </Link>
+              </div>
+              {nextEvent ? <NextEvent event={nextEvent} /> : <NoEvent />}
+            </section>
+
+            <section className={styles.applyBy} data-hue="iris" aria-labelledby="apply-by">
+              <div className={styles.nextHead} data-reveal="rise">
+                <h3 id="apply-by" className={styles.subTitle}>
+                  {NEXT_UP.applyBy}
+                </h3>
+                <Link className={ui.textLink} to="/hackathons">
+                  {NEXT_UP.allHackathons}
+                </Link>
+              </div>
+              {deadlines.length === 0 ? (
+                <p className={styles.quiet} data-reveal="rise">
+                  {HOME_EMPTY.deadlines}
+                </p>
+              ) : (
+                <ol className={styles.deadlineList}>
+                  {deadlines.map((hackathon, index) => {
+                    const days = daysUntil(hackathon.applyBy)
+                    return (
+                      <li
+                        key={hackathon.id}
+                        className={styles.deadline}
+                        data-reveal="rise"
+                        style={{ '--d': `${index * 90}ms` } as CSSProperties}
+                      >
+                        <span className={styles.countdown}>
+                          {days}
+                          <small>{days === 1 ? 'day' : 'days'}</small>
+                        </span>
+                        <span className={styles.deadlineName}>
+                          {/* Hackathons have no page of their own: straight to its site, else the list. */}
+                          {hackathon.href ? (
+                            <a className={styles.stretch} href={hackathon.href} target="_blank" rel="noopener noreferrer">
+                              {hackathon.name}
+                            </a>
+                          ) : (
+                            <Link className={styles.stretch} to="/hackathons">
+                              {hackathon.name}
+                            </Link>
+                          )}
+                          <SampleTag show={hackathon.placeholder} />
+                        </span>
+                        <span className={styles.deadlineDate}>
+                          {NEXT_UP.closes} {formatDay(hackathon.applyBy)}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ol>
+              )}
+            </section>
           </div>
         </section>
 
-        {/* The record: the running tally, then the newest wins on their own light sheet. */}
-        <section className={styles.wins} aria-labelledby="latest-wins">
+        {/* The record, as on main: the running tally, the wins in orbit, then the newest as cards. */}
+        <section className={styles.wins} data-hue="rose" aria-labelledby="latest-wins">
           <div className={styles.tally}>
-            <div className={ui.wrap}>
+            <div className={lui.wrap}>
               <WinTally wins={wins} />
             </div>
           </div>
-          <WinOrbit wins={latest} />
-          <LatestWins wins={latest} id="latest-wins" />
+          {latest.length === 0 ? (
+            <div className={styles.tally}>
+              <p className={`${lui.wrap} ${lui.body}`}>{WINS_EMPTY}</p>
+            </div>
+          ) : (
+            <>
+              <WinOrbit wins={latest} />
+              <LatestWins wins={latest.slice(0, 3)} id="latest-wins" />
+            </>
+          )}
         </section>
 
         <LogoBand />
+        {/* Harbor fills back up with the field for the last word. */}
+        <GlyphEdge color={GROUND.harbor} mode="drain" side="bottom" rows={44} cell={10} />
+      </div>
+      </div>
 
-        <JoinFrame />
+      <div className={styles.column}>
+        {/* The ask, back on the field, lit word by word as it rises up the screen. */}
+        <section className={styles.join} aria-labelledby="join-cta">
+          <h2 id="join-cta" className={styles.joinTitle} data-fog-clear>
+            <ScrubWords text={JOIN_CTA.title} />
+          </h2>
+          <p className={styles.joinLede} data-fog-clear>
+            {JOIN_CTA.lede}
+          </p>
+          <Link className={`${ui.primary} ${styles.joinButton}`} to={JOIN_CTA.cta.href} data-fog-clear="box">
+            {JOIN_CTA.cta.label}
+          </Link>
+        </section>
       </div>
     </>
   )

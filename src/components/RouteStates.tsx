@@ -4,9 +4,9 @@ import ui from './ui.module.css'
 import styles from './RouteStates.module.css'
 
 /**
- * A page's HydrateFallback: Layout is already up, so the page holds a screen's height (Layout hides
- * the footer meanwhile, so it doesn't jump up and back down) and shows three pixels stepping on and
- * off where the page's title will land.
+ * A page's HydrateFallback: Layout and the field are already up, so the page holds a screen's
+ * height (Layout hides the footer meanwhile, so it doesn't jump up and back down) and shows the
+ * trail's three glyphs pulsing where the page's title will land.
  */
 export function PageLoading() {
   const { pathname } = useLocation()
@@ -15,10 +15,10 @@ export function PageLoading() {
     <div className={`${ui.page} ${styles.pending}`} data-route-loading>
       <title>{section ? `${section} · ${BRAND.full}` : BRAND.full}</title>
       <p className={styles.loading} role="status">
-        <span className={styles.pixels} aria-hidden="true">
-          <span />
-          <span />
-          <span />
+        <span className={styles.glyphs} aria-hidden="true">
+          <span>○</span>
+          <span>&gt;</span>
+          <span>_</span>
         </span>
         <span className={ui.srOnly}>{ROUTE_STATES.loading}</span>
       </p>
@@ -26,7 +26,7 @@ export function PageLoading() {
   )
 }
 
-/** A page's ErrorBoundary. It renders inside Layout, so the navigation stays put. */
+/** A page's ErrorBoundary. It renders inside Layout, so the field and top bar stay put. */
 export function LoadError() {
   const error = useRouteError()
   const location = useLocation()
@@ -36,14 +36,14 @@ export function LoadError() {
     <div className={ui.page}>
       <title>{`${ROUTE_STATES.error.title} · ${BRAND.full}`}</title>
       <section className={`${ui.panel} ${styles.error}`} role="alert">
-        <h1 className={styles.title}>
+        <h1 className={styles.title} data-fog-clear>
           {ROUTE_STATES.error.title}
         </h1>
-        <p className={styles.text}>
+        <p className={styles.text} data-fog-clear>
           {ROUTE_STATES.error.text}
         </p>
         {/* Navigating to the same URL re-runs its loaders. */}
-        <Link className={ui.secondary} to={`${location.pathname}${location.search}`} replace>
+        <Link className={ui.secondary} to={`${location.pathname}${location.search}`} replace data-fog-clear="box">
           {ROUTE_STATES.error.retry}
         </Link>
       </section>

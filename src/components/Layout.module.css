@@ -29,24 +29,22 @@
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  color: var(--c-ink);
-  /* Clip, not hidden: it makes no scroll container, so sticky parts and vertical scroll still work. */
+  padding-top: max(18px, env(safe-area-inset-top, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  /* Pages throw soft glows past the screen's edges on purpose; they end at the edge, never widening
+     the page into a sideways scroll. (The body's own clip doesn't reach the viewport in Chrome.)
+     Clip, not hidden: it makes no scroll container, so sticky parts and vertical scroll are unaffected. */
   overflow-x: clip;
 }
 
-/* The cursor trail, over the page's art and under the top bar; it never takes a click. */
-.trail {
-  position: fixed;
-  z-index: 40;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+/* Positioned, so they paint over the ground layer below, which comes first. */
+.shell > :not(.ground) {
+  position: relative;
 }
 
 .main {
-  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -58,17 +56,18 @@
 }
 
 /*
- * A thin line across the top while the next page loads. It waits a beat before showing, so quick
- * loads never flash it, then ticks most of the way across and holds until the page lands.
+ * A thin mint line across the top while the next page loads. It waits a beat before showing, so
+ * quick loads never flash it, then creeps most of the way across and holds until the page lands.
  */
-.progress {
+.shell > .progress {
   position: fixed;
-  z-index: 60;
+  z-index: 10;
   top: 0;
   left: 0;
   width: 100%;
   height: 2px;
-  background: var(--c-blue);
+  background: var(--mint);
+  box-shadow: 0 0 10px rgb(var(--mint-rgb) / 0.6);
   transform: scaleX(0);
   transform-origin: left;
   opacity: 0;
@@ -78,36 +77,29 @@
     transform 0ms 200ms;
 }
 
-.progress[data-active] {
+.shell > .progress[data-active] {
   opacity: 1;
   transform: scaleX(0.85);
   transition:
     opacity 150ms ease 150ms,
-    transform 3s steps(12) 150ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .progress,
-  .progress[data-active] {
-    transition: opacity 150ms ease;
-  }
+    transform 4s cubic-bezier(0.1, 0.6, 0.2, 1) 150ms;
 }
 
 /*
  * The page's own ground, scrolling with it. On the landing it's off (the landing draws its own).
- * Elsewhere the field shows behind the header, then drains into harbor through the field's own
- * characters (GlyphEdge's drain strip hangs off this layer's top edge): solid harbor for pages
- * people read or fill in, harbor with the field faintly under it for lists.
+ * Elsewhere the field shows behind the header, then drains into solid harbor through the field's
+ * own characters (GlyphEdge's drain strip hangs off this layer's top edge), starting under the
+ * page's intro.
  */
 .ground {
   position: absolute;
-  top: clamp(360px, 54vh, 560px);
+  /* Just under the page's intro, measured (see Layout); a fixed depth for pages without one. */
+  top: var(--ground-top, clamp(360px, 54vh, 560px));
   right: 0;
   bottom: 0;
   left: 0;
   opacity: 0;
   transition: opacity 600ms ease;
-  z-index: -1;
   background: var(--harbor);
   pointer-events: none;
 }
@@ -116,8 +108,10 @@
   opacity: 1;
 }
 
-.ground[data-reach='veil'] {
-  opacity: 0.84;
+/* Under the seam the field's light stays faint, so the cards and sheets on the harbor are what's
+   lit, not the ground between them. */
+.ground::before {
+  opacity: 0.35;
 }
 
 /* The field's light caught in the harbor just under the drain, as on the landing: its colours
@@ -142,7 +136,7 @@
   position: absolute;
   inset: 0;
   background: var(--field-sweep);
-  opacity: 0.3;
+  opacity: 0.1;
   -webkit-mask-image: var(--texture-mask), linear-gradient(to bottom, transparent 0, #000 40vh);
   mask-image: var(--texture-mask), linear-gradient(to bottom, transparent 0, #000 40vh);
   -webkit-mask-size: 595px 400px, 100% 100%;

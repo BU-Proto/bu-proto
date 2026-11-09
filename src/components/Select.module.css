@@ -11,6 +11,8 @@
   justify-content: space-between;
   gap: 10px;
   width: 100%;
+  /* Buttons don't inherit type by default; the class it's given (or its context) sets it. */
+  font: inherit;
   text-align: left;
   cursor: pointer;
 }
@@ -21,7 +23,7 @@
 }
 
 .trigger[aria-invalid='true'] {
-  border-color: var(--c-red);
+  border-color: var(--coral);
 }
 
 .value,
@@ -32,7 +34,7 @@
 }
 
 .placeholder {
-  color: var(--c-muted);
+  color: var(--ink-dim);
 }
 
 .chevron {
@@ -41,10 +43,10 @@
   height: 12px;
   margin-right: -2px;
   fill: none;
-  stroke: var(--c-ink);
+  stroke: var(--ink-soft);
   stroke-width: 1.6;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .trigger[aria-expanded='true'] .chevron {
@@ -64,62 +66,55 @@
   pointer-events: none;
 }
 
-/*
- * Portalled to the body, outside the public shell, so it reads only the site-wide tokens. The box
- * holds the glass (Glass.tsx) and sets its size; the list scrolls inside it. Larger glass runs
- * darker, for the text it carries, as the top bar's menus do.
- */
-.menu {
-  --glass-blur: 16px;
-  --glass-tone: saturate(1.8) contrast(0.5) brightness(0.42);
-  --glass-shadow: 0 18px 50px rgb(0 0 0 / 0.5);
+.list {
   position: fixed;
   z-index: 50;
   /* As wide as the trigger, but never so narrow that options wrap mid-amount. */
   min-width: 11rem;
   box-sizing: border-box;
-  border-radius: var(--radius-menu);
-  color: var(--c-ink);
-  font-family: var(--font-display);
-  font-size: 15px;
-}
-
-.list {
-  display: grid;
-  gap: 2px;
-  box-sizing: border-box;
-  max-height: inherit;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 6px;
-  border-radius: inherit;
+  padding: 4px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 12px;
+  background: var(--navy);
+  box-shadow:
+    0 14px 32px rgb(var(--harbor-rgb) / 0.55),
+    0 2px 6px rgb(var(--harbor-rgb) / 0.4);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  transform-origin: top center;
+}
+
+.list[data-up] {
+  transform-origin: bottom center;
 }
 
 .list:focus {
   outline: none;
 }
 
-/* Text lines up with the trigger's: 6px of list padding plus 8px here matches its 14px. Each row's
-   corner is the list's less its padding, so the two curves run parallel. */
+/* Text lines up with the trigger's: 4px of list padding plus 10px here matches its 14px. */
 .option {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   min-height: 40px;
-  padding: 8px 8px;
-  border-radius: var(--radius-field);
+  padding: 8px 10px;
+  border-radius: 8px;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .option[data-active] {
-  background: rgb(255 255 255 / 0.13);
+  background: rgb(var(--frost-rgb) / 0.1);
 }
 
 .option:active {
-  background: rgb(255 255 255 / 0.18);
+  background: rgb(var(--frost-rgb) / 0.14);
 }
 
 .check {
@@ -127,10 +122,10 @@
   width: 16px;
   height: 16px;
   fill: none;
-  stroke: var(--c-blue);
+  stroke: var(--mint);
   stroke-width: 1.8;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   visibility: hidden;
 }
 
@@ -145,36 +140,30 @@
   }
 }
 
-/* Only the box moves and only the words fade: opacity on the box would blind the glass inside it
-   for as long as the fade ran. */
 @media (prefers-reduced-motion: no-preference) {
-  .menu:not([hidden]) {
-    animation: drop 0.3s var(--ease-out, ease-out);
+  .chevron {
+    transition: transform 160ms ease;
   }
 
-  .menu[data-up]:not([hidden]) {
+  .list:not([hidden]) {
+    animation: drop 140ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+
+  .list[data-up]:not([hidden]) {
     animation-name: rise;
-  }
-
-  .menu:not([hidden]) .list {
-    animation: words 0.18s ease;
   }
 }
 
 @keyframes drop {
   from {
-    transform: translateY(-6px) scale(0.97);
+    opacity: 0;
+    transform: translateY(-4px) scaleY(0.97);
   }
 }
 
 @keyframes rise {
   from {
-    transform: translateY(6px) scale(0.97);
-  }
-}
-
-@keyframes words {
-  from {
     opacity: 0;
+    transform: translateY(4px) scaleY(0.97);
   }
 }

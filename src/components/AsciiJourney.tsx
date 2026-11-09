@@ -1,9 +1,9 @@
-import { useRef } from 'react'
+import { useRef, type CSSProperties } from 'react'
 import { JOURNEY } from '../content/home'
 import { JOURNEY_PALETTE, journeyFrame, journeyGlyph } from '../lib/pixelGrid'
-import { MaskLines } from './motion/MaskLines'
+import { RevealWords } from './motion/RevealWords'
 import { usePixelCanvas } from './usePixelCanvas'
-import ui from './ui.module.css'
+import lui from './landing.module.css'
 import styles from './AsciiJourney.module.css'
 
 const pitchFor = (width: number) => (width < 600 ? 8 : 11)
@@ -17,22 +17,22 @@ export function AsciiJourney() {
     <section className={styles.section} aria-labelledby="journey">
       <header className={styles.head}>
         <h2 id="journey" className={styles.title}>
-          {JOURNEY.title.split('\n').map((line) => (
-            <span key={line} className={styles.line}>
-              <MaskLines text={line} />
+          {JOURNEY.title.split('\n').map((line, index) => (
+            <span key={line} className={styles.line} data-reveal="words" style={{ '--d': `${index * 160}ms` } as CSSProperties}>
+              <RevealWords text={line} />
             </span>
           ))}
         </h2>
-        <p className={styles.lede} data-reveal="rise">
+        <p className={styles.lede} data-reveal="rise" style={{ '--d': '240ms' } as CSSProperties}>
           {JOURNEY.lede}
         </p>
       </header>
-      <canvas ref={canvas} className={styles.art} aria-hidden="true" data-trail-art />
-      <ol className={`${ui.steps} ${styles.steps}`}>
+      <canvas ref={canvas} className={styles.art} aria-hidden="true" />
+      <ol className={`${lui.steps} ${styles.steps}`}>
         {JOURNEY.steps.map((step, index) => (
-          <li key={step.name} className={ui.step}>
-            <div className={ui.stepHead}>
-              <span className={ui.badge}>{String(index + 1).padStart(2, '0')}</span>
+          <li key={step.name} className={lui.step}>
+            <div className={lui.stepHead}>
+              <span className={lui.badge}>{String(index + 1).padStart(2, '0')}</span>
               <h3 className={styles.stepName}>{step.name}</h3>
             </div>
             <p className={styles.stepText}>{step.text}</p>

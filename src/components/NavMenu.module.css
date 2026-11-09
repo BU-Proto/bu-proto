@@ -1,112 +1,127 @@
-/* A tab item with pages under it, and the small glass panel they open in. */
+/* A pill item with pages under it, and the small navy panel they open in. */
 
 .root {
   position: relative;
   display: flex;
 }
 
-/* Set like the tab's links beside it: the name is a link to the section's page, and the chevron
+/* Set like the pill's links beside it: the name is a link to the section's page, and the chevron
    beside it, which turns over while the list is open, is its own small button. */
 .trigger {
-  position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  border-radius: 999px;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 13px;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgb(var(--harbor-rgb, 6 26 46) / 0.3);
+}
+
+.trigger:hover,
+.trigger[data-open] {
+  color: var(--ink, #f6fbff);
 }
 
 .label {
-  display: flex;
-  align-items: center;
-  padding: 0 2px 0 11px;
+  padding: 7px 2px 7px 13px;
+  border-radius: 999px 0 0 999px;
   color: inherit;
 }
 
 .toggle {
   display: grid;
   place-items: center;
-  padding: 0 7px 0 2px;
+  padding: 7px 11px 7px 3px;
   border: 0;
+  border-radius: 0 999px 999px 0;
   background: none;
   color: inherit;
   cursor: pointer;
 }
 
+/* On any of its pages it reads as the current section, the way a current link does. */
+.trigger[data-current] {
+  background: rgb(var(--frost-rgb, 246 251 255) / 0.08);
+  color: var(--ink, #f6fbff);
+}
+
 .label:focus-visible,
 .toggle:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: -4px;
-  border-radius: 19px;
+  outline: 2px solid var(--frost, #f6fbff);
+  outline-offset: 2px;
 }
 
 .chevron {
   width: 12px;
   height: 12px;
-}
-
-.chevron {
-  transition: transform 0.25s ease;
+  opacity: 0.8;
 }
 
 .toggle[aria-expanded='true'] .chevron {
   transform: rotate(180deg);
 }
 
-/* Hangs from the tab, a little clear of it so the two never read as glass on glass, under its own
-   trigger. Larger glass runs darker, for the text it carries. */
+/* Solid navy, so its small print never sits on the field. Hangs from the trigger's left edge,
+   just below the pill. */
 .panel {
-  --glass-blur: 16px;
-  --glass-tone: saturate(1.8) contrast(0.5) brightness(0.42);
-  --glass-shadow: 0 18px 50px rgb(0 0 0 / 0.5);
   position: absolute;
-  top: calc(100% + 8px);
-  left: -4px;
+  top: calc(100% + 12px);
+  left: -5px;
   z-index: 3;
-  width: 280px;
-  border-radius: var(--radius-menu);
-  transform-origin: 66px 0;
+  width: 272px;
+  padding: 6px;
+  border: 1px solid rgb(var(--frost-rgb, 246 251 255) / 0.14);
+  border-radius: 16px;
+  background: var(--navy, #0b2a46);
+  box-shadow: 0 28px 56px -28px rgb(var(--harbor-rgb, 6 26 46) / 0.95);
+  text-shadow: none;
 }
 
-/* Bridges the gap down from the tab, so the pointer never crosses open air on the way to a link. */
+/* A bridge over the gap between the trigger and the panel, so moving the mouse down to a link
+   never leaves the menu on the way. */
 .panel::before {
   content: '';
   position: absolute;
   right: 0;
   bottom: 100%;
   left: 0;
-  height: 8px;
+  height: 14px;
 }
 
 .list {
   display: grid;
   gap: 2px;
   margin: 0;
-  padding: 6px;
+  padding: 0;
   list-style: none;
 }
 
 .link {
   display: grid;
-  gap: 6px;
-  padding: 12px 13px 13px;
-  border-radius: var(--radius-field);
+  gap: 3px;
+  padding: 10px 12px 11px;
+  border-radius: 11px;
 }
 
 .link:hover,
 .link:focus-visible {
-  background: rgb(255 255 255 / 0.13);
+  background: rgb(var(--frost-rgb, 246 251 255) / 0.07);
 }
 
 .link:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--frost, #f6fbff);
   outline-offset: -2px;
 }
 
-/* The page you're on gets a dot. */
+/* The page you're on gets the accent dot the menu sheet uses. */
 .name {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  color: var(--ink, #f6fbff);
+  font-size: 14px;
   font-weight: 500;
+  letter-spacing: -0.005em;
 }
 
 .link[aria-current='page'] .name::after {
@@ -114,16 +129,13 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--accent, #9df0a8);
 }
 
 .line {
-  font-family: var(--font-display);
-  font-size: 13px;
-  letter-spacing: 0;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 12.5px;
   line-height: 1.4;
-  opacity: 0.72;
-  text-transform: none;
 }
 
 .srOnly {
@@ -135,26 +147,26 @@
   white-space: nowrap;
 }
 
-/* It pops out of the chevron. Only the transform moves and only the words fade: opacity on the panel
-   itself would blind the glass inside it for as long as the fade ran. */
 @media (prefers-reduced-motion: no-preference) {
   .panel:not([hidden]) {
-    animation: pop 0.42s linear(0, 0.097, 0.307, 0.543, 0.751, 0.908, 1.009, 1.062, 1.08, 1.076, 1.06, 1.041, 1.024, 1.01, 1.001, 0.996, 0.994, 0.994, 0.995, 0.996, 1);
+    animation: drop 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
-  .panel:not([hidden]) .list {
-    animation: words 0.22s ease;
+  .chevron {
+    transition: transform 160ms ease;
+  }
+
+  .trigger,
+  .link {
+    transition:
+      background-color 120ms,
+      color 120ms;
   }
 }
 
-@keyframes pop {
-  from {
-    transform: scale(0.9) translateY(-8px);
-  }
-}
-
-@keyframes words {
+@keyframes drop {
   from {
     opacity: 0;
+    transform: translateY(-4px);
   }
 }

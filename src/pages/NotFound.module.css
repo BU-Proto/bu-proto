@@ -1,12 +1,12 @@
-/* Every page as a short ruled directory: the name, and the path it lives at. */
 .links {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0 28px;
+  gap: 0 clamp(24px, 4vw, 48px);
+  max-width: 820px;
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--c-line);
+  text-shadow: var(--on-field-shadow);
 }
 
 .link {
@@ -14,48 +14,34 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: var(--cell) 0;
-  border-bottom: 1px solid var(--c-line);
-  color: var(--c-ink);
-  font-size: 18px;
-  letter-spacing: -0.01em;
+  padding: 14px 0;
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.3);
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: -0.015em;
 }
 
 .route {
-  color: var(--c-muted);
+  color: var(--ink-soft);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 0;
 }
 
-/* A dotted line grows under the name from the left on hover. */
-.label {
-  padding-bottom: 3px;
-  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 0 3px;
-  transition: background-size 0.45s var(--ease-out);
-}
-
-.link:hover .label,
-.link:focus-visible .label {
-  background-size: 100% 3px;
+.link:hover .label {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
 @media (max-width: 640px) {
   .links {
     grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .label {
-    transition: none;
   }
 }

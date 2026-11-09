@@ -1,79 +1,336 @@
 /*
- * The fund's coming-soon page: editorial splits on the harbor ground, the route as a band of pixels over four
- * steps, Ignite on the dark panel, and the interest list at the foot.
+ * The fund's coming-soon page. One ground the whole way down: the field over the intro, then
+ * harbor, lit from behind by soft pools of the field's own colours. The pools have no edges and
+ * overlap, so the light shifts down the page while the ground never changes. No bands, no rules,
+ * no boxes. The colour that carries meaning is on the route: each stop has its own, read along
+ * the field's gradient, and the last one is mint, the site's colour for what's yours to do.
  */
+
 .page {
-  gap: calc(var(--cell) * 10);
+  /* The field's light, from the palette in index.css. Light tones are for text and the route's
+     glyphs; the -deep ones (as rgb channels) only ever light the ground. */
+  --tone-sky: var(--sky, #7cc7f4);
+  --tone-iris: var(--iris, #ab9dff);
+  --tone-rose: var(--rose, #f4a2c0);
+  --glow-sky: var(--sky-deep-rgb, 26 143 192);
+  --glow-iris: var(--iris-deep-rgb, 122 110 224);
+  --glow-rose: var(--rose-deep-rgb, 194 64 122);
+  --glow-lagoon: var(--lagoon-rgb, 63 184 208);
+  --ring: 28px;
+
+  width: min(1180px, 100%);
+  margin-inline: auto;
+  padding: clamp(28px, 6vh, 64px) 0 clamp(72px, 12vh, 120px);
 }
 
-/* ---- The intro ---- */
-
-.status {
-  max-width: 62ch;
-  margin: calc(var(--cell) / 2) 0 0;
-  color: var(--c-body);
-  font-size: clamp(15px, 1.15vw, 18px);
-  line-height: 1.62;
+/* Every section can hang a light pool behind itself without lifting it over the page. */
+.plan,
+.route,
+.ignite,
+.interest {
+  position: relative;
+  isolation: isolate;
 }
 
-.statusWord {
-  margin-right: 4px;
+.plan::before,
+.route::before,
+.ignite::before,
+.interest::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
 }
 
-/* ---- The plan ---- */
+.subtitle {
+  margin: 0;
+  font-size: clamp(30px, 3.6vw, 46px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
 
-.planLead {
+.lede {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.head {
   display: grid;
   align-content: start;
   gap: 14px;
 }
 
+/* ---- The intro, on the field ------------------------------------------------------------------ */
+
+.status {
+  max-width: 62ch;
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
+  text-shadow: var(--on-field-shadow);
+}
+
+/* Amber, the site's colour for "not yet". */
+.statusWord {
+  color: var(--amber);
+  font-weight: 500;
+}
+
+/* ---- The plan: one line, and the two things people ask first ---------------------------------- */
+
+/* Starts where the field has drained, so the line stands on harbor. */
+.plan {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+  align-items: start;
+  gap: 40px clamp(32px, 5vw, 72px);
+  padding-top: clamp(120px, 20vh, 200px);
+}
+
+/* Blue into violet, the top of the field's gradient, picking up where the field leaves off. */
+.plan::before {
+  inset: -10% auto -30% -18%;
+  width: min(1100px, 120vw);
+  background:
+    radial-gradient(closest-side at 38% 50%, rgb(var(--glow-iris) / 0.3), transparent),
+    radial-gradient(closest-side at 72% 34%, rgb(var(--glow-sky) / 0.26), transparent);
+}
+
+.planLead {
+  display: grid;
+  gap: 18px;
+}
+
+.headline {
+  max-width: 17ch;
+  margin: 0;
+  font-size: clamp(32px, 4.3vw, 54px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  font-variant-numeric: tabular-nums;
+  text-wrap: balance;
+}
+
+.caveat {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.facts {
+  display: grid;
+  gap: 26px;
+  padding-top: 0.5em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact {
+  display: grid;
+  gap: 6px;
+}
+
 .factTitle {
   margin: 0;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.3;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
 .factText {
-  max-width: 48ch;
-  margin: 4px 0 0;
-  color: var(--c-body);
-  font-size: 14.5px;
+  max-width: 36ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
   line-height: 1.5;
   text-wrap: pretty;
 }
 
-/* ---- How it'll work ---- */
+/* ---- How it'll work: a strip map in the field's characters ------------------------------------ */
 
 .route {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: calc(var(--cell) * 4);
+  gap: clamp(44px, 7vh, 64px);
+  padding-top: clamp(100px, 15vh, 160px);
 }
 
-/* ---- Next to Ignite: the dark panel, inside the page column like every other card ---- */
+.map {
+  --gap: clamp(24px, 3.4vw, 48px);
+  position: relative;
+}
 
-.page .ignite {
+/* The line's light on the ground: its own gradient, spread wide and soft along it. */
+.map::before {
+  content: '';
+  position: absolute;
+  z-index: -2;
+  top: calc(var(--ring) / 2 - 170px);
+  right: -12%;
+  left: -12%;
+  height: 340px;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--glow-sky)),
+    rgb(var(--glow-iris)) 35%,
+    rgb(var(--glow-rose)) 60%,
+    rgb(var(--mint-rgb) / 0.6) 85%
+  );
+  opacity: 0.32;
+  -webkit-mask-image: radial-gradient(closest-side, #000, transparent);
+  mask-image: radial-gradient(closest-side, #000, transparent);
+  pointer-events: none;
+}
+
+/* The line: rails of glyphs, coloured along the field's gradient from the first stop to the last,
+   then running on and fading out past it, since it isn't meant to be a one-trip line. */
+.track {
+  position: absolute;
+  top: calc(var(--ring) / 2);
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    var(--tone-sky) 0%,
+    var(--tone-iris) 26%,
+    var(--tone-rose) 52%,
+    var(--mint) 78%,
+    var(--mint) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+  white-space: pre;
+  -webkit-mask-image: linear-gradient(90deg, #000 84%, transparent);
+  mask-image: linear-gradient(90deg, #000 84%, transparent);
+  filter: drop-shadow(0 0 12px rgb(var(--glow-iris) / 0.9));
+  user-select: none;
+}
+
+.trackRow {
+  display: block;
+}
+
+.stops {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px var(--gap);
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.igniteHead {
+.stop {
+  position: relative;
   display: grid;
   align-content: start;
-  gap: calc(var(--cell) * 1.5);
+  gap: 10px;
 }
 
-.igniteLede {
-  max-width: 44ch;
+/* Each stop lights the ground around it in its own colour; side by side they run together into
+   one long glow under the line. */
+.stop::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: calc(var(--ring) / 2 - 190px);
+  left: calc(var(--ring) / 2 - 260px);
+  width: 520px;
+  height: 380px;
+  background: radial-gradient(closest-side, rgb(var(--glow) / 0.36), transparent);
+  pointer-events: none;
+}
+
+/* A station: a ring in the stop's colour, with harbor around it so the rails stop short of it. */
+.ring {
+  width: var(--ring);
+  height: var(--ring);
+  margin-bottom: 22px;
+  border: 4px solid var(--tone);
+  border-radius: 50%;
+  background: var(--harbor);
+  box-shadow:
+    0 0 0 7px var(--harbor),
+    0 0 28px 8px rgb(var(--glow) / 0.75);
+}
+
+.stopTitle {
   margin: 0;
-  color: rgb(246 251 255 / 0.72);
-  font-size: clamp(15px, 1.15vw, 18px);
-  line-height: 1.62;
+  color: var(--tone);
+  font-size: clamp(24px, 2.4vw, 32px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
 }
 
-.igniteLede a {
-  color: var(--c-ink);
+.stopText {
+  max-width: 28ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* The page's one motion: the line runs out from the first stop, and each station comes on as the
+   line reaches it. Under reduced motion it's simply there. */
+@media (prefers-reduced-motion: no-preference) {
+  .track {
+    transition: clip-path 1500ms cubic-bezier(0.45, 0.05, 0.25, 1);
+  }
+
+  .map:not([data-drawn]) .track {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .ring {
+    transition:
+      transform 480ms cubic-bezier(0.2, 1.5, 0.4, 1),
+      opacity 240ms ease;
+    transition-delay: calc(120ms + var(--i) * 330ms);
+  }
+
+  .map:not([data-drawn]) .ring {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ---- Next to Ignite: side by side, the plan's column in colour -------------------------------- */
+
+.ignite {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  gap: 40px clamp(32px, 6vw, 96px);
+  padding-top: clamp(110px, 16vh, 170px);
+}
+
+/* Teal, over to the right, behind the plan's column. */
+.ignite::before {
+  top: 0;
+  right: -22%;
+  bottom: -30%;
+  width: min(900px, 100vw);
+  background: radial-gradient(closest-side, rgb(var(--glow-lagoon) / 0.2), transparent);
 }
 
 .compare {
@@ -85,49 +342,64 @@
 
 .compare th,
 .compare td {
-  padding: var(--cell) 20px var(--cell) 0;
-  border-top: 1px solid rgb(246 251 255 / 0.16);
-  font-weight: 400;
+  padding: 0 28px 22px 0;
   vertical-align: baseline;
 }
 
-.compare thead th,
-.compare thead td {
-  padding-top: 0;
-  border-top: 0;
+.compare thead th {
+  padding-bottom: 18px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.colIgnite {
+  color: var(--ink-dim);
 }
 
 .colProto {
-  color: var(--c-ink);
+  color: var(--ink);
 }
 
 .topic {
+  color: var(--ink-dim);
+  font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
 }
 
 .was {
-  color: rgb(246 251 255 / 0.68);
-  font-size: 14.5px;
-  line-height: 1.45;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.4;
 }
 
 .will {
-  color: var(--c-ink);
-  font-size: clamp(17px, 1.6vw, 22px);
-  letter-spacing: -0.015em;
+  color: var(--ink);
+  font-size: clamp(20px, 2vw, 25px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
-/* ---- The interest list ---- */
+/* ---- The interest list ------------------------------------------------------------------------ */
 
 .interest {
-  scroll-margin-top: calc(var(--cell) * 5);
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 40px clamp(32px, 6vw, 96px);
+  padding-top: clamp(110px, 16vh, 170px);
+  scroll-margin-top: 24px;
 }
 
-.interestHead {
-  display: grid;
-  align-content: start;
-  gap: var(--cell);
+/* Mint and blue under the form, the warmest light on the page, where the page ends. */
+.interest::before {
+  top: 8%;
+  right: -16%;
+  bottom: -40%;
+  left: 8%;
+  background:
+    radial-gradient(closest-side at 62% 52%, rgb(var(--mint-rgb) / 0.14), transparent),
+    radial-gradient(closest-side at 26% 66%, rgb(var(--glow-sky) / 0.26), transparent);
 }
 
 .formWrap {
@@ -144,30 +416,39 @@
   width: 100%;
   min-height: 48px;
   padding: 11px 14px;
-  border: 1px solid var(--c-line);
-  border-radius: var(--radius-field);
-  background: var(--c-paper);
-  color: var(--c-ink);
+  border: 1px solid rgb(var(--frost-rgb) / 0.24);
+  border-radius: 12px;
+  background: rgb(var(--harbor-rgb) / 0.62);
+  color: var(--ink);
   /* 16px keeps phones from zooming in on focus. */
   font-size: 16px;
 }
 
 .input::placeholder {
-  color: var(--c-muted);
+  color: rgb(var(--frost-rgb) / 0.5);
 }
 
 .input:hover {
-  border-color: rgb(246 251 255 / 0.4);
+  border-color: rgb(var(--frost-rgb) / 0.45);
 }
 
 .input:focus-visible {
   outline: none;
-  border-color: var(--c-ink);
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px rgb(var(--mint-rgb) / 0.24);
 }
 
 .input:user-invalid,
 .input[aria-invalid='true'] {
-  border-color: var(--c-red);
+  border-color: var(--coral);
+}
+
+/* The submit is the one thing on the page that's yours to do, so it's mint. */
+.form button[type='submit'] {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: var(--harbor);
+  font-size: 14px;
 }
 
 .privacy {
@@ -185,15 +466,87 @@
   display: none;
 }
 
-/* ---- Small screens ---- */
+/* ---- Small screens ---------------------------------------------------------------------------- */
 
-@media (max-width: 680px) {
-  .page {
-    gap: calc(var(--cell) * 6);
+@media (max-width: 960px) {
+  .plan,
+  .ignite,
+  .interest {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .route {
-    gap: calc(var(--cell) * 3);
+  .plan {
+    align-items: start;
+  }
+}
+
+/* The strip map turns to run down the page, the stops stacked beside it. */
+@media (max-width: 720px) {
+  .stops {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    padding-left: calc(var(--ring) + 24px);
+  }
+
+  .track {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    left: calc(var(--ring) / 2);
+    transform: translateX(-50%);
+    background: linear-gradient(
+      180deg,
+      var(--tone-sky) 0%,
+      var(--tone-iris) 30%,
+      var(--tone-rose) 58%,
+      var(--mint) 86%,
+      var(--mint) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    /* Upright glyphs advance a full em each; pull them in so the rails close up. */
+    letter-spacing: -0.42em;
+    line-height: 0.75;
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+    -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent);
+    mask-image: linear-gradient(180deg, #000 90%, transparent);
+  }
+
+  .ring {
+    position: absolute;
+    top: 2px;
+    left: calc(-1 * (var(--ring) + 24px));
+    margin: 0;
+  }
+
+  .map::before {
+    top: -60px;
+    right: auto;
+    bottom: -60px;
+    left: calc(var(--ring) / 2 - 150px);
+    width: 300px;
+    height: auto;
+    background: linear-gradient(
+      180deg,
+      rgb(var(--glow-sky)),
+      rgb(var(--glow-iris)) 35%,
+      rgb(var(--glow-rose)) 60%,
+      rgb(var(--mint-rgb) / 0.6) 85%
+    );
+  }
+
+  .stop::before {
+    top: -150px;
+    left: -200px;
+    width: 400px;
+    height: 300px;
+  }
+}
+
+@media (max-width: 720px) and (prefers-reduced-motion: no-preference) {
+  .map:not([data-drawn]) .track {
+    clip-path: inset(0 0 100% 0);
   }
 }
 
@@ -205,17 +558,14 @@
     display: grid;
   }
 
+  .compare tbody {
+    gap: 24px;
+  }
+
   .compare tr {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 6px 20px;
-    padding: var(--cell) 0;
-    border-top: 1px solid rgb(246 251 255 / 0.16);
-  }
-
-  .compare thead tr {
-    padding-top: 0;
-    border-top: 0;
   }
 
   .compare thead td {
@@ -225,7 +575,10 @@
   .compare th,
   .compare td {
     padding: 0;
-    border-top: 0;
+  }
+
+  .compare thead th {
+    padding-bottom: 14px;
   }
 
   .topic {

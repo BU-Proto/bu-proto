@@ -2,52 +2,37 @@ import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import type { Win } from '../../shared/api'
 import { WIN_SHEET, WINS_EMPTY } from '../content/wins'
-import { reducedMotion, useInView } from '../lib/useInView'
+import { reducedMotion } from '../lib/useInView'
+import { RevealWords } from './motion/RevealWords'
+import ui from './ui.module.css'
 import { WinTile } from './WinTile'
 import { mountWinStage } from './winStage'
 import styles from './WinSheet.module.css'
 
-/** The heading, its characters tipping up out of the line, with the lede rising beside it. */
+/** Staggers the parts of a block as it settles in (see motion/useReveal). */
+const after = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
+
+/** The heading, its words rising into place, with the lede settling in beside it. */
 function Head({ id }: { id: string }) {
-  const [ref, inView] = useInView<HTMLElement>('0px', 0, true)
-  const seen = { count: 0 }
   return (
-    <header ref={ref} className={styles.head} data-in={inView || undefined}>
-      <h2 id={id} className={styles.title} aria-label={WIN_SHEET.title}>
-        {WIN_SHEET.title.split(' ').map((word, wordIndex) => (
-          <span key={wordIndex}>
-            {wordIndex > 0 && ' '}
-            <span className={styles.word} aria-hidden="true">
-              {[...word].map((char, charIndex) => (
-                <span key={charIndex} className={styles.char} style={{ '--i': seen.count++ } as CSSProperties}>
-                  {char}
-                </span>
-              ))}
-            </span>
-          </span>
-        ))}
+    <header className={styles.head}>
+      <h2 id={id} className={styles.title} data-reveal="words">
+        <RevealWords text={WIN_SHEET.title} />
       </h2>
-      <p className={styles.lede}>
-        <span className={styles.ledeLine}>{WIN_SHEET.lede}</span>
+      <p className={styles.lede} data-reveal="rise" style={after(220)}>
+        {WIN_SHEET.lede}
       </p>
     </header>
   )
 }
 
-/** The way through to every win. */
+/** The way through to every win: a button sized to its words. */
 function AllWins() {
-  const [ref, inView] = useInView<HTMLDivElement>('0px', 0, true)
   return (
-    <div ref={ref} className={styles.pillRow} data-in={inView || undefined}>
-      <div className={styles.pillRise}>
-        <Link className={styles.pill} to="/wins">
-          <span className={styles.pillDot} aria-hidden="true" />
-          <span className={styles.pillLabel}>{WIN_SHEET.allWins}</span>
-          <span className={styles.pillArrow} aria-hidden="true">
-            {'>'}
-          </span>
-        </Link>
-      </div>
+    <div className={styles.allRow}>
+      <Link className={ui.secondary} to="/wins" data-reveal="rise">
+        {WIN_SHEET.allWins}
+      </Link>
     </div>
   )
 }
@@ -71,9 +56,10 @@ export function WinGrid({ wins, details = false }: { wins: readonly Win[]; detai
 
 /**
  * The sheet, its covers drawn in WebGL behind the words. Only for a mouse: a touch scroll runs
- * ahead of the page's frames, so a drawn cover would trail its own words.
+ * ahead of the page's frames, so a drawn cover would trail its own words. It has no fill of its
+ * own: it's the landing's harbor, the navy covers standing on it.
  */
-function Sheet({ wins, children }: { wins: readonly Win[]; children: ReactNode }) {
+function Sheet({ wins, className, children }: { wins: readonly Win[]; className?: string; children: ReactNode }) {
   const sheet = useRef<HTMLDivElement>(null)
   const stage = useRef<HTMLCanvasElement>(null)
   const tiles = wins.map((win) => win.id).join()
@@ -85,17 +71,17 @@ function Sheet({ wins, children }: { wins: readonly Win[]; children: ReactNode }
   }, [tiles])
 
   return (
-    <div ref={sheet} className={styles.sheet} data-field-cover>
+    <div ref={sheet} className={className ? `${styles.sheet} ${className}` : styles.sheet} data-hue="rose">
       {wins.length > 0 && <canvas key={tiles} ref={stage} className={styles.stage} aria-hidden="true" />}
       {children}
     </div>
   )
 }
 
-/** The landing's latest wins, on their own light sheet, with the way through to the rest. */
+/** The landing's latest wins: a short row of the newest, in the page column, and the way to the rest. */
 export function LatestWins({ wins, id }: { wins: readonly Win[]; id: string }) {
   return (
-    <Sheet wins={wins}>
+    <Sheet wins={wins} className={styles.latest}>
       <Head id={id} />
       {wins.length === 0 ? (
         <p className={styles.empty}>{WINS_EMPTY}</p>

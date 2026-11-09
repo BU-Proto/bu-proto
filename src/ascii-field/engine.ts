@@ -7,14 +7,12 @@ import {
   createFieldRenderer,
   drawGlyphAtlas,
   type FieldGeometry,
-  type FieldLayer,
   type FieldRenderer,
   type GlyphAtlas,
   type WarpField,
 } from './renderer'
 import { FIELD, FOG, MONO_FAMILY, MONO_STACK, RAMPS, type FieldSettings } from './settings'
-import { buildAllowMask, buildClearMask, CLEAR_SELECTOR } from './textClearing'
-import { trailWarp } from './trailWarp'
+import { buildClearMask, CLEAR_SELECTOR } from './textClearing'
 
 /** Pointer-downs inside elements marked `data-fog-ignore` (e.g. the tweak panel) don't splash. */
 const IGNORE_SELECTOR = '[data-fog-ignore]'
@@ -98,17 +96,6 @@ function sampleNodes(
  * a Canvas 2D renderer draws the same field with the glyphs picked on the CPU and held in
  * place. The engine owns its DOM listeners and animation loop; call `destroy()` to release them.
  */
-export interface FieldEngineOptions {
-  /** `trail` draws only the cursor trail, on a transparent canvas laid over other art. */
-  layer?: FieldLayer
-  /** The elements the trail steps back from (default: those marked data-fog-clear). */
-  clearSelector?: string
-  /** Publish the wind's warp in trailWarp, so other art can slide its own glyphs with it. */
-  shareWarp?: boolean
-  /** When set, the trail runs only over these elements (and still steps back from the copy). */
-  onlyOver?: string
-}
-
 export class AsciiFieldEngine {
   private readonly renderer: FieldRenderer
   /** Off-screen canvases for measuring the mono face and drawing the glyph atlas. */
@@ -121,13 +108,6 @@ export class AsciiFieldEngine {
 
   private settings: FieldSettings
   private reduceMotion: boolean
-  private readonly layer: FieldLayer
-  /** The elements the trail steps back from. */
-  private readonly clearSelector: string
-  /** Publish the warp in trailWarp, for other art to slide its glyphs by. */
-  private readonly shareWarp: boolean
-  /** The elements the trail is kept to, or null to run everywhere. */
-  private readonly onlyOver: string | null
 
   // Grid.
   private geometry: FieldGeometry | null = null
@@ -180,13 +160,9 @@ export class AsciiFieldEngine {
   private resizeTimer = 0
   private clearFrame = 0
 
-  constructor(canvas: HTMLCanvasElement, settings: FieldSettings, options: FieldEngineOptions = {}) {
+  constructor(canvas: HTMLCanvasElement, settings: FieldSettings) {
     this.settings = settings
-    this.layer = options.layer ?? 'field'
-    this.clearSelector = options.clearSelector ?? CLEAR_SELECTOR
-    this.shareWarp = options.shareWarp ?? false
-    this.onlyOver = options.onlyOver ?? null
-    this.renderer = createFieldRenderer(canvas, this.onRendererRestored, this.layer)
+    this.renderer = createFieldRenderer(canvas, this.onRendererRestored)
     const measureCtx = document.createElement('canvas').getContext('2d')
     if (!measureCtx) throw new Error('Canvas 2D is not supported in this browser')
     this.measureCtx = measureCtx
@@ -238,7 +214,7 @@ export class AsciiFieldEngine {
   /** Re-measure the elements marked `data-fog-clear` (call after showing or hiding them). */
   refreshClearMask(): void {
     if (!this.booted || this.destroyed) return
-    const elements = document.querySelectorAll(this.clearSelector)
+    const elements = document.querySelectorAll(CLEAR_SELECTOR)
     if (this.clearObserver) {
       this.clearObserver.disconnect()
       for (const element of elements) this.clearObserver.observe(element)
@@ -250,10 +226,6 @@ export class AsciiFieldEngine {
     if (this.destroyed) return
     this.destroyed = true
     this.stop()
-    if (this.shareWarp && trailWarp.current) {
-      trailWarp.current = null
-      trailWarp.version++
-    }
     cancelAnimationFrame(this.clearFrame)
     window.clearTimeout(this.resizeTimer)
     this.clearObserver?.disconnect()
@@ -389,12 +361,6 @@ export class AsciiFieldEngine {
     this.raf = requestAnimationFrame(this.frame)
   }
 
-  /** Whether an opaque `data-field-cover` element fills the screen, so nothing here can be seen. */
-  private covered(): boolean {
-    const box = document.querySelector('[data-field-cover]')?.getBoundingClientRect()
-    return Boolean(box && box.top <= 0 && box.bottom >= window.innerHeight)
-  }
-
   private stop(): void {
     this.running = false
     cancelAnimationFrame(this.raf)
@@ -409,10 +375,6 @@ export class AsciiFieldEngine {
     this.lastFrame = now
     if (dt > 0.05) dt = 0.05
     else if (dt <= 0) dt = 0.016
-    if (this.covered()) {
-      this.raf = requestAnimationFrame(this.frame)
-      return
-    }
     const time = now / 1000
     fluid.step(dt, this.settings.trailLength, this.renderer.canWarp ? this.settings.push : 0)
     this.texTime += dt
@@ -425,17 +387,9 @@ export class AsciiFieldEngine {
   private render(time: number): void {
     if (!this.geometry) return
     const warping = this.renderer.canWarp && this.updateWarp()
-    if (this.shareWarp && (warping || trailWarp.current)) {
-      trailWarp.current = warping ? this.warp : null
-      trailWarp.version++
-    }
     let cellsChanged = this.paintFog(warping) || this.calmChanged
     this.calmChanged = false
-    if (this.layer === 'trail') {
-      // Only the trail is drawn here: with no fog on screen and none just gone, the last frame
-      // (cleared) still stands, so skip the draw.
-      if (!cellsChanged && !this.fogRect) return
-    } else if (!this.renderer.picksGlyphs) {
+    if (!this.renderer.picksGlyphs) {
       this.pickGlyphs(time)
       cellsChanged = true
     }
@@ -651,11 +605,6 @@ export class AsciiFieldEngine {
     const { geometry } = this
     if (!geometry) return
     const mask = buildClearMask(elements, geometry.cols, geometry.rows, geometry.cellW, geometry.cellH)
-    if (this.onlyOver) {
-      // Outside the allowed elements the trail is cleared as if by copy.
-      const allow = buildAllowMask(document.querySelectorAll(this.onlyOver), geometry.cols, geometry.rows, geometry.cellW, geometry.cellH)
-      for (let k = 0; k < mask.length; k++) mask[k] = Math.max(mask[k], 1 - allow[k])
-    }
     this.clearMask = mask
     if (this.renderer.picksGlyphs) {
       // Hand the shader its share of the drift through the unused glyph byte.
@@ -738,8 +687,8 @@ export class AsciiFieldEngine {
     if (this.clearFrame || this.destroyed) return
     this.clearFrame = requestAnimationFrame(() => {
       this.clearFrame = 0
-      if (!this.booted || this.destroyed || this.covered()) return
-      this.measureClearMask(document.querySelectorAll(this.clearSelector))
+      if (!this.booted || this.destroyed) return
+      this.measureClearMask(document.querySelectorAll(CLEAR_SELECTOR))
     })
   }
 }

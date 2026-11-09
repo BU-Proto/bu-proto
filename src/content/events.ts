@@ -29,7 +29,7 @@ export const EVENTS_LATER = 'Also coming up'
 /** The landing's events section: the giant words behind it, and its heading. */
 export const EVENT_LEDGER = {
   title: 'Events',
-  words: ['HACK', 'BUILD', 'SHIP', 'DEMO', 'REPEAT'],
+  words: ['Hack', 'Build', 'Ship', 'Demo', 'Repeat'],
   empty: 'This semester’s nights are being planned now.',
 } as const
 
