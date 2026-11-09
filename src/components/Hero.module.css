@@ -6,18 +6,24 @@
   min-height: 100vh;
   min-height: 100svh;
   padding: 0 var(--gutter) clamp(56px, 12vh, 120px);
-  overflow: hidden;
+  /* Clipped at the sides only: the rings run on below the hero's foot (see .rings). */
+  overflow-x: clip;
   background: var(--c-paper);
   cursor: default;
 }
 
-/* The rings (HeroRings). They come up as soon as their first frame is drawn, already half-written. */
+/*
+ * The rings (HeroRings). They come up as soon as their first frame is drawn, already half-written, and
+ * run on past the hero's foot into the gap the page leaves under it (Home's .afterHero, 37vh), where
+ * the seam gives them way to the page.
+ */
 .rings {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   display: block;
   width: 100%;
-  height: 100%;
+  height: calc(100% + 37vh);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
@@ -25,6 +31,33 @@
 
 .rings[data-ready] {
   opacity: 1;
+}
+
+/* The seam (HeroSeam): a band over the hero's foot and the gap below it, ending where the rings do.
+   As tall as contentarchitecture.dev's, a little shorter on narrow screens. */
+.seam {
+  --seam: 360px;
+  position: absolute;
+  z-index: 0;
+  top: calc(100% + 37vh - var(--seam));
+  left: 0;
+  width: 100%;
+  height: var(--seam);
+  overflow: clip;
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .seam {
+    --seam: 520px;
+  }
+}
+
+.seam canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
 }
 
 /* Follows the pointer over the rings: a small white chip in the site's own face. */

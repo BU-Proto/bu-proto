@@ -49,7 +49,9 @@ export function HeroRings({ hero }: { hero: RefObject<HTMLElement | null> }) {
     }
 
     const sizes = new ResizeObserver(() => {
-      field.resize(surface.clientWidth, surface.clientHeight)
+      // The seam's band (HeroSeam), for the light to gather above it.
+      const seam = box.querySelector<HTMLElement>('[data-seam]')
+      field.resize(surface.clientWidth, surface.clientHeight, box.clientHeight, seam?.clientHeight ?? 0)
       measure()
       paint()
       surface.dataset.ready = ''
@@ -59,7 +61,8 @@ export function HeroRings({ hero }: { hero: RefObject<HTMLElement | null> }) {
       state.onScreen = entry.isIntersecting
       sync()
     })
-    screen.observe(box)
+    // The canvas, not the hero: it runs on below the hero's foot.
+    screen.observe(surface)
     const onVisibility = () => {
       state.visible = !document.hidden
       sync()

@@ -51,7 +51,7 @@ const TYPE = `#version 300 es
 precision highp float;
 out vec4 o;
 uniform vec2 uCentre;
-uniform float uCell, uSpin, uDive, uIntro, uT, uDpr, uWords, uRows;
+uniform float uCell, uSpin, uDive, uIntro, uT, uDpr, uWords, uRows, uSeam;
 /* Each letter's shade, the words run together, 0 for a space; and where each word starts and its length. */
 uniform float uTone[64];
 uniform float uWordAt[8];
@@ -226,6 +226,10 @@ void main() {
      folding slowly like light through water, and darker along the lanes between rings. */
   float folds = vn(p / 160. + vec2(uT * .03, -uT * .02)) * .6 + vn(p / 70. - vec2(uT * .02, 0.)) * .4;
   float glow = (.1 + .3 * exp(-max(at, 0.) / 7.)) * (.7 + .6 * folds) * mix(.5, 1., smoothstep(0., .3, lane));
+  /* The light gathers over the seam's band at the canvas's foot into a near-solid wash of tiles, so the
+     seam (see glyphSeam) breaks it off along a clear skyline, the way its cream breaks against dark. */
+  float pool = smoothstep(uSeam * .95, uSeam * .42, centre.y) * step(.5, uSeam);
+  glow = max(glow, pool * (.34 + .16 * folds));
   glow *= open * mix(.55, 1., uIntro);
 
   /* The dotted circle between rings: a brighter tile every so often along each ring's edge. */
@@ -236,8 +240,9 @@ void main() {
   /* The words burn brightest, the outer rings coming forward and the core far off. */
   float words = typed.x * mix(.62, 1.05, smoothstep(0., 12., typed.y));
   float light = max(max(glow, words), bead * .28);
-  /* Toward the hero's foot the tiles don't dim, they thin out, dropping away one by one. */
-  light *= step(hash(id + .37), smoothstep(0., .24, id.y / uRows));
+  /* At the very foot of the canvas the tiles thin out, dropping away one by one, under the seam's black
+     (see glyphSeam) or, without it, into the page. */
+  light *= step(hash(id + .37), smoothstep(0., .08, id.y / uRows));
   o = vec4(bloom(at, theta), clamp(light, 0., 1.));
 }`
 
@@ -326,7 +331,11 @@ void main() {
 }`
 
 export interface RingField {
-  resize(width: number, height: number): void
+  /**
+   * The canvas's size in CSS px, the hero's height inside it (the canvas runs on below the hero), and
+   * the height of the seam's band at the canvas's foot (0 for none).
+   */
+  resize(width: number, height: number, heroHeight: number, seamHeight: number): void
   /** The hero's words, as CSS px boxes from the canvas's top left, for the type to step out of. */
   clear(boxes: readonly DOMRect[]): void
   hold(down: boolean): void
@@ -350,7 +359,7 @@ export function createRingField(canvas: HTMLCanvasElement, onLost: () => void): 
   } catch {
     return null
   }
-  const T = locate(gl, type, ['uCentre', 'uCell', 'uSpin', 'uDive', 'uIntro', 'uT', 'uDpr', 'uWords', 'uRows', 'uTone', 'uWordAt', 'uWordLen', 'uClear'])
+  const T = locate(gl, type, ['uCentre', 'uCell', 'uSpin', 'uDive', 'uIntro', 'uT', 'uDpr', 'uWords', 'uRows', 'uSeam', 'uTone', 'uWordAt', 'uWordLen', 'uClear'])
   const B = locate(gl, blocks, ['uTiles', 'uRes', 'uCell', 'uT'])
   gl.bindVertexArray(gl.createVertexArray())
 
@@ -369,7 +378,7 @@ export function createRingField(canvas: HTMLCanvasElement, onLost: () => void): 
   const target = gl.createFramebuffer()
 
   const state = {
-    dpr: 1, width: 1, height: 1, cell: CELL_CSS, cols: 1, rows: 1,
+    dpr: 1, width: 1, height: 1, hero: 1, seam: 0, cell: CELL_CSS, cols: 1, rows: 1,
     startedAt: 0, lastAt: 0,
     spin: 0, spinSpeed: 1, dive: 0, diveSpeed: 0, held: false,
     /** The whole ring a dive that's been let go is gliding on to, if one is. */
@@ -384,10 +393,12 @@ export function createRingField(canvas: HTMLCanvasElement, onLost: () => void): 
   canvas.addEventListener('webglcontextlost', onContextLost)
 
   return {
-    resize(width, height) {
+    resize(width, height, heroHeight, seamHeight) {
       state.dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
       state.width = width
       state.height = height
+      state.hero = heroHeight
+      state.seam = seamHeight
       canvas.width = Math.round(width * state.dpr)
       canvas.height = Math.round(height * state.dpr)
       state.cell = Math.max(1, Math.round((width < PHONE_WIDTH ? CELL_CSS_PHONE : CELL_CSS) * state.dpr))
@@ -448,8 +459,8 @@ export function createRingField(canvas: HTMLCanvasElement, onLost: () => void): 
       gl.bindFramebuffer(gl.FRAMEBUFFER, target)
       gl.viewport(0, 0, state.cols, state.rows)
       gl.useProgram(type)
-      // A touch above the middle, so the hero's words sit out on the wide rings.
-      gl.uniform2f(T.uCentre, canvas.width * 0.5, canvas.height * 0.56)
+      // A touch above the hero's middle, so its words sit out on the wide rings. In device px, y up.
+      gl.uniform2f(T.uCentre, canvas.width * 0.5, canvas.height - state.hero * state.dpr * 0.44)
       gl.uniform1f(T.uCell, state.cell)
       gl.uniform1f(T.uSpin, state.spin)
       gl.uniform1f(T.uDive, state.dive)
@@ -457,6 +468,7 @@ export function createRingField(canvas: HTMLCanvasElement, onLost: () => void): 
       gl.uniform1f(T.uT, time)
       gl.uniform1f(T.uDpr, state.dpr)
       gl.uniform1f(T.uRows, state.rows)
+      gl.uniform1f(T.uSeam, state.seam * state.dpr)
       gl.uniform4fv(T.uClear, state.clear)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
 
