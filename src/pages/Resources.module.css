@@ -3,9 +3,10 @@
 
 .sheet {
   padding: clamp(20px, 3vw, 36px);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--slab-edge);
   border-radius: 22px;
   background: var(--navy);
+  box-shadow: var(--slab-shadow);
 }
 
 .cards {

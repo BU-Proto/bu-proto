@@ -52,9 +52,10 @@
 
 .sheet {
   padding: clamp(20px, 2.6vw, 30px);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--slab-edge);
   border-radius: 20px;
   background: var(--navy);
+  box-shadow: var(--slab-shadow);
 }
 
 /* ---- The photo beside what it is ---- */
@@ -204,9 +205,10 @@ a.need:hover .go {
   align-content: start;
   gap: 8px;
   padding: 20px 22px 22px;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--slab-edge);
   border-radius: 18px;
   background: var(--navy);
+  box-shadow: var(--slab-shadow);
 }
 
 .program > a {
@@ -262,9 +264,10 @@ a.need:hover .go {
   gap: 6px;
   height: 100%;
   padding: 18px 22px;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--slab-edge);
   border-radius: 18px;
   background: var(--navy);
+  box-shadow: var(--slab-shadow);
 }
 
 .otherTitle {

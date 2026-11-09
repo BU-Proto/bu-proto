@@ -35,7 +35,7 @@ export function About() {
     <div className={`${ui.page} ${styles.page}`}>
       <title>{`${ABOUT_INTRO.tab} · ${BRAND.full}`}</title>
 
-      <header className={styles.intro}>
+      <header className={styles.intro} data-ground-after="">
         <h1 className={styles.title} data-fog-clear>
           {ABOUT_INTRO.title}
         </h1>

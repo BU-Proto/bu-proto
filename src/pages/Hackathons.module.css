@@ -33,10 +33,10 @@
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--slab-edge);
   border-radius: 18px;
   background: var(--navy);
-  box-shadow: 0 24px 60px -34px rgb(var(--harbor-rgb) / 0.8);
+  box-shadow: var(--slab-shadow);
 }
 
 .card[data-linked='true']:hover {
@@ -51,7 +51,8 @@
   place-items: center;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: var(--harbor);
+  /* A step up from navy, so the card's top half doesn't sink into the harbor around it. */
+  background: color-mix(in srgb, var(--navy), var(--frost) 2%);
 }
 
 /* No photo: harbor with a stretch of the frozen field, lit toward the middle in the trips' iris

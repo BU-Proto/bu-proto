@@ -33,8 +33,9 @@ export function Events() {
 
   return (
     <div className={`${ui.page} ${styles.page}`}>
-      <div className={styles.head}>
-        <PageIntro intro={EVENTS_INTRO} />
+      {/* The intro and hack night's note side by side: the ground drains in under both. */}
+      <div className={styles.head} data-ground-after="">
+        <PageIntro intro={EVENTS_INTRO} groundAfter={false} />
         <HackNight next={nextHackNight} />
       </div>
 

@@ -54,14 +54,14 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   min-height: clamp(440px, 56vh, 560px);
   overflow: hidden;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--slab-edge);
   border-radius: 26px;
   /* The sheet lit from its far corner in the night's colour, the light the photo fades into. */
   background:
     radial-gradient(70% 80% at 100% 0%, rgb(var(--hue-deep-rgb) / 0.26), transparent 70%),
     radial-gradient(60% 70% at 70% 100%, rgb(var(--rose-deep-rgb) / 0.12), transparent 70%),
     var(--navy);
-  box-shadow: 0 40px 90px -50px rgb(var(--harbor-rgb) / 0.9);
+  box-shadow: var(--slab-shadow);
 }
 
 .cover {

@@ -19,7 +19,7 @@
 .panel {
   position: relative;
   padding: clamp(18px, 2.6vw, 28px);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--slab-edge);
   border-radius: 22px;
   /* The field's light reaching the sheet's top edge: cerulean in one corner, the core's raspberry
      in the other, both gone well before the text. Every sheet has the same light. */
@@ -29,9 +29,7 @@
     rgb(var(--navy-rgb) / 0.9);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  box-shadow:
-    0 24px 60px -34px rgb(var(--harbor-rgb) / 0.8),
-    inset 0 1px 0 rgb(var(--frost-rgb) / 0.1);
+  box-shadow: var(--slab-shadow);
 }
 
 /* The same sheet, fully opaque, for dense text and tables. */
@@ -179,6 +177,7 @@
   gap: 16px;
   max-width: 820px;
 }
+
 
 .introTitle {
   margin: 0;

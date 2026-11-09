@@ -15,6 +15,12 @@ const CONTROLS = 'a, button, input, select, textarea, label, summary, [role="but
 /** How long the field dims before it takes the next page's settings (see the CSS for the rise). */
 const DIM_MS = 200
 
+/** The drain from the field into harbor: its glyph rows and cell size, and the air between the
+    page's intro and where it begins. */
+const DRAIN_ROWS = 12
+const DRAIN_CELL = 10
+const DRAIN_GAP = 12
+
 /**
  * Every page: the ASCII field mounted once behind everything, tuned to the page's ground, then the
  * top bar, the page and the footer.
@@ -75,6 +81,44 @@ export function Layout() {
     }
   }, [])
 
+  // The harbor starts under the page's intro, so the drain into it never runs over the title or
+  // lede. Measured, not a fixed height: intros wrap to different lengths on every page and width.
+  const groundRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const shell = shellRef.current
+    const groundEl = groundRef.current
+    if (!shell || !groundEl) return
+    const watch: { intro: Element | null; frame: number } = { intro: null, frame: 0 }
+    const place = () => {
+      watch.frame = 0
+      const found = shell.querySelector('[data-ground-after]')
+      if (found !== watch.intro) {
+        if (watch.intro) sizes.unobserve(watch.intro)
+        if (found) sizes.observe(found)
+        watch.intro = found
+      }
+      if (!found) {
+        groundEl.style.removeProperty('--ground-top')
+        return
+      }
+      const end = found.getBoundingClientRect().bottom - shell.getBoundingClientRect().top
+      groundEl.style.setProperty('--ground-top', `${Math.round(end + DRAIN_GAP + DRAIN_ROWS * DRAIN_CELL)}px`)
+    }
+    const schedule = () => {
+      if (!watch.frame) watch.frame = requestAnimationFrame(place)
+    }
+    const sizes = new ResizeObserver(schedule)
+    const mounts = new MutationObserver(schedule)
+    mounts.observe(shell, { childList: true, subtree: true })
+    sizes.observe(shell)
+    place()
+    return () => {
+      cancelAnimationFrame(watch.frame)
+      sizes.disconnect()
+      mounts.disconnect()
+    }
+  }, [])
+
   // The field re-measures marked text on scroll and resize, but not when a new page or a
   // form's thank-you state mounts new text. Tell it whenever the content changes.
   useEffect(() => {
@@ -104,9 +148,15 @@ export function Layout() {
       >
         <AsciiField ref={fieldRef} settings={field} className={styles.field} />
       </div>
-      <div ref={shellRef} className={styles.shell} data-ground={shown}>
-        {/* Below the header the field drains into harbor, solid or veiled (see pageGround). */}
+      <div
+        ref={shellRef}
+        className={styles.shell}
+        data-ground={shown}
+        style={{ '--drain-h': `${DRAIN_GAP + DRAIN_ROWS * DRAIN_CELL}px` } as CSSProperties}
+      >
+        {/* Below the intro the field drains into solid harbor (see pageGround). */}
         <div
+          ref={groundRef}
           className={styles.ground}
           data-reach={GROUNDS[target].reach}
           style={
@@ -117,7 +167,7 @@ export function Layout() {
           }
           aria-hidden="true"
         >
-          <GlyphEdge color={GROUND.harbor} mode="drain" rows={28} cell={10} />
+          <GlyphEdge color={GROUND.harbor} mode="drain" rows={DRAIN_ROWS} cell={DRAIN_CELL} />
           <span className={styles.groundTexture} />
         </div>
         <span className={styles.progress} data-active={navigating || undefined} aria-hidden="true" />

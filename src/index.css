@@ -72,6 +72,12 @@
   --glass-strong: rgb(var(--frost-rgb) / 0.23);
   --glass-edge: rgb(var(--frost-rgb) / 0.36);
   --pill: rgb(var(--navy-rgb) / 0.62);
+  /* A slab: how a navy card or sheet sits on the harbor. Pages stand on solid harbor below the
+     header, so navy against it is a small step; a lit hairline, a bright top edge and a shadow
+     under it make the step read as something solid rather than one blue. */
+  --slab-edge: rgb(var(--frost-rgb) / 0.13);
+  --slab-shadow:
+    inset 0 1px 0 rgb(var(--frost-rgb) / 0.08), 0 1px 0 rgb(0 0 0 / 0.25), 0 30px 60px -30px rgb(0 0 0 / 0.7);
   --accent: var(--mint);
   --on-light: var(--navy);
   --ground-ink: var(--harbor);
@@ -82,8 +88,29 @@
   --on-field-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.6), 0 0 18px rgb(var(--harbor-rgb) / 0.5);
   --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  /* ASCII art and glyph pictures, which need every character the same width to line up. */
+  --font-art: var(--font-mono);
+
+  /*
+   * The landing's grid, taken from main's layout: a 14px cell, a gutter either side and one
+   * column width. Its colours and type stay this site's own (see landing.module.css).
+   */
+  --cell: 14px;
+  --gutter: 56px;
+  --maxw: 1176px;
+  --radius: 22px;
+  --radius-media: 16px;
+  --radius-sm: 8px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-lusion: cubic-bezier(0.35, 0, 0, 1);
 
   color-scheme: dark;
+}
+
+@media (max-width: 680px) {
+  :root {
+    --gutter: 16px;
+  }
 }
 
 /* Something with a size in the palette's sense carries data-hue; its styles read --hue (text),
@@ -110,6 +137,14 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* The top of an inner page: the field drains into harbor just under it (Layout measures it and
+   sets --drain-h), and the page's content starts once that's done, so the first cards never sit
+   half in the fade. Less the page's own row gap, and a little less again so they start as the
+   last glyphs go. */
+[data-ground-after] {
+  margin-bottom: max(0px, calc(var(--drain-h, 0px) - 28px - 16px));
 }
 
 /* In-page links glide to their target. Only while one was just clicked (lib/smoothScroll sets the

@@ -87,13 +87,14 @@
 
 /*
  * The page's own ground, scrolling with it. On the landing it's off (the landing draws its own).
- * Elsewhere the field shows behind the header, then drains into harbor through the field's own
- * characters (GlyphEdge's drain strip hangs off this layer's top edge): solid harbor for pages
- * people read or fill in, harbor with the field faintly under it for lists.
+ * Elsewhere the field shows behind the header, then drains into solid harbor through the field's
+ * own characters (GlyphEdge's drain strip hangs off this layer's top edge), starting under the
+ * page's intro.
  */
 .ground {
   position: absolute;
-  top: clamp(360px, 54vh, 560px);
+  /* Just under the page's intro, measured (see Layout); a fixed depth for pages without one. */
+  top: var(--ground-top, clamp(360px, 54vh, 560px));
   right: 0;
   bottom: 0;
   left: 0;
@@ -107,8 +108,10 @@
   opacity: 1;
 }
 
-.ground[data-reach='veil'] {
-  opacity: 0.84;
+/* Under the seam the field's light stays faint, so the cards and sheets on the harbor are what's
+   lit, not the ground between them. */
+.ground::before {
+  opacity: 0.35;
 }
 
 /* The field's light caught in the harbor just under the drain, as on the landing: its colours
@@ -133,7 +136,7 @@
   position: absolute;
   inset: 0;
   background: var(--field-sweep);
-  opacity: 0.3;
+  opacity: 0.1;
   -webkit-mask-image: var(--texture-mask), linear-gradient(to bottom, transparent 0, #000 40vh);
   mask-image: var(--texture-mask), linear-gradient(to bottom, transparent 0, #000 40vh);
   -webkit-mask-size: 595px 400px, 100% 100%;

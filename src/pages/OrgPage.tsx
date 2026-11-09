@@ -49,7 +49,7 @@ export function OrgPage() {
     <div className={`${ui.page} ${styles.page}`}>
       <title>{`${org.name} · ${BRAND.full}`}</title>
 
-      <header className={styles.head}>
+      <header className={styles.head} data-ground-after="">
         <p className={styles.crumbs} data-fog-clear>
           <Link to={HUB_PATH}>{ORG_PAGE.back}</Link>
           <span aria-hidden="true">/</span>

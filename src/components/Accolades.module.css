@@ -167,12 +167,10 @@
   grid-row: span 4;
   row-gap: 0;
   overflow: hidden;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--slab-edge);
   border-radius: 16px;
   background: var(--navy);
-  box-shadow:
-    0 24px 60px -34px rgb(0 0 0 / 0.8),
-    inset 0 1px 0 rgb(var(--frost-rgb) / 0.08);
+  box-shadow: var(--slab-shadow);
   transition: border-color 0.2s ease;
 }
 
