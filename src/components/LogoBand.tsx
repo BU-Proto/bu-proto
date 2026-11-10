@@ -7,9 +7,22 @@ import styles from './LogoBand.module.css'
 /** Copies per half of the loop, so a band of two or three names still runs edge to edge. */
 const MIN_ITEMS = 8
 
-function Mark({ logo }: { logo: Logo }) {
+/**
+ * One name in a band: its logo when there's a file for it, its name as a wordmark until then.
+ * `eager` loads the file with the page instead of when it nears the screen. A band whose logos
+ * arrive one by one changes width as it runs, and its two looping copies drift out of step.
+ */
+export function Mark({ logo, eager = false }: { logo: Logo; eager?: boolean }) {
   const mark = logo.src ? (
-    <img className={styles.logo} src={logo.src} alt={logo.name} loading="lazy" />
+    <img
+      className={styles.logo}
+      src={logo.src}
+      alt={logo.name}
+      width={logo.size?.[0]}
+      height={logo.size?.[1]}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+    />
   ) : (
     <span className={styles.wordmark} data-fog-clear>
       {logo.name}
