@@ -67,9 +67,11 @@
   text-underline-offset: 3px;
 }
 
-/* ---- Contents on the field, the article on glass ---- */
+/* ---- Contents beside the article, both straight on the ground ---- */
 
 .layout {
+  /* The article's one width, which the next guide's card under it keeps too. */
+  --article: 760px;
   display: grid;
   grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
   gap: 32px clamp(24px, 3.4vw, 48px);
@@ -122,14 +124,13 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.28);
 }
 
+/* Set apart by space alone: the article beside it already has the page's rules. */
 .contentsList a {
   position: relative;
   display: block;
-  padding: 7px 0 7px 16px;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
+  padding: 6px 0 6px 16px;
   color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.4;
@@ -140,7 +141,7 @@
 .contentsList a::before {
   content: '';
   position: absolute;
-  top: calc(7px + 0.7em - 3px);
+  top: calc(6px + 0.7em - 3px);
   left: 2px;
   width: 6px;
   height: 6px;
@@ -172,22 +173,26 @@
   outline-offset: 2px;
 }
 
+/* The article is not in a panel: its text stands on the harbor, on the column's own left edge.
+   One width for everything in it (text, rules, pictures, examples, graphics, the authors), so the
+   whole article keeps a single right-hand edge down the page. */
 .doc {
-  /* The text's side margin, and the measure it keeps inside them. */
-  --pad: clamp(20px, 4.6vw, 60px);
-  --measure: 64ch;
+  /* No side margin of its own; every block runs the article's full width. */
+  --pad: 0px;
+  --measure: 100%;
 
   display: grid;
   gap: 0;
-  padding: clamp(28px, 4vw, 56px) 0 0;
-  overflow: hidden;
+  width: 100%;
+  max-width: var(--article);
+  min-width: 0;
+  padding: clamp(28px, 4vw, 52px) 0 0;
   font-size: 17px;
   line-height: 1.7;
 }
 
 /* The opening paragraph, a size up from the body, like a magazine's stand-first. */
 .standfirst {
-  max-width: 34em;
   margin: 0 var(--pad) clamp(36px, 5vw, 56px);
   color: var(--ink);
   font-size: clamp(20px, 2vw, 25px);
@@ -251,14 +256,13 @@
   padding: 0;
   list-style: none;
   counter-reset: step;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
+/* No rules between them: the big numbers down the left already mark each one off. */
 .steps li {
   position: relative;
-  min-height: 64px;
-  padding: 16px 0 16px 72px;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
+  min-height: 58px;
+  padding: 13px 0 13px 72px;
   counter-increment: step;
   text-wrap: pretty;
 }
@@ -266,7 +270,7 @@
 .steps li::before {
   content: counter(step);
   position: absolute;
-  top: 10px;
+  top: 7px;
   left: 0;
   width: 52px;
   color: var(--accent);
@@ -316,14 +320,29 @@
   text-wrap: balance;
 }
 
+/* The line stands between its two marks: one opening it above its first word, its match closing
+   it straight after its last, so the pair reads as one quotation whatever the line's length. */
+.pull::before,
+.pull::after {
+  color: var(--accent);
+  font-size: 2.2em;
+  font-weight: 500;
+}
+
 .pull::before {
   content: '“';
   display: block;
   height: 0.5em;
-  color: var(--accent);
-  font-size: 2.2em;
-  font-weight: 500;
   line-height: 0.9;
+}
+
+/* No line height of its own, so it hangs off the last line without pushing the lines apart. */
+.pull::after {
+  content: '”';
+  display: inline-block;
+  margin-left: 0.06em;
+  line-height: 0;
+  vertical-align: -0.46em;
 }
 
 .checklist {
@@ -353,21 +372,20 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
-/* An empty box to tick, drawn so it lines up with the first line of text. */
+/* An empty box to tick, drawn so it lines up with the first line of text. The boxes mark the
+   items off, so nothing is ruled between them. */
 .checks li {
   position: relative;
-  padding: 11px 0 11px 34px;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
+  padding: 8px 0 8px 34px;
   text-wrap: pretty;
 }
 
 .checks li::before {
   content: '';
   position: absolute;
-  top: calc(11px + 0.38em);
+  top: calc(8px + 0.38em);
   left: 3px;
   width: 15px;
   height: 15px;
@@ -375,21 +393,12 @@
   border-radius: 4px;
 }
 
-/* From our wins: the project's cover beside the point it makes, ruled above and below. */
+/* From our wins: the project's cover beside the point it makes, set off by space. */
 .section > .example {
   display: grid;
   grid-template-columns: 148px minmax(0, 1fr);
   gap: 20px;
-  max-width: calc(var(--measure) + 40px);
-  padding: 18px 0;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.2);
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.2);
-}
-
-/* Examples in a run share their rules. */
-.section > .example + .example {
-  margin-top: -19px;
-  border-top: 0;
+  padding: 10px 0;
 }
 
 .exampleThumb img {
@@ -477,8 +486,7 @@
   gap: 20px clamp(20px, 3vw, 32px);
   max-width: none;
   margin-block: 10px;
-  padding-top: 20px;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.2);
+  padding-top: 8px;
 }
 
 .exampleCard {
@@ -541,7 +549,7 @@
   color: var(--ink);
 }
 
-/* Wide: out of the column to the glass's edges, the caption back on the column. */
+/* Wide: out of the text's measure to the column's full width. */
 .section > .wide {
   display: grid;
   gap: 12px;
@@ -554,9 +562,10 @@
   width: 100%;
   height: auto;
   max-height: min(560px, 70vh);
+  border-radius: var(--radius-media);
   object-fit: cover;
   object-position: top;
-  background: rgb(var(--harbor-rgb) / 0.25);
+  background: var(--navy);
 }
 
 .wide .figcaption {
@@ -595,15 +604,13 @@
 
 .facts {
   display: grid;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
 .fact {
   display: grid;
   grid-template-columns: minmax(110px, 150px) minmax(0, 1fr);
   gap: 4px 20px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
+  padding: 7px 0;
 }
 
 .fact dt {
@@ -696,6 +703,8 @@
   display: grid;
   gap: 18px;
   grid-column: 2;
+  width: 100%;
+  max-width: var(--article);
 }
 
 .nextCard {
@@ -919,8 +928,7 @@
     grid-template-columns: 88px minmax(0, 1fr);
     grid-template-rows: none;
     gap: 14px;
-    padding: 18px 0;
-    border-bottom: 1px solid rgb(var(--frost-rgb) / 0.2);
+    padding: 12px 0;
   }
 
   .exampleCard .exampleThumb img {

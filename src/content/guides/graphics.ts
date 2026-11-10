@@ -41,7 +41,7 @@ export const WEEKEND = {
     { label: 'Skeleton', from: 2, to: 9, note: 'Something ugly running end to end, and deployed.' },
     { label: 'The hard part', from: 9, to: 24, note: 'The demo path works by halfway. Then make the hard part real.' },
     { label: 'Polish', from: 24, to: 31, note: 'Polish the demo path and fix what’s broken. No new features.' },
-    { label: 'Practise', from: 31, to: 36, note: 'The backup video, the write-up, the demo out loud until it’s boring.' },
+    { label: 'Practice', from: 31, to: 36, note: 'The backup video, the write-up, the demo out loud until it’s boring.' },
     { label: 'Judging', from: 36, to: 38, note: 'Show it.' },
   ] satisfies Span[],
   /** `row` staggers the labels so neighbours don't collide. */
@@ -134,7 +134,7 @@ export const ROLES = {
   title: 'Who does what, and when',
   caption:
     'The jobs change through the weekend. By the last column, everyone is working on the same three minutes.',
-  phases: ['Plan', 'Skeleton', 'The hard part', 'Polish', 'Practise'],
+  phases: ['Plan', 'Skeleton', 'The hard part', 'Polish', 'Practice'],
   rows: [
     { role: 'Front end', cells: ['Sketch the demo screens', 'Screens on example data', 'Screens on real data', 'Loading and empty states', 'Drives the laptop'] },
     { role: 'Back end and data', cells: ['Agree the data shapes', 'One endpoint, deployed', 'Real data, seeded', 'Fix what breaks', 'Keeps the deploy frozen'] },

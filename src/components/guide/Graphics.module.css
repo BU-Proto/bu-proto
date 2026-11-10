@@ -1,12 +1,11 @@
-/* The guides' diagrams. They sit on the guide's deep glass, so they draw with hairlines and the
-   mint accent rather than boxes of their own. */
+/* The guides' diagrams. They stand on the page's ground with the article's text, so they draw
+   with the mint accent and space rather than boxes or runs of rules. */
 
 .graphic {
   display: grid;
   gap: 18px;
   margin: 0;
-  padding-top: 18px;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.22);
+  padding-top: 6px;
 }
 
 .title {
@@ -90,12 +89,10 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
 .phases > li {
-  padding: 12px 0;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
+  padding: 10px 0;
 }
 
 .phaseText {
@@ -280,7 +277,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
 }
 
 .legend > li {
@@ -288,8 +284,7 @@
   grid-template-columns: 26px 92px minmax(0, 1fr);
   gap: 4px 12px;
   align-items: baseline;
-  padding: 10px 0;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
+  padding: 7px 0;
   font-size: 15px;
   line-height: 1.5;
 }

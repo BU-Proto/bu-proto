@@ -54,7 +54,7 @@ export function Playbook() {
 
       {FEATURED && <Featured guide={FEATURED} />}
 
-      <section className={`${ui.panelDeep} ${styles.book}`} aria-labelledby="contents">
+      <section className={styles.book} aria-labelledby="contents">
         {/* The list explains itself; the heading is for screen readers. */}
         <h2 id="contents" className={ui.srOnly}>
           {CONTENTS_LABEL}

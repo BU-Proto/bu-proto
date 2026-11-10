@@ -208,6 +208,39 @@ function BlockView({ block, authors }: { block: Block; authors: readonly Author[
 
 type Run = { block: Block } | { examples: WinExample[] }
 
+/**
+ * Fewer "From our wins": a guide tells each win once, and a section tells one at most. A picture
+ * of a win counts as telling it, so its example doesn't follow straight after its own cover. The
+ * guides' text keeps every example; this only decides which of them a page shows.
+ */
+function curate(sections: readonly GuideSection[]): GuideSection[] {
+  const covers = new Map<string, number>()
+  for (const section of sections) {
+    for (const block of section.body) {
+      if (!isParagraph(block) && 'example' in block) covers.set(block.example.win.cover, block.example.win.id)
+    }
+  }
+  const told = new Set<number>()
+  return sections.map((section) => {
+    let shown = false
+    const body = section.body.filter((block) => {
+      if (isParagraph(block)) return true
+      if ('figure' in block) {
+        const pictured = covers.get(block.figure.src)
+        if (pictured !== undefined) told.add(pictured)
+        return true
+      }
+      if (!('example' in block)) return true
+      const { id } = block.example.win
+      if (shown || told.has(id)) return false
+      shown = true
+      told.add(id)
+      return true
+    })
+    return { ...section, body }
+  })
+}
+
 /** Examples in a row are set side by side as one spread, so the same block never stacks on
  * itself; every other block stands alone. */
 function runs(body: readonly Block[]): Run[] {
@@ -501,11 +534,11 @@ export function Guide() {
           </details>
         </nav>
 
-        <article className={`${ui.panelDeep} ${styles.doc}`} aria-labelledby="guide-title">
+        <article className={styles.doc} aria-labelledby="guide-title">
           <p className={styles.standfirst} data-fog-clear>
             <RichText text={doc.standfirst} />
           </p>
-          {doc.sections.map((section) => (
+          {curate(doc.sections).map((section) => (
             <section key={section.id} id={section.id} className={styles.section} aria-labelledby={`${section.id}-title`}>
               <h2 id={`${section.id}-title`} className={styles.heading} data-fog-clear>
                 {section.title}
