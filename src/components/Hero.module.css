@@ -1,6 +1,6 @@
 /*
- * One screen tall under the top bar, all field. What Proto is and the way in sit in a centred
- * column low on the screen, where the light has thinned.
+ * One screen tall under the top bar, all field. What Proto is sits in a centred column low on
+ * the screen, where the light has thinned.
  */
 .hero {
   position: relative;
@@ -50,11 +50,6 @@
 }
 
 
-.primary {
-  margin-top: 8px;
-  padding: 13px 22px;
-  font-size: 15px;
-}
 
 @media (max-width: 640px) {
   .headline {

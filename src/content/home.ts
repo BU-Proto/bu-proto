@@ -5,8 +5,6 @@ import type { Hue, Link, TrackName } from './types'
 
 export const HERO_COPY = {
   headline: 'Proto is the home base for building things at BU',
-  primaryCta: { label: 'Join Proto', href: '/join' },
-  secondaryCta: { label: 'See hack nights', href: '/events' },
 } as const
 
 export type NoteIconName = 'grants' | 'handoff'
