@@ -147,7 +147,7 @@ export function asciiWord(word: string, cols = 156, rows = 61, aspect = 0.6): st
   canvas.width = cols
   canvas.height = rows
   const lines = wordLines(word)
-  const font = (size: number) => `600 ${size}px Inter, system-ui, sans-serif`
+  const font = (size: number) => `600 ${size}px 'Host Grotesk', system-ui, sans-serif`
   ctx.font = font(100)
   const widest = Math.max(...lines.map((line) => ctx.measureText(line).width), 1)
   // Canvas pixels are square and the cells aren't, so the letters are drawn squashed to come out true.
@@ -157,7 +157,7 @@ export function asciiWord(word: string, cols = 156, rows = 61, aspect = 0.6): st
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillStyle = '#fff'
-  // A stroke on top, since Inter's 600 goes thin once it's only a few cells wide.
+  // A stroke on top, since a 600 weight goes thin once it's only a few cells wide.
   ctx.strokeStyle = '#fff'
   ctx.lineWidth = size * 0.035
   lines.forEach((line, index) => {

@@ -108,19 +108,17 @@
   opacity: 1;
 }
 
-/* Proto's title, alone at the centre of the rings. */
+/* Proto's name, alone and large at the centre of the rings. */
 .headline {
   position: relative;
   z-index: 1;
-  max-width: 16ch;
   margin: 0;
   color: var(--c-ink);
-  font-size: clamp(40px, 6.4vw, 96px);
+  font-size: clamp(88px, 17vw, 240px);
   font-weight: 400;
-  letter-spacing: -0.035em;
-  line-height: 1.02;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
   text-align: center;
-  text-wrap: balance;
   text-shadow: 0 2px 30px rgb(0 0 0 / 0.5);
 }
 

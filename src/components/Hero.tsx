@@ -6,7 +6,7 @@ import styles from './Hero.module.css'
 
 /**
  * The home hero: rings of block-shade type in the bloom's colours filling the screen, turning round
- * Proto's title at its centre, where the rings make room for it. The way in is Join in the top bar.
+ * Proto's name at its centre, where the rings make room for it. The way in is Join in the top bar.
  * Below the hero's foot the light breaks off into the page along a seam of text cells.
  */
 export function Hero() {
