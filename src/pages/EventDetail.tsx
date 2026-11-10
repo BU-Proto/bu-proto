@@ -120,6 +120,8 @@ function Opener({ event, past }: { event: ProtoEvent; past: boolean }) {
       alt={event.photo ? event.title : cover.alt}
       credit={event.photo ? undefined : cover}
       hugeName={false}
+      // Its own picture is often a flyer with words on it: shown whole. A campus cover fills the band.
+      banner={event.photo ? 'contain' : 'cover'}
     >
       {/* The date set the way the home page sets the next event's: the day huge, the rest beside it. */}
       <p className={styles.date} data-hue={KIND_HUE[event.kind]} data-fog-clear>

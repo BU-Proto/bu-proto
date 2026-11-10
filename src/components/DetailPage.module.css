@@ -72,6 +72,76 @@
   text-shadow: var(--on-field-shadow);
 }
 
+/* ---- Banner: the photo across the top, the text under it ---- */
+
+.banner {
+  --under-bar: calc(44px + max(18px, env(safe-area-inset-top, 0px)) + 12px);
+  grid-template-rows: auto auto;
+  margin-top: calc(-1 * var(--under-bar));
+}
+
+/* Up under the top bar, edge to edge, dissolving into the field at its foot. */
+.band {
+  position: relative;
+  height: calc(min(60svh, 620px) + var(--under-bar));
+  overflow: hidden;
+  background: var(--harbor);
+  -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
+}
+
+/* A little ink under the top bar, so the menu holds up over a bright photo. */
+.band::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgb(var(--harbor-rgb) / 0.5), transparent 140px);
+  pointer-events: none;
+}
+
+.bandImage {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A flyer: the whole of it, clear of the top bar and the fade, on a blur of itself. */
+.band[data-fit='contain'] .bandImage {
+  box-sizing: border-box;
+  padding: calc(var(--under-bar) + 12px) 16px clamp(40px, 8vh, 80px);
+  object-fit: contain;
+  filter: drop-shadow(0 18px 40px rgb(var(--harbor-rgb) / 0.55));
+}
+
+.bandFill {
+  position: absolute;
+  inset: -60px;
+  width: calc(100% + 120px);
+  height: calc(100% + 120px);
+  object-fit: cover;
+  filter: blur(48px) saturate(1.15) brightness(0.55);
+}
+
+.banner .openerText {
+  grid-area: auto;
+  align-self: start;
+  padding-top: clamp(4px, 1.6vh, 16px);
+}
+
+/* Titles that run to a sentence, set under the picture rather than over it. */
+.banner .title {
+  max-width: 20ch;
+  font-size: clamp(38px, 6vw, 88px);
+}
+
+@media (max-width: 640px) {
+  .band {
+    height: calc(40svh + var(--under-bar));
+  }
+}
+
 /* The line set above the title: a win's placement, an event's date, a hackathon's dates. */
 .kicker {
   margin: 0 0 clamp(12px, 2.4vh, 22px);
@@ -376,7 +446,8 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .cover img {
+  .cover img,
+  .bandImage {
     animation: settle 1400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 

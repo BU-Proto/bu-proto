@@ -4,7 +4,7 @@ import { PageIntro } from '../components/PageIntro'
 import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { EVENT_COVERS, type CoverPhoto } from '../content/covers'
+import { coverThumb, EVENT_COVERS, type CoverPhoto } from '../content/covers'
 import { EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, HACK_NIGHT, KIND_HUE, NEXT_EVENT } from '../content/events'
 import { dateParts, daysUntil, formatMonth } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
@@ -12,6 +12,9 @@ import { useRsvp } from '../lib/useRsvp'
 import styles from './Events.module.css'
 
 const HACK_NIGHT_COVER = EVENT_COVERS['Hack night']
+
+/** The BU building an event without a photo of its own opens with, matched to its kind. */
+const stockCover = (event: ProtoEvent) => EVENT_COVERS[event.kind] ?? HACK_NIGHT_COVER
 
 /**
  * What's coming up: the next event set large with its photo, then the rest as one ruled list
@@ -30,6 +33,8 @@ export function Events() {
     const month = formatMonth(event.date)
     months.set(month, [...(months.get(month) ?? []), event])
   }
+  // The stock covers the list shows, each credited once under it, as their licences require.
+  const credits = [...new Set(later.filter((event) => !event.photo).map((event) => stockCover(event)))]
 
   return (
     <div className={`${ui.page} ${styles.page}`}>
@@ -60,6 +65,21 @@ export function Events() {
               </section>
             ))}
           </div>
+          {credits.length > 0 && (
+            <p className={styles.listCredit} data-fog-clear>
+              Photos by{' '}
+              {credits.map((cover, i) => (
+                <span key={cover.source}>
+                  {i > 0 && (i === credits.length - 1 ? ' and ' : ', ')}
+                  <a href={cover.source} target="_blank" rel="noopener noreferrer">
+                    {cover.author}
+                  </a>{' '}
+                  ({cover.license})
+                </span>
+              ))}{' '}
+              via Wikimedia Commons
+            </p>
+          )}
         </section>
       )}
     </div>
@@ -111,7 +131,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
   const rsvp = useRsvp(event)
   const { day, monthLong, weekdayLong } = dateParts(event.date)
   // No photo of its own yet: the BU building matched to its kind, as on the event's own page.
-  const stock = EVENT_COVERS[event.kind] ?? HACK_NIGHT_COVER
+  const stock = stockCover(event)
 
   return (
     <article className={styles.lead} data-hue={KIND_HUE[event.kind]} aria-labelledby="next-event">
@@ -188,6 +208,11 @@ function EventRow({ event }: { event: ProtoEvent }) {
         <span className={styles.rowDay}>{day}</span>
         <span className={styles.rowWeekday}>{weekday}</span>
       </time>
+
+      {/* Its own photo, or the stock cover its page opens with (credited under the list). */}
+      <div className={styles.thumb}>
+        <img src={event.photo || coverThumb(stockCover(event).src)} alt="" loading="lazy" decoding="async" />
+      </div>
 
       <div className={styles.body}>
         <h4 className={styles.title} data-fog-clear>

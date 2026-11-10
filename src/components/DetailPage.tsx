@@ -27,16 +27,43 @@ export function DetailOpener({
   photo,
   alt,
   hugeName = true,
+  banner,
   credit,
   children,
 }: {
   photo: string | null | undefined
   alt: string
   hugeName?: boolean
+  /**
+   * The photo as a band across the top with the text under it, never over it, for pictures that
+   * carry words of their own (an event's flyer). `cover` fills the band; `contain` shows the whole
+   * picture on a blurred fill of itself, so a flyer's words aren't cropped.
+   */
+  banner?: 'cover' | 'contain'
   /** For a stock or default cover: who took it, under what licence, and where it's from. */
   credit?: { author: string; license: string; source: string }
   children: ReactNode
 }) {
+  if (banner && photo) {
+    return (
+      <header className={`${styles.opener} ${styles.banner}`} data-ground-after="">
+        <div className={styles.band} data-fit={banner}>
+          {banner === 'contain' && <img className={styles.bandFill} src={photo} alt="" aria-hidden="true" />}
+          <img className={styles.bandImage} src={photo} alt={alt} fetchPriority="high" />
+        </div>
+        {credit && (
+          <p className={styles.credit} data-fog-clear>
+            Photo by {credit.author},{' '}
+            <a href={credit.source} target="_blank" rel="noopener noreferrer">
+              {credit.license} via Wikimedia Commons
+            </a>
+          </p>
+        )}
+        <div className={styles.openerText}>{children}</div>
+      </header>
+    )
+  }
+
   const kind = photo ? styles.withPhoto : `${styles.typeOnly} ${hugeName ? styles.hugeName : ''}`
   return (
     <header className={`${styles.opener} ${kind}`}>
