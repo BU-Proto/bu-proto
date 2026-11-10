@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "lint": "oxlint",
+    "test": "node --test \"src/**/*.test.ts\"",
     "preview": "npm run build && vite preview",
     "deploy": "npm run build && npm run db:migrate:remote && wrangler deploy",
     "db:migrate": "wrangler d1 migrations apply DB --local",

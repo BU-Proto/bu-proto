@@ -1,12 +1,12 @@
-// The pieces every detail page is built from (/wins/:id, /events/:id, /hackathons/:id), so the
-// three read as one family: the opener, the write-up sheet, the photos, the previous / next bar
-// and the not-found state.
+// The pieces the detail pages are built from (/wins/:id, the guides, and parts of /events/:id,
+// which lays out its own opening and write-up), so they read as one family: the opener, the
+// write-up and its side column, the photos, the previous / next bar and the not-found state.
 
 import type { ReactNode } from 'react'
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router'
 import { BRAND } from '../content/site'
 import { ApiError } from '../lib/api'
-import { paragraphs } from '../lib/detail'
+import { parseEventProse, type ProseBlock } from '../lib/eventProse'
 import { BuMark } from './BuMark'
 import { Gallery } from './Gallery'
 import { LoadError } from './RouteStates'
@@ -27,43 +27,13 @@ export function DetailOpener({
   photo,
   alt,
   hugeName = true,
-  banner,
-  credit,
   children,
 }: {
   photo: string | null | undefined
   alt: string
   hugeName?: boolean
-  /**
-   * The photo as a band across the top with the text under it, never over it, for pictures that
-   * carry words of their own (an event's flyer). `cover` fills the band; `contain` shows the whole
-   * picture on a blurred fill of itself, so a flyer's words aren't cropped.
-   */
-  banner?: 'cover' | 'contain'
-  /** For a stock or default cover: who took it, under what licence, and where it's from. */
-  credit?: { author: string; license: string; source: string }
   children: ReactNode
 }) {
-  if (banner && photo) {
-    return (
-      <header className={`${styles.opener} ${styles.banner}`} data-ground-after="">
-        <div className={styles.band} data-fit={banner}>
-          {banner === 'contain' && <img className={styles.bandFill} src={photo} alt="" aria-hidden="true" />}
-          <img className={styles.bandImage} src={photo} alt={alt} fetchPriority="high" />
-        </div>
-        {credit && (
-          <p className={styles.credit} data-fog-clear>
-            Photo by {credit.author},{' '}
-            <a href={credit.source} target="_blank" rel="noopener noreferrer">
-              {credit.license} via Wikimedia Commons
-            </a>
-          </p>
-        )}
-        <div className={styles.openerText}>{children}</div>
-      </header>
-    )
-  }
-
   const kind = photo ? styles.withPhoto : `${styles.typeOnly} ${hugeName ? styles.hugeName : ''}`
   return (
     <header className={`${styles.opener} ${kind}`}>
@@ -71,14 +41,6 @@ export function DetailOpener({
         <div className={styles.cover}>
           <img src={photo} alt={alt} fetchPriority="high" />
         </div>
-      )}
-      {photo && credit && (
-        <p className={styles.credit} data-fog-clear>
-          Photo by {credit.author},{' '}
-          <a href={credit.source} target="_blank" rel="noopener noreferrer">
-            {credit.license} via Wikimedia Commons
-          </a>
-        </p>
       )}
       <div className={styles.openerText}>{children}</div>
     </header>
@@ -94,29 +56,105 @@ export function DetailTitle({ children, sample }: { children: ReactNode; sample:
   )
 }
 
-/** Plain text with blank lines between paragraphs, as the portal stores it. */
+/** Bold and links dropped on import leave a space before the punctuation that followed them. */
+const tidy = (text: string) => text.replace(/ +([,.;:!?])(?=\s|$)/g, '$1')
+
+/**
+ * A short line on its own with no full stop, inside a part: a smaller heading for what follows it
+ * ("01. Our starting point", "What we're proud of and what we learned").
+ */
+const isLabel = (text: string) => !text.includes('\n') && text.length <= 64 && !/[.!?:;,…]$/.test(text) && !text.startsWith('$')
+
+/** A formula pasted as LaTeX between `$$` marks: set apart as one, without the marks. */
+const FORMULA = /^\$\$([\s\S]+)\$\$$/
+
+/**
+ * A write-up as it was pasted (a Devpost page, mostly), set the way a guide's article is: its own
+ * headings ("Inspiration", "How we built it") over what they head, lists as lists, facts as
+ * facts, straight on the ground. The same reading of plain text an event's page uses.
+ */
 export function Prose({ text }: { text: string }) {
+  const { sections } = parseEventProse(text)
   return (
     <div className={styles.prose}>
-      {paragraphs(text).map((part, index) => (
-        <p key={index} data-fog-clear>
-          {part}
-        </p>
+      {sections.map((section, index) => (
+        <div key={index} className={styles.part}>
+          {section.heading && (
+            <h3 className={styles.partHeading} data-fog-clear>
+              {section.heading}
+            </h3>
+          )}
+          {section.blocks.map((block, blockIndex) =>
+            block.kind === 'paragraph' && isLabel(block.text.trim()) && blockIndex < section.blocks.length - 1 ? (
+              <h4 key={blockIndex} className={styles.partLabel} data-fog-clear>
+                {block.text.trim()}
+              </h4>
+            ) : (
+              <ProseBlockView key={blockIndex} block={block} />
+            ),
+          )}
+        </div>
       ))}
     </div>
   )
 }
 
+function ProseBlockView({ block }: { block: ProseBlock }) {
+  if (block.kind === 'paragraph') {
+    const formula = FORMULA.exec(block.text.trim())
+    return formula ? (
+      <p className={styles.formula}>{formula[1].trim()}</p>
+    ) : (
+      <p data-fog-clear>{tidy(block.text)}</p>
+    )
+  }
+
+  if (block.kind === 'list') {
+    return (
+      <ul className={styles.proseList}>
+        {block.items.map((item, index) => (
+          <li key={index} data-fog-clear>
+            {tidy(item)}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  if (block.kind === 'facts') {
+    return (
+      <dl className={styles.proseFacts}>
+        {block.rows.map((row, index) => (
+          <div key={index}>
+            <dt>{row.key}</dt>
+            <dd>{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+
+  return (
+    <ul className={styles.proseList}>
+      {block.people.map((person, index) => (
+        <li key={index} data-fog-clear>
+          {person.role ? `${person.name}, ${person.role}` : person.name}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 /**
- * The write-up: the main column (`main`) in deep glass, and the side column (`aside`) beside it on
- * the field, pinned while the text scrolls, so the glass is only as tall as the words in it.
- * Either may be empty; with only one, it takes the full width.
+ * The write-up: the main column (`main`) and the side column (`aside`) beside it, both straight on
+ * the ground. The side column is pinned while the text scrolls. Either may be empty; with only
+ * one, it takes the full width.
  */
 export function WriteUp({ main, aside }: { main?: ReactNode; aside?: ReactNode }) {
   if (!main && !aside) return null
   return (
     <div className={styles.sheet}>
-      {main && <div className={`${ui.panelDeep} ${styles.main}`}>{main}</div>}
+      {main && <div className={styles.main}>{main}</div>}
       {aside && <aside className={styles.aside}>{aside}</aside>}
     </div>
   )
@@ -216,12 +254,14 @@ interface DetailNavProps {
   previousLabel: string
   nextLabel: string
   all: { to: string; label: string }
+  /** The names at reading size, two lines at most, for pages whose names run to a sentence (events). */
+  quiet?: boolean
 }
 
 /** The bar at the foot of the page: the one before, the way back to the list, the one after. */
-export function DetailNav({ label, previous, next, previousLabel, nextLabel, all }: DetailNavProps) {
+export function DetailNav({ label, previous, next, previousLabel, nextLabel, all, quiet }: DetailNavProps) {
   return (
-    <nav className={styles.neighbours} aria-label={label}>
+    <nav className={`${styles.neighbours} ${quiet ? styles.quiet : ''}`} aria-label={label}>
       {previous ? <NeighbourLink item={previous} label={previousLabel} direction="previous" /> : <span />}
       <Link className={`${ui.textLink} ${styles.all}`} to={all.to} data-fog-clear>
         {all.label}

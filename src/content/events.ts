@@ -73,11 +73,17 @@ export const EVENT_DETAIL = {
   recap: 'How it went',
   schedule: 'Schedule',
   hosts: 'Hosts',
-  place: 'Where',
+  /** Read out before the date and the place in the head, which show neither word. */
+  when: 'When',
+  where: 'Where',
   map: 'Open in Maps',
   gallery: 'Photos',
   addToCalendar: 'Add to calendar',
   past: 'This one has already happened.',
+  /** The credit under a default campus cover: "Photo by {author}, {licence} via Wikimedia Commons". */
+  photoBy: 'Photo by',
+  viaCommons: 'via Wikimedia Commons',
+  navLabel: 'More events',
   previous: 'Earlier',
   next: 'Later',
   allEvents: 'All events',

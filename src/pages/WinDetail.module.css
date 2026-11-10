@@ -1,6 +1,6 @@
 /* What only a win's page has; the shared layout is in components/DetailPage.module.css. */
 
-/* A ruled list in two columns: reads like a colophon, not a row of badges. */
+/* A plain list in two columns: reads like a colophon, not a row of badges. */
 .stack {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -11,8 +11,8 @@
 }
 
 .stack li {
-  padding: 8px 0;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.16);
+  padding: 4px 0;
+  color: var(--ink-soft);
   font-size: 15px;
 }
 

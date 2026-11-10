@@ -4,6 +4,7 @@
 import type { ContentTypes, Hackathon, ProtoEvent, Win } from '../../shared/api'
 import type { ContentResource } from '../../shared/constants'
 import { api } from './api'
+import { imageRatio } from './imageRatio'
 
 /** Published rows of one resource, already in display order. */
 export async function fetchContent<R extends ContentResource>(resource: R, signal?: AbortSignal) {
@@ -45,15 +46,22 @@ export interface EventPageData {
   event: ProtoEvent
   /** Every published event, oldest first, for earlier and later. */
   events: ProtoEvent[]
+  /**
+   * Width over height of the event's own photo, measured before the page renders so it can lay
+   * itself out by the picture's shape at once. Null with no photo, or when it couldn't be read in
+   * time; the page then corrects itself from the picture once it has loaded.
+   */
+  photoRatio: number | null
 }
 
 const byDate = (a: ProtoEvent, b: ProtoEvent) => a.date.localeCompare(b.date) || a.id - b.id
 
 /** One event for its own page, plus the rest so it can link to the ones either side. */
 export async function fetchEventPage(id: string | undefined, signal?: AbortSignal): Promise<EventPageData> {
-  const [{ item }, events] = await Promise.all([
-    api<{ item: ProtoEvent }>(`/content/events/${encodeURIComponent(id ?? '')}`, { signal }),
-    fetchContent('events', signal),
-  ])
-  return { event: item, events: events.toSorted(byDate) }
+  // The photo is measured while the list is still on its way, so it rarely adds to the wait.
+  const measuredEvent = api<{ item: ProtoEvent }>(`/content/events/${encodeURIComponent(id ?? '')}`, { signal }).then(
+    async ({ item }) => ({ event: item, photoRatio: item.photo ? await imageRatio(item.photo) : null }),
+  )
+  const [{ event, photoRatio }, events] = await Promise.all([measuredEvent, fetchContent('events', signal)])
+  return { event, events: events.toSorted(byDate), photoRatio }
 }

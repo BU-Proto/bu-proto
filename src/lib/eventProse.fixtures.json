@@ -1,0 +1,107 @@
+[
+  {
+    "id": 1,
+    "date": "2026-11-12",
+    "text": "Past winners show what they built and what it led to. Pizza, then questions.",
+    "description": "Every semester we bring back people who won something at a hackathon and ask them to show what they built, how the weekend actually went, and what it led to afterwards: internships, startups, a project they still work on.\n\nIt's the best place to start if you've never been to a hackathon. Come with questions; there's pizza.",
+    "hosts": []
+  },
+  {
+    "id": 2,
+    "date": "2026-11-19",
+    "text": "Bring a project or find one. Food at 7.",
+    "description": "Hack night, but with a few more people in the room. Bring whatever you’re building, or come with nothing and we’ll find you a team or a starter idea. First-timers get paired with someone who has shipped before.\n\nThere’s food at 7, a quick round of what everyone’s working on, then three hours to build. We finish with short show-and-tells: anything that runs, or almost runs, counts.",
+    "hosts": []
+  },
+  {
+    "id": 3,
+    "date": "2026-12-03",
+    "text": "Alumni founders and a recruiter on what got their projects noticed.",
+    "description": "Three BU students and alums who turned a weekend project into something bigger talk about the messy middle: deciding to keep going after the hackathon, finding the first users, picking co-founders, and what BU’s programs actually helped with.\n\nBring questions. The second half is open Q&A, and the panelists stay after to look at your projects.",
+    "hosts": []
+  },
+  {
+    "id": 4,
+    "date": "2027-01-26",
+    "text": "Ideas, team formation and pitch practice the week before.",
+    "description": "Going to Hack@Brown with us? This is the night to show up with a rough idea and leave with a team, a plan and a demo outline. We go over the tracks and prizes, pitch ideas in two minutes each, and form teams on the spot.\n\nWe also sort the trip itself: the bus, what to pack, and who sits with who on the way down.",
+    "hosts": []
+  },
+  {
+    "id": 5,
+    "date": "2027-02-04",
+    "text": "A hands-on workshop co-hosted with a sponsor. Laptops required.",
+    "description": "A hands-on workshop: by 8:30 you’ll have a small AI app deployed with a link you can send to friends. We start from a template, wire up a model API, add one feature that makes it yours, and ship it.\n\nLaptops required. No AI experience needed, but you should be comfortable running a few commands in a terminal. API credits for the evening are covered.",
+    "hosts": []
+  },
+  {
+    "id": 6,
+    "date": "2027-04-22",
+    "text": "Anyone can show anything. Five minutes each, half-finished welcome.",
+    "description": "The end-of-semester demo night. Anyone at BU can show anything they’ve built this term: a hackathon project, a side project, a class project you’re proud of, or something half finished. Five minutes each, then questions.\n\nIt doesn’t have to win and it doesn’t have to work. Sign up to demo at the door, or just come and watch. Food from 6.",
+    "hosts": []
+  },
+  {
+    "id": 7,
+    "date": "2026-11-17",
+    "text": "J and BU Cybersecurity Association is bringing together student founders, hackers, operators, and creators from across Boston for a candid fireside conversation at Boston University with Kent Bennett of Bessemer Venture Partners.",
+    "description": "J and BU Cybersecurity Association is bringing together student founders, hackers, operators, and creators from across Boston for a candid fireside conversation at Boston University with Kent Bennett of Bessemer Venture Partners.\n\nWhat to expect\n\n45-minute fireside chat with Kent\n\n30 minutes of audience Q&A\n\nA chance to meet student builders from BU, Wellesley, Tufts, BC, and across Boston\n\nDetails\n\nDate: Tuesday, November 17, 2026\n\nTime: 5:00-6:30 PM ET\n\nPlace: Boston University (exact room shared with approved guests)\n\nCost: Free, approval required\n\nHosted by Jose Cruz | BU Cybersecurity Association",
+    "hosts": [
+      {
+        "name": "Jose Cruz",
+        "href": "https://luma.com/cjxsez"
+      },
+      {
+        "name": "Kent Bennett",
+        "href": null
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "date": "2026-11-20",
+    "text": "Rionium and BU Proto are bringing together student founders, engineers, and technical builders from across Boston for a candid fireside conversation at Boston University with Eric Silver, co-founder of Mass Magnetics (YC).",
+    "description": "Rionium and BU Proto are bringing together student founders, engineers, and technical builders from across Boston for a candid fireside conversation at Boston University with Eric Silver, co-founder of Mass Magnetics (YC).\n\nSpeaker\n\nEric Silver, Co-founder, Mass Magnetics (YC)\n\nWhat to expect\n\n45-minute fireside chat with Eric on building a hardware company, from materials and aerospace engineering to Mass Magnetics\n\n30 minutes of audience Q&A\n\nA chance to meet student builders from BU, Wellesley, Tufts, BC, and across Boston\n\nDetails\n\nDate: Friday, November 20, 2026\n\nTime: Evening (exact time shared with approved guests)\n\nPlace: Boston University (exact room shared with approved guests)\n\nCost: Free, approval required\n\nHosted by Jose Cruz | Rionium | BU Proto",
+    "hosts": [
+      {
+        "name": "Jose Cruz",
+        "href": "https://luma.com/cjxsez"
+      }
+    ]
+  },
+  {
+    "id": 91,
+    "date": "2026-10-20",
+    "text": "Twelve teams showed what they built this fall.",
+    "description": "Twelve teams took five minutes each to show what they built this fall, from a campus food tracker to a robot arm that sorts recycling.\n\nThe room voted for a favourite at the end, and most people stayed for pizza and to try the demos themselves.",
+    "hosts": [
+      {
+        "name": "BU Proto",
+        "href": null
+      }
+    ]
+  },
+  {
+    "id": 92,
+    "date": "2027-03-02",
+    "text": "",
+    "description": "",
+    "hosts": []
+  },
+  {
+    "id": 93,
+    "date": "2027-03-11",
+    "text": "Bring a project or find one.",
+    "description": "A longer hack night for the week after midterms. Come with whatever you’re building.\n\nWhat to bring\n\nLaptop\n\nCharger\n\nWe provide food and drinks all night.",
+    "hosts": [
+      {
+        "name": "Andres Lopez",
+        "href": "https://github.com/AndresL230"
+      },
+      {
+        "name": "Spark!",
+        "href": null
+      }
+    ]
+  }
+]
