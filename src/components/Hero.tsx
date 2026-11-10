@@ -5,10 +5,10 @@ import styles from './Hero.module.css'
 
 /**
  * The home hero: the field's light fills the screen, with what Proto is and the way in set in a
- * centred column low on it, as main lays it out.
+ * centred column low on it. The opening lead below says the rest.
  */
 export function Hero() {
-  const { headline, lede, primaryCta } = HERO_COPY
+  const { headline, primaryCta } = HERO_COPY
 
   return (
     <section className={styles.hero}>
@@ -16,9 +16,6 @@ export function Hero() {
         <h1 className={styles.headline} data-fog-clear>
           {headline}
         </h1>
-        <p className={styles.lede} data-fog-clear>
-          {lede}
-        </p>
         <Link className={`${ui.primary} ${styles.primary}`} to={primaryCta.href} data-fog-clear="box">
           {primaryCta.label}
         </Link>

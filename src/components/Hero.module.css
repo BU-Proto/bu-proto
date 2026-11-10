@@ -49,14 +49,6 @@
   text-shadow: 0 2px 34px rgb(var(--harbor-rgb) / 0.45);
 }
 
-.lede {
-  max-width: 46ch;
-  margin: 0;
-  color: var(--ink);
-  font-size: 17px;
-  line-height: 1.55;
-  text-wrap: pretty;
-}
 
 .primary {
   margin-top: 8px;
@@ -67,9 +59,5 @@
 @media (max-width: 640px) {
   .headline {
     font-size: clamp(38px, 11vw, 56px);
-  }
-
-  .lede {
-    font-size: 16px;
   }
 }
