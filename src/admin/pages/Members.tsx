@@ -3,6 +3,11 @@ import { Link, useSearchParams } from 'react-router'
 import type { Member } from '../../../shared/api'
 import { TRACKS } from '../../../shared/constants'
 import ui from '../admin.module.css'
+import { Kbd } from '../components/Kbd'
+import { ChevronRightIcon, DownloadIcon, MailIcon, SearchIcon } from '../components/icons'
+import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../lib/toast'
+import { useSlashFocus } from '../lib/keys'
 import { downloadFile, formatStampDate, plural, stampToIso, toCsv } from './people/format'
 import { useApi, useDebounced } from './people/useApi'
 import shared from './people/people.module.css'
@@ -15,6 +20,9 @@ export function Component() {
 
   // The box is local so typing stays snappy; the URL (and the fetch) follow once typing pauses.
   const [query, setQuery] = useState(q)
+  const toast = useToast()
+  const searchBox = useRef<HTMLInputElement>(null)
+  useSlashFocus(searchBox)
   const settled = useDebounced(query.trim(), 250)
 
   // Push to the URL only when the typed value settles, so Back (which changes q) isn't undone.
@@ -64,6 +72,7 @@ export function Component() {
       `proto-members${suffix ? `-${suffix}` : ''}-${day}.csv`,
       toCsv(['Name', 'Email', 'Year', 'Track', 'Joined (UTC)', 'Unsubscribed', 'Notes'], rows),
     )
+    toast({ text: `${plural(members.length, 'member')} exported`, detail: filtered ? 'Only the people in this search or track.' : undefined })
   }
 
   const emailHref = track ? `/admin/email?audience=track&track=${encodeURIComponent(track)}` : '/admin/email?audience=members'
@@ -71,45 +80,41 @@ export function Component() {
 
   return (
     <div className={shared.page}>
-      <title>Members · Admin · BU Proto</title>
+      <PageHeader
+        title="Members"
+        count={data ? (filtered ? `${members.length} of the list` : members.length) : undefined}
+        actions={
+          <>
+            <button type="button" className={ui.button} onClick={exportCsv} disabled={members.length === 0}>
+              <DownloadIcon /> Export CSV
+            </button>
+            <Link to={emailHref} className={ui.primary}>
+              <MailIcon /> {track ? `Email the ${track} track` : 'Email all members'}
+            </Link>
+          </>
+        }
+      />
 
-      <header className={shared.head}>
-        <div className={shared.headText}>
-          <h1 className={shared.title}>
-            Members
-            {data && (
-              <span className={shared.count} aria-live="polite">
-                {filtered ? `${plural(members.length, 'match', 'matches')}` : plural(members.length, 'person', 'people')}
-              </span>
-            )}
-          </h1>
-        </div>
-        <div className={shared.headActions}>
-          <button type="button" className={ui.secondary} onClick={exportCsv} disabled={members.length === 0}>
-            Export CSV
-          </button>
-          <Link to={emailHref} className={ui.primary}>
-            {track ? `Email the ${track} track` : 'Email all members'}
-          </Link>
-        </div>
-      </header>
-
-      <div className={shared.toolbar} role="search">
-        <label className={`${shared.field} ${styles.search}`}>
-          <span className={shared.label}>Search</span>
+      <div className={ui.toolbar} role="search">
+        <label className={`${ui.search} ${styles.search}`}>
+          <span className={ui.srOnly}>Search members</span>
+          <SearchIcon />
           <input
+            ref={searchBox}
             type="search"
-            className={shared.input}
+            className={ui.input}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Name or email"
+            onKeyDown={(event) => event.key === 'Escape' && query && setQuery('')}
+            placeholder="Search by name or email"
             autoComplete="off"
             spellCheck={false}
           />
+          <Kbd>/</Kbd>
         </label>
-        <label className={shared.field}>
-          <span className={shared.label}>Track</span>
-          <select className={shared.input} value={track} onChange={(event) => setTrack(event.target.value)}>
+        <label className={styles.track}>
+          <span className={ui.srOnly}>Track</span>
+          <select className={ui.input} value={track} onChange={(event) => setTrack(event.target.value)}>
             <option value="">All tracks</option>
             {TRACKS.map((name) => (
               <option key={name} value={name}>
@@ -131,13 +136,27 @@ export function Component() {
         {error?.message}
       </p>
 
-      <div className={shared.tableWrap} aria-busy={loading || undefined}>
+      <div className={ui.panelFlush} aria-busy={loading || undefined}>
         {data && members.length === 0 ? (
-          <p className={shared.empty}>{filtered ? 'No one matches that.' : 'No one has joined yet.'}</p>
-        ) : !data && loading ? (
-          <p className={shared.empty}>Loading members…</p>
+          <div className={shared.empty}>
+            <h2>{filtered ? 'No members match that' : 'No members yet'}</h2>
+            {filtered ? (
+              <button
+                type="button"
+                className={ui.button}
+                onClick={() => {
+                  setQuery('')
+                  setParams({}, { replace: true })
+                }}
+              >
+                Clear search and track
+              </button>
+            ) : (
+              <p>People who join from the site show up here.</p>
+            )}
+          </div>
         ) : (
-          <table className={shared.table}>
+          <table className={ui.table}>
             <thead>
               <tr>
                 <th scope="col">Name</th>
@@ -145,29 +164,59 @@ export function Component() {
                 <th scope="col">Year</th>
                 <th scope="col">Track</th>
                 <th scope="col">Joined</th>
+                <th scope="col" className={ui.rowGo}>
+                  <span className={ui.srOnly}>Open</span>
+                </th>
               </tr>
             </thead>
-            <tbody className={loading ? styles.stale : undefined}>
-              {members.map((member) => (
-                <tr key={member.id}>
-                  <td data-wide>
-                    <Link to={`/admin/members/${member.id}`} className={shared.rowLink}>
-                      {member.name}
-                    </Link>
-                    {member.unsubscribed && <span className={`${shared.flag} ${styles.unsub}`}>Unsubscribed</span>}
-                  </td>
-                  <td data-wide className={`${shared.mono} ${styles.email}`}>
-                    {member.email}
-                  </td>
-                  <td data-label="Year">{member.year}</td>
-                  <td data-label="Track">{member.track}</td>
-                  <td data-label="Joined" className={`${shared.figure} ${styles.joined}`}>
-
-                    <time dateTime={stampToIso(member.createdAt)}>{formatStampDate(member.createdAt)}</time>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+            {!data ? (
+              // The table's own shape while the first load is out, so nothing jumps when it lands.
+              <tbody aria-hidden="true">
+                {Array.from({ length: 6 }, (_, row) => (
+                  <tr key={row}>
+                    {[150, 190, 80, 60, 90].map((width, cell) => (
+                      <td key={cell}>
+                        <span className={ui.skeleton} style={{ width: width - (row % 3) * 14 }} />
+                      </td>
+                    ))}
+                    <td />
+                  </tr>
+                ))}
+              </tbody>
+            ) : (
+              <tbody className={loading ? styles.stale : undefined}>
+                {members.map((member) => (
+                  <tr key={member.id}>
+                    <td data-wide>
+                      <span className={ui.person}>
+                        <span className={ui.avatar} aria-hidden="true">
+                          {member.name.trim().slice(0, 1).toUpperCase()}
+                        </span>
+                        <Link to={`/admin/members/${member.id}`} className={ui.rowTitle}>
+                          {member.name}
+                        </Link>
+                        {member.unsubscribed && <span className={shared.flag}>Unsubscribed</span>}
+                      </span>
+                    </td>
+                    <td data-wide className={styles.email}>
+                      {member.email}
+                    </td>
+                    <td data-label="Year" className={styles.soft}>
+                      {member.year}
+                    </td>
+                    <td data-label="Track" className={styles.soft}>
+                      {member.track}
+                    </td>
+                    <td data-label="Joined" className={`${shared.figure} ${styles.soft}`}>
+                      <time dateTime={stampToIso(member.createdAt)}>{formatStampDate(member.createdAt)}</time>
+                    </td>
+                    <td className={ui.rowGo} aria-hidden="true">
+                      <ChevronRightIcon />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            )}
           </table>
         )}
       </div>

@@ -19,6 +19,29 @@ export function RowFlags({ placeholder, published }: { placeholder?: boolean; pu
   )
 }
 
+/**
+ * A content row's state for a list's Status column: a dot and a word. Sample content is the one
+ * to notice (it's made up), then whether the row is out or still a draft.
+ */
+export function RowState({ placeholder, published }: { placeholder?: boolean; published?: boolean }) {
+  if (placeholder) {
+    return (
+      <span className={styles.state} data-tone="sample" title="Made-up sample content. The site marks it as a sample.">
+        {published === false ? 'Sample, draft' : 'Sample'}
+      </span>
+    )
+  }
+  return published === false ? (
+    <span className={styles.state} data-tone="draft">
+      Draft
+    </span>
+  ) : (
+    <span className={styles.state} data-tone="live">
+      Published
+    </span>
+  )
+}
+
 export type StatusTone = 'info' | 'ok' | 'error'
 
 /**

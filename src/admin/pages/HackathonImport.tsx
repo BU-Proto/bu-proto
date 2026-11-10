@@ -192,8 +192,8 @@ export function Component() {
   return (
     <div className={admin.page}>
       <PageHeader
-        title="Import hackathons"
-        back={{ to: '/admin/hackathons', label: 'Hackathons' }}
+        title="Hackathons"
+        tabTitle="Import hackathons"
         lede={IMPORT_SOURCES.map((source) => (
           <RunSummary key={source} source={source} run={lastRun(source)} />
         ))}
@@ -342,7 +342,7 @@ export function Component() {
                       <>
                         <button
                           type="button"
-                          className={`${admin.primary} ${admin.small}`}
+                          className={`${admin.button} ${admin.small}`}
                           disabled={busy !== null}
                           onClick={() => add(candidate)}
                         >

@@ -80,8 +80,8 @@ export function Component() {
   return (
     <div className={admin.page}>
       <PageHeader
-        title="Import an event"
-        back={{ to: '/admin/events', label: 'Events' }}
+        title="Events"
+        tabTitle="Import an event"
         lede={
           <>
             <p>

@@ -1,0 +1,180 @@
+/* The command menu: a search box over a short list, a third of the way down the screen. */
+
+.dialog {
+  width: min(600px, calc(100vw - 24px));
+  max-width: none;
+  max-height: none;
+  margin: min(18vh, 160px) auto auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: var(--scrim);
+}
+
+.panel {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-dialog);
+  background: var(--surface-raised);
+  box-shadow: var(--pop);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 0 16px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.searchIcon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--ink-dim);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 50px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--placeholder);
+}
+
+.list {
+  max-height: min(380px, 52vh);
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scroll-padding-block: 6px;
+}
+
+.group + .group {
+  margin-top: 4px;
+}
+
+.heading {
+  margin: 0;
+  padding: 8px 10px 4px;
+  color: var(--ink-dim);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.itemIcon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--ink-dim);
+}
+
+.itemLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemHint {
+  flex: none;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+}
+
+.itemGo {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  color: var(--ink-dim);
+  opacity: 0;
+}
+
+/* The highlight follows the keyboard and the pointer alike; it's the only lit row. */
+.item[aria-selected='true'] {
+  background: var(--selected);
+  color: var(--ink);
+}
+
+.item[aria-selected='true'] .itemIcon {
+  color: var(--mint);
+}
+
+.item[aria-selected='true'] .itemGo {
+  opacity: 1;
+}
+
+.none {
+  margin: 0;
+  padding: 28px 16px;
+  color: var(--ink-dim);
+  font-size: 13.5px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--line-strong);
+  color: var(--ink-dim);
+  font-size: 12px;
+}
+
+.foot span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.footEnd {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .dialog {
+    margin-top: 12px;
+  }
+
+  .list {
+    max-height: 60vh;
+  }
+
+  /* No keyboard to hint at. */
+  .foot,
+  .search kbd {
+    display: none;
+  }
+}

@@ -1,6 +1,12 @@
+/* The search takes the row's slack up to a comfortable width; the track filter sits at its end. */
 .search {
   flex: 1 1 260px;
-  max-width: 420px;
+  max-width: 360px;
+}
+
+.track {
+  flex: none;
+  min-width: 150px;
 }
 
 .email {
@@ -8,14 +14,9 @@
   overflow-wrap: anywhere;
 }
 
-.unsub {
-  margin-left: 10px;
-}
-
-.joined {
+.soft {
   color: var(--ink-soft);
 }
-
 
 /* The previous results stay up while the next search loads; dim them so it's clear they're old. */
 .stale {

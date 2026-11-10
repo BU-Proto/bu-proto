@@ -1,8 +1,11 @@
 import { useId, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useRevalidator, useSearchParams } from 'react-router'
 import type { FundInterest, FundStatus } from '../../../shared/api'
 import { FUND_AMOUNTS, FUND_STATUSES } from '../../../shared/constants'
 import ui from '../admin.module.css'
+import { MailIcon, TrashIcon } from '../components/icons'
+import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../lib/toast'
 import { api } from '../../lib/api'
 import { ConfirmDialog } from './people/ConfirmDialog'
 import { formatStampDate, plural, stampToIso } from './people/format'
@@ -33,13 +36,17 @@ export function Component() {
   const all = data?.items ?? []
   const shown = status ? all.filter((entry) => entry.status === status) : all
 
-  const [announcement, setAnnouncement] = useState('')
+  const toast = useToast()
+  // The sidebar's count of new entries comes from the shell's loader; a change here refreshes it.
+  const { revalidate } = useRevalidator()
   const [deleting, setDeleting] = useState<FundInterest | null>(null)
   const [busy, setBusy] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
-  const replace = (item: FundInterest) =>
+  const replace = (item: FundInterest) => {
     setData((prev) => prev && { items: prev.items.map((entry) => (entry.id === item.id ? item : entry)) })
+    void revalidate()
+  }
 
   const remove = async () => {
     if (!deleting) return
@@ -48,8 +55,9 @@ export function Component() {
     try {
       await api(`/admin/fund/${deleting.id}`, { method: 'DELETE' })
       setData((prev) => prev && { items: prev.items.filter((entry) => entry.id !== deleting.id) })
-      setAnnouncement(`Deleted ${deleting.name}’s entry.`)
+      toast(`${deleting.name}’s entry deleted`)
       setDeleting(null)
+      void revalidate()
     } catch (failure) {
       setDeleteError(toApiError(failure).message)
     } finally {
@@ -61,62 +69,64 @@ export function Component() {
 
   return (
     <div className={shared.page}>
-      <title>Fund · Admin · BU Proto</title>
-
-      <header className={shared.head}>
-        <div className={shared.headText}>
-          <h1 className={shared.title}>
-            Fund interest
-            {data && <span className={shared.count}>{plural(all.length, 'person', 'people')}</span>}
-          </h1>
-          <p className={shared.lede}>
-            The fund isn’t open yet, so no one can apply. This is who’d use a $50–$500 microgrant and for what: it’s how we
-            show sponsors there’s demand. Statuses are our own triage; nothing is promised.
-          </p>
-        </div>
-        <div className={shared.headActions}>
+      <PageHeader
+        title="Fund interest"
+        tabTitle="Fund"
+        count={data ? all.length : undefined}
+        lede="The fund isn’t open yet, so no one can apply. This is who’d use a $50–$500 microgrant and for what: it’s how we show sponsors there’s demand. Statuses are our own triage; nothing is promised."
+        actions={
           <Link to={emailHref} className={ui.primary}>
-            {status ? `Email everyone ${STATUS_LABELS[status].toLowerCase()}` : 'Email this list'}
+            <MailIcon /> {status ? `Email everyone ${STATUS_LABELS[status].toLowerCase()}` : 'Email this list'}
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       <p className={shared.error} role="alert" hidden={!error}>
         {error?.message}
       </p>
 
-      {data && <Demand entries={all} />}
+      {data && all.length > 0 && <Demand entries={all} />}
 
-      <nav aria-label="Filter by status" className={styles.filters}>
-        <ul className={shared.tabs}>
-          <li>
-            <Link to={{ search: '' }} className={shared.tab} aria-current={status === null ? 'page' : undefined}>
-              All <span className={shared.tabCount}>{all.length}</span>
-            </Link>
-          </li>
-          {FUND_STATUSES.map((value) => (
-            <li key={value}>
-              <Link to={{ search: `?status=${value}` }} className={shared.tab} aria-current={status === value ? 'page' : undefined}>
-                {STATUS_LABELS[value]} <span className={shared.tabCount}>{all.filter((entry) => entry.status === value).length}</span>
+      {data && all.length > 0 && (
+        <nav aria-label="Filter by status">
+          <ul className={shared.tabs}>
+            <li>
+              <Link to={{ search: '' }} replace className={shared.tab} aria-current={status === null ? 'page' : undefined}>
+                All <span className={shared.tabCount}>{all.length}</span>
               </Link>
             </li>
-          ))}
-        </ul>
-        <p className={styles.live} aria-live="polite">
-          {announcement}
-        </p>
-      </nav>
+            {FUND_STATUSES.map((value) => (
+              <li key={value}>
+                <Link to={{ search: `?status=${value}` }} replace className={shared.tab} aria-current={status === value ? 'page' : undefined}>
+                  {STATUS_LABELS[value]} <span className={shared.tabCount}>{all.filter((entry) => entry.status === value).length}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
 
       {!data && loading ? (
-        <p className={shared.empty}>Loading the interest list…</p>
+        <div className={shared.panel} aria-hidden="true">
+          <span className={ui.skeleton} style={{ width: 160, marginBottom: 14 }} />
+          <span className={ui.skeleton} style={{ width: 320, marginBottom: 10 }} />
+          <span className={ui.skeleton} style={{ width: 240 }} />
+        </div>
       ) : data && shown.length === 0 ? (
-        <p className={`${shared.panel} ${shared.empty}`}>
-          {status ? `Nothing marked ${STATUS_LABELS[status].toLowerCase()}.` : 'No one has signed up yet.'}
-        </p>
+        <div className={`${shared.panel} ${shared.empty}`}>
+          <h2>{status ? `Nothing marked ${STATUS_LABELS[status].toLowerCase()}` : 'No one has signed up yet'}</h2>
+          {status ? (
+            <Link to={{ search: '' }} replace className={ui.button}>
+              Show the whole list
+            </Link>
+          ) : (
+            <p>People who fill in the fund form on the site show up here.</p>
+          )}
+        </div>
       ) : (
         <ul className={styles.entries}>
           {shown.map((entry) => (
-            <Entry key={entry.id} entry={entry} onSaved={replace} onAnnounce={setAnnouncement} onDelete={() => setDeleting(entry)} />
+            <Entry key={entry.id} entry={entry} onSaved={replace} onDelete={() => setDeleting(entry)} />
           ))}
         </ul>
       )}
@@ -165,8 +175,7 @@ function Demand({ entries }: { entries: FundInterest[] }) {
         </h2>
         <p className={styles.total}>
           <span className={styles.totalValue}>{counted.length === 0 ? '$0' : `${dollars(low)} to ${dollars(high)}`}</span>
-          <span className={shared.dim}>
-            {' '}
+          <span className={styles.totalNote}>
             from {plural(counted.length, 'person', 'people')}
             {unsure && unsure.count > 0 && `, ${unsure.count} unsure of the amount`}
             {declined > 0 && `. Leaves out ${declined} declined`}.
@@ -191,28 +200,35 @@ function Demand({ entries }: { entries: FundInterest[] }) {
 interface EntryProps {
   entry: FundInterest
   onSaved: (item: FundInterest) => void
-  onAnnounce: (message: string) => void
   onDelete: () => void
 }
 
-function Entry({ entry, onSaved, onAnnounce, onDelete }: EntryProps) {
+function Entry({ entry, onSaved, onDelete }: EntryProps) {
   const id = useId()
+  const toast = useToast()
   const [notes, setNotes] = useState(entry.notes)
   const [saving, setSaving] = useState<'status' | 'notes' | null>(null)
-  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const first = entry.name.trim().split(/\s+/)[0]
 
-  const patch = async (kind: 'status' | 'notes', body: { status?: FundStatus; notes?: string }) => {
+  const patch = async (kind: 'status' | 'notes', body: { status?: FundStatus; notes?: string }, undo = true) => {
     if (saving) return
+    const before = entry.status
     setSaving(kind)
     setError('')
-    setMessage('')
     try {
       const { item } = await api<{ item: FundInterest }>(`/admin/fund/${entry.id}`, { method: 'PATCH', body })
-      if (kind === 'notes') setNotes(item.notes)
-      // A status change can move the entry off the current tab, so announce it at page level.
-      if (kind === 'status') onAnnounce(`${entry.name} marked ${STATUS_LABELS[item.status].toLowerCase()}.`)
-      else setMessage('Notes saved.')
+      if (kind === 'notes') {
+        setNotes(item.notes)
+        toast('Notes saved')
+      } else {
+        // A status change can move the entry off the current tab, so it's said where it can
+        // still be read, with the way back.
+        toast({
+          text: `${first} marked ${STATUS_LABELS[item.status].toLowerCase()}`,
+          action: undo ? { label: 'Undo', onAction: () => void patch('status', { status: before }, false) } : undefined,
+        })
+      }
       onSaved(item)
     } catch (failure) {
       const apiError = toApiError(failure)
@@ -225,88 +241,77 @@ function Entry({ entry, onSaved, onAnnounce, onDelete }: EntryProps) {
   return (
     <li className={`${shared.panel} ${styles.entry}`}>
       <div className={styles.entryHead}>
+        <span className={ui.avatar} aria-hidden="true">
+          {entry.name.trim().slice(0, 1).toUpperCase()}
+        </span>
         <div className={styles.who}>
           <h2 className={styles.name}>{entry.name}</h2>
-          <a href={`mailto:${entry.email}`} className={`${shared.link} ${shared.mono} ${styles.email}`}>
-            {entry.email}
-          </a>
-          <span className={shared.dim}>{entry.year}</span>
+          <p className={styles.meta}>
+            <a href={`mailto:${entry.email}`} className={shared.link}>
+              {entry.email}
+            </a>
+            <span>{entry.year}</span>
+            <time dateTime={stampToIso(entry.createdAt)}>Signed up {formatStampDate(entry.createdAt)}</time>
+          </p>
         </div>
-        <div className={styles.facts}>
-          <span className={styles.amount}>{entry.amount}</span>
-          <time className={`${shared.figure} ${shared.dim}`} dateTime={stampToIso(entry.createdAt)}>
-            {formatStampDate(entry.createdAt)}
-          </time>
+        {/* One click sets it, as a switch would; the toast carries the undo. */}
+        <div className={`${ui.tabs} ${styles.status}`} role="group" aria-label={`Status for ${entry.name}`}>
+          {FUND_STATUSES.map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={ui.tab}
+              data-tone={value}
+              aria-pressed={entry.status === value}
+              disabled={saving !== null}
+              onClick={() => entry.status !== value && patch('status', { status: value })}
+            >
+              {STATUS_LABELS[value]}
+            </button>
+          ))}
         </div>
       </div>
 
       <dl className={styles.answers}>
         <div>
-          <dt className={shared.label}>Target</dt>
+          <dt>Amount</dt>
+          <dd className={shared.figure}>{entry.amount}</dd>
+        </div>
+        <div>
+          <dt>For</dt>
           <dd>{entry.target}</dd>
         </div>
         <div>
-          <dt className={shared.label}>What they’d spend it on</dt>
+          <dt>They’d spend it on</dt>
           <dd className={styles.spend}>{entry.spend}</dd>
         </div>
       </dl>
 
-      <div className={styles.controls}>
-        <label className={`${shared.field} ${styles.statusField}`}>
-          <span className={shared.label}>Status</span>
-          {/* The dot is the status colour, as on the other lists; the select stays a plain select. */}
-          <span className={styles.statusControl} data-tone={entry.status}>
-            <select
-              className={shared.input}
-              value={entry.status}
-              disabled={saving !== null}
-              onChange={(event) => patch('status', { status: event.target.value as FundStatus })}
-            >
-              {FUND_STATUSES.map((value) => (
-                <option key={value} value={value}>
-                  {STATUS_LABELS[value]}
-                </option>
-              ))}
-            </select>
-          </span>
+      <div className={styles.foot}>
+        <label className={ui.srOnly} htmlFor={`${id}-notes`}>
+          Notes on {entry.name}
         </label>
-
-        <div className={`${shared.field} ${styles.notesField}`}>
-          <label className={shared.label} htmlFor={`${id}-notes`}>
-            Notes
-          </label>
-          <textarea
-            id={`${id}-notes`}
-            className={shared.input}
-            rows={2}
-            maxLength={2000}
-            value={notes}
-            placeholder="Only admins see these."
-            onChange={(event) => {
-              setNotes(event.target.value)
-              setMessage('')
-            }}
-          />
-        </div>
-        <div className={styles.entryActions}>
-          <button
-            type="button"
-            className={shared.small}
-            disabled={saving !== null || notes === entry.notes}
-            onClick={() => patch('notes', { notes })}
-          >
+        <textarea
+          id={`${id}-notes`}
+          className={`${shared.input} ${styles.notes}`}
+          rows={1}
+          maxLength={2000}
+          value={notes}
+          placeholder="Add a note. Only admins see these."
+          onChange={(event) => setNotes(event.target.value)}
+        />
+        {notes !== entry.notes && (
+          <button type="button" className={`${ui.button} ${styles.saveNotes}`} disabled={saving !== null} onClick={() => patch('notes', { notes })}>
             {saving === 'notes' ? 'Saving…' : 'Save notes'}
           </button>
-          <span aria-live="polite">
-            {message && <span className={shared.status}>{message}</span>}
-            {error && <span className={shared.error}>{error}</span>}
-          </span>
-          <button type="button" className={`${shared.dangerSmall} ${styles.delete}`} onClick={onDelete}>
-            Delete
-          </button>
-
-        </div>
+        )}
+        <button type="button" className={`${ui.dangerGhost} ${styles.delete}`} aria-label={`Delete ${entry.name}’s entry`} onClick={onDelete}>
+          <TrashIcon />
+        </button>
       </div>
+      <p className={shared.error} role="alert" hidden={!error}>
+        {error}
+      </p>
     </li>
   )
 }

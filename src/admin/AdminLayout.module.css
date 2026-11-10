@@ -1,29 +1,35 @@
-/* The portal's frame: a fixed sidebar on laptops, a top bar with a menu sheet on phones, on the
-   site's harbor ground. No field behind it: this is a screen people sit in for an hour. */
+/* The portal's frame. On a laptop: a sidebar on the darker ground, and the page as one lit sheet
+   beside it that scrolls on its own under a header bar. On a phone: a top bar with a menu sheet,
+   and the page scrolls as any page does. No field behind it: this is a screen people sit in for
+   an hour. */
 
 .shell,
 .fatal {
   /* Portal tokens, built from the site's palette in index.css. Every page inherits these,
-     dialogs included (they inherit from where they sit in the DOM, even in the top layer). */
+     dialogs and toasts included (they inherit from where they sit in the DOM, even in the top
+     layer). */
 
-  /* Grounds: the sidebar a step below harbor, panels a step above it, inputs sunk into panels. */
-  --ground: var(--harbor);
+  /* Grounds, darkest first: the frame round everything, the sheet pages sit on (the site's own
+     harbor), panels a step above it, and what floats over those. Inputs are sunk into panels. */
   --side: #04131f;
-  --surface: color-mix(in srgb, var(--navy) 62%, var(--harbor));
+  --ground: var(--harbor);
+  --surface: color-mix(in srgb, var(--navy) 58%, var(--harbor));
   --surface-raised: var(--navy);
-  --surface-sunk: rgb(var(--harbor-rgb) / 0.72);
-  --scrim: rgb(var(--harbor-rgb) / 0.72);
+  --surface-sunk: rgb(var(--harbor-rgb) / 0.66);
+  --scrim: rgb(2 10 18 / 0.66);
 
   /* Lines and fills, all frost at low strength so they sit on any of the grounds above. */
-  --line: rgb(var(--frost-rgb) / 0.08);
-  --line-strong: rgb(var(--frost-rgb) / 0.13);
-  --edge: rgb(var(--frost-rgb) / 0.17);
-  --edge-hover: rgb(var(--frost-rgb) / 0.3);
-  --hover: rgb(var(--frost-rgb) / 0.045);
-  --selected: rgb(var(--frost-rgb) / 0.09);
+  --line: rgb(var(--frost-rgb) / 0.07);
+  --line-strong: rgb(var(--frost-rgb) / 0.11);
+  --edge: rgb(var(--frost-rgb) / 0.16);
+  --edge-hover: rgb(var(--frost-rgb) / 0.28);
+  --hover: rgb(var(--frost-rgb) / 0.04);
+  --selected: rgb(var(--frost-rgb) / 0.08);
   --fill: rgb(var(--frost-rgb) / 0.06);
-  --fill-hover: rgb(var(--frost-rgb) / 0.11);
+  --fill-hover: rgb(var(--frost-rgb) / 0.1);
   --placeholder: rgb(var(--frost-rgb) / 0.4);
+  /* The lit top edge a panel carries, as the site's slabs do. */
+  --rim: inset 0 1px 0 rgb(var(--frost-rgb) / 0.045);
 
   /* States: always the word in colour, never a capsule. Info is a pale sample of the field's blue. */
   --ok-ink: var(--mint);
@@ -41,34 +47,45 @@
   --primary-hover: color-mix(in srgb, var(--frost) 86%, var(--mint));
   --focus: var(--mint);
   --focus-ring: 0 0 0 3px rgb(var(--mint-rgb) / 0.2);
-  --pop: 0 30px 80px -24px rgb(0 0 0 / 0.6);
+  --pop: 0 0 0 1px rgb(0 0 0 / 0.25), 0 12px 28px -8px rgb(0 0 0 / 0.5), 0 32px 80px -24px rgb(0 0 0 / 0.6);
 
   /* Older names some page styles still read. */
   --highlight: inset 0 0 0 0 transparent;
   --lift: 0 0 0 0 transparent;
 
-  /* Radii step with size: controls, then panels, then dialogs. */
+  /* Radii step with size: controls, then panels, then what floats. */
   --radius-control: 8px;
-  --radius-panel: 14px;
-  --radius-dialog: 16px;
+  --radius-panel: 12px;
+  --radius-dialog: 14px;
+
+  /* Motion. Things that appear ease out and are quick; things that move across the screen ease
+     both ways; colour on hover is plain ease. Nothing runs past a quarter of a second. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --quick: 0.12s;
+  --swift: 0.18s;
+  --calm: 0.24s;
 
   --column: 1120px;
-  --sidebar: 236px;
+  --sidebar: 248px;
+  --gutter: clamp(20px, 2.6vw, 36px);
 }
 
 .shell {
   display: grid;
   grid-template-columns: var(--sidebar) minmax(0, 1fr);
-  min-height: 100vh;
-  min-height: 100dvh;
-  background: var(--ground);
+  height: 100vh;
+  height: 100dvh;
+  background: var(--side);
+  color: var(--ink);
+  font-size: 14px;
 }
 
 .skip {
   position: fixed;
   top: 8px;
   left: 8px;
-  z-index: 30;
+  z-index: 70;
   padding: 8px 14px;
   border-radius: var(--radius-control);
   background: var(--frost);
@@ -96,7 +113,7 @@
 .progress {
   position: fixed;
   inset: 0 0 auto;
-  z-index: 25;
+  z-index: 65;
   height: 2px;
   background: linear-gradient(90deg, transparent, var(--mint) 40%);
   opacity: 0;
@@ -113,16 +130,12 @@
 /* ---- Sidebar ------------------------------------------------------------------------------ */
 
 .sidebar {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 10;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  padding: 12px 12px 12px;
-  border-right: 1px solid var(--line);
-  background: var(--side);
+  min-height: 0;
+  padding: 10px 10px 10px;
 }
 
 .brandRow {
@@ -131,15 +144,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 44px;
-  margin-bottom: 12px;
+  min-height: 40px;
+  margin-bottom: 8px;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  min-height: 36px;
+  gap: 8px;
+  min-height: 34px;
   padding: 0 8px;
   border-radius: var(--radius-control);
   font-size: 15px;
@@ -150,8 +163,8 @@
 .mark {
   flex: none;
   display: block;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   margin-left: -2px;
 }
 
@@ -160,34 +173,47 @@
 }
 
 .brandSub {
-  margin-left: -5px;
+  margin-left: -3px;
   color: var(--ink-dim);
   font-weight: 400;
 }
 
-.menuButton {
+/* Search and menu as icons: phones only, where the sidebar is a bar. */
+.brandTools {
   display: none;
   align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--edge);
+  gap: 4px;
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-control);
-  background: var(--fill);
-  font-size: 13px;
-  font-weight: 500;
+  background: transparent;
+  color: var(--ink-soft);
   cursor: pointer;
 }
 
-.menuButton:hover {
-  border-color: var(--edge-hover);
-  background: var(--fill-hover);
+.iconButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.iconButton:hover {
+  background: var(--fill);
+  color: var(--ink);
 }
 
 .brand:focus-visible,
-.menuButton:focus-visible,
+.iconButton:focus-visible,
+.search:focus-visible,
 .navLink:focus-visible,
-.subLink:focus-visible {
+.accountButton:focus-visible,
+.menuItem:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 0;
 }
@@ -199,13 +225,50 @@
   min-height: 0;
 }
 
+/* Reads as a search box; it's a button that opens the command menu. */
+.search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 34px;
+  margin-bottom: 14px;
+  padding: 0 7px 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: var(--fill);
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.search:hover {
+  border-color: var(--edge);
+  background: var(--fill-hover);
+  color: var(--ink-soft);
+}
+
+.searchIcon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.searchLabel {
+  flex: 1;
+}
+
 /* The links scroll on a short screen; the account stays put under them. Side padding so the
-   focus rings aren't clipped by the scroll box. */
-.navGroups {
+   focus rings aren't clipped by the scroll box. It's the glider's frame of reference too. */
+.nav {
+  position: relative;
   display: grid;
   flex: 1;
   align-content: start;
-  gap: 20px;
+  gap: 18px;
   min-height: 0;
   margin: 0 -4px;
   padding: 2px 4px 16px;
@@ -213,190 +276,102 @@
   scrollbar-width: thin;
 }
 
+/* The lit block behind the current section. One element, moved, rather than a background on
+   each link, so it can travel. */
+.glider {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  left: 4px;
+  border-radius: var(--radius-control);
+  background: var(--selected);
+  box-shadow: inset 0 0 0 1px var(--line);
+  pointer-events: none;
+}
+
 .navLabel {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   padding: 0 10px;
   color: var(--ink-dim);
   font-size: 12px;
   font-weight: 500;
 }
 
-.nav,
-.subNav {
+.navList {
   display: grid;
-  gap: 2px;
+  gap: 1px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* A link, and for a section with sub-pages, its chevron beside it: two targets on one row. The
-   row carries the lit background, so the pair reads as one item. */
-.navRow {
-  display: flex;
-  align-items: stretch;
-  border-radius: var(--radius-control);
-}
-
-/* The row is the hover surface, link and chevron together, so it lights in one piece at the same
-   width as the rows without a chevron and the sub-links under it. */
-.navRow:hover {
-  background: var(--hover);
-}
-
+/* Above the glider, which sits behind every link. */
 .navLink {
+  position: relative;
   display: flex;
-  flex: 1;
   align-items: center;
   gap: 10px;
-  min-width: 0;
-  min-height: 34px;
+  min-height: 32px;
   padding: 0 10px;
   border-radius: var(--radius-control);
   color: var(--ink-soft);
   font-size: 13.5px;
+  /* One weight, lit or not: a label that changes weight shifts everything after it. */
+  font-weight: 500;
 }
 
-.navIcon {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  color: var(--ink-dim);
+.navText {
+  flex: 1;
+  min-width: 0;
 }
 
-.subLink:hover {
-  background: var(--hover);
-  color: var(--ink);
+/* How many are waiting in a section: a figure in the accent, not a capsule. */
+.navBadge {
+  color: var(--mint);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
 }
 
-.navLink:hover {
-  color: var(--ink);
-}
-
-/* Inside a lit row the chevron still says it's its own control: it brightens on its own. */
-.disclosure:hover {
-  color: var(--ink);
-}
-
-.navLink:hover .navIcon {
-  color: var(--ink-soft);
-}
-
-/* The current page: a lit row, its icon in the one accent. Editors under a list (an event's page)
-   count as that list, since NavLink matches the start of the path. */
-.navRow:has(> .navLink[aria-current='page']) {
-  background: var(--selected);
-}
-
+/* The current section: brighter ink over the lit block. Pages inside a section (an
+   event's editor, the import tab) count as that section, since NavLink matches the path's start. */
 .navLink[aria-current='page'] {
   color: var(--ink);
-  font-weight: 500;
 }
 
-.navLink[aria-current='page'] .navIcon {
-  color: var(--mint);
-}
-
-/* On a sub-page the light moves down to the sub-link; the parent keeps its mint icon and bright
-   label, which says "the current page is in here". If someone folds that group shut, the parent
-   takes the light back, so the current page always shows somewhere. */
-.navItem[data-open]:has(.subLink[aria-current='page']) > .navRow {
-  background: transparent;
-}
-
-.disclosure {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 32px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--ink-dim);
-  cursor: pointer;
-}
-
-.chevron {
-  width: 14px;
-  height: 14px;
-  transform: rotate(-90deg);
-}
-
-.disclosure[aria-expanded='true'] .chevron {
-  transform: none;
-}
-
-.disclosure:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 0;
-}
-
-/* Inside the fold's clipping box, so the ring is drawn inward to stay whole. */
-.subLink:focus-visible {
-  outline-offset: -2px;
-}
-
-/* Folds by animating the row's height from nothing to its content's; hidden once shut, and inert
-   in the markup, so closed links are out of the tab order. */
-.subWrap {
-  display: grid;
-  grid-template-rows: 0fr;
-  visibility: hidden;
-}
-
-.navItem[data-open] > .subWrap {
-  grid-template-rows: 1fr;
-  visibility: visible;
-}
-
-/* Children start where the parent's label does, with no icon of their own: the indent is the
-   guide. */
-.subNav {
-  min-height: 0;
-  overflow: hidden;
-}
-
-.subNav > li:first-child {
-  padding-top: 2px;
-}
-
-.subNav > li:last-child {
-  padding-bottom: 4px;
-}
-
-.subLink {
-  display: flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 10px 0 36px;
-  border-radius: var(--radius-control);
-  color: var(--ink-dim);
-  font-size: 13px;
-}
-
-.subLink[aria-current='page'] {
-  background: var(--selected);
-  color: var(--ink);
-  font-weight: 500;
+@media (hover: hover) and (pointer: fine) {
+  .navLink:not([aria-current='page']):hover {
+    background: var(--hover);
+    color: var(--ink);
+  }
 }
 
 /* ---- Account ------------------------------------------------------------------------------ */
 
 .account {
-  display: grid;
+  position: relative;
   flex: none;
-  gap: 10px;
-  padding: 12px 2px 0;
-  border-top: 1px solid var(--line);
+  padding-top: 8px;
 }
 
-.user {
+.accountButton {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
-  padding: 0 8px;
+  width: 100%;
+  min-height: 46px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.accountButton:hover,
+.accountButton[aria-expanded='true'] {
+  background: var(--fill);
 }
 
 .avatar {
@@ -415,6 +390,7 @@
 
 .userText {
   display: grid;
+  flex: 1;
   min-width: 0;
 }
 
@@ -435,27 +411,113 @@
   font-size: 12px;
 }
 
-.accountActions {
+.accountChevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--ink-dim);
+}
+
+/* Opens upward from the row that opened it. */
+.accountMenu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 2px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  gap: 1px;
+  padding: 5px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  box-shadow: var(--pop);
+  transform-origin: 24px 100%;
+}
+
+.accountEmail {
+  margin: 0;
+  padding: 7px 9px 8px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuItem {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  gap: 10px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
 }
 
-.account p:empty {
-  display: none;
+.menuItem svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--ink-dim);
 }
 
-.account p {
-  padding: 0 8px;
+.menuItem:hover,
+.menuItem:focus-visible {
+  background: var(--fill-hover);
+  color: var(--ink);
 }
 
-/* ---- Main column -------------------------------------------------------------------------- */
+.menuItem:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ---- The sheet: header bar and page -------------------------------------------------------- */
+
+.sheet {
+  position: relative;
+  min-width: 0;
+  margin: 8px 8px 8px 0;
+  overflow-y: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-dialog);
+  background: var(--ground);
+  /* The bar is sticky inside; leave room so anchors and focus don't hide under it. */
+  scroll-padding-top: 72px;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--frost-rgb) / 0.16) transparent;
+}
+
+/* Filled by the page (see PageHeader). It keeps the sheet's ground, a little see-through so what
+   scrolls under it is felt, with a hairline below. */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 0 var(--gutter);
+  border-bottom: 1px solid var(--line);
+  background: rgb(var(--harbor-rgb) / 0.86);
+  backdrop-filter: blur(14px) saturate(1.3);
+}
+
+/* Nothing in it yet (the first paint of a page): hold its height so the page doesn't jump. */
+.bar:empty {
+  min-height: 56px;
+}
 
 .main {
   min-width: 0;
-  padding: 36px clamp(20px, 4vw, 48px) 80px;
+  padding: 24px var(--gutter) 96px;
 }
 
 .main:focus {
@@ -482,13 +544,18 @@
   .shell {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--ground);
   }
 
   .sidebar {
-    height: auto;
-    padding: env(safe-area-inset-top, 0px) 12px 0;
-    border-right: 0;
+    position: sticky;
+    top: 0;
+    padding: env(safe-area-inset-top, 0px) 8px 0 12px;
     border-bottom: 1px solid var(--line);
+    background: var(--side);
   }
 
   .brandRow {
@@ -500,8 +567,8 @@
     margin-left: -8px;
   }
 
-  .menuButton {
-    display: inline-flex;
+  .brandTools {
+    display: flex;
   }
 
   .menu {
@@ -519,7 +586,12 @@
     background: var(--side);
   }
 
-  .navGroups {
+  /* The search icon in the bar does this job here. */
+  .search {
+    display: none;
+  }
+
+  .nav {
     flex: none;
     gap: 22px;
     overflow: visible;
@@ -530,27 +602,8 @@
     font-size: 15px;
   }
 
-  .navIcon {
-    width: 18px;
-    height: 18px;
-  }
-
-  .disclosure {
-    width: 44px;
-  }
-
-  .chevron {
-    width: 16px;
-    height: 16px;
-  }
-
-  .subLink {
-    min-height: 44px;
-    padding-left: 38px;
-    font-size: 14px;
-  }
-
-  .navLabel {
+  .navLabel,
+  .navBadge {
     font-size: 13px;
   }
 
@@ -559,17 +612,31 @@
     padding-top: 16px;
   }
 
-  .main {
-    padding: 24px 16px 64px;
+  /* The page scrolls as the document here, so the sheet is just its ground. */
+  .sheet {
+    margin: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
   }
-}
 
-/* The page under the open sheet stays still. */
-@media (max-width: 860px) {
+  .bar {
+    position: static;
+    padding-inline: 16px;
+    backdrop-filter: none;
+  }
+
+  .main {
+    padding: 20px 16px 88px;
+  }
+
+  /* The page under the open sheet stays still. */
   html:has(.menu[data-open]) {
     overflow: hidden;
   }
 }
+
+/* ---- Motion ------------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: no-preference) {
   .progress {
@@ -579,35 +646,50 @@
   }
 
   .navLink,
-  .subLink,
-  .menuButton,
-  .navIcon,
-  .disclosure,
-  .navRow {
+  .iconButton,
+  .search,
+  .accountButton,
+  .menuItem {
     transition:
-      background-color 0.12s ease,
-      color 0.12s ease;
+      background-color var(--quick) ease,
+      border-color var(--quick) ease,
+      color var(--quick) ease;
   }
 
-  .chevron {
-    transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* The lit block slides to the section you picked. It only starts moving once it has been
+     placed, so opening the portal doesn't send it down from the top. */
+  .glider[data-settled] {
+    transition:
+      transform var(--calm) var(--ease-in-out),
+      height var(--calm) var(--ease-in-out);
   }
 
-  /* Visibility waits for the fold to finish closing, and flips at once when it opens. */
-  .subWrap {
-    transition:
-      grid-template-rows 0.16s cubic-bezier(0.2, 0.8, 0.2, 1),
-      visibility 0s linear 0.16s;
+  /* A page arrives with a short fade and the smallest rise: enough to say it's new. */
+  .page {
+    animation: page 0.2s var(--ease-out);
   }
 
-  .navItem[data-open] > .subWrap {
-    transition:
-      grid-template-rows 0.16s cubic-bezier(0.2, 0.8, 0.2, 1),
-      visibility 0s;
+  /* From the row that opened it, never from nothing. */
+  .accountMenu {
+    animation: pop 0.16s var(--ease-out);
   }
 
   .menu[data-open] {
-    animation: sheet 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: sheet 0.2s var(--ease-out);
+  }
+}
+
+@keyframes page {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
   }
 }
 

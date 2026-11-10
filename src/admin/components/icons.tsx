@@ -152,3 +152,105 @@ export function KeyIcon(props: IconProps) {
     </Svg>
   )
 }
+
+// Controls: search, ways in and out, and the small marks toasts and menus carry.
+
+export function SearchIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M16 16l4 4" />
+    </Svg>
+  )
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 6l6 6-6 6" />
+    </Svg>
+  )
+}
+
+export function ArrowLeftIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M19 12H5M11 6l-6 6 6 6" />
+    </Svg>
+  )
+}
+
+/** Two chevrons, up and down: this row opens a menu. */
+export function SelectorIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M8 9.5l4-4 4 4M8 14.5l4 4 4-4" />
+    </Svg>
+  )
+}
+
+export function SignOutIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M14 4.5h3.5a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H14M10 8l-4 4 4 4M6 12h9" />
+    </Svg>
+  )
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </Svg>
+  )
+}
+
+export function AlertIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5v5M12 16v.2" />
+    </Svg>
+  )
+}
+
+/** An arrow into a tray: bring something in from another site. */
+export function ImportIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 4v10M8 10.5l4 4 4-4M5 16.5v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1" />
+    </Svg>
+  )
+}
+
+export function SendIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M20 4L10.5 13.5M20 4l-6 16-3.5-6.5L4 10l16-6z" />
+    </Svg>
+  )
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 7h14M10 7V5h4v2M7 7l.8 11a2 2 0 0 0 2 1.8h4.4a2 2 0 0 0 2-1.8L17 7M10.5 11v5M13.5 11v5" />
+    </Svg>
+  )
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 4.5v11M7.5 11l4.5 4.5 4.5-4.5M5 19.5h14" />
+    </Svg>
+  )
+}
+
+export function ReturnIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M19 6v5a3 3 0 0 1-3 3H6M10 10l-4 4 4 4" />
+    </Svg>
+  )
+}

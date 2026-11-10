@@ -2,8 +2,12 @@ import { useState } from 'react'
 import type { BoardInterest } from '../../../shared/api'
 import { BOARD_SEATS } from '../../../shared/constants'
 import { api } from '../../lib/api'
+import ui from '../admin.module.css'
+import { TrashIcon } from '../components/icons'
+import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../lib/toast'
 import { ConfirmDialog } from './people/ConfirmDialog'
-import { formatStampDate, plural, stampToIso } from './people/format'
+import { formatStampDate, stampToIso } from './people/format'
 import { toApiError, useApi } from './people/useApi'
 import shared from './people/people.module.css'
 import styles from './Fund.module.css'
@@ -15,7 +19,7 @@ export function Component() {
   const [deleting, setDeleting] = useState<BoardInterest | null>(null)
   const [busy, setBusy] = useState(false)
   const [deleteError, setDeleteError] = useState('')
-  const [announcement, setAnnouncement] = useState('')
+  const toast = useToast()
 
   const remove = async () => {
     if (!deleting) return
@@ -24,7 +28,7 @@ export function Component() {
     try {
       await api(`/admin/board-interest/${deleting.id}`, { method: 'DELETE' })
       setData((prev) => prev && { items: prev.items.filter((entry) => entry.id !== deleting.id) })
-      setAnnouncement(`Deleted ${deleting.name}’s entry.`)
+      toast(`${deleting.name}’s entry deleted`)
       setDeleting(null)
     } catch (failure) {
       setDeleteError(toApiError(failure).message)
@@ -35,20 +39,11 @@ export function Component() {
 
   return (
     <div className={shared.page}>
-      <title>Board interest · Admin · BU Proto</title>
-
-      <header className={shared.head}>
-        <div className={shared.headText}>
-          <h1 className={shared.title}>
-            Board interest
-            {data && <span className={shared.count}>{plural(all.length, 'person', 'people')}</span>}
-          </h1>
-          <p className={shared.lede}>
-            Who put their hand up on the board page, and for which seat. They got a confirmation email; the owners get a
-            note for each one.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Board"
+        tabTitle="Board interest"
+        lede="Who put their hand up on the board page, and for which seat. They got a confirmation email; the owners get a note for each one."
+      />
 
       <p className={shared.error} role="alert" hidden={!error}>
         {error?.message}
@@ -63,46 +58,50 @@ export function Component() {
           ))}
         </ul>
       )}
-      <p className={styles.live} aria-live="polite">
-        {announcement}
-      </p>
-
       {!data && loading ? (
-        <p className={shared.empty}>Loading…</p>
+        <div className={shared.panel} aria-hidden="true">
+          <span className={ui.skeleton} style={{ width: 160, marginBottom: 14 }} />
+          <span className={ui.skeleton} style={{ width: 320 }} />
+        </div>
       ) : data && all.length === 0 ? (
-        <p className={`${shared.panel} ${shared.empty}`}>No one has put their hand up yet.</p>
+        <div className={`${shared.panel} ${shared.empty}`}>
+          <h2>No one has put their hand up yet</h2>
+          <p>People who fill in the form on the board page show up here.</p>
+        </div>
       ) : (
         <ul className={styles.entries}>
           {all.map((entry) => (
             <li key={entry.id} className={`${shared.panel} ${styles.entry}`}>
               <div className={styles.entryHead}>
+                <span className={ui.avatar} aria-hidden="true">
+                  {entry.name.trim().slice(0, 1).toUpperCase()}
+                </span>
                 <div className={styles.who}>
                   <h2 className={styles.name}>{entry.name}</h2>
-                  <a href={`mailto:${entry.email}`} className={`${shared.link} ${shared.mono} ${styles.email}`}>
-                    {entry.email}
-                  </a>
-                  <span className={shared.dim}>{entry.year}</span>
+                  <p className={styles.meta}>
+                    <a href={`mailto:${entry.email}`} className={shared.link}>
+                      {entry.email}
+                    </a>
+                    <span>{entry.year}</span>
+                    <time dateTime={stampToIso(entry.createdAt)}>Sent {formatStampDate(entry.createdAt)}</time>
+                  </p>
                 </div>
-                <div className={styles.facts}>
-                  <span className={styles.amount}>{entry.role}</span>
-                  <time className={`${shared.figure} ${shared.dim}`} dateTime={stampToIso(entry.createdAt)}>
-                    {formatStampDate(entry.createdAt)}
-                  </time>
-                </div>
-              </div>
-              {entry.note && (
-                <dl className={styles.answers}>
-                  <div>
-                    <dt className={shared.label}>What they’d take on</dt>
-                    <dd className={styles.spend}>{entry.note}</dd>
-                  </div>
-                </dl>
-              )}
-              <div>
-                <button type="button" className={shared.dangerSmall} onClick={() => setDeleting(entry)}>
-                  Delete
+                <button type="button" className={`${ui.dangerGhost} ${styles.delete}`} aria-label={`Delete ${entry.name}’s entry`} onClick={() => setDeleting(entry)}>
+                  <TrashIcon />
                 </button>
               </div>
+              <dl className={styles.answers}>
+                <div>
+                  <dt>Seat</dt>
+                  <dd>{entry.role}</dd>
+                </div>
+                {entry.note && (
+                  <div>
+                    <dt>What they’d take on</dt>
+                    <dd className={styles.spend}>{entry.note}</dd>
+                  </div>
+                )}
+              </dl>
             </li>
           ))}
         </ul>

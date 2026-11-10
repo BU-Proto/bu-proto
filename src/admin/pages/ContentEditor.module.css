@@ -1,47 +1,29 @@
-.form {
-  position: relative;
+/* The editor: the form's sections down the page, and beside them a rail with where and whether
+   the row shows. The rail stays in view while the sections scroll. */
+.layout {
   display: grid;
-  gap: 24px;
-  min-width: 0;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) 288px;
+  align-items: start;
   gap: 20px;
-  padding: 24px 24px 0;
+  min-width: 0;
 }
 
-.wide {
-  grid-column: 1 / -1;
-}
-
-/* Long editors come in titled sections. Each holds its own grid, so the grid's padding moves here. */
-.sections {
-  display: grid;
-}
-
-.section {
+.main {
   display: grid;
   gap: 16px;
   min-width: 0;
-  padding: 24px;
 }
 
-/* The form's own gap already spaces the last section from the save bar. */
-.section:last-child {
-  padding-bottom: 0;
-}
-
-.section + .section {
-  border-top: 1px solid var(--line-strong);
-}
-
-.section .grid {
-  padding: 0;
+.section,
+.railPanel {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--rim);
 }
 
 .sectionHead {
@@ -51,52 +33,136 @@
 
 .sectionTitle {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
 }
 
-/* The save bar sticks to the bottom of the screen on long forms: the form's own footer, raised
-   over the fields scrolling under it. */
-.bar {
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+/* Clear of the sticky bar above it. */
+.rail {
   position: sticky;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  padding: 12px 24px;
-  border-top: 1px solid var(--line-strong);
-  border-radius: 0 0 var(--radius-panel) var(--radius-panel);
-  background: var(--surface-raised);
+  top: 76px;
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  min-width: 0;
 }
 
-.barStatus {
-  flex: 1 1 140px;
+.railPanel {
+  width: 100%;
+  gap: 16px;
+}
+
+.railHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.railFields {
+  display: grid;
+  gap: 16px;
+}
+
+/* When it was made and last saved: small print under the switches. */
+.facts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+}
+
+.facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.facts dt {
+  color: var(--ink-dim);
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+/* "Unsaved changes" beside the buttons in the bar. Empty, it takes no room. */
+.saveState {
+  color: var(--ink-dim);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.saveState:empty {
+  display: none;
+}
+
+/* A save the server turned down, said once above the form; each field says its own part. */
+.callout {
+  padding: 12px 16px;
+  border: 1px solid var(--danger-edge);
+  border-radius: var(--radius-panel);
+  background: linear-gradient(var(--danger-wash), var(--danger-wash)), var(--surface);
+  color: var(--danger-ink);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* What hangs off the row (an event's RSVPs) lines up with the form, not the rail. */
+.below {
   min-width: 0;
-  padding-inline: 6px;
+  max-width: calc(100% - 308px);
+}
+
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rail {
+    position: static;
+  }
+
+  .below {
+    max-width: none;
+  }
 }
 
 @media (max-width: 640px) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
-    padding: 18px 16px 0;
   }
 
-  .section {
-    padding: 20px 16px;
+  .section,
+  .railPanel {
+    padding: 16px;
   }
+}
 
-  .section:last-child {
-    padding-bottom: 0;
+@media (prefers-reduced-motion: no-preference) {
+  .saveState:not(:empty) {
+    animation: arrive var(--swift) var(--ease-out);
   }
+}
 
-  .section .grid {
-    padding: 0;
-  }
-
-  .bar {
-    padding: 12px 16px;
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateX(4px);
   }
 }

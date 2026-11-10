@@ -99,8 +99,8 @@ export function Component() {
   return (
     <div className={admin.page}>
       <PageHeader
-        title="Import wins from Devpost"
-        back={{ to: '/admin/wins', label: 'Wins' }}
+        title="Wins"
+        tabTitle="Import wins from Devpost"
         lede={
           <>
             <p>
