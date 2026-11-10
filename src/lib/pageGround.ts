@@ -53,11 +53,12 @@ export const GROUNDS: Record<GroundName, PageGround> = {
     light: [1, 0.95],
     reach: 'top',
   },
-  // Hackathons: chunky block shades, like a departures board.
+  // Hackathons: chunky block shades, like a departures board. Its brightest band runs behind the
+  // intro, so the light comes down a little to keep the lede readable.
   hackathons: {
     name: 'hackathons',
     field: field({ shape: 'strata', ramp: 'blocks', cellSize: 12, ribbing: 0.3, glyphContrast: 0.4, baseColor: 0.75, drift: 0.7 }),
-    light: [1, 0.95],
+    light: [0.95, 0.82],
     reach: 'top',
   },
   // Wins and the track record: the classic ramp in fine cells, deep fluting, a little dimmer.

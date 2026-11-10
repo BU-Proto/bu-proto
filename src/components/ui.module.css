@@ -173,9 +173,23 @@
 
 /* Page intro: the title and lede, set like the landing's section titles. */
 .intro {
+  position: relative;
+  isolation: isolate;
   display: grid;
   gap: 16px;
   max-width: 820px;
+}
+
+/* The hero's pool of harbor, behind an inner page's title and lede: wider than the words and gone
+   well before its edges, so they read over the field's brightest band without a box. */
+.intro::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -35% -30% -45% -20%;
+  /* closest-side keeps the ellipse inside the box, so it never meets an edge and leaves a line. */
+  background: radial-gradient(closest-side, rgb(var(--harbor-rgb) / 0.6), rgb(var(--harbor-rgb) / 0));
+  pointer-events: none;
 }
 
 

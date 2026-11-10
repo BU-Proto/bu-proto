@@ -12,28 +12,25 @@ import styles from './WinSheet.module.css'
 /** Staggers the parts of a block as it settles in (see motion/useReveal). */
 const after = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
 
-/** The heading, its words rising into place, with the lede settling in beside it. */
-function Head({ id }: { id: string }) {
+/**
+ * The heading, its words rising into place, with the lede settling in beside it. On the landing
+ * the way to every win sits under the lede, as "All events" sits by Next up.
+ */
+function Head({ id, allWins = false }: { id: string; allWins?: boolean }) {
   return (
     <header className={styles.head}>
       <h2 id={id} className={styles.title} data-reveal="words">
         <RevealWords text={WIN_SHEET.title} />
       </h2>
-      <p className={styles.lede} data-reveal="rise" style={after(220)}>
-        {WIN_SHEET.lede}
-      </p>
+      <div className={styles.headAside} data-reveal="rise" style={after(220)}>
+        <p className={styles.lede}>{WIN_SHEET.lede}</p>
+        {allWins && (
+          <Link className={ui.textLink} to="/wins">
+            {WIN_SHEET.allWins}
+          </Link>
+        )}
+      </div>
     </header>
-  )
-}
-
-/** The way through to every win: a button sized to its words. */
-function AllWins() {
-  return (
-    <div className={styles.allRow}>
-      <Link className={ui.secondary} to="/wins" data-reveal="rise">
-        {WIN_SHEET.allWins}
-      </Link>
-    </div>
   )
 }
 
@@ -82,15 +79,8 @@ function Sheet({ wins, className, children }: { wins: readonly Win[]; className?
 export function LatestWins({ wins, id }: { wins: readonly Win[]; id: string }) {
   return (
     <Sheet wins={wins} className={styles.latest}>
-      <Head id={id} />
-      {wins.length === 0 ? (
-        <p className={styles.empty}>{WINS_EMPTY}</p>
-      ) : (
-        <>
-          <WinGrid wins={wins} />
-          <AllWins />
-        </>
-      )}
+      <Head id={id} allWins={wins.length > 0} />
+      {wins.length === 0 ? <p className={styles.empty}>{WINS_EMPTY}</p> : <WinGrid wins={wins} />}
     </Sheet>
   )
 }

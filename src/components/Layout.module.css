@@ -131,22 +131,6 @@
   mask-image: linear-gradient(transparent, #000 30%, #000 46%, transparent);
 }
 
-/* The frozen field, its glyphs cut from the field's own sweep so it freezes with its colour. */
-.groundTexture {
-  position: absolute;
-  inset: 0;
-  background: var(--field-sweep);
-  opacity: 0.1;
-  -webkit-mask-image: var(--texture-mask), linear-gradient(to bottom, transparent 0, #000 40vh);
-  mask-image: var(--texture-mask), linear-gradient(to bottom, transparent 0, #000 40vh);
-  -webkit-mask-size: 595px 400px, 100% 100%;
-  mask-size: 595px 400px, 100% 100%;
-  -webkit-mask-repeat: repeat, no-repeat;
-  mask-repeat: repeat, no-repeat;
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .fieldLight,
   .ground {

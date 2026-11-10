@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Outlet, ScrollRestoration, useLocation, useNavigation } from 'react-router'
 import { AsciiField, SHAPES, type AsciiFieldHandle, type ShapeName } from '../ascii-field'
-import { glyphTexture } from '../lib/glyphArt'
 import { GROUND, GROUNDS, groundFor, lightFilter, type GroundName } from '../lib/pageGround'
 import { useSmoothAnchors } from '../lib/smoothScroll'
 import { reducedMotion } from '../lib/useInView'
@@ -17,7 +16,7 @@ const DIM_MS = 200
 
 /** The drain from the field into harbor: its glyph rows and cell size, and the air between the
     page's intro and where it begins. */
-const DRAIN_ROWS = 12
+const DRAIN_ROWS = 24
 const DRAIN_CELL = 10
 const DRAIN_GAP = 12
 
@@ -42,8 +41,6 @@ export function Layout() {
   const shape = useShapePreview() ?? pageShape
   const field = useMemo(() => (shape ? { ...ground.field, shape } : ground.field), [ground.field, shape])
   const outlet = useMemo<LayoutOutlet>(() => ({ setFieldShape: setPageShape }), [])
-  const texture = useMemo(() => glyphTexture(GROUND.texture), [])
-  const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   useSmoothAnchors()
   // Moving to a page that loads data keeps the old page up until the data lands; a line along
   // the top says the click registered.
@@ -159,16 +156,9 @@ export function Layout() {
           ref={groundRef}
           className={styles.ground}
           data-reach={GROUNDS[target].reach}
-          style={
-            {
-              '--texture': texture ? `url(${texture})` : 'none',
-              '--texture-mask': textureMask ? `url(${textureMask})` : 'none',
-            } as CSSProperties
-          }
           aria-hidden="true"
         >
           <GlyphEdge color={GROUND.harbor} mode="drain" rows={DRAIN_ROWS} cell={DRAIN_CELL} />
-          <span className={styles.groundTexture} />
         </div>
         <span className={styles.progress} data-active={navigating || undefined} aria-hidden="true" />
         <TopBar />

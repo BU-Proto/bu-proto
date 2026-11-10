@@ -140,11 +140,11 @@
 }
 
 /* The top of an inner page: the field drains into harbor just under it (Layout measures it and
-   sets --drain-h), and the page's content starts once that's done, so the first cards never sit
-   half in the fade. Less the page's own row gap, and a little less again so they start as the
-   last glyphs go. */
+   sets --drain-h). The page's content starts in the drain's last, nearly solid stretch, so the
+   first cards never sit in the bright part of the fade, and the drain stays long enough to be soft.
+   Less the page's own row gap. */
 [data-ground-after] {
-  margin-bottom: max(0px, calc(var(--drain-h, 0px) - 28px - 16px));
+  margin-bottom: max(0px, calc(var(--drain-h, 0px) * 0.7 - 28px));
 }
 
 /* In-page links glide to their target. Only while one was just clicked (lib/smoothScroll sets the

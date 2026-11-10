@@ -44,25 +44,6 @@
   margin-top: 170px;
 }
 
-/* The field's light caught in the harbor just under the drain, its colours where they were above:
-   cerulean to the left, the raspberry core, the teal edge. It rises from nothing at the seam, so
-   the drain still ends in plain harbor, and is gone before Start. */
-.afterHero::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0 0 auto;
-  height: min(clamp(560px, 90vh, 900px), 100%);
-  background:
-    radial-gradient(40% 60% at 14% 28%, rgb(var(--sky-deep-rgb) / 0.28), transparent 72%),
-    radial-gradient(42% 64% at 44% 32%, rgb(var(--rose-deep-rgb) / 0.26), transparent 72%),
-    radial-gradient(36% 56% at 66% 24%, rgb(var(--iris-deep-rgb) / 0.22), transparent 72%),
-    radial-gradient(34% 56% at 92% 30%, rgb(var(--lagoon-rgb) / 0.2), transparent 72%);
-  -webkit-mask-image: linear-gradient(transparent, #000 34%, #000 52%, transparent);
-  mask-image: linear-gradient(transparent, #000 34%, #000 52%, transparent);
-  pointer-events: none;
-}
-
 /* A heading inside a section: the next beat, the latest wins. */
 .subTitle {
   margin: 0;

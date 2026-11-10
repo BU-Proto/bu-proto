@@ -73,10 +73,17 @@
   line-height: 0.95;
 }
 
-.lede {
+/* The lede and, on the landing, the way to every win under it. */
+.headAside {
+  display: grid;
   flex: none;
+  justify-items: start;
+  gap: 12px;
   width: 300px;
   max-width: 100%;
+}
+
+.lede {
   margin: 0;
   color: var(--ink-soft);
   font-size: 15px;
@@ -303,7 +310,7 @@
     font-size: 15vw;
   }
 
-  .lede {
+  .headAside {
     margin: 3em 0;
   }
 
@@ -462,11 +469,6 @@
   font-size: min(clamp(20px, 1.9vw, 28px), calc(100cqw / (var(--n) * 0.54 + 1.6)));
 }
 
-.latest .allRow {
-  justify-content: flex-start;
-  margin-top: calc(var(--cell) * 3);
-  padding: 0;
-}
 
 @media (max-width: 980px) {
   .latest .grid {
