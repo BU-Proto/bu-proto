@@ -21,11 +21,16 @@ export interface Fact {
   text: string
 }
 
-/** The plan in one line, the caveat under it, and the two things people ask first beside it. */
+/**
+ * The plan, printed as a ticket: where from and where to, the plan in one line, the two things
+ * people ask first, and on the stub the caveat that it's still only a plan.
+ */
 export const PLAN = {
   title: 'The plan',
+  from: 'Boston',
+  to: 'Your hackathon',
   headline: '$50 to $500 toward getting there, paid before you go.',
-  caveat: 'A plan, not a promise. The amounts firm up once the fund is funded.',
+  caveat: { lead: 'A plan, not a promise.', text: 'The amounts firm up once the fund is funded.' },
   facts: [
     {
       title: 'Travel only, for now',
@@ -40,7 +45,9 @@ export interface Stop {
   text: string
 }
 
-/** The four stops on the way, in order. The last is the one thing asked back. */
+/**
+ * The four stops on the way, in order. The last is the one thing asked back.
+ */
 export const ROUTE = {
   title: 'How it’ll work',
   lede: 'Four stops, quick enough that you can still book in time.',

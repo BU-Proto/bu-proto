@@ -5,13 +5,14 @@ import { GRADIENT_COLORMAP, type Colormap } from './colormap'
  * design; the others are painted here from the same pigments (picked out of that gradient), so
  * every shape is in the site's one palette and only the silhouette changes.
  */
-export const SHAPES = ['tides', 'bloom', 'eclipse', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
+export const SHAPES = ['tides', 'bloom', 'eclipse', 'trails', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
 export type ShapeName = (typeof SHAPES)[number]
 
 export const SHAPE_LABELS: Record<ShapeName, string> = {
   tides: 'Tides',
   bloom: 'Bloom',
   eclipse: 'Eclipse',
+  trails: 'Trails',
   ripple: 'Ripple',
   aurora: 'Aurora',
   rays: 'Rays',
@@ -291,6 +292,18 @@ function paintTides(time: number): GradientMap {
   return soften({ width: W, height: H, data }, TIDES_SOFTEN, tidesScratch as Float32Array)
 }
 
+/** The trails' climb: about twenty degrees above level. */
+const TRAIL_COS = Math.cos(0.36)
+const TRAIL_SIN = Math.sin(0.36)
+/** Each trail: where it runs across the climb, where its head is, its length, width, colour, strength. */
+const TRAILS: readonly [at: number, head: number, length: number, width: number, pigment: RGB, alpha: number][] = [
+  [0.3, 1.52, 1.3, 0.05, P.lagoon, 0.5],
+  [0.5, 1.3, 1.3, 0.075, P.peach, 0.9],
+  [0.7, 1.46, 1.6, 0.06, P.rose, 0.85],
+  [0.93, 1.22, 1.35, 0.08, P.violet, 0.8],
+  [1.12, 1.4, 1.5, 0.06, P.peach, 0.65],
+]
+
 const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
   // Currents of light flowing across the top of the landing (see paintTides).
   tides: paintTides,
@@ -317,6 +330,29 @@ const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
       c = over(c, P.deep, smooth(R * 0.95, R * 0.55, d) * 0.92)
       const bead = Math.hypot(x - (cx + R * Math.cos(-0.75)), y - (cy + R * Math.sin(-0.75)))
       return over(c, P.haze, gauss(bead / 0.11))
+    }),
+
+  // Light trails climbing from the lower left to the upper right, like a long exposure of
+  // departures: each a soft streak with a faint tail and a brighter head, bending upward as it
+  // goes. No object anywhere, only the way out. For the fund, which pays for getting there.
+  trails: () =>
+    painted((x, y, ground) => {
+      // Along the climb (u) and across it (v); the climb is tilted up to the right.
+      const u = x * TRAIL_COS - y * TRAIL_SIN
+      const v = x * TRAIL_SIN + y * TRAIL_COS
+      // A violet dusk over the upper right, so the trails have something to climb into.
+      let c = over(ground, P.iris, 0.5 * smooth(0.1, 1.3, u) * smooth(0.95, 0.2, v))
+      for (const [at, head, length, width, pigment, alpha] of TRAILS) {
+        const along = (u - (head - length)) / length
+        // Each trail lifts off its line as it goes, so the bundle fans a little toward the top.
+        const lift = 0.3 * along * along
+        const across = (v - at + lift) / (width * (0.55 + 0.45 * clamp01(along)))
+        const body = gauss(across) * smooth(0, 0.7, along) * smooth(1.12, 0.96, along)
+        c = over(c, pigment, body * alpha)
+        // The head: a pale bead where the trail is newest.
+        c = over(c, P.haze, gauss(across * 1.5) * gauss((along - 0.97) / 0.1) * alpha * 0.6)
+      }
+      return c
     }),
 
   // Rings rolling out from beyond the top-left corner, as if something dropped in just off the

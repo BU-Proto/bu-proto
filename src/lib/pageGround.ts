@@ -17,7 +17,7 @@ export const GROUND = {
   textureMask: '#ffffff',
 } as const
 
-export type GroundName = 'home' | 'events' | 'hackathons' | 'record' | 'reading' | 'membership' | 'legal'
+export type GroundName = 'home' | 'events' | 'hackathons' | 'record' | 'reading' | 'membership' | 'fund' | 'legal'
 
 export interface PageGround {
   name: GroundName
@@ -75,11 +75,19 @@ export const GROUNDS: Record<GroundName, PageGround> = {
     light: [0.7, 0.9],
     reach: 'top',
   },
-  // Join, the fund and the board: forms and names, so the field frames the header and the
-  // form stands on solid harbor.
+  // Join and the board: forms and names, so the field frames the header and the form stands on
+  // solid harbor.
   membership: {
     name: 'membership',
     field: field({ shape: 'eclipse', ramp: 'classic', cellSize: 10, baseColor: 0.6, glyphContrast: 0.45, ribbing: 0.5, drift: 0.5 }),
+    light: [1, 0.95],
+    reach: 'top',
+  },
+  // The fund: light trails climbing to the upper right, the way out of town. Softer glyphs than
+  // the other membership pages, so the trails read as light rather than as stripes.
+  fund: {
+    name: 'fund',
+    field: field({ shape: 'trails', ramp: 'classic', cellSize: 10, baseColor: 0.62, glyphContrast: 0.4, ribbing: 0.35, drift: 0.5 }),
     light: [1, 0.95],
     reach: 'top',
   },
@@ -101,7 +109,7 @@ const ROUTES: readonly [prefix: string, ground: GroundName][] = [
   ['/track-record', 'record'],
   ['/resources', 'reading'],
   ['/join', 'membership'],
-  ['/grants', 'membership'],
+  ['/grants', 'fund'],
   ['/board', 'membership'],
   ['/privacy', 'legal'],
   ['/terms', 'legal'],

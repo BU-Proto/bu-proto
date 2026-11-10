@@ -1,61 +1,35 @@
 /*
- * The fund's coming-soon page. One ground the whole way down: the field over the intro, then
- * harbor, lit from behind by soft pools of the field's own colours. The pools have no edges and
- * overlap, so the light shifts down the page while the ground never changes. No bands, no rules,
- * no boxes. The colour that carries meaning is on the route: each stop has its own, read along
- * the field's gradient, and the last one is mint, the site's colour for what's yours to do.
+ * The fund's coming-soon page. Plain harbor under the intro, like the other inner pages, with two
+ * navy sheets on it: the plan, cut like a ticket, at the top, and the interest form at the foot.
+ * Between them nothing is boxed: the stops are signs drawn in the field's characters, straight
+ * on the ground. Colour is the field's gradient (the ticket's line, the signs) and mint, the
+ * site's colour for what's yours, which here is the button.
  */
 
 .page {
-  /* The field's light, from the palette in index.css. Light tones are for text and the route's
-     glyphs; the -deep ones (as rgb channels) only ever light the ground. */
-  --tone-sky: var(--sky, #7cc7f4);
-  --tone-iris: var(--iris, #ab9dff);
-  --tone-rose: var(--rose, #f4a2c0);
-  --glow-sky: var(--sky-deep-rgb, 26 143 192);
-  --glow-iris: var(--iris-deep-rgb, 122 110 224);
-  --glow-rose: var(--rose-deep-rgb, 194 64 122);
-  --glow-lagoon: var(--lagoon-rgb, 63 184 208);
-  --ring: 28px;
+  /* The bite the perforation takes out of the ticket's edge, top and bottom. */
+  --notch: 13px;
+  --sheet: var(--navy);
 
   width: min(1180px, 100%);
   margin-inline: auto;
-  padding: clamp(28px, 6vh, 64px) 0 clamp(72px, 12vh, 120px);
-}
-
-/* Every section can hang a light pool behind itself without lifting it over the page. */
-.plan,
-.route,
-.ignite,
-.interest {
-  position: relative;
-  isolation: isolate;
-}
-
-.plan::before,
-.route::before,
-.ignite::before,
-.interest::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
+  padding: clamp(28px, 6vh, 64px) 0 clamp(64px, 10vh, 104px);
 }
 
 .subtitle {
   margin: 0;
-  font-size: clamp(30px, 3.6vw, 46px);
+  font-size: clamp(28px, 3.2vw, 42px);
   font-weight: 300;
   letter-spacing: -0.03em;
-  line-height: 1.05;
+  line-height: 1.08;
   text-wrap: balance;
 }
 
 .lede {
-  max-width: 46ch;
+  max-width: 44ch;
   margin: 0;
   color: var(--ink-soft);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.55;
   text-wrap: pretty;
 }
@@ -83,35 +57,164 @@
   font-weight: 500;
 }
 
-/* ---- The plan: one line, and the two things people ask first ---------------------------------- */
+/* ---- The plan, printed as a ticket ------------------------------------------------------------ */
 
-/* Starts where the field has drained, so the line stands on harbor. */
-.plan {
+/* Two pieces of one sheet, torn along a perforation: the plan, and a stub with its caveat. Each
+   piece is cut with its own mask, so the shadow has to come from a filter on the pair. */
+.ticket {
   display: grid;
-  grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
-  align-items: start;
-  gap: 40px clamp(32px, 5vw, 72px);
-  padding-top: clamp(120px, 20vh, 200px);
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 27%);
+  margin-top: 44px;
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.25)) drop-shadow(0 26px 28px rgb(0 0 0 / 0.4));
 }
 
-/* Blue into violet, the top of the field's gradient, picking up where the field leaves off. */
-.plan::before {
-  inset: -10% auto -30% -18%;
-  width: min(1100px, 120vw);
+.ticketBody,
+.stub {
+  border: 1px solid var(--slab-edge);
+  background-origin: border-box;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* The bites sit on the seam's two ends. A ring one pixel wider than each bite, drawn under the
+   mask, carries the sheet's edge around it. */
+.ticketBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: clamp(20px, 2.6vw, 30px);
+  padding: clamp(22px, 3.2vw, 40px);
+  border-right: 0;
+  border-radius: 22px 0 0 22px;
   background:
-    radial-gradient(closest-side at 38% 50%, rgb(var(--glow-iris) / 0.3), transparent),
-    radial-gradient(closest-side at 72% 34%, rgb(var(--glow-sky) / 0.26), transparent);
+    radial-gradient(circle calc(var(--notch) + 1px) at 100% 0, var(--slab-edge) 99%, transparent),
+    radial-gradient(circle calc(var(--notch) + 1px) at 100% 100%, var(--slab-edge) 99%, transparent),
+    radial-gradient(60% 60% at 0% 0%, rgb(var(--sky-deep-rgb) / 0.18), transparent 70%),
+    var(--sheet);
+  -webkit-mask-image:
+    radial-gradient(circle var(--notch) at 100% 0, transparent 97%, #000),
+    radial-gradient(circle var(--notch) at 100% 100%, transparent 97%, #000);
+  mask-image:
+    radial-gradient(circle var(--notch) at 100% 0, transparent 97%, #000),
+    radial-gradient(circle var(--notch) at 100% 100%, transparent 97%, #000);
+  -webkit-mask-position: top, bottom;
+  mask-position: top, bottom;
+  -webkit-mask-size: 100% 51%;
+  mask-size: 100% 51%;
 }
 
-.planLead {
+.stub {
+  position: relative;
   display: grid;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: space-between;
+  gap: 24px;
+  padding: clamp(22px, 3.2vw, 40px);
+  padding-left: clamp(24px, 3vw, 36px);
+  border-left: 0;
+  border-radius: 0 22px 22px 0;
+  background:
+    radial-gradient(circle calc(var(--notch) + 1px) at 0 0, var(--slab-edge) 99%, transparent),
+    radial-gradient(circle calc(var(--notch) + 1px) at 0 100%, var(--slab-edge) 99%, transparent),
+    radial-gradient(90% 60% at 100% 0%, rgb(var(--rose-deep-rgb) / 0.14), transparent 70%),
+    var(--sheet);
+  -webkit-mask-image:
+    radial-gradient(circle var(--notch) at 0 0, transparent 97%, #000),
+    radial-gradient(circle var(--notch) at 0 100%, transparent 97%, #000);
+  mask-image:
+    radial-gradient(circle var(--notch) at 0 0, transparent 97%, #000),
+    radial-gradient(circle var(--notch) at 0 100%, transparent 97%, #000);
+  -webkit-mask-position: top, bottom;
+  mask-position: top, bottom;
+  -webkit-mask-size: 100% 51%;
+  mask-size: 100% 51%;
+}
+
+/* The stub's code, in the field's characters: rows set tight enough that the bars run together. */
+.code {
+  overflow: hidden;
+  margin: 0;
+  color: rgb(var(--frost-rgb) / 0.42);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: -0.34em;
+  line-height: 0.82;
+  white-space: pre;
+  user-select: none;
+}
+
+.caveat {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.caveatLead {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* The perforation: a row of pin holes down the seam, between the two bites. */
+.stub::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--notch) + 8px);
+  bottom: calc(var(--notch) + 8px);
+  left: -2px;
+  width: 4px;
+  background: radial-gradient(circle, rgb(var(--harbor-rgb) / 0.9) 1.4px, transparent 1.9px) center top / 4px 10px
+    repeat-y;
+}
+
+/* Where from and where to, with the line between them in the field's characters and colours. */
+.leg {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.leg > span {
+  flex: none;
+}
+
+.leg > .rail {
+  flex: 1;
+}
+
+.rail {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--sky), var(--iris) 50%, var(--rose));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  /* No ligatures: every rail is its own character, as in the field. */
+  font-variant-ligatures: none;
+  line-height: 1;
+  opacity: 0.85;
+  user-select: none;
 }
 
 .headline {
-  max-width: 17ch;
+  max-width: 21ch;
   margin: 0;
-  font-size: clamp(32px, 4.3vw, 54px);
+  font-size: clamp(30px, 3.9vw, 50px);
   font-weight: 300;
   letter-spacing: -0.035em;
   line-height: 1.08;
@@ -119,18 +222,10 @@
   text-wrap: balance;
 }
 
-.caveat {
-  max-width: 44ch;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 15px;
-  line-height: 1.5;
-}
-
 .facts {
   display: grid;
-  gap: 26px;
-  padding-top: 0.5em;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px clamp(24px, 4vw, 56px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -138,15 +233,16 @@
 
 .fact {
   display: grid;
-  gap: 6px;
+  align-content: start;
+  gap: 5px;
 }
 
 .factTitle {
   margin: 0;
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
 .factText {
@@ -158,132 +254,67 @@
   text-wrap: pretty;
 }
 
-/* ---- How it'll work: a strip map in the field's characters ------------------------------------ */
+/* ---- The sections under it: a title on the left, what it introduces on the right --------------- */
+
+.section {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  align-items: start;
+  gap: 36px clamp(32px, 6vw, 96px);
+  padding-top: clamp(84px, 13vh, 132px);
+}
+
+/* ---- How it'll work: a row of signs in the field's characters --------------------------------- */
 
 .route {
   display: grid;
-  gap: clamp(44px, 7vh, 64px);
-  padding-top: clamp(100px, 15vh, 160px);
+  gap: clamp(32px, 5vh, 48px);
+  padding-top: clamp(84px, 13vh, 132px);
 }
 
-.map {
-  --gap: clamp(24px, 3.4vw, 48px);
-  position: relative;
-}
-
-/* The line's light on the ground: its own gradient, spread wide and soft along it. */
-.map::before {
-  content: '';
-  position: absolute;
-  z-index: -2;
-  top: calc(var(--ring) / 2 - 170px);
-  right: -12%;
-  left: -12%;
-  height: 340px;
-  background: linear-gradient(
-    90deg,
-    rgb(var(--glow-sky)),
-    rgb(var(--glow-iris)) 35%,
-    rgb(var(--glow-rose)) 60%,
-    rgb(var(--mint-rgb) / 0.6) 85%
-  );
-  opacity: 0.32;
-  -webkit-mask-image: radial-gradient(closest-side, #000, transparent);
-  mask-image: radial-gradient(closest-side, #000, transparent);
-  pointer-events: none;
-}
-
-/* The line: rails of glyphs, coloured along the field's gradient from the first stop to the last,
-   then running on and fading out past it, since it isn't meant to be a one-trip line. */
-.track {
-  position: absolute;
-  top: calc(var(--ring) / 2);
-  right: 0;
-  left: 0;
-  overflow: hidden;
-  transform: translateY(-50%);
-  background: linear-gradient(
-    90deg,
-    var(--tone-sky) 0%,
-    var(--tone-iris) 26%,
-    var(--tone-rose) 52%,
-    var(--mint) 78%,
-    var(--mint) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-family: var(--font-mono);
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 0.95;
-  white-space: pre;
-  -webkit-mask-image: linear-gradient(90deg, #000 84%, transparent);
-  mask-image: linear-gradient(90deg, #000 84%, transparent);
-  filter: drop-shadow(0 0 12px rgb(var(--glow-iris) / 0.9));
-  user-select: none;
-}
-
-.trackRow {
-  display: block;
-}
-
-.stops {
+/* The four stops, side by side. */
+.steps {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 32px var(--gap);
+  gap: 28px clamp(24px, 3.4vw, 48px);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .stop {
-  position: relative;
   display: grid;
   align-content: start;
-  gap: 10px;
+  justify-items: start;
+  gap: 8px;
 }
 
-/* Each stop lights the ground around it in its own colour; side by side they run together into
-   one long glow under the line. */
-.stop::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  top: calc(var(--ring) / 2 - 190px);
-  left: calc(var(--ring) / 2 - 260px);
-  width: 520px;
-  height: 380px;
-  background: radial-gradient(closest-side, rgb(var(--glow) / 0.36), transparent);
-  pointer-events: none;
-}
-
-/* A station: a ring in the stop's colour, with harbor around it so the rails stop short of it. */
-.ring {
-  width: var(--ring);
-  height: var(--ring);
-  margin-bottom: 22px;
-  border: 4px solid var(--tone);
-  border-radius: 50%;
-  background: var(--harbor);
-  box-shadow:
-    0 0 0 7px var(--harbor),
-    0 0 28px 8px rgb(var(--glow) / 0.75);
+/* A sign: drawn in glyphs, and coloured from the field's gradient where it stands in the row, so
+   the four read as one sweep of light from sky to rose. */
+.sign {
+  --figure-size: 5.5px;
+  /* The drawing has a little air round it; pull it back so its strokes start on the text's edge. */
+  margin: 0 0 14px -10px;
+  font-weight: 500;
+  background-image: linear-gradient(90deg, var(--sky), var(--iris) 50%, var(--rose));
+  background-position: calc(var(--col) * 33.333%) 0;
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .stopTitle {
   margin: 0;
-  color: var(--tone);
-  font-size: clamp(24px, 2.4vw, 32px);
+  font-size: clamp(20px, 2vw, 24px);
   font-weight: 400;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   text-wrap: balance;
 }
 
 .stopText {
-  max-width: 28ch;
+  max-width: 30ch;
   margin: 0;
   color: var(--ink-soft);
   font-size: 15px;
@@ -291,47 +322,7 @@
   text-wrap: pretty;
 }
 
-/* The page's one motion: the line runs out from the first stop, and each station comes on as the
-   line reaches it. Under reduced motion it's simply there. */
-@media (prefers-reduced-motion: no-preference) {
-  .track {
-    transition: clip-path 1500ms cubic-bezier(0.45, 0.05, 0.25, 1);
-  }
-
-  .map:not([data-drawn]) .track {
-    clip-path: inset(0 100% 0 0);
-  }
-
-  .ring {
-    transition:
-      transform 480ms cubic-bezier(0.2, 1.5, 0.4, 1),
-      opacity 240ms ease;
-    transition-delay: calc(120ms + var(--i) * 330ms);
-  }
-
-  .map:not([data-drawn]) .ring {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-}
-
-/* ---- Next to Ignite: side by side, the plan's column in colour -------------------------------- */
-
-.ignite {
-  display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
-  gap: 40px clamp(32px, 6vw, 96px);
-  padding-top: clamp(110px, 16vh, 170px);
-}
-
-/* Teal, over to the right, behind the plan's column. */
-.ignite::before {
-  top: 0;
-  right: -22%;
-  bottom: -30%;
-  width: min(900px, 100vw);
-  background: radial-gradient(closest-side, rgb(var(--glow-lagoon) / 0.2), transparent);
-}
+/* ---- Next to Ignite: side by side ------------------------------------------------------------- */
 
 .compare {
   align-self: start;
@@ -342,12 +333,21 @@
 
 .compare th,
 .compare td {
-  padding: 0 28px 22px 0;
+  padding: 0 28px 20px 0;
   vertical-align: baseline;
 }
 
+.compare tbody tr + tr > * {
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+
+.compare tbody tr:last-child > * {
+  padding-bottom: 0;
+}
+
 .compare thead th {
-  padding-bottom: 18px;
+  padding-bottom: 16px;
   font-size: 14px;
   font-weight: 500;
 }
@@ -375,31 +375,16 @@
 
 .will {
   color: var(--ink);
-  font-size: clamp(20px, 2vw, 25px);
+  font-size: clamp(19px, 1.9vw, 23px);
   font-weight: 300;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 /* ---- The interest list ------------------------------------------------------------------------ */
 
 .interest {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: 40px clamp(32px, 6vw, 96px);
-  padding-top: clamp(110px, 16vh, 170px);
   scroll-margin-top: 24px;
-}
-
-/* Mint and blue under the form, the warmest light on the page, where the page ends. */
-.interest::before {
-  top: 8%;
-  right: -16%;
-  bottom: -40%;
-  left: 8%;
-  background:
-    radial-gradient(closest-side at 62% 52%, rgb(var(--mint-rgb) / 0.14), transparent),
-    radial-gradient(closest-side at 26% 66%, rgb(var(--glow-sky) / 0.26), transparent);
 }
 
 .formWrap {
@@ -409,38 +394,7 @@
 }
 
 .form {
-  gap: 20px;
-}
-
-.input {
-  width: 100%;
-  min-height: 48px;
-  padding: 11px 14px;
-  border: 1px solid rgb(var(--frost-rgb) / 0.24);
-  border-radius: 12px;
-  background: rgb(var(--harbor-rgb) / 0.62);
-  color: var(--ink);
-  /* 16px keeps phones from zooming in on focus. */
-  font-size: 16px;
-}
-
-.input::placeholder {
-  color: rgb(var(--frost-rgb) / 0.5);
-}
-
-.input:hover {
-  border-color: rgb(var(--frost-rgb) / 0.45);
-}
-
-.input:focus-visible {
-  outline: none;
-  border-color: var(--mint);
-  box-shadow: 0 0 0 3px rgb(var(--mint-rgb) / 0.24);
-}
-
-.input:user-invalid,
-.input[aria-invalid='true'] {
-  border-color: var(--coral);
+  gap: 18px 16px;
 }
 
 /* The submit is the one thing on the page that's yours to do, so it's mint. */
@@ -448,7 +402,6 @@
   border-color: var(--mint);
   background: var(--mint);
   color: var(--harbor);
-  font-size: 14px;
 }
 
 .privacy {
@@ -469,84 +422,36 @@
 /* ---- Small screens ---------------------------------------------------------------------------- */
 
 @media (max-width: 960px) {
-  .plan,
-  .ignite,
-  .interest {
+  .section {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .plan {
-    align-items: start;
   }
 }
 
-/* The strip map turns to run down the page, the stops stacked beside it. */
-@media (max-width: 720px) {
-  .stops {
+/* Too narrow for four across: the signs go down the side, each stop beside its own. */
+@media (max-width: 1000px) {
+  .steps {
     grid-template-columns: minmax(0, 1fr);
-    gap: 40px;
-    padding-left: calc(var(--ring) + 24px);
   }
 
-  .track {
-    top: 0;
-    right: auto;
-    bottom: 0;
-    left: calc(var(--ring) / 2);
-    transform: translateX(-50%);
-    background: linear-gradient(
-      180deg,
-      var(--tone-sky) 0%,
-      var(--tone-iris) 30%,
-      var(--tone-rose) 58%,
-      var(--mint) 86%,
-      var(--mint) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    /* Upright glyphs advance a full em each; pull them in so the rails close up. */
-    letter-spacing: -0.42em;
-    line-height: 0.75;
-    writing-mode: vertical-lr;
-    text-orientation: upright;
-    -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent);
-    mask-image: linear-gradient(180deg, #000 90%, transparent);
+  .stop {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: clamp(18px, 4vw, 32px);
   }
 
-  .ring {
-    position: absolute;
-    top: 2px;
-    left: calc(-1 * (var(--ring) + 24px));
+  .sign {
+    --figure-size: 3.6px;
+    grid-row: 1 / span 2;
     margin: 0;
   }
 
-  .map::before {
-    top: -60px;
-    right: auto;
-    bottom: -60px;
-    left: calc(var(--ring) / 2 - 150px);
-    width: 300px;
-    height: auto;
-    background: linear-gradient(
-      180deg,
-      rgb(var(--glow-sky)),
-      rgb(var(--glow-iris)) 35%,
-      rgb(var(--glow-rose)) 60%,
-      rgb(var(--mint-rgb) / 0.6) 85%
-    );
+  .stopTitle {
+    align-self: end;
   }
 
-  .stop::before {
-    top: -150px;
-    left: -200px;
-    width: 400px;
-    height: 300px;
-  }
-}
-
-@media (max-width: 720px) and (prefers-reduced-motion: no-preference) {
-  .map:not([data-drawn]) .track {
-    clip-path: inset(0 0 100% 0);
+  .stopText {
+    grid-column: 2;
+    align-self: start;
   }
 }
 
@@ -559,7 +464,7 @@
   }
 
   .compare tbody {
-    gap: 24px;
+    gap: 22px;
   }
 
   .compare tr {
@@ -573,8 +478,10 @@
   }
 
   .compare th,
-  .compare td {
+  .compare td,
+  .compare tbody tr + tr > * {
     padding: 0;
+    border-top: 0;
   }
 
   .compare thead th {
@@ -583,5 +490,9 @@
 
   .topic {
     grid-column: 1 / -1;
+  }
+
+  .form {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
