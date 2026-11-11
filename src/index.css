@@ -4,23 +4,25 @@
    *
    * The ASCII field's gradient (blue, violet-pink, teal) is the site's only source of other
    * colour: the field itself, and the named samples of it below (sky, iris, rose, lagoon), which
-   * each mean one thing wherever they appear. Everything else is drawn from these five:
-   *   harbor  the one dark ground: the field's own base, so the field drains straight into it
-   *   navy    a raised surface on harbor (panels, inputs), and the ink on paper
+   * each mean one thing wherever they appear. Everything else is drawn from these five. The
+   * first three keep the names they had when the site stood on blue; the site is black now.
+   *   harbor  the one ground: black, which the field drains straight into
+   *   navy    a raised surface (panels, inputs): near-black, a step off the ground and never
+   *           its opposite. Also the ink on paper
    *   paper   the one light ground
-   *   frost   the ink on harbor and navy
+   *   frost   the ink on harbor and navy: white
    *   mint    the primary accent: the cursor in "Proto_", links in emails, what's open, what's
    *           yours, the rule under a link and a button as it's pressed.
    *           mint-deep is the same accent where it has to sit on paper.
    * BU red is not a theme colour. It only marks BU itself (the BU tag on a teammate's name).
    */
-  --harbor: #061a2e;
-  --harbor-rgb: 6 26 46;
-  --navy: #0b2a46;
-  --navy-rgb: 11 42 70;
+  --harbor: #000;
+  --harbor-rgb: 0 0 0;
+  --navy: #131313;
+  --navy-rgb: 19 19 19;
   --paper: #e3eaf0;
-  --frost: #f6fbff;
-  --frost-rgb: 246 251 255;
+  --frost: #fff;
+  --frost-rgb: 255 255 255;
   --mint: #9df0a8;
   --mint-rgb: 157 240 168;
   --mint-deep: #17603a;
@@ -98,6 +100,17 @@
   --cell: 14px;
   --gutter: 56px;
   --maxw: 1176px;
+  /*
+   * The landing's own measure: it runs the width of the screen on twelve columns, with this much
+   * left at each side and between columns. The top bar takes the same margin there.
+   */
+  --edge: clamp(16px, 5vw, 128px);
+  --col-gap: clamp(12px, 2vw, 44px);
+  /* The top bar: how far down from the screen's top it sits (more on a wide screen), how tall its
+     name and buttons stand, and where something that sticks to the top can start, just under it. */
+  --bar-top: max(clamp(20px, 2.6vw, 48px), env(safe-area-inset-top, 0px));
+  --bar-h: 44px;
+  --bar-clear: calc(var(--bar-top) + var(--bar-h) + 16px);
   --radius: 22px;
   --radius-media: 16px;
   --radius-sm: 8px;
@@ -110,6 +123,13 @@
 @media (max-width: 680px) {
   :root {
     --gutter: 16px;
+  }
+}
+
+/* A phone's width holds the name and both buttons only at a smaller size. */
+@media (max-width: 560px) {
+  :root {
+    --bar-h: 40px;
   }
 }
 

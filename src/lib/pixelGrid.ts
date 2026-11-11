@@ -8,7 +8,7 @@ export const IRIS = '#ab9dff'
 export const RASPBERRY = '#c2407a'
 export const MINT = '#9df0a8'
 /** The ground the cells sit on, which their paler tiers fade toward. */
-const HARBOR_RGB = [6, 26, 46]
+const HARBOR_RGB = [19, 19, 19]
 
 /** Index 0 is always a blank cell. Cells are stored as indexes into a palette. */
 export const HEAT_PALETTE = ['', DEEP, CERULEAN, IRIS, RASPBERRY, MINT] as const

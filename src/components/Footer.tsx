@@ -1,12 +1,16 @@
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { CONTACT_EMAIL, LEGAL_LINKS } from '../content/legal'
 import { BRAND, FOOTER, PROTO_LINKEDIN } from '../content/site'
 import styles from './Footer.module.css'
 
-/** One block: who we are on the left, the site sorted into columns beside it. */
+/**
+ * One block: who we are on the left, the site sorted into columns beside it. On the landing it
+ * takes the landing's margins, like the top bar, so it ends where everything above it does.
+ */
 export function Footer() {
+  const wide = useLocation().pathname === '/'
   return (
-    <footer className={styles.footer}>
+    <footer className={styles.footer} data-wide={wide || undefined}>
       <div className={styles.about}>
         <p className={styles.brand} data-fog-clear>
           <img src={BRAND.seal} alt="" width={20} height={20} />

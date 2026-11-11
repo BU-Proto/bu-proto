@@ -1,4 +1,6 @@
+import type { CSSProperties } from 'react'
 import { Link, NavLink } from 'react-router'
+import { JOIN_CTA } from '../content/home'
 import { BRAND, NAV_ITEMS } from '../content/site'
 import { MenuSheet } from './MenuSheet'
 import { NavMenu } from './NavMenu'
@@ -6,16 +8,16 @@ import ui from './ui.module.css'
 import styles from './TopBar.module.css'
 
 /**
- * Seal and name, the centered nav pill, and Join on the right. A pill item with pages under it
- * (About) opens them in a small menu. On phones the pill doesn't fit, so the menu sheet takes
- * Join's place and carries every page; the footer lists the rest on desktop.
+ * The bar at the top of every page, in the same place on all of them: the seal and name at the
+ * left, the nav pill in the middle, Join at the right. A pill item with pages under it (About)
+ * opens them in a small menu. Where the pill doesn't fit, a menu button beside Join opens a sheet
+ * with every page. The bar holds its place as the page scrolls.
  */
 export function TopBar() {
   return (
     <header className={styles.top}>
       <Link className={styles.logo} to="/" data-fog-clear>
-        {/* A filled flat mark: shown as-is, not through the stroked icon helper. */}
-        <img src={BRAND.seal} alt="" width={24} height={24} />
+        <span className={styles.seal} style={{ '--seal': `url(${BRAND.seal})` } as CSSProperties} aria-hidden="true" />
         {BRAND.short}
       </Link>
 
@@ -32,8 +34,8 @@ export function TopBar() {
       </nav>
 
       <div className={styles.actions}>
-        <Link className={`${ui.primary} ${styles.join}`} to="/join" data-fog-clear="box">
-          Join Proto
+        <Link className={`${ui.primary} ${styles.join}`} to={JOIN_CTA.cta.href} data-fog-clear="box">
+          {JOIN_CTA.cta.label}
         </Link>
         <div className={styles.menu}>
           <MenuSheet />

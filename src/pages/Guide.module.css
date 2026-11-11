@@ -80,7 +80,7 @@
 
 .contents {
   position: sticky;
-  top: 24px;
+  top: var(--bar-clear);
   display: grid;
   gap: 12px;
   padding-top: clamp(28px, 4vw, 52px);

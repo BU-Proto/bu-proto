@@ -158,3 +158,51 @@
   font-size: 14px;
   font-weight: 500;
 }
+
+/*
+ * The landing's own secondary button: a round-ended glass bar with a dot before its words.
+ * Pressing toward it fills it frost, as the primary button is.
+ */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(11px, 0.9vw, 16px);
+  padding: clamp(13px, 1vw, 18px) clamp(22px, 1.6vw, 30px) clamp(13px, 1vw, 18px) clamp(18px, 1.4vw, 26px);
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  background: var(--glass);
+  color: var(--ink);
+  font-size: clamp(14px, 1vw, 17px);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    background-color 260ms var(--ease-out),
+    border-color 260ms var(--ease-out),
+    color 260ms var(--ease-out);
+}
+
+.cta::before {
+  content: '';
+  flex: none;
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  background: currentColor;
+  transition: transform 420ms var(--ease-lusion);
+}
+
+.cta:hover {
+  border-color: var(--frost);
+  background: var(--frost);
+  color: var(--navy);
+}
+
+.cta:hover::before {
+  transform: scale(1.6);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 3px;
+}

@@ -5,7 +5,7 @@
  */
 
 .sheet {
-  padding: clamp(40px, 6vw, 96px) clamp(20px, 5vw, 80px) clamp(56px, 8vw, 120px);
+  padding: clamp(40px, 6vw, 96px) var(--edge) clamp(56px, 8vw, 120px);
   color: var(--ink);
   font-family: var(--font-ui);
 }
@@ -73,18 +73,12 @@
   line-height: 0.95;
 }
 
-/* The lede and, on the landing, the way to every win under it. */
-.headAside {
-  display: grid;
+/* Said small at the far end of the title's row, level with its baseline. */
+.lede {
   flex: none;
-  justify-items: start;
-  gap: 12px;
   width: 300px;
   max-width: 100%;
-}
-
-.lede {
-  margin: 0;
+  margin: 0 0 0.9em;
   color: var(--ink-soft);
   font-size: 15px;
   line-height: 1.5;
@@ -307,11 +301,11 @@
   }
 
   .title {
-    font-size: 15vw;
+    font-size: clamp(44px, 13vw, 96px);
   }
 
-  .headAside {
-    margin: 3em 0;
+  .lede {
+    margin: 1.4em 0 2.6em;
   }
 
   .allRow {
@@ -437,51 +431,5 @@
 
   to {
     filter: blur(0);
-  }
-}
-
-/* ---- The landing's latest: a short row in the page column, at the size of the other sections ---- */
-
-.latest {
-  /* Full width up to the column: auto margins alone would shrink a grid item to its content. */
-  width: 100%;
-  max-width: calc(var(--maxw) + 2 * var(--gutter));
-  margin-inline: auto;
-  padding: calc(var(--cell) * 4) var(--gutter) calc(var(--cell) * 5);
-}
-
-.latest .head {
-  margin-bottom: calc(var(--cell) * 3);
-}
-
-.latest .title {
-  padding-top: 0;
-  font-size: clamp(36px, 5vw, 68px);
-  letter-spacing: -0.035em;
-}
-
-.latest .grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: calc(var(--cell) * 3) calc(var(--cell) * 2);
-}
-
-.latest .name {
-  font-size: min(clamp(20px, 1.9vw, 28px), calc(100cqw / (var(--n) * 0.54 + 1.6)));
-}
-
-
-@media (max-width: 980px) {
-  .latest .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 812px) {
-  .latest .title {
-    font-size: clamp(36px, 11vw, 56px);
-  }
-
-  .latest .grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

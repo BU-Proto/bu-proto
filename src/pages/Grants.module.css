@@ -9,7 +9,6 @@
 .page {
   /* The bite the perforation takes out of the ticket's edge, top and bottom. */
   --notch: 13px;
-  --sheet: var(--navy);
 
   width: min(1180px, 100%);
   margin-inline: auto;
@@ -90,7 +89,7 @@
     radial-gradient(circle calc(var(--notch) + 1px) at 100% 0, var(--slab-edge) 99%, transparent),
     radial-gradient(circle calc(var(--notch) + 1px) at 100% 100%, var(--slab-edge) 99%, transparent),
     radial-gradient(60% 60% at 0% 0%, rgb(var(--sky-deep-rgb) / 0.18), transparent 70%),
-    var(--sheet);
+    var(--navy);
   -webkit-mask-image:
     radial-gradient(circle var(--notch) at 100% 0, transparent 97%, #000),
     radial-gradient(circle var(--notch) at 100% 100%, transparent 97%, #000);
@@ -117,7 +116,7 @@
     radial-gradient(circle calc(var(--notch) + 1px) at 0 0, var(--slab-edge) 99%, transparent),
     radial-gradient(circle calc(var(--notch) + 1px) at 0 100%, var(--slab-edge) 99%, transparent),
     radial-gradient(90% 60% at 100% 0%, rgb(var(--rose-deep-rgb) / 0.14), transparent 70%),
-    var(--sheet);
+    var(--navy);
   -webkit-mask-image:
     radial-gradient(circle var(--notch) at 0 0, transparent 97%, #000),
     radial-gradient(circle var(--notch) at 0 100%, transparent 97%, #000);
