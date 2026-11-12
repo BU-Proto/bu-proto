@@ -1,6 +1,6 @@
 /*
  * One screen: the top bar, the line that says what Proto is, the frame, and the marks at its
- * foot. The band is harbor everywhere but inside the frame, where the field shows through.
+ * foot. The band is harbor everywhere but inside the frame, where the hero film plays.
  */
 .hero {
   /* The top bar's room: the shell's top padding and the bar itself. The band reaches up under it. */
@@ -35,16 +35,40 @@
 }
 
 /*
- * The window. Its spread shadow is the harbor round it, cut to its rounded corners, so the field
- * shows only inside; the inner hairline is the rim every slab on the site has.
+ * The frame. Its spread shadow is the harbor round it, cut to its rounded corners, so the film
+ * shows only inside; the rim is drawn over the film (::before).
  */
 .frame {
+  position: relative;
   margin-top: clamp(18px, 3.2vh, 30px);
   border-radius: var(--radius);
+  box-shadow: 0 0 0 200vmax var(--harbor);
+}
+
+/* The film fills the frame exactly: cropped to its shape, never stretched or letterboxed. */
+.film {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--harbor);
+  object-fit: cover;
+  object-position: center;
+}
+
+/* The rim every slab on the site has, drawn over the film so it stays visible. */
+.frame::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
   box-shadow:
-    0 0 0 200vmax var(--harbor),
     inset 0 0 0 1px var(--slab-edge),
     inset 0 1px 0 rgb(var(--frost-rgb) / 0.1);
+  pointer-events: none;
 }
 
 .foot {
@@ -113,18 +137,18 @@
 }
 
 /*
- * As the page arrives the window widens a little and its light comes up. The light is a harbor
+ * As the page arrives the frame widens a little and its film comes up. The light is a harbor
  * sheet over the window fading out: fading the frame itself would fade the harbor round it too.
  */
 @media (prefers-reduced-motion: no-preference) {
   .frame {
-    position: relative;
     animation: widen 1500ms var(--ease-lusion) both;
   }
 
   .frame::after {
     content: '';
     position: absolute;
+    z-index: 2;
     inset: 0;
     border-radius: inherit;
     background: var(--harbor);
