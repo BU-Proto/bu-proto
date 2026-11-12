@@ -18,6 +18,14 @@
   text-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.4);
 }
 
+/* The landing's measure: the screen's width less its edge, of which the shell already gives 16px. */
+.footer[data-wide] {
+  width: auto;
+  max-width: none;
+  margin-inline: calc(var(--edge) - max(16px, env(safe-area-inset-left, 0px)));
+  padding-inline: clamp(20px, 2.4vw, 44px);
+}
+
 .about {
   display: grid;
   gap: 10px;

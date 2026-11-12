@@ -4,7 +4,7 @@ import type { Win } from '../../shared/api'
 import { WIN_SHEET, WINS_EMPTY } from '../content/wins'
 import { reducedMotion } from '../lib/useInView'
 import { RevealWords } from './motion/RevealWords'
-import ui from './ui.module.css'
+import lui from './landing.module.css'
 import { WinTile } from './WinTile'
 import { mountWinStage } from './winStage'
 import styles from './WinSheet.module.css'
@@ -12,24 +12,16 @@ import styles from './WinSheet.module.css'
 /** Staggers the parts of a block as it settles in (see motion/useReveal). */
 const after = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
 
-/**
- * The heading, its words rising into place, with the lede settling in beside it. On the landing
- * the way to every win sits under the lede, as "All events" sits by Next up.
- */
-function Head({ id, allWins = false }: { id: string; allWins?: boolean }) {
+/** The heading, its words rising into place, with the lede settling in at the far side of its row. */
+function Head({ id }: { id: string }) {
   return (
     <header className={styles.head}>
       <h2 id={id} className={styles.title} data-reveal="words">
         <RevealWords text={WIN_SHEET.title} />
       </h2>
-      <div className={styles.headAside} data-reveal="rise" style={after(220)}>
-        <p className={styles.lede}>{WIN_SHEET.lede}</p>
-        {allWins && (
-          <Link className={ui.textLink} to="/wins">
-            {WIN_SHEET.allWins}
-          </Link>
-        )}
-      </div>
+      <p className={styles.lede} data-reveal="rise" style={after(220)}>
+        {WIN_SHEET.lede}
+      </p>
     </header>
   )
 }
@@ -56,7 +48,7 @@ export function WinGrid({ wins, details = false }: { wins: readonly Win[]; detai
  * ahead of the page's frames, so a drawn cover would trail its own words. It has no fill of its
  * own: it's the landing's harbor, the navy covers standing on it.
  */
-function Sheet({ wins, className, children }: { wins: readonly Win[]; className?: string; children: ReactNode }) {
+function Sheet({ wins, children }: { wins: readonly Win[]; children: ReactNode }) {
   const sheet = useRef<HTMLDivElement>(null)
   const stage = useRef<HTMLCanvasElement>(null)
   const tiles = wins.map((win) => win.id).join()
@@ -68,19 +60,33 @@ function Sheet({ wins, className, children }: { wins: readonly Win[]; className?
   }, [tiles])
 
   return (
-    <div ref={sheet} className={className ? `${styles.sheet} ${className}` : styles.sheet} data-hue="rose">
+    <div ref={sheet} className={styles.sheet} data-hue="rose">
       {wins.length > 0 && <canvas key={tiles} ref={stage} className={styles.stage} aria-hidden="true" />}
       {children}
     </div>
   )
 }
 
-/** The landing's latest wins: a short row of the newest, in the page column, and the way to the rest. */
+/**
+ * The landing's latest wins: the newest few at the full width of the page, two to a row, and the
+ * way to the rest under them.
+ */
 export function LatestWins({ wins, id }: { wins: readonly Win[]; id: string }) {
   return (
-    <Sheet wins={wins} className={styles.latest}>
-      <Head id={id} allWins={wins.length > 0} />
-      {wins.length === 0 ? <p className={styles.empty}>{WINS_EMPTY}</p> : <WinGrid wins={wins} />}
+    <Sheet wins={wins}>
+      <Head id={id} />
+      {wins.length === 0 ? (
+        <p className={styles.empty}>{WINS_EMPTY}</p>
+      ) : (
+        <>
+          <WinGrid wins={wins} />
+          <p className={styles.allRow} data-reveal="rise">
+            <Link className={lui.cta} to="/wins">
+              {WIN_SHEET.allWins}
+            </Link>
+          </p>
+        </>
+      )}
     </Sheet>
   )
 }
