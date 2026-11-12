@@ -322,65 +322,6 @@
   text-wrap: pretty;
 }
 
-/* ---- Next to Ignite: side by side ------------------------------------------------------------- */
-
-.compare {
-  align-self: start;
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.compare th,
-.compare td {
-  padding: 0 28px 20px 0;
-  vertical-align: baseline;
-}
-
-.compare tbody tr + tr > * {
-  padding-top: 20px;
-  border-top: 1px solid var(--rule);
-}
-
-.compare tbody tr:last-child > * {
-  padding-bottom: 0;
-}
-
-.compare thead th {
-  padding-bottom: 16px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.colIgnite {
-  color: var(--ink-dim);
-}
-
-.colProto {
-  color: var(--ink);
-}
-
-.topic {
-  color: var(--ink-dim);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.was {
-  color: var(--ink-soft);
-  font-size: 16px;
-  line-height: 1.4;
-}
-
-.will {
-  color: var(--ink);
-  font-size: clamp(19px, 1.9vw, 23px);
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-}
-
 /* ---- The interest list ------------------------------------------------------------------------ */
 
 .interest {
@@ -456,42 +397,6 @@
 }
 
 @media (max-width: 640px) {
-  /* Each difference stacks: what it's about, then the two answers side by side under the heads. */
-  .compare,
-  .compare thead,
-  .compare tbody {
-    display: grid;
-  }
-
-  .compare tbody {
-    gap: 22px;
-  }
-
-  .compare tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 6px 20px;
-  }
-
-  .compare thead td {
-    display: none;
-  }
-
-  .compare th,
-  .compare td,
-  .compare tbody tr + tr > * {
-    padding: 0;
-    border-top: 0;
-  }
-
-  .compare thead th {
-    padding-bottom: 14px;
-  }
-
-  .topic {
-    grid-column: 1 / -1;
-  }
-
   .form {
     grid-template-columns: minmax(0, 1fr);
   }
