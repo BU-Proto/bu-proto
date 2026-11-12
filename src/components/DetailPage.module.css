@@ -21,10 +21,10 @@
   margin-inline: calc(50% - 50vw);
 }
 
-/* The photo runs up under the top bar (its 44px, plus the shell's and the page's top padding) and
+/* The photo runs up under the top bar (its height, plus the shell's and the page's top padding) and
    fills the first screen. */
 .withPhoto {
-  --under-bar: calc(44px + max(18px, env(safe-area-inset-top, 0px)) + 12px);
+  --under-bar: calc(var(--bar-h) + var(--bar-top) + 12px);
   min-height: min(100svh, 980px);
   margin-top: calc(-1 * var(--under-bar));
 }
@@ -253,7 +253,7 @@
 
 .aside {
   position: sticky;
-  top: 24px;
+  top: var(--bar-clear);
   display: grid;
   align-content: start;
   gap: 36px;

@@ -8,10 +8,10 @@ import { DEFAULT_FIELD_SETTINGS, type FieldSettings } from '../ascii-field'
 
 /** Solid grounds, for canvas-drawn edges and textures. Kept in step with the tokens in index.css. */
 export const GROUND = {
-  harbor: '#061a2e',
+  harbor: '#000000',
   paper: '#e3eaf0',
   /** Frost, faint: the frozen glyph texture on harbor. */
-  texture: 'rgba(246, 251, 255, 0.06)',
+  texture: 'rgba(255, 255, 255, 0.06)',
   /** The same glyph tile drawn solid, for a mask: the field's sweep shows through its glyphs, so
       the frozen texture keeps the field's colour. */
   textureMask: '#ffffff',

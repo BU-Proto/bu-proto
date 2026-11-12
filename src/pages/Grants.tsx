@@ -6,7 +6,7 @@ import { PageIntro } from '../components/PageIntro'
 import { PrivacyNote } from '../components/PrivacyNote'
 import { Select } from '../components/Select'
 import ui from '../components/ui.module.css'
-import { GRANTS_INTRO, IGNITE, INTEREST, PLAN, ROUTE, STATUS } from '../content/grants'
+import { GRANTS_INTRO, INTEREST, PLAN, ROUTE, STATUS } from '../content/grants'
 import { api } from '../lib/api'
 import { asciiDrawing, hash } from '../lib/glyphArt'
 import { FUND_AMOUNTS, YEARS } from '../../shared/constants'
@@ -78,7 +78,7 @@ const CODE = Array.from({ length: 56 }, (_, i) => (hash(i, 9) > 0.42 ? '|' : ' '
 /**
  * The fund's coming-soon page, on plain harbor like the other inner pages. The plan is printed as
  * the thing it pays for, a ticket; then the way it'll work as a row of signs in the field's
- * characters; then Ignite side by side; then the interest list.
+ * characters; then the interest list.
  */
 export function Grants() {
   const { fields } = INTEREST
@@ -151,44 +151,6 @@ export function Grants() {
             </li>
           ))}
         </ol>
-      </section>
-
-      <section className={styles.section} aria-labelledby="ignite">
-        <div className={styles.head}>
-          <h2 id="ignite" className={styles.subtitle}>
-            {IGNITE.title}
-          </h2>
-          <p className={styles.lede}>
-            <a className={ui.textLink} href={IGNITE.link.href} target="_blank" rel="noreferrer">
-              {IGNITE.link.label}
-            </a>{' '}
-            {IGNITE.intro}
-          </p>
-        </div>
-        <table className={styles.compare}>
-          <thead>
-            <tr>
-              <td />
-              <th scope="col" className={styles.colIgnite}>
-                {IGNITE.heads.ignite}
-              </th>
-              <th scope="col" className={styles.colProto}>
-                {IGNITE.heads.proto}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {IGNITE.rows.map((row) => (
-              <tr key={row.topic}>
-                <th scope="row" className={styles.topic}>
-                  {row.topic}
-                </th>
-                <td className={styles.was}>{row.ignite}</td>
-                <td className={styles.will}>{row.proto}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </section>
 
       <section id="interest" className={`${styles.section} ${styles.interest}`} aria-labelledby="interest-title">

@@ -126,7 +126,7 @@ src/
   admin/                 the portal at /admin: shell, sign-in, dashboard, editors, people and email pages
   components/
     Layout.tsx           mounts the field once, the top bar, the page and the footer
-    TopBar, MenuSheet, Footer, Hero, ScheduleCard, PageIntro, SampleTag, Form, RouteStates, IconButton, icons
+    TopBar, NavMenu, MenuSheet, Footer, Hero, ScheduleCard, PageIntro, SampleTag, Form, RouteStates, IconButton, icons
     ui.module.css        shared glass panels, buttons, the sample tag and the page intro
   content/               all copy, one typed file per page (see Content)
   lib/content.ts         fetches the D1 content for the route loaders
