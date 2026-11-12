@@ -11,7 +11,7 @@
 
 .monthName {
   position: sticky;
-  top: 20px;
+  top: var(--bar-clear);
   margin: 6px 0 0;
   color: var(--hue);
   font-size: 17px;

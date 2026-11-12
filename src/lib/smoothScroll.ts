@@ -41,7 +41,7 @@ function scrollsInside(target: EventTarget | null, deltaY: number): boolean {
   return false
 }
 
-/** Page scroll is locked (an open menu sheet or dialog): leave the wheel alone. */
+/** Page scroll is locked (an open dialog): leave the wheel alone. */
 const scrollLocked = () =>
   getComputedStyle(document.documentElement).overflowY === 'hidden' || getComputedStyle(document.body).overflowY === 'hidden'
 
@@ -108,7 +108,10 @@ export function useWheelEasing() {
     const step = (now: number) => {
       // Someone else scrolled since the last frame: hand the page back to them.
       if (Math.abs(window.scrollY - current) > 2) return stop()
-      const dt = Math.min(64, now - last)
+      // A frame's timestamp is when it began, which can be before the wheel event that started the
+      // glide in that same frame. Never a negative step: it would push the page the wrong way, and
+      // at the very top that reads as the page being held, which drops the notch.
+      const dt = Math.max(0, Math.min(64, now - last))
       last = now
       current += (target - current) * (1 - (1 - EASE) ** (dt / 16.67))
       if (Math.abs(target - current) < 0.5) current = target

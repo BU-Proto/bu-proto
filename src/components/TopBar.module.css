@@ -1,32 +1,55 @@
-.top {
-  position: relative;
-  /* Above the page, for project pages whose cover photo runs up under the bar. */
-  z-index: 2;
-  display: flex;
-  /* The same column as every page, so the logo lines up with the titles below it. */
-  width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 44px;
+/*
+ * The bar: name at the left, the nav pill in the middle, Join at the right. It holds its place at
+ * the top of the screen. The shell positions its children with a two-class rule, so this one is
+ * written a notch more specific to hold.
+ */
+header.top[class] {
+  position: sticky;
+  top: var(--bar-top);
 }
 
+.top {
+  /* Over the page and anything in it that sticks or is drawn fixed. */
+  z-index: 20;
+  display: flex;
+  /* One place on every page: the screen's width less its edge (of which the shell already gives
+     16px), so the name and Join never move as you go from page to page. */
+  margin-inline: calc(var(--edge) - max(16px, env(safe-area-inset-left, 0px)));
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--bar-h);
+  /* Only its own things take the pointer: the page shows, and can be used, between them. */
+  pointer-events: none;
+}
+
+.top > * {
+  pointer-events: auto;
+}
+
+/* Bare at any scroll: no ground of its own, only a soft shade of harbor behind it so the mark
+   keeps an edge when something pale passes under. */
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
+  gap: 0.45em;
+  height: var(--bar-h);
+  filter: drop-shadow(0 1px 8px rgb(var(--harbor-rgb) / 0.55));
+  /* The name and its seal are sized from the bar's height, so they grow and shrink with it. */
+  font-size: calc(var(--bar-h) * 0.42);
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
-.logo img {
-  display: block;
-  width: 24px;
-  height: 24px;
+/* The seal, cut out of the name's own colour. */
+.seal {
+  width: 1.45em;
+  height: 1.45em;
+  background: currentColor;
+  -webkit-mask: var(--seal) center / contain no-repeat;
+  mask: var(--seal) center / contain no-repeat;
 }
 
+/* The pill, centred on the bar whatever stands at either end. */
 .nav {
   position: absolute;
   top: 50%;
@@ -54,11 +77,14 @@
   text-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.3);
 }
 
+.nav > a:hover {
+  color: var(--ink);
+}
+
 .nav > a[aria-current='page'] {
   background: rgb(var(--frost-rgb) / 0.08);
   color: var(--ink);
 }
-
 
 .logo:focus-visible,
 .nav > a:focus-visible {
@@ -72,19 +98,21 @@
   gap: 8px;
 }
 
+/* The primary button at the bar's height. */
 .join {
-  padding: 9px 16px;
+  height: var(--bar-h);
+  padding: 0 calc(var(--bar-h) * 0.42);
+  font-size: calc(var(--bar-h) * 0.3);
 }
 
 .menu {
   display: none;
 }
 
-/* The pill doesn't fit between the logo and Join on narrow screens; the menu sheet has every
-   page, Join too. */
-@media (max-width: 800px) {
-  .nav,
-  .join {
+/* The pill doesn't fit between the name and Join on narrow screens: a menu button beside Join
+   opens the sheet, which has every page. */
+@media (max-width: 900px) {
+  .nav {
     display: none;
   }
 
@@ -93,3 +121,12 @@
   }
 }
 
+@media (max-width: 560px) {
+  .actions {
+    gap: 6px;
+  }
+
+  .join {
+    padding: 0 14px;
+  }
+}
