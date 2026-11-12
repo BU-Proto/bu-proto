@@ -1,6 +1,4 @@
 import { LogoBand } from '../components/LogoBand'
-import motion from '../components/motion/motion.module.css'
-import { useReveal } from '../components/motion/useReveal'
 import { PageIntro } from '../components/PageIntro'
 import ui from '../components/ui.module.css'
 import { EMPTY_WALL, LOGO_WALLS, TRACK_RECORD_INTRO } from '../content/trackRecord'
@@ -11,21 +9,19 @@ import styles from './TrackRecord.module.css'
  * so most rows start empty and say so in a line rather than drawing fake slots.
  */
 export function TrackRecord() {
-  const revealRef = useReveal<HTMLDivElement>()
-
   return (
-    <div ref={revealRef} className={`${ui.page} ${motion.reveal}`}>
+    <div className={ui.page}>
       <PageIntro intro={TRACK_RECORD_INTRO} />
       <LogoBand showLink={false} />
 
       <div className={styles.walls}>
         {LOGO_WALLS.map((wall, index) => (
-          <section key={wall.id} className={styles.wall} aria-labelledby={`wall-${index}`} data-reveal>
+          <section key={wall.id} className={styles.wall} aria-labelledby={`wall-${index}`}>
             <div className={styles.head}>
-              <h2 id={`wall-${index}`} className={styles.title}>
+              <h2 id={`wall-${index}`} className={styles.title} data-fog-clear>
                 {wall.title}
               </h2>
-              <p className={styles.text}>
+              <p className={styles.text} data-fog-clear>
                 {wall.text}
               </p>
             </div>
@@ -36,7 +32,7 @@ export function TrackRecord() {
                   const mark = logo.src ? (
                     <img src={logo.src} alt={logo.name} loading="lazy" />
                   ) : (
-                    <span className={styles.wordmark}>
+                    <span className={styles.wordmark} data-fog-clear>
                       {logo.name}
                     </span>
                   )
@@ -54,7 +50,7 @@ export function TrackRecord() {
                 })}
               </ul>
             ) : (
-              <p className={styles.empty}>
+              <p className={styles.empty} data-fog-clear>
                 {EMPTY_WALL}
               </p>
             )}

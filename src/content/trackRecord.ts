@@ -17,6 +17,11 @@ export interface Logo {
   name: string
   /** Path under public/, e.g. /logos/acme.svg. Until we have the official file, the name shows as a wordmark. */
   src?: string
+  /**
+   * The file's own size in pixels. Give it for any logo that scrolls in a band: the band's loop
+   * is measured from its logos' widths, so each needs its width before the file has loaded.
+   */
+  size?: readonly [width: number, height: number]
   href?: string
 }
 
@@ -48,7 +53,6 @@ export const LOGO_WALLS: readonly LogoWall[] = [
 export const LOGO_BAND = {
   label: 'Partners and sponsors',
   title: 'Built with',
-  lede: 'The BU programs and organizations we build with.',
   walls: ['partners', 'sponsors'] as readonly LogoWallId[],
   link: { label: 'See the track record', href: '/track-record' },
 }

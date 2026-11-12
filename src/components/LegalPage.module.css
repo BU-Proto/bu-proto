@@ -1,98 +1,92 @@
 .effective {
   margin: 0;
-  color: var(--c-body);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  color: var(--ink);
+  font-size: 14px;
+  text-shadow: var(--on-field-shadow);
 }
 
-/* Contents at the left, the text at a reading measure beside it. */
+/* Contents on the field at the left, the text at a reading measure beside it. */
 .layout {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 820px);
-  gap: calc(var(--cell) * 2) calc(var(--cell) * 6);
+  gap: 32px clamp(28px, 4vw, 56px);
   align-items: start;
 }
 
 .contents {
   position: sticky;
-  /* Clear of the fixed tab. */
-  top: calc(var(--cell) * 5);
+  top: var(--bar-clear);
   display: grid;
   gap: 12px;
+  padding-top: clamp(18px, 2.6vw, 28px);
+  text-shadow: var(--on-field-shadow);
 }
 
 .contentsTitle {
   margin: 0;
-  color: var(--c-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .contentsList {
   display: grid;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--c-line);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.28);
 }
 
 .contentsList a {
   display: block;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--c-line);
-  color: var(--c-ink);
+  padding: 7px 0;
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
+  color: var(--ink);
   font-size: 14px;
-  transition: color 0.2s ease;
 }
 
 .contentsList a:hover {
-  color: var(--c-blue);
+  color: var(--accent);
 }
 
 .contentsList a:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
 .doc {
   display: grid;
-  gap: calc(var(--cell) * 3);
-  color: var(--c-body);
-  font-size: clamp(15px, 1.15vw, 18px);
-  line-height: 1.62;
+  gap: clamp(28px, 3.4vw, 40px);
+  padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 56px);
+  font-size: 16px;
+  line-height: 1.7;
 }
 
 .section {
   display: grid;
-  gap: var(--cell);
-  /* Lands a contents jump clear of the fixed tab, with a little air above the heading. */
-  scroll-margin-top: calc(var(--cell) * 5);
+  gap: 14px;
+  max-width: 68ch;
+  /* Lands a contents jump with a little air above the heading. */
+  scroll-margin-top: 24px;
 }
 
 .section p {
   margin: 0;
-  text-align: justify;
-  text-align-last: left;
+  color: var(--ink);
   text-wrap: pretty;
 }
 
 .heading {
   margin: 0;
-  color: var(--c-ink);
-  font-size: clamp(22px, 2.2vw, 30px);
+  font-size: clamp(21px, 2.3vw, 26px);
   font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
 .section strong {
-  color: var(--c-ink);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .list {
@@ -100,7 +94,6 @@
   gap: 10px;
   margin: 0;
   padding-left: 1.2em;
-  list-style: square;
 }
 
 .list li {
@@ -109,36 +102,29 @@
 }
 
 .list li::marker {
-  color: var(--c-navy);
+  color: var(--accent);
 }
 
-/* Ink at rest; a dotted line grows under it from the left on hover. */
 .link {
-  padding-bottom: 3px;
-  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 0 3px;
-  color: var(--c-ink);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.45);
   font-weight: 500;
   overflow-wrap: anywhere;
-  transition: background-size 0.45s var(--ease-out);
 }
 
-.link:hover,
-.link:focus-visible {
-  background-size: 100% 3px;
+.link:hover {
+  border-bottom-color: var(--frost);
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
 .other {
+  max-width: 68ch;
   margin: 0;
-  padding-top: calc(var(--cell) * 2);
-  border-top: 1px solid var(--c-line);
+  padding-top: 24px;
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.18);
 }
 
 @media (max-width: 860px) {
@@ -149,6 +135,7 @@
   /* Above the text on narrow screens, so it doesn't stick over it. */
   .contents {
     position: static;
+    padding-top: 0;
   }
 
   .contentsList {
@@ -157,21 +144,8 @@
   }
 }
 
-@media (max-width: 680px) {
-  .section p {
-    text-align: left;
-  }
-}
-
 @media (max-width: 480px) {
   .contentsList {
     grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .contentsList a,
-  .link {
-    transition: none;
   }
 }

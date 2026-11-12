@@ -1,31 +1,28 @@
 /*
- * Hackathons month by month: the month in the margin over a hairline, the cards to its right. Each
- * card is the event's own art with its listing under it, and what we know about going in ruled rows.
+ * Hackathons as cards, the way MLH lists a season: the event's own art on top, then its listing,
+ * then what we know about going. A month heading sits in the margin, as on /events.
  */
 .month {
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr);
-  gap: calc(var(--cell) * 2);
+  gap: 20px;
   align-items: start;
-  padding-top: calc(var(--cell) * 2);
-  border-top: 1px solid var(--c-line);
 }
 
-/* Sticky, clear of the fixed tab. */
 .monthName {
   position: sticky;
-  top: calc(var(--cell) * 4);
-  margin: 0;
-  font-size: clamp(22px, 2.2vw, 30px);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  top: var(--bar-clear);
+  margin: 6px 0 0;
+  color: var(--hue);
+  font-size: 17px;
+  font-weight: 500;
+  text-shadow: var(--on-field-shadow);
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
-  gap: calc(var(--cell) * 4) 28px;
+  gap: 18px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -35,6 +32,15 @@
   position: relative;
   display: grid;
   grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border: 1px solid var(--slab-edge);
+  border-radius: 18px;
+  background: var(--navy);
+  box-shadow: var(--slab-shadow);
+}
+
+.card[data-linked='true']:hover {
+  border-color: rgb(var(--hue-rgb) / 0.55);
 }
 
 /* ---- The art: the event's background with its logo centred over it ---- */
@@ -45,26 +51,20 @@
   place-items: center;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: var(--c-ink);
-  color: var(--c-paper);
+  /* A step up from navy, so the card's top half doesn't sink into the harbor around it. */
+  background: color-mix(in srgb, var(--navy), var(--frost) 2%);
 }
 
-/* No photo: a solid colour, picked per hackathon, with the name set on it. */
-.art[data-tone='0']:not([data-photo]) {
-  background: var(--c-navy);
-}
-
-.art[data-tone='1']:not([data-photo]) {
-  background: var(--c-blue);
-}
-
-.art[data-tone='2']:not([data-photo]) {
-  background: var(--c-gold);
-  color: var(--c-ink);
-}
-
-.art[data-tone='3']:not([data-photo]) {
-  background: var(--c-red);
+/* No photo: harbor with a stretch of the frozen field, lit toward the middle in the trips' iris
+   with the field's core warming one corner, so the name has a ground of its own. */
+.art:not([data-photo])::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 50%, rgb(var(--iris-deep-rgb) / 0.42), transparent 75%),
+    radial-gradient(ellipse 50% 60% at 100% 100%, rgb(var(--rose-deep-rgb) / 0.3), transparent 75%),
+    var(--texture) var(--offset, 0 0) / 595px 400px;
 }
 
 .photo {
@@ -75,12 +75,12 @@
   object-fit: cover;
 }
 
-/* A flat shade, so a white or colour mark reads on any photo. */
+/* A soft shade under the logo, so a white or colour mark reads on any photo. */
 .art[data-photo]::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgb(10 10 10 / 0.32);
+  background: radial-gradient(ellipse 55% 65% at 50% 50%, rgb(var(--harbor-rgb) / 0.5), rgb(var(--harbor-rgb) / 0.12) 80%);
 }
 
 .logo {
@@ -92,6 +92,9 @@
   height: auto;
   max-height: 62%;
   object-fit: contain;
+  /* Most MLH logos are opaque squares; rounding them seats them on the photo like a badge. */
+  border-radius: 12px;
+  filter: drop-shadow(0 4px 16px rgb(var(--harbor-rgb) / 0.55));
 }
 
 .wordmark {
@@ -99,10 +102,11 @@
   z-index: 1;
   max-width: 80%;
   font-size: clamp(22px, 2.2vw, 28px);
+  font-weight: 300;
   letter-spacing: -0.02em;
-  line-height: 1;
+  line-height: 1.1;
   text-align: center;
-  text-transform: uppercase;
+  text-shadow: 0 2px 18px rgb(var(--harbor-rgb) / 0.8);
   text-wrap: balance;
 }
 
@@ -111,28 +115,19 @@
 .body {
   display: flex;
   flex-direction: column;
-  padding-top: var(--cell);
+  padding: 16px 18px;
 }
 
 .name {
   margin: 0;
-  font-size: clamp(20px, 1.8vw, 24px);
+  font-size: 18px;
   font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
   text-wrap: balance;
 }
 
 /* The name's link covers the card, so a click anywhere opens the hackathon's site. */
-.cardLink {
-  padding-bottom: 3px;
-  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 0 3px;
-  transition: background-size 0.45s var(--ease-out);
-}
-
 .cardLink::after {
   content: '';
   position: absolute;
@@ -145,19 +140,19 @@
 }
 
 .card:has(.cardLink:focus-visible) {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 3px;
 }
 
-.card:has(.cardLink:hover) .cardLink,
-.card:has(.cardLink:focus-visible) .cardLink {
-  background-size: 100% 3px;
+.card:has(.cardLink:hover) .cardLink {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
 
 .when {
-  margin: 8px 0 0;
-  color: var(--c-ink);
-  font-size: 14.5px;
+  margin: 6px 0 0;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -167,64 +162,56 @@
   flex-wrap: wrap;
   gap: 0 1em;
   margin: 2px 0 0;
-  color: var(--c-body);
-  font-size: 14.5px;
+  color: var(--ink-soft);
+  font-size: 14px;
 }
 
 .mode {
-  color: var(--c-muted);
+  color: var(--ink-dim);
 }
 
 /* ---- What we know: apply-by, travel, who's going ---- */
 
 .facts {
-  margin: var(--cell) 0 0;
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed rgb(var(--frost-rgb) / 0.2);
   font-size: 13.5px;
 }
 
 .facts div {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: var(--cell);
-  align-items: center;
-  padding: 8px 0;
-  border-top: 1px solid var(--c-line);
-}
-
-.facts div:last-child {
-  border-bottom: 1px solid var(--c-line);
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
 }
 
 .facts dt {
-  color: var(--c-muted);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  color: var(--ink-dim);
 }
 
 .facts dd {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 12px;
+  align-items: baseline;
+  gap: 2px 12px;
   margin: 0;
-  color: var(--c-ink);
   font-variant-numeric: tabular-nums;
 }
 
 .facts dd[data-covered='true'] {
-  color: var(--c-blue);
-  font-weight: 500;
+  color: var(--accent);
 }
 
 .facts dd[data-covered='false'] {
-  color: var(--c-body);
+  color: var(--ink-soft);
 }
 
 .going {
   margin: 10px 0 0;
-  color: var(--c-blue);
+  color: var(--accent);
   font-size: 13.5px;
   font-weight: 500;
 }
@@ -232,37 +219,35 @@
 /* Where the card goes, at the foot, so the link's destination is never a surprise. */
 .host {
   margin: auto 0 0;
-  padding-top: var(--cell);
+  padding-top: 14px;
   overflow: hidden;
-  color: var(--c-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  font-size: 12.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .footnote {
   max-width: 75ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  text-shadow: var(--on-field-shadow);
 }
 
 @media (max-width: 760px) {
   .month {
     grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
   }
 
   .monthName {
     position: static;
+    margin: 0;
   }
 
   /* One card a row: a wider, shorter banner so the list doesn't scroll forever. */
   .art {
     aspect-ratio: 2 / 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cardLink {
-    transition: none;
   }
 }

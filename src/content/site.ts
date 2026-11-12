@@ -109,11 +109,8 @@ export const FOOTER = {
       title: 'Explore',
       links: [
         { label: 'About Proto', to: '/about' },
-        { label: 'The board', to: '/board' },
         { label: 'Events', to: '/events' },
         { label: 'Hackathons', to: '/hackathons' },
-        { label: 'Playbook', to: '/resources/playbook' },
-        { label: 'Resources', to: '/resources' },
       ],
     },
     {

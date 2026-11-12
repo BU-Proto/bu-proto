@@ -1,135 +1,330 @@
 /*
- * The fund's coming-soon page: editorial splits on the harbor ground, the route as a band of pixels over four
- * steps, Ignite on the dark panel, and the interest list at the foot.
+ * The fund's coming-soon page. Plain harbor under the intro, like the other inner pages, with two
+ * navy sheets on it: the plan, cut like a ticket, at the top, and the interest form at the foot.
+ * Between them nothing is boxed: the stops are signs drawn in the field's characters, straight
+ * on the ground. Colour is the field's gradient (the ticket's line, the signs) and mint, the
+ * site's colour for what's yours, which here is the button.
  */
+
 .page {
-  gap: calc(var(--cell) * 10);
+  /* The bite the perforation takes out of the ticket's edge, top and bottom. */
+  --notch: 13px;
+
+  width: min(1180px, 100%);
+  margin-inline: auto;
+  padding: clamp(28px, 6vh, 64px) 0 clamp(64px, 10vh, 104px);
 }
 
-/* ---- The intro ---- */
-
-.status {
-  max-width: 62ch;
-  margin: calc(var(--cell) / 2) 0 0;
-  color: var(--c-body);
-  font-size: clamp(15px, 1.15vw, 18px);
-  line-height: 1.62;
+.subtitle {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 42px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  text-wrap: balance;
 }
 
-.statusWord {
-  margin-right: 4px;
+.lede {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
-/* ---- The plan ---- */
-
-.planLead {
+.head {
   display: grid;
   align-content: start;
   gap: 14px;
 }
 
-.factTitle {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.3;
+/* ---- The intro, on the field ------------------------------------------------------------------ */
+
+.status {
+  max-width: 62ch;
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
+  text-shadow: var(--on-field-shadow);
 }
 
-.factText {
-  max-width: 48ch;
-  margin: 4px 0 0;
-  color: var(--c-body);
-  font-size: 14.5px;
+/* Amber, the site's colour for "not yet". */
+.statusWord {
+  color: var(--amber);
+  font-weight: 500;
+}
+
+/* ---- The plan, printed as a ticket ------------------------------------------------------------ */
+
+/* Two pieces of one sheet, torn along a perforation: the plan, and a stub with its caveat. Each
+   piece is cut with its own mask, so the shadow has to come from a filter on the pair. */
+.ticket {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 27%);
+  margin-top: 44px;
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.25)) drop-shadow(0 26px 28px rgb(0 0 0 / 0.4));
+}
+
+.ticketBody,
+.stub {
+  border: 1px solid var(--slab-edge);
+  background-origin: border-box;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* The bites sit on the seam's two ends. A ring one pixel wider than each bite, drawn under the
+   mask, carries the sheet's edge around it. */
+.ticketBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: clamp(20px, 2.6vw, 30px);
+  padding: clamp(22px, 3.2vw, 40px);
+  border-right: 0;
+  border-radius: 22px 0 0 22px;
+  background:
+    radial-gradient(circle calc(var(--notch) + 1px) at 100% 0, var(--slab-edge) 99%, transparent),
+    radial-gradient(circle calc(var(--notch) + 1px) at 100% 100%, var(--slab-edge) 99%, transparent),
+    radial-gradient(60% 60% at 0% 0%, rgb(var(--sky-deep-rgb) / 0.18), transparent 70%),
+    var(--navy);
+  -webkit-mask-image:
+    radial-gradient(circle var(--notch) at 100% 0, transparent 97%, #000),
+    radial-gradient(circle var(--notch) at 100% 100%, transparent 97%, #000);
+  mask-image:
+    radial-gradient(circle var(--notch) at 100% 0, transparent 97%, #000),
+    radial-gradient(circle var(--notch) at 100% 100%, transparent 97%, #000);
+  -webkit-mask-position: top, bottom;
+  mask-position: top, bottom;
+  -webkit-mask-size: 100% 51%;
+  mask-size: 100% 51%;
+}
+
+.stub {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: space-between;
+  gap: 24px;
+  padding: clamp(22px, 3.2vw, 40px);
+  padding-left: clamp(24px, 3vw, 36px);
+  border-left: 0;
+  border-radius: 0 22px 22px 0;
+  background:
+    radial-gradient(circle calc(var(--notch) + 1px) at 0 0, var(--slab-edge) 99%, transparent),
+    radial-gradient(circle calc(var(--notch) + 1px) at 0 100%, var(--slab-edge) 99%, transparent),
+    radial-gradient(90% 60% at 100% 0%, rgb(var(--rose-deep-rgb) / 0.14), transparent 70%),
+    var(--navy);
+  -webkit-mask-image:
+    radial-gradient(circle var(--notch) at 0 0, transparent 97%, #000),
+    radial-gradient(circle var(--notch) at 0 100%, transparent 97%, #000);
+  mask-image:
+    radial-gradient(circle var(--notch) at 0 0, transparent 97%, #000),
+    radial-gradient(circle var(--notch) at 0 100%, transparent 97%, #000);
+  -webkit-mask-position: top, bottom;
+  mask-position: top, bottom;
+  -webkit-mask-size: 100% 51%;
+  mask-size: 100% 51%;
+}
+
+/* The stub's code, in the field's characters: rows set tight enough that the bars run together. */
+.code {
+  overflow: hidden;
+  margin: 0;
+  color: rgb(var(--frost-rgb) / 0.42);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: -0.34em;
+  line-height: 0.82;
+  white-space: pre;
+  user-select: none;
+}
+
+.caveat {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
   line-height: 1.5;
   text-wrap: pretty;
 }
 
-/* ---- How it'll work ---- */
-
-.route {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: calc(var(--cell) * 4);
-}
-
-/* ---- Next to Ignite: the dark panel, wider than the page column, 8px off the screen's edges ---- */
-
-.page .ignite {
-  justify-self: start;
-  width: calc(100vw - 16px);
-  margin: 0 0 0 calc(50% - 50vw + 8px);
-}
-
-.igniteHead {
-  display: grid;
-  align-content: start;
-  gap: calc(var(--cell) * 1.5);
-}
-
-.igniteLede {
-  max-width: 44ch;
-  margin: 0;
-  color: rgb(246 251 255 / 0.72);
-  font-size: clamp(15px, 1.15vw, 18px);
-  line-height: 1.62;
-}
-
-.igniteLede a {
-  color: var(--c-ink);
-}
-
-.compare {
-  align-self: start;
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.compare th,
-.compare td {
-  padding: var(--cell) 20px var(--cell) 0;
-  border-top: 1px solid rgb(246 251 255 / 0.16);
-  font-weight: 400;
-  vertical-align: baseline;
-}
-
-.compare thead th,
-.compare thead td {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.colProto {
-  color: var(--c-ink);
-}
-
-.topic {
-  white-space: nowrap;
-}
-
-.was {
-  color: rgb(246 251 255 / 0.68);
-  font-size: 14.5px;
-  line-height: 1.45;
-}
-
-.will {
-  color: var(--c-ink);
-  font-size: clamp(17px, 1.6vw, 22px);
-  letter-spacing: -0.015em;
+.caveatLead {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
-/* ---- The interest list ---- */
-
-.interest {
-  scroll-margin-top: calc(var(--cell) * 5);
+/* The perforation: a row of pin holes down the seam, between the two bites. */
+.stub::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--notch) + 8px);
+  bottom: calc(var(--notch) + 8px);
+  left: -2px;
+  width: 4px;
+  background: radial-gradient(circle, rgb(var(--harbor-rgb) / 0.9) 1.4px, transparent 1.9px) center top / 4px 10px
+    repeat-y;
 }
 
-.interestHead {
+/* Where from and where to, with the line between them in the field's characters and colours. */
+.leg {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.leg > span {
+  flex: none;
+}
+
+.leg > .rail {
+  flex: 1;
+}
+
+.rail {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--sky), var(--iris) 50%, var(--rose));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  /* No ligatures: every rail is its own character, as in the field. */
+  font-variant-ligatures: none;
+  line-height: 1;
+  opacity: 0.85;
+  user-select: none;
+}
+
+.headline {
+  max-width: 21ch;
+  margin: 0;
+  font-size: clamp(30px, 3.9vw, 50px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  font-variant-numeric: tabular-nums;
+  text-wrap: balance;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px clamp(24px, 4vw, 56px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact {
   display: grid;
   align-content: start;
-  gap: var(--cell);
+  gap: 5px;
+}
+
+.factTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.factText {
+  max-width: 36ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* ---- The sections under it: a title on the left, what it introduces on the right --------------- */
+
+.section {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  align-items: start;
+  gap: 36px clamp(32px, 6vw, 96px);
+  padding-top: clamp(84px, 13vh, 132px);
+}
+
+/* ---- How it'll work: a row of signs in the field's characters --------------------------------- */
+
+.route {
+  display: grid;
+  gap: clamp(32px, 5vh, 48px);
+  padding-top: clamp(84px, 13vh, 132px);
+}
+
+/* The four stops, side by side. */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px clamp(24px, 3.4vw, 48px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stop {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 8px;
+}
+
+/* A sign: drawn in glyphs, and coloured from the field's gradient where it stands in the row, so
+   the four read as one sweep of light from sky to rose. */
+.sign {
+  --figure-size: 5.5px;
+  /* The drawing has a little air round it; pull it back so its strokes start on the text's edge. */
+  margin: 0 0 14px -10px;
+  font-weight: 500;
+  background-image: linear-gradient(90deg, var(--sky), var(--iris) 50%, var(--rose));
+  background-position: calc(var(--col) * 33.333%) 0;
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.stopTitle {
+  margin: 0;
+  font-size: clamp(20px, 2vw, 24px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.stopText {
+  max-width: 30ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* ---- The interest list ------------------------------------------------------------------------ */
+
+.interest {
+  scroll-margin-top: 24px;
 }
 
 .formWrap {
@@ -139,37 +334,14 @@
 }
 
 .form {
-  gap: 20px;
+  gap: 18px 16px;
 }
 
-.input {
-  width: 100%;
-  min-height: 48px;
-  padding: 11px 14px;
-  border: 1px solid var(--c-line);
-  border-radius: 0;
-  background: var(--c-paper);
-  color: var(--c-ink);
-  /* 16px keeps phones from zooming in on focus. */
-  font-size: 16px;
-}
-
-.input::placeholder {
-  color: var(--c-muted);
-}
-
-.input:hover {
-  border-color: rgb(246 251 255 / 0.4);
-}
-
-.input:focus-visible {
-  outline: none;
-  border-color: var(--c-ink);
-}
-
-.input:user-invalid,
-.input[aria-invalid='true'] {
-  border-color: var(--c-red);
+/* The submit is the one thing on the page that's yours to do, so it's mint. */
+.form button[type='submit'] {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: var(--harbor);
 }
 
 .privacy {
@@ -187,50 +359,44 @@
   display: none;
 }
 
-/* ---- Small screens ---- */
+/* ---- Small screens ---------------------------------------------------------------------------- */
 
-@media (max-width: 680px) {
-  .page {
-    gap: calc(var(--cell) * 6);
+@media (max-width: 960px) {
+  .section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Too narrow for four across: the signs go down the side, each stop beside its own. */
+@media (max-width: 1000px) {
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .route {
-    gap: calc(var(--cell) * 3);
+  .stop {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: clamp(18px, 4vw, 32px);
+  }
+
+  .sign {
+    --figure-size: 3.6px;
+    grid-row: 1 / span 2;
+    margin: 0;
+  }
+
+  .stopTitle {
+    align-self: end;
+  }
+
+  .stopText {
+    grid-column: 2;
+    align-self: start;
   }
 }
 
 @media (max-width: 640px) {
-  /* Each difference stacks: what it's about, then the two answers side by side under the heads. */
-  .compare,
-  .compare thead,
-  .compare tbody {
-    display: grid;
-  }
-
-  .compare tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 6px 20px;
-    padding: var(--cell) 0;
-    border-top: 1px solid rgb(246 251 255 / 0.16);
-  }
-
-  .compare thead tr {
-    padding-top: 0;
-    border-top: 0;
-  }
-
-  .compare thead td {
-    display: none;
-  }
-
-  .compare th,
-  .compare td {
-    padding: 0;
-    border-top: 0;
-  }
-
-  .topic {
-    grid-column: 1 / -1;
+  .form {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

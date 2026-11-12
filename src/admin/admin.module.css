@@ -1,5 +1,6 @@
-/* Shared pieces for the portal: page header, panels, buttons, fields, tables, row flags, dialogs.
-   Every colour comes from the tokens set on the shell in AdminLayout.module.css. */
+/* Shared pieces for the portal: the header bar's contents, panels, buttons, fields, tables, row
+   states, dialogs. Every colour and every timing comes from the tokens set on the shell in
+   AdminLayout.module.css. */
 
 .page {
   display: grid;
@@ -13,11 +14,10 @@
   margin-inline: auto;
 }
 
-/* Editors and single forms read better at a line length than at full width. The page keeps the
-   shared column, so its left edge doesn't jump between a list and its editor; only the content
-   inside stops short. */
+/* Single forms read better at a line length than at full width. The page keeps the shared
+   column, so its left edge doesn't jump between a list and a form; only the content stops short. */
 .narrow > * {
-  max-width: 880px;
+  max-width: 760px;
 }
 
 .mono {
@@ -53,73 +53,77 @@
   color: var(--ink-soft);
 }
 
-/* ---- Page header ------------------------------------------------------------------------ */
+/* ---- The header bar's contents (portalled into the shell's bar by PageHeader) --------------- */
 
-.header {
+/* One row: where you are on the left, what you can do on the right. The bar is sticky, so the
+   page's main button is always in the same place, however far the page has scrolled. */
+.bar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px 24px;
-  padding-bottom: 4px;
+  gap: 8px 20px;
+  max-width: var(--column, 1120px);
+  min-height: 56px;
+  margin-inline: auto;
+  padding-block: 10px;
 }
 
-.headerText {
-  display: grid;
-  flex: 1 1 320px;
+.trail {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
   gap: 6px;
   min-width: 0;
 }
 
-/* Only ever a way back to the parent page; section names live in the sidebar. */
-.back {
-  margin: 0 0 2px;
+/* The way back to the parent page, then this page's own name. */
+.crumb {
+  flex: none;
+  margin-left: -6px;
+  padding: 3px 6px;
+  border-radius: 6px;
   color: var(--ink-dim);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.back a {
-  border-radius: 4px;
-}
-
-.back a:hover {
+.crumb:hover {
+  background: var(--fill);
   color: var(--ink);
 }
 
-.back a:focus-visible {
+.crumb:focus-visible {
   outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline-offset: 0;
+}
+
+.crumbSep {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  color: rgb(var(--frost-rgb) / 0.3);
 }
 
 .title {
+  min-width: 0;
   margin: 0;
-  font-size: 26px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-  text-wrap: balance;
-}
-
-.titleCount {
-  color: var(--ink-dim);
+  overflow: hidden;
   font-size: 15px;
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.lede {
-  max-width: 68ch;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.lede p {
-  margin: 0;
+.titleCount {
+  flex: none;
+  margin-left: 4px;
+  color: var(--ink-dim);
+  font-size: 13.5px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .actions {
@@ -127,6 +131,87 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.bar > .actions {
+  flex: none;
+  justify-content: flex-end;
+}
+
+/* A section's pages (its list, its import), under the heading: the same bar, a second row. */
+.sectionTabs {
+  display: flex;
+  gap: 20px;
+  max-width: var(--column, 1120px);
+  margin: -4px auto 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sectionTab {
+  position: relative;
+  flex: none;
+  padding: 6px 0 11px;
+  color: var(--ink-dim);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.sectionTab:hover {
+  color: var(--ink);
+}
+
+/* The rule under the current tab sits on the bar's own bottom line. */
+.sectionTab[aria-current='page'] {
+  color: var(--ink);
+}
+
+.sectionTab[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--mint);
+}
+
+.sectionTab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+/* What a page is for, in a sentence or two, at the top of its content. */
+.lede {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.lede p {
+  margin: 0;
+}
+
+.lede p + p {
+  margin-top: 4px;
+}
+
+@media (max-width: 860px) {
+  .bar {
+    flex-wrap: wrap;
+    padding-block: 12px;
+  }
+
+  .title {
+    font-size: 17px;
+    white-space: normal;
+  }
+
+  .bar > .actions {
+    justify-content: flex-start;
+  }
 }
 
 /* ---- Panels ------------------------------------------------------------------------------ */
@@ -138,6 +223,7 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-panel);
   background: var(--surface);
+  box-shadow: var(--rim);
 }
 
 /* Holds a table edge to edge. If a table ever can't fit, it scrolls here rather than being cut off. */
@@ -163,26 +249,27 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
-  min-height: 56px;
-  padding: 10px 16px 10px 20px;
+  min-height: 52px;
+  padding: 10px 12px 10px 16px;
   border-bottom: 1px solid var(--line-strong);
 }
 
 .flushStatus {
-  flex: 1 1 160px;
+  flex: 1 1 40px;
   min-width: 0;
 }
 
 .panelTitle {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
 }
 
 /* ---- Buttons ----------------------------------------------------------------------------- */
 
-/* Every button is as wide as its label: no button ever stretches to fill a row. */
+/* Every button is as wide as its label: no button ever stretches to fill a row. One height for
+   the lot, so a row of them lines up whatever each one is for. */
 .button,
 .secondary,
 .primary,
@@ -195,8 +282,8 @@
   justify-self: start;
   gap: 6px;
   width: auto;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 34px;
+  padding: 0 13px;
   border: 1px solid var(--edge);
   border-radius: var(--radius-control);
   background: var(--fill);
@@ -207,24 +294,15 @@
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
+  user-select: none;
 }
 
-.button:hover,
-.secondary:hover {
-  border-color: var(--edge-hover);
-  background: var(--fill-hover);
-}
-
-/* The site's frost button, in the portal's shape. */
+/* The site's frost button, in the portal's shape: the one thing a page most wants you to do. */
 .primary {
   border-color: var(--frost);
   background: var(--frost);
   color: var(--navy);
-}
-
-.primary:hover {
-  border-color: var(--primary-hover);
-  background: var(--primary-hover);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
 }
 
 .danger {
@@ -233,24 +311,37 @@
   color: var(--danger-ink);
 }
 
-.danger:hover {
-  border-color: var(--danger-ink);
-  background: var(--danger-wash-strong);
-}
-
 .ghost {
   border-color: transparent;
   background: transparent;
   color: var(--ink-soft);
 }
 
-.ghost:hover {
-  background: var(--fill);
-  color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  .button:hover,
+  .secondary:hover {
+    border-color: var(--edge-hover);
+    background: var(--fill-hover);
+  }
+
+  .primary:hover {
+    border-color: var(--primary-hover);
+    background: var(--primary-hover);
+  }
+
+  .danger:hover {
+    border-color: var(--danger-ink);
+    background: var(--danger-wash-strong);
+  }
+
+  .ghost:hover {
+    background: var(--fill);
+    color: var(--ink);
+  }
 }
 
 .small {
-  min-height: 30px;
+  min-height: 28px;
   padding: 0 10px;
   font-size: 12.5px;
 }
@@ -261,6 +352,16 @@
 .danger svg,
 .ghost svg {
   flex: none;
+  width: 15px;
+  height: 15px;
+  margin-left: -2px;
+}
+
+/* An icon after the label (an arrow out) hangs off the other side. */
+.button svg:last-child:not(:first-child),
+.ghost svg:last-child:not(:first-child) {
+  margin-right: -2px;
+  margin-left: 0;
 }
 
 .button:disabled,
@@ -281,6 +382,19 @@
 .tab:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* A text button for a destructive thing that shouldn't shout until you reach for it. */
+.dangerGhost {
+  composes: ghost;
+  color: var(--danger-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dangerGhost:hover {
+    background: var(--danger-wash);
+    color: var(--danger-ink);
+  }
 }
 
 /* Also used on buttons, so it clears a button's own chrome. */
@@ -338,8 +452,8 @@
 
 .input {
   width: 100%;
-  min-height: 38px;
-  padding: 8px 11px;
+  min-height: 36px;
+  padding: 7px 11px;
   border: 1px solid var(--edge);
   border-radius: var(--radius-control);
   background: var(--surface-sunk);
@@ -395,6 +509,44 @@ input[type='date'].input {
   font-variant-numeric: tabular-nums;
 }
 
+/* A search box: the glass sits inside the field, and a key cap can hang off its far end. */
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.search > svg {
+  position: absolute;
+  left: 10px;
+  width: 15px;
+  height: 15px;
+  color: var(--ink-dim);
+  pointer-events: none;
+}
+
+.search > .input {
+  padding-left: 32px;
+}
+
+/* The browser's own clear button and decoration, which fight the field's. */
+.search > .input::-webkit-search-decoration,
+.search > .input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.search > kbd {
+  position: absolute;
+  right: 8px;
+  pointer-events: none;
+}
+
+.search:focus-within > kbd,
+.search > .input:not(:placeholder-shown) ~ kbd {
+  display: none;
+}
+
 /* A checkbox drawn as a switch, with its label and hint beside it. It stays a real checkbox, so
    space toggles it. */
 .switchRow {
@@ -408,7 +560,7 @@ input[type='date'].input {
 .switch {
   position: relative;
   flex: none;
-  width: 36px;
+  width: 34px;
   height: 20px;
   margin: 0;
   border: 1px solid var(--edge-hover);
@@ -435,8 +587,8 @@ input[type='date'].input {
 }
 
 .switch:checked::after {
-  left: 18px;
   background: var(--navy);
+  transform: translateX(14px);
 }
 
 .switch:focus-visible {
@@ -453,6 +605,20 @@ input[type='date'].input {
   font-weight: 500;
 }
 
+/* ---- Toolbar: what filters a list, on one row above it -------------------------------------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+}
+
+.toolbar > .search {
+  flex: 0 1 260px;
+}
+
 /* ---- Tables ------------------------------------------------------------------------------ */
 
 .table {
@@ -462,8 +628,8 @@ input[type='date'].input {
 }
 
 .table th {
-  height: 40px;
-  padding: 0 14px;
+  height: 38px;
+  padding: 0 12px;
   border-bottom: 1px solid var(--line-strong);
   color: var(--ink-dim);
   font-size: 12.5px;
@@ -473,29 +639,93 @@ input[type='date'].input {
 }
 
 .table td {
-  padding: 12px 14px;
+  height: 46px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--line);
-  /* Baseline, so a mono email or a smaller note lines up with the name beside it. */
-  vertical-align: baseline;
 }
 
 /* The outer cells keep the panel's own inset. */
 .table th:first-child,
 .table td:first-child {
-  padding-left: 20px;
+  padding-left: 16px;
 }
 
 .table th:last-child,
 .table td:last-child {
-  padding-right: 20px;
+  padding-right: 16px;
 }
 
 .table tbody tr:last-child td {
   border-bottom: 0;
 }
 
-.table tbody tr:hover {
-  background: var(--hover);
+/* A row that opens something takes the whole row as its target (the title's link, stretched),
+   and says so on hover: a step lighter, with a chevron arriving at its far end. */
+.table tbody tr {
+  position: relative;
+}
+
+.rowTitle {
+  font-weight: 500;
+}
+
+/* Only in a table whose rows open (it has the chevron column): a title that links somewhere
+   else, like an import's source page, stays an ordinary link. */
+tr:has(> .rowGo) a.rowTitle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+tr:has(> .rowGo) a.rowTitle:focus-visible {
+  outline: none;
+}
+
+tr:has(> .rowGo) a.rowTitle:focus-visible::after {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.rowTitle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+a.rowTitle:hover {
+  color: var(--mint);
+}
+
+tr:has(> .rowGo) a.rowTitle:hover {
+  color: inherit;
+}
+
+/* The chevron's own narrow column at the end of a row that opens. */
+.rowGo {
+  width: 36px;
+  padding-inline: 0 14px !important;
+  color: var(--ink-dim);
+  text-align: right;
+}
+
+.rowGo svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  opacity: 0;
+  transform: translateX(-4px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .table tbody tr:hover {
+    background: var(--hover);
+  }
+
+  .table tbody tr:hover .rowGo svg {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .num {
@@ -504,15 +734,17 @@ input[type='date'].input {
   white-space: nowrap;
 }
 
-/* Row buttons sit at the row's right edge, on one line. */
+/* Row buttons sit at the row's right edge, on one line, above a stretched row link. */
 .rowActions {
+  position: relative;
+  z-index: 1;
   width: 1%;
   text-align: right !important;
   white-space: nowrap;
 }
 
 .rowActions > * + * {
-  margin-left: 6px;
+  margin-left: 4px;
 }
 
 /* A text-only button at the end lines its label up with the column's edge, not its invisible one. */
@@ -520,24 +752,27 @@ input[type='date'].input {
   margin-right: -10px;
 }
 
-/* Buttons are taller than a line of text; pull them up so their label sits on the row's text line. */
-.rowActions > button,
-.rowActions > a {
-  margin-block: -6px;
+/* An initial in a disc, before a person's name. */
+.avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgb(var(--sky-rgb) / 0.13);
+  color: var(--sky);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
 }
 
-.rowTitle {
-  font-weight: 500;
-}
-
-a.rowTitle:hover {
-  color: var(--mint);
-}
-
-.rowTitle:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-  border-radius: 4px;
+/* Name beside its avatar, as one cell. */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 
 /* Phones: each row stacks into a small block, with the column name before each value. */
@@ -554,7 +789,7 @@ a.rowTitle:hover {
   }
 
   .table tr {
-    padding: 14px 16px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--line);
   }
 
@@ -563,6 +798,7 @@ a.rowTitle:hover {
   }
 
   .table td {
+    height: auto;
     padding: 2px 0;
     border: 0;
   }
@@ -587,6 +823,10 @@ a.rowTitle:hover {
     font-size: 12.5px;
   }
 
+  .table td.rowGo {
+    display: none;
+  }
+
   .num,
   .rowActions {
     width: auto;
@@ -596,11 +836,6 @@ a.rowTitle:hover {
   .rowActions {
     padding-top: 10px !important;
     white-space: normal;
-  }
-
-  .rowActions > button,
-  .rowActions > a {
-    margin-block: 0;
   }
 
   /* A text-only button lines its label up with the values above, not its invisible edge. */
@@ -613,9 +848,46 @@ a.rowTitle:hover {
   }
 }
 
-/* ---- Row flags, tabs -------------------------------------------------------------------- */
+/* ---- Row states, filters ------------------------------------------------------------------ */
 
-/* A row's state, said in words inside the row's own type: no capsules. */
+/* A row's state: a small dot in its colour, then the word. Never a capsule. */
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.state::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tone, var(--ink-dim));
+}
+
+.state[data-tone='live'] {
+  --tone: var(--mint);
+}
+
+/* Not out yet: a ring, not a dot. */
+.state[data-tone='draft'] {
+  color: var(--ink-dim);
+}
+
+.state[data-tone='draft']::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--ink-dim);
+}
+
+.state[data-tone='sample'] {
+  --tone: var(--amber);
+}
+
+/* Words after a title, for the few places a state still rides in the title's own cell. */
 .flags {
   display: inline-flex;
   flex-wrap: wrap;
@@ -664,19 +936,19 @@ a.rowTitle:hover {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 30px;
-  padding: 0 12px;
+  min-height: 28px;
+  padding: 0 11px;
   border: 0;
   border-radius: 7px;
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .tab:hover {
-  background: var(--hover);
   color: var(--ink);
 }
 
@@ -685,8 +957,9 @@ a.rowTitle:hover {
 .tab[aria-pressed='true'] {
   background: var(--fill-hover);
   color: var(--ink);
-  font-weight: 500;
-  box-shadow: inset 0 0 0 1px var(--line-strong);
+  box-shadow:
+    inset 0 0 0 1px var(--line-strong),
+    0 1px 2px rgb(0 0 0 / 0.25);
 }
 
 /* On a phone the options scroll sideways rather than wrapping onto a second row. */
@@ -709,7 +982,7 @@ a.rowTitle:hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- Status line, empty state, error ------------------------------------------------------ */
+/* ---- Status line, empty state, loading, error ---------------------------------------------- */
 
 .status {
   margin: 0;
@@ -727,13 +1000,14 @@ a.rowTitle:hover {
   color: var(--danger-ink);
 }
 
-/* Nothing here yet: a heading that says so, and what to do about it. */
+/* Nothing here: a heading that says why, and the one thing to do about it. */
 .empty {
   display: grid;
   justify-items: center;
   gap: 6px;
-  padding: 48px 24px;
+  padding: 56px 24px;
   color: var(--ink-soft);
+  font-size: 13.5px;
   text-align: center;
 }
 
@@ -741,12 +1015,26 @@ a.rowTitle:hover {
 .empty h3 {
   margin: 0;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .empty p {
+  max-width: 44ch;
   margin: 0;
+}
+
+.empty > a,
+.empty > button {
+  margin-top: 10px;
+}
+
+/* A stand-in line while a list loads: the shape of what's coming, with a slow light across it. */
+.skeleton {
+  display: block;
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--fill) 25%, var(--fill-hover) 50%, var(--fill) 75%) 0 0 / 300% 100%;
 }
 
 /* Something went wrong: a tinted panel, not a red one. */
@@ -792,26 +1080,31 @@ a.rowTitle:hover {
 
 .dialogBody {
   display: grid;
-  gap: 10px;
-  padding: 22px 22px 18px;
+  gap: 8px;
+  padding: 20px 20px 16px;
 }
 
 .dialogTitle {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.3;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
 }
 
 .dialogText {
   margin: 0;
   color: var(--ink-soft);
+  font-size: 13.5px;
   line-height: 1.55;
 }
 
 .dialogText p {
   margin: 0;
+}
+
+.dialogText p + p {
+  margin-top: 6px;
 }
 
 .dialogBody > .error:empty {
@@ -823,7 +1116,7 @@ a.rowTitle:hover {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 @media (max-width: 640px) {
@@ -836,6 +1129,8 @@ a.rowTitle:hover {
   }
 }
 
+/* ---- Motion ------------------------------------------------------------------------------- */
+
 @media (prefers-reduced-motion: no-preference) {
   .button,
   .secondary,
@@ -843,31 +1138,69 @@ a.rowTitle:hover {
   .danger,
   .ghost,
   .tab,
+  .sectionTab,
+  .crumb,
   .input,
   .switch,
-  .link,
-  a.rowTitle {
+  .link {
     transition:
-      background-color 0.12s ease,
-      border-color 0.12s ease,
-      box-shadow 0.12s ease,
-      color 0.12s ease;
+      background-color var(--quick) ease,
+      border-color var(--quick) ease,
+      box-shadow var(--quick) ease,
+      color var(--quick) ease,
+      transform var(--quick) var(--ease-out);
+  }
+
+  /* A button gives a little under the press, so a click is felt before anything else happens. */
+  .button:active:not(:disabled),
+  .secondary:active:not(:disabled),
+  .primary:active:not(:disabled),
+  .danger:active:not(:disabled),
+  .ghost:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
   .switch::after {
     transition:
-      left 0.18s cubic-bezier(0.3, 0.7, 0.3, 1),
-      background-color 0.15s ease;
+      transform var(--swift) var(--ease-out),
+      background-color var(--quick) ease;
   }
 
+  .rowGo svg {
+    transition:
+      opacity var(--quick) ease,
+      transform var(--swift) var(--ease-out);
+  }
+
+  .skeleton {
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  /* A dialog rises a few pixels into place as the page dims behind it. */
   .dialog[open] {
-    animation: rise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: rise var(--calm) var(--ease-out);
+  }
+
+  .dialog[open]::backdrop {
+    animation: dim var(--calm) ease;
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.985);
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+@keyframes dim {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -300% 0;
   }
 }

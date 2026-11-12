@@ -1,152 +1,68 @@
-/*
- * Three rows of logos drifting left, full bleed. Every brand gets the same square slot and the
- * same ink, so no logo shouts over another. A slot is 15em and takes 1.8s to pass (1.35s on the
- * middle row): about 100px and 135px a second on a laptop.
- */
+/* Full bleed, like the notes band, but quieter: no tint, just the names on the field. */
 .band {
+  display: grid;
+  gap: 22px;
+  /* Edge to edge from inside any column (the body clips the scrollbar's width of overflow). */
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  padding-block: 25vh 15vh;
-  overflow: hidden;
-  color: var(--c-ink);
-  font-size: clamp(0.75rem, 1vw, 1.75rem);
+  padding: clamp(28px, 5vh, 52px) 0;
 }
 
 .head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 1em 3em;
-  width: min(var(--maxw), 100% - 2 * var(--gutter));
-  margin: 0 auto 2vh;
+  gap: 8px 24px;
+  /* The page column: 1180px, less the shell's side padding on narrow screens. */
+  width: min(1180px, 100% - 2 * max(16px, env(safe-area-inset-left, 0px)));
+  margin: 0 auto;
+  text-shadow: var(--on-field-shadow);
 }
 
 .title {
   margin: 0;
-  font-size: 4em;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  text-transform: uppercase;
-}
-
-.lede {
-  width: 14em;
-  margin: 0;
-  font-size: 0.875em;
-  line-height: 1.2;
-  text-align: right;
-  text-transform: uppercase;
-}
-
-.row + .row {
-  margin-top: -2em;
-}
-
-.track {
-  display: flex;
-  width: max-content;
-  will-change: transform;
+  font-size: 17px;
+  font-weight: 500;
 }
 
 .item {
-  display: flex;
-  flex: none;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  min-width: 15em;
-  height: 15em;
-  padding-inline: 2em;
-  color: inherit;
-  text-decoration: none;
-  transition: color 0.3s ease;
+  height: clamp(44px, 6vw, 64px);
+  opacity: 0.88;
 }
 
 a.item:hover {
-  color: var(--c-blue);
+  opacity: 1;
 }
 
 a.item:focus-visible {
-  outline: 2px solid var(--c-blue);
-  outline-offset: -1.5em;
+  outline: 2px solid var(--frost);
+  outline-offset: 6px;
+  border-radius: 6px;
 }
 
-/* The file is a stencil, so any logo takes on the page's ink and the hover's colour. */
+/* Logos turn white so every brand sits in the same voice over the gradient. */
 .logo {
-  display: block;
-  width: 9em;
-  height: 4.5em;
-  background: currentColor;
-  mask: var(--logo) center / contain no-repeat;
+  /* The band's height, and a width worked out from the file's own proportions (its width and
+     height attributes), so a logo holds its place before it has loaded. */
+  height: 100%;
+  max-height: 100%;
+  width: auto;
+  filter: brightness(0) invert(1) drop-shadow(0 1px 8px rgb(var(--harbor-rgb) / 0.45));
 }
 
 .wordmark {
-  font-size: 2.1em;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1;
+  font-size: clamp(30px, 4.6vw, 58px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
   white-space: nowrap;
+  text-shadow: var(--on-field-shadow);
 }
 
-.more {
-  width: min(var(--maxw), 100% - 2 * var(--gutter));
-  margin: 2em auto 0;
-  text-align: right;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .track {
-    animation: drift calc(var(--count) * 1.8s) linear infinite;
-  }
-
-  .row[data-fast] .track {
-    animation-duration: calc(var(--count) * 1.35s);
-  }
-}
-
-@keyframes drift {
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@media (max-width: 812px) {
-  .band {
-    padding-block: calc(var(--cell) * 7) 10vh;
-  }
-
-  .title {
-    font-size: 14vw;
-  }
-
-  .lede {
-    width: 100%;
-    font-size: 1.2em;
-    text-align: left;
-  }
-
-  .item {
-    min-width: 12em;
-    height: 12em;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .row:not(:first-child),
-  .track > :nth-child(n + 11) {
-    display: none;
-  }
-
-  .track {
-    flex-wrap: wrap;
-    justify-content: center;
-    width: auto;
-    will-change: auto;
-  }
-
-  .item {
-    transition: none;
-  }
+/* A band in two rows (the schools on the wins page): close enough to read as one band. */
+.rows {
+  display: grid;
+  gap: clamp(18px, 3vh, 30px);
 }

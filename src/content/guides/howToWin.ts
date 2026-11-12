@@ -21,7 +21,7 @@ export const HOW_TO_WIN: GuideDoc = {
             [{ strong: 'Read the tracks and prizes' }, ' and aim at them on purpose.'],
             [{ strong: 'Use AI to code and design,' }, ' without shame and with judgement.'],
             [{ strong: 'Treat UI and UX as part of the build,' }, ' not the last hour.'],
-            [{ strong: 'Practise the demo' }, ' until it’s boring.'],
+            [{ strong: 'Practice the demo' }, ' until it’s boring.'],
           ],
         },
       ],
@@ -176,7 +176,7 @@ export const HOW_TO_WIN: GuideDoc = {
     },
     {
       id: 'practice',
-      title: '6. Practise the demo',
+      title: '6. Practice the demo',
       body: [
         'A demo that works on the first try in front of judges has usually worked twenty times in front of the team. Freeze features early enough that you have time to rehearse, and treat the rehearsal as part of the build.',
         {
@@ -218,7 +218,7 @@ export const HOW_TO_WIN: GuideDoc = {
             [{ strong: 'The first quarter:' }, ' the skeleton running end to end and deployed, even if every screen is ugly.'],
             [{ strong: 'Halfway:' }, ' the demo path works. Now make the hard part real.'],
             [{ strong: 'The last third:' }, ' polish the demo path and fix what’s broken. No new features.'],
-            [{ strong: 'The last few hours:' }, ' feature freeze, the backup video, the write-up, then practise the demo until it’s boring.'],
+            [{ strong: 'The last few hours:' }, ' feature freeze, the backup video, the write-up, then practice the demo until it’s boring.'],
           ],
         },
         ['Every one of our wins, and why it won, is in ', guideLink(SLUGS.breakdowns, 'Winning projects, broken down'), '.'],

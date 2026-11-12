@@ -1,10 +1,12 @@
-/* The record as a sentence in lead type: the counts in ink, the words between them muted. */
+/* The record as a sentence: words at reading size, the counts set huge and light between them.
+   Laid out on main's grid (a cell's gap, the landing's column width); the type is this site's. */
 .tally {
   display: grid;
   gap: var(--cell);
   width: 100%;
   max-width: var(--maxw);
   margin: 0 auto;
+  text-shadow: var(--on-field-shadow);
 }
 
 .line {
@@ -13,8 +15,8 @@
   align-items: baseline;
   gap: 0 0.3em;
   margin: 0;
-  color: var(--c-muted);
-  font-size: clamp(26px, 3.4vw, 46px);
+  font-size: clamp(22px, 2.6vw, 34px);
+  font-weight: 300;
   letter-spacing: -0.02em;
   line-height: 1.06;
 }
@@ -24,8 +26,10 @@
 }
 
 .line b {
-  color: var(--c-ink);
-  font-weight: 400;
+  color: var(--hue);
+  font-size: clamp(64px, 9vw, 132px);
+  font-weight: 200;
+  letter-spacing: -0.05em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -35,10 +39,10 @@
   align-items: baseline;
   gap: 6px 10px;
   margin: 0;
-  color: var(--c-muted);
-  font-size: 14px;
+  color: var(--ink);
+  font-size: 16px;
 }
 
 .note a {
-  color: var(--c-ink);
+  color: var(--ink);
 }

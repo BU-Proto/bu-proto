@@ -1,13 +1,18 @@
-/* The wins on their light sheet: the landing's latest four and everything on /wins. */
+/*
+ * The wins on their sheet: the landing's latest and everything on /wins. Laid out as on main; the
+ * sheet has no fill, so it's the landing's harbor, with frost ink, Inter in light weights for the
+ * large type, and the covers on navy. A win is rose (the sheet carries data-hue="rose").
+ */
 
 .sheet {
   padding: clamp(40px, 6vw, 96px) clamp(20px, 5vw, 80px) clamp(56px, 8vw, 120px);
-  color: var(--paper-ink);
-  font-family: var(--font-display);
+  color: var(--ink);
+  font-family: var(--font-ui);
 }
 
 .empty {
   margin: 0;
+  color: var(--ink-soft);
   font-size: 16px;
 }
 
@@ -34,7 +39,7 @@
 
 .sheet[data-gl] .head,
 .sheet[data-gl] .grid,
-.sheet[data-gl] .pillRow {
+.sheet[data-gl] .allRow {
   position: relative;
   z-index: 1;
 }
@@ -60,38 +65,30 @@
 }
 
 .title {
-  margin: 0 0 0 -0.07em;
+  margin: 0 0 0 -0.05em;
   padding-top: 0.5em;
-  overflow: hidden;
   font-size: clamp(56px, 8vw, 128px);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 0.9;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
 }
 
-.word {
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.char {
-  display: inline-block;
-  transform-origin: 0 100%;
+/* The lede and, on the landing, the way to every win under it. */
+.headAside {
+  display: grid;
+  flex: none;
+  justify-items: start;
+  gap: 12px;
+  width: 300px;
+  max-width: 100%;
 }
 
 .lede {
-  flex: none;
-  width: 300px;
-  max-width: 100%;
   margin: 0;
-  overflow: hidden;
-  font-size: clamp(10px, 0.9vw, 13px);
-  line-height: 1.4;
-  text-transform: uppercase;
-}
-
-.ledeLine {
-  display: block;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 
 /* ---- Grid and tile ---- */
@@ -113,11 +110,12 @@
   display: block;
   container-type: inline-size;
   color: inherit;
-  border-radius: 16px;
+  text-decoration: none;
+  border-radius: var(--radius-media);
 }
 
 .tile[data-link]:focus-visible {
-  outline: 2px solid var(--paper-ink);
+  outline: 2px solid var(--ink);
   outline-offset: 6px;
 }
 
@@ -128,14 +126,37 @@
   aspect-ratio: 20 / 13;
 }
 
+/* The cover throws a win's rose onto the harbor under it. */
+.media::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: var(--radius-media);
+  box-shadow: 0 30px 80px -40px rgb(var(--hue-deep-rgb) / 0.7);
+  pointer-events: none;
+}
+
 .clip {
   position: absolute;
   inset: 0;
   container-type: inline-size;
   overflow: hidden;
-  border-radius: 16px;
-  background: var(--c-raised);
+  border-radius: var(--radius-media);
+  background: var(--navy);
   clip-path: inset(0 round 16px);
+}
+
+/* A hairline rim over the frame, so its rounded corners show even where a photo runs dark at its
+   edges (a phone screenshot's black bezel would otherwise melt into the page). */
+.clip::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--slab-edge);
+  pointer-events: none;
 }
 
 .zoom {
@@ -149,11 +170,15 @@
   inset: -12px;
   display: grid;
   place-items: center;
-  background: var(--c-raised);
+  background: var(--navy);
   transform: scale(1.026);
 }
 
+/* Pinned to the art's box: as a grid item a tall photo grew to its own height, so only its top
+   showed. Pinned, it's cropped about its middle like the rest. */
 .art img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -163,15 +188,24 @@
 /* The art's grid is 156 cells across at 0.6em each. */
 .ascii {
   --figure-size: calc(100cqw / 93.6);
-  color: var(--c-iris-300);
+  color: var(--hue, var(--rose));
 }
 
+/* Where, what and who: sentence case in the dim ink, the parts set apart by space alone. */
 .tag {
   position: relative;
   contain: layout;
   margin: 1.5em 0 1em;
-  font-size: clamp(10px, 0.9vw, 13px);
+  color: var(--ink-dim);
+  font-size: 14px;
   line-height: 1.4;
+}
+
+.tagTwin,
+.tagLive {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15em 1.4em;
 }
 
 .tagTwin {
@@ -189,8 +223,8 @@
   margin: 0;
   /* A long name comes down to fit the column, leaving room for the hover's shift. */
   font-size: min(clamp(26px, 3vw, 48px), calc(100cqw / (var(--n) * 0.54 + 1.6)));
-  font-weight: 400;
-  letter-spacing: -0.02em;
+  font-weight: 300;
+  letter-spacing: -0.03em;
 }
 
 .mask {
@@ -202,11 +236,13 @@
   line-height: 1.15;
 }
 
+/* The trail's own > glyph, so it's set in the art face. */
 .arrow {
   position: absolute;
   top: 0;
   left: -1em;
-  font-family: var(--font-mono);
+  color: var(--hue, var(--rose));
+  font-family: var(--font-art);
 }
 
 .letter {
@@ -237,73 +273,29 @@
 
 .sample > span {
   margin-left: 0;
-  color: var(--amber);
-  text-decoration-color: var(--amber);
-  text-shadow: none;
 }
 
 .blurb {
   margin: 14px 0 0;
   max-width: 56ch;
+  color: var(--ink-soft);
   font-size: 15px;
   line-height: 1.5;
 }
 
 .team {
   margin: 10px 0 0;
+  color: var(--ink-dim);
   font-size: 13px;
-  opacity: 0.72;
 }
 
 /* ---- All wins ---- */
 
-.pillRow {
+.allRow {
   display: flex;
   justify-content: center;
   margin-top: calc(12vh - 12px);
-  overflow: hidden;
   padding: 12px 24px 24px;
-}
-
-.pill {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  height: 3.375em;
-  padding: 1em 1.5em 1em 1.625em;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--c-ink);
-  color: var(--c-paper);
-  font-size: clamp(0.875rem, 1vw, 1.75rem);
-  font-weight: 500;
-  text-transform: uppercase;
-}
-
-.pillDot {
-  flex: none;
-  width: 0.5em;
-  height: 0.5em;
-  margin-right: 1em;
-  border-radius: 50%;
-  background: var(--c-paper);
-}
-
-.pillLabel {
-  position: relative;
-}
-
-.pillArrow {
-  position: absolute;
-  top: 50%;
-  right: 1em;
-  font-family: var(--font-mono);
-  transform: translate(3em, -50%);
-}
-
-.pill:focus-visible {
-  outline: 2px solid var(--paper-ink);
-  outline-offset: 3px;
 }
 
 /* ---- Phones: the hover pose is how a tile rests ---- */
@@ -311,9 +303,6 @@
 @media (max-width: 812px) {
   .head {
     display: block;
-  }
-
-  .head {
     margin-bottom: 0;
   }
 
@@ -321,11 +310,11 @@
     font-size: 15vw;
   }
 
-  .lede {
+  .headAside {
     margin: 3em 0;
   }
 
-  .pillRow {
+  .allRow {
     margin-top: calc(4em - 12px);
   }
 
@@ -347,39 +336,12 @@
   }
 }
 
-/* ---- Entrance, once ---- */
+/* ---- Entrance, each time a tile comes back on screen ---- */
 
 @media (prefers-reduced-motion: no-preference) {
   /* Only the way in is animated: off screen, everything snaps back, ready to play again. */
-  .head[data-in] .char {
-    transition: transform 667ms var(--ease-lusion) calc(var(--i) * 33ms);
-  }
-
-  .head:not([data-in]) .char {
-    transform: translateY(1em) rotate(10deg);
-  }
-
-  .head[data-in] .ledeLine {
-    transition: transform 1s var(--ease-lusion);
-  }
-
-  .head:not([data-in]) .ledeLine {
-    transform: translateY(100%);
-  }
-
-  .pillRow[data-in] .pillRise {
-    transition:
-      transform 1s var(--ease-lusion),
-      opacity 1s var(--ease-lusion);
-  }
-
-  .pillRow:not([data-in]) .pillRise {
-    opacity: 0;
-    transform: translateY(150%) rotate(10deg);
-  }
-
   .item[data-in] .media {
-    transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 2s var(--ease-out);
   }
 
   .item:not([data-in]) .media[data-side='left'] {
@@ -391,7 +353,7 @@
   }
 
   .item[data-in] .clip {
-    transition: clip-path 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: clip-path 1.5s var(--ease-out);
   }
 
   /* 12.5% each side is a 0.75 frame, and 0.75 x 1.333 keeps the picture its full size inside it. */
@@ -400,7 +362,7 @@
   }
 
   .item[data-in] .zoom {
-    transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 1.5s var(--ease-out);
   }
 
   .item:not([data-in]) .zoom {
@@ -432,47 +394,6 @@
   /* The cursor's arrival knocks the picture out of focus for a moment. */
   .media:hover .art > * {
     animation: settle 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .pillDot {
-    transition:
-      background-color 0.5s var(--ease-lusion),
-      transform 0.4s var(--ease-lusion);
-  }
-
-  .pill {
-    transition:
-      background-color 0.2s var(--ease-lusion),
-      color 0.5s var(--ease-lusion);
-  }
-
-  .pillLabel {
-    transition: transform 0.4s var(--ease-lusion);
-  }
-
-  .pillArrow {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0, 1);
-  }
-
-  .pill:is(:hover, :focus-visible) {
-    background: var(--mint);
-    color: var(--navy);
-    transition:
-      background-color 0.5s var(--ease-lusion) 0.3s,
-      color 0.5s var(--ease-lusion);
-  }
-
-  .pill:is(:hover, :focus-visible) .pillDot {
-    background: var(--mint);
-    transform: translateX(4em) scale(32);
-  }
-
-  .pill:is(:hover, :focus-visible) .pillLabel {
-    transform: translateX(-1.5em);
-  }
-
-  .pill:is(:hover, :focus-visible) .pillArrow {
-    transform: translate(0, -50%);
   }
 }
 
@@ -519,9 +440,48 @@
   }
 }
 
-@media (hover: hover) and (prefers-reduced-motion: reduce) {
-  .pill:is(:hover, :focus-visible) {
-    background: var(--mint);
-    color: var(--navy);
+/* ---- The landing's latest: a short row in the page column, at the size of the other sections ---- */
+
+.latest {
+  /* Full width up to the column: auto margins alone would shrink a grid item to its content. */
+  width: 100%;
+  max-width: calc(var(--maxw) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding: calc(var(--cell) * 4) var(--gutter) calc(var(--cell) * 5);
+}
+
+.latest .head {
+  margin-bottom: calc(var(--cell) * 3);
+}
+
+.latest .title {
+  padding-top: 0;
+  font-size: clamp(36px, 5vw, 68px);
+  letter-spacing: -0.035em;
+}
+
+.latest .grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(var(--cell) * 3) calc(var(--cell) * 2);
+}
+
+.latest .name {
+  font-size: min(clamp(20px, 1.9vw, 28px), calc(100cqw / (var(--n) * 0.54 + 1.6)));
+}
+
+
+@media (max-width: 980px) {
+  .latest .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 812px) {
+  .latest .title {
+    font-size: clamp(36px, 11vw, 56px);
+  }
+
+  .latest .grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

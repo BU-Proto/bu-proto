@@ -8,7 +8,7 @@ export const IRIS = '#ab9dff'
 export const RASPBERRY = '#c2407a'
 export const MINT = '#9df0a8'
 /** The ground the cells sit on, which their paler tiers fade toward. */
-const HARBOR_RGB = [6, 26, 46]
+const HARBOR_RGB = [19, 19, 19]
 
 /** Index 0 is always a blank cell. Cells are stored as indexes into a palette. */
 export const HEAT_PALETTE = ['', DEEP, CERULEAN, IRIS, RASPBERRY, MINT] as const
@@ -177,16 +177,33 @@ export function flowFrame(variant: FlowVariant, cells: Uint8Array, cols: number,
 
 // ---- The journey ----
 
-/** The journey's light, left to right, each stop at three strengths, then the steady beat underneath. */
-const JOURNEY_STOPS = ['#3fbcff', '#5ba6ff', '#7f94ff', '#9d8bff', '#c47ce0', '#ff6eb0', '#ff8fa4', '#ffb199'] as const
+/**
+ * The journey's light, left to right: eight stops read across the field from sky, through iris, to
+ * rose (this branch's named samples of it, see index.css), each at three strengths laid over the
+ * harbor ground, then the steady frost beat underneath.
+ */
+const between = (from: string, to: string, amount: number) =>
+  `#${[1, 3, 5]
+    .map((at) => {
+      const a = Number.parseInt(from.slice(at, at + 2), 16)
+      const b = Number.parseInt(to.slice(at, at + 2), 16)
+      return Math.round(a + (b - a) * amount).toString(16).padStart(2, '0')
+    })
+    .join('')}`
+const SKY_LIGHT = '#7cc7f4'
+const IRIS_LIGHT = '#ab9dff'
+const ROSE_LIGHT = '#f4a2c0'
+const FROST = '#f6fbff'
+const JOURNEY_STOPS = Array.from({ length: 8 }, (_, index) => {
+  const at = index / 7
+  return at < 0.5 ? between(SKY_LIGHT, IRIS_LIGHT, at * 2) : between(IRIS_LIGHT, ROSE_LIGHT, (at - 0.5) * 2)
+})
 const JOURNEY_STRENGTHS = [1, 0.6, 0.3] as const
-const dim = (hex: string, by: number) =>
-  `#${[1, 3, 5].map((at) => Math.round(Number.parseInt(hex.slice(at, at + 2), 16) * by).toString(16).padStart(2, '0')).join('')}`
 
 export const JOURNEY_PALETTE = [
   '',
-  ...JOURNEY_STRENGTHS.flatMap((by) => JOURNEY_STOPS.map((stop) => dim(stop, by))),
-  dim('#f4f4f6', 0.42),
+  ...JOURNEY_STRENGTHS.flatMap((strength) => JOURNEY_STOPS.map((stop) => tint(stop, strength))),
+  tint(FROST, 0.42),
 ] as const
 const JOURNEY_BEAT = JOURNEY_PALETTE.length - 1
 

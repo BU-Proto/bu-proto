@@ -1,26 +1,26 @@
-import { useRef, useState, type MouseEvent } from 'react'
+import { useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { useLoaderData } from 'react-router'
 import type { BoardMember } from '../../shared/api'
 import { BOARD_SEATS, YEARS, type BoardSeat } from '../../shared/constants'
 import { Field, Form } from '../components/Form'
 import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
-import { MaskLines } from '../components/motion/MaskLines'
-import motion from '../components/motion/motion.module.css'
-import { useReveal } from '../components/motion/useReveal'
 import { PageIntro } from '../components/PageIntro'
 import { PrivacyNote } from '../components/PrivacyNote'
-import { ProtoMark } from '../components/ProtoMark'
 import { Select } from '../components/Select'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { BOARD_CONTACT, BOARD_FORM, BOARD_FORMING, BOARD_INTRO, BOARD_THANKS, OPEN_SEAT, OPEN_SEATS } from '../content/board'
 import { PROTO_LINKEDIN } from '../content/site'
 import { api } from '../lib/api'
+import { glyphTexture } from '../lib/glyphArt'
 import { reducedMotion } from '../lib/useInView'
 import styles from './Board.module.css'
 
 type MemberLink = BoardMember['links'][number]
 type OpenSeat = (typeof OPEN_SEATS)[number]
+
+// Faint enough that the empty frame reads as a gap in the board, not a picture.
+const EMPTY_INK = 'rgba(246, 251, 255, 0.4)'
 
 const initials = (name: string) =>
   name
@@ -56,7 +56,7 @@ function LinkedInGlyph() {
   )
 }
 
-/** A portrait, or the member's initials on navy when there's none or it won't load. */
+/** A portrait, or the member's initials on a quiet gradient when there's none or it won't load. */
 function Portrait({ member }: { member: BoardMember }) {
   const [failed, setFailed] = useState(false)
   const showPhoto = member.photo && !failed
@@ -87,9 +87,9 @@ function Member({ member }: { member: BoardMember }) {
   const links = [...member.links].sort((a, b) => Number(isLinkedIn(b)) - Number(isLinkedIn(a)))
 
   return (
-    <li className={styles.seat} data-reveal>
+    <li className={styles.seat}>
       <Portrait member={member} />
-      <div className={styles.text}>
+      <div className={styles.text} data-fog-clear>
         <h3 className={styles.name}>
           {member.name}
           <SampleTag show={member.placeholder} />
@@ -122,29 +122,31 @@ function Member({ member }: { member: BoardMember }) {
  * A seat nobody has taken yet, laid out like a member so the board reads as one table: an empty
  * frame where the portrait would be, the role where the name would be.
  */
-function Vacancy({ seat, onPick }: { seat: OpenSeat; onPick: (seat: BoardSeat) => void }) {
+function Vacancy({ seat, texture, onPick }: { seat: OpenSeat; texture: string; onPick: (seat: BoardSeat) => void }) {
   const pick = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
     onPick(seat.role)
   }
 
   return (
-    <li className={`${styles.seat} ${styles.vacancy}`} data-reveal>
-      <div className={styles.empty} aria-hidden="true">
-        <ProtoMark size={28} />
-      </div>
+    <li className={`${styles.seat} ${styles.vacancy}`}>
+      <div
+        className={styles.empty}
+        style={texture ? ({ '--texture': `url(${texture})` } as CSSProperties) : undefined}
+        aria-hidden="true"
+      />
       <div className={styles.text}>
-        <h3 className={styles.name}>
+        <h3 className={styles.name} data-fog-clear>
           {seat.role}
         </h3>
-        <p className={`${ui.tag} ${ui.tagNeon} ${styles.status}`}>
+        <p className={styles.status} data-fog-clear>
           {OPEN_SEAT.status}
         </p>
-        <p className={styles.detail}>
+        <p className={styles.detail} data-fog-clear>
           {seat.detail}
         </p>
         {/* A plain anchor underneath, so it still lands on the form without JS. */}
-        <a className={`${ui.secondary} ${styles.pick}`} href={`#${BOARD_FORM.id}`} onClick={pick}>
+        <a className={`${ui.secondary} ${styles.pick}`} href={`#${BOARD_FORM.id}`} onClick={pick} data-fog-clear="box">
           {OPEN_SEAT.cta}
           <span className={ui.srOnly}> for {seat.role}</span>
         </a>
@@ -155,13 +157,13 @@ function Vacancy({ seat, onPick }: { seat: OpenSeat; onPick: (seat: BoardSeat) =
 
 export function Board() {
   const board = useLoaderData<BoardMember[]>()
+  const texture = useMemo(() => glyphTexture(EMPTY_INK), [])
   const open = OPEN_SEATS.filter((seat) => !board.some((member) => fills(member, seat)))
   // Only the seats still open, plus Not sure yet, are worth offering in the form.
   const seatOptions = BOARD_SEATS.filter((seat) => seat === 'Not sure yet' || open.some((item) => item.role === seat))
   const [seat, setSeat] = useState<BoardSeat | ''>('')
   const formRef = useRef<HTMLElement>(null)
   const nameRef = useRef<HTMLInputElement>(null)
-  const revealRef = useReveal<HTMLUListElement>()
 
   const pick = (role: BoardSeat) => {
     setSeat(role)
@@ -174,7 +176,7 @@ export function Board() {
   return (
     <div className={ui.page}>
       <PageIntro intro={BOARD_INTRO}>
-        <div className={styles.contact}>
+        <div className={styles.contact} data-fog-clear>
           <p>
             {BOARD_CONTACT.lead}{' '}
             <a className={ui.textLink} href={`mailto:${BOARD_CONTACT.email}`}>
@@ -195,11 +197,13 @@ export function Board() {
 
       <section className={styles.board} aria-labelledby="board-seats">
         {open.length > 0 ? (
-          <div className={ui.split}>
-            <h2 id="board-seats" className={ui.h2}>
-              <MaskLines text={BOARD_FORMING.title} />
+          <div className={styles.lead}>
+            <h2 id="board-seats" className={styles.leadTitle} data-fog-clear>
+              {BOARD_FORMING.title}
             </h2>
-            <p className={ui.body}>{BOARD_FORMING.text}</p>
+            <p className={styles.leadText} data-fog-clear>
+              {BOARD_FORMING.text}
+            </p>
           </div>
         ) : (
           <h2 id="board-seats" className={ui.srOnly}>
@@ -207,23 +211,23 @@ export function Board() {
           </h2>
         )}
 
-        <ul ref={revealRef} className={`${motion.reveal} ${styles.grid}`}>
+        <ul className={styles.grid}>
           {board.map((member) => (
             <Member key={member.id} member={member} />
           ))}
           {open.map((item) => (
-            <Vacancy key={item.role} seat={item} onPick={pick} />
+            <Vacancy key={item.role} seat={item} texture={texture} onPick={pick} />
           ))}
         </ul>
       </section>
 
       {open.length > 0 && (
-        <section ref={formRef} id={BOARD_FORM.id} className={`${ui.split} ${styles.apply}`} aria-labelledby="board-form">
+        <section ref={formRef} id={BOARD_FORM.id} className={`${ui.panelDeep} ${styles.apply}`} aria-labelledby="board-form">
           <div className={styles.applyLead}>
-            <h2 id="board-form" className={ui.h2}>
-              <MaskLines text={BOARD_FORM.title} />
+            <h2 id="board-form" className={ui.sectionTitle}>
+              {BOARD_FORM.title}
             </h2>
-            <p className={ui.body}>{BOARD_FORM.text}</p>
+            <p className={styles.applyText}>{BOARD_FORM.text}</p>
             <PrivacyNote text={BOARD_FORM.privacy} className={styles.privacy} />
           </div>
           <Form

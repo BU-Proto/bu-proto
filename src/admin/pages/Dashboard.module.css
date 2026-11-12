@@ -1,18 +1,192 @@
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+/* The overview: a greeting, what's waiting on an admin, four figures, then what's next and who's
+   new. Each list row is a link to where that thing gets dealt with. */
+
+.hello {
+  display: grid;
+  gap: 6px;
+  padding: 8px 0 4px;
+}
+
+/* The one large line in the portal: it's the page you land on. */
+.greeting {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.today {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.heading {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* ---- Waiting on you ----------------------------------------------------------------------- */
+
+.attention {
+  display: grid;
+  gap: 10px;
+}
+
+.attention > .rows {
   overflow: hidden;
-  clip-path: inset(50%);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--rim);
+}
+
+.clear {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-panel);
+  color: var(--ink-dim);
+  font-size: 13.5px;
+}
+
+/* ---- Rows: one link each, across the panel's whole width ----------------------------------- */
+
+.rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rows > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 9px 14px 9px 16px;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+/* Something that wants doing: the accent, as a dot. */
+.pip {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin: 0 3px;
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 0 3px rgb(var(--mint-rgb) / 0.14);
+}
+
+.rowText {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+
+.rowTitle {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* The figures as one strip, cells split by hairlines (the strip's own colour showing through a
-   1px gap), so they read as one summary rather than five cards. Flex, so a short last row
-   stretches instead of leaving an empty cell. */
-.tiles {
-  display: flex;
-  flex-wrap: wrap;
+.rowDetail {
+  overflow: hidden;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft {
+  margin-left: 8px;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* When, and what's known about it, at the row's far end. */
+.rowAside {
+  display: grid;
+  flex: none;
+  gap: 1px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.go {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--ink-dim);
+  opacity: 0.5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover {
+    background: var(--hover);
+  }
+
+  .row:hover .go {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+}
+
+/* A calendar leaf: the month over the day. */
+.leaf {
+  display: grid;
+  flex: none;
+  justify-items: center;
+  width: 40px;
+  padding: 4px 0 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface-sunk);
+  line-height: 1.1;
+}
+
+.leafMonth {
+  color: var(--ink-dim);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.leafDay {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Figures ------------------------------------------------------------------------------ */
+
+/* One strip, cells split by hairlines (the strip's own colour showing through a 1px gap), so
+   they read as one summary rather than four cards. */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   margin: 0;
   padding: 0;
@@ -23,158 +197,166 @@
   list-style: none;
 }
 
-.tiles > li {
+.figures > li {
   display: flex;
-  flex: 1 1 170px;
 }
 
-.tile {
+.figure {
+  position: relative;
   display: grid;
   flex: 1;
   /* Label and figure first, so the figures line up across the strip even when a note wraps. */
   grid-template-rows: auto auto 1fr;
-  gap: 4px;
-  padding: 16px 18px 15px;
+  gap: 2px;
+  min-width: 0;
+  padding: 14px 16px 14px;
   background: var(--surface);
 }
 
-.tile:hover {
-  background: color-mix(in srgb, var(--surface) 88%, var(--frost));
-}
-
-.tile:focus-visible {
+a.figure:focus-visible,
+.figureLink:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -2px;
 }
 
-.label {
+/* In the members cell the label and number are the link, and the bars beside them are their
+   own thing to point at. */
+.figureLink {
+  display: grid;
+  gap: 2px;
+  justify-self: start;
+  border-radius: 6px;
+}
+
+.figureLabel {
   color: var(--ink-soft);
   font-size: 13px;
   font-weight: 500;
 }
 
-.value {
-  margin-top: 8px;
-  font-size: 30px;
-  font-weight: 400;
+.figureValue {
+  margin-top: 4px;
+  font-size: 28px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
 }
 
-.note {
+.figureNote {
   color: var(--ink-dim);
   font-size: 12.5px;
   line-height: 1.45;
 }
 
-/* Fund entries waiting for review: the one figure that asks for something. */
-.tile[data-highlight] .note {
-  color: var(--mint);
+@media (hover: hover) and (pointer: fine) {
+  a.figure:hover {
+    background: color-mix(in srgb, var(--surface) 92%, var(--frost));
+  }
 }
 
-/* Quick links and site content sit side by side on a laptop. */
+/* Eight weeks of sign-ups as bars standing on the cell's floor, at its far side. */
+.spark {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: flex-end;
+  height: 40px;
+}
+
+/* Each bar's slot is wider than the bar, so the pointer has something to hit. */
+.sparkSlot {
+  display: flex;
+  align-items: flex-end;
+  width: 10px;
+  height: 100%;
+  padding: 0 2px;
+}
+
+.sparkBar {
+  width: 6px;
+  border-radius: 2px 2px 0 0;
+  background: rgb(var(--frost-rgb) / 0.2);
+}
+
+/* This week is the one the note talks about. */
+.sparkBar[data-now] {
+  background: var(--mint);
+}
+
+.sparkBar[data-on] {
+  background: var(--frost);
+}
+
+/* ---- What's next, who's new --------------------------------------------------------------- */
+
 .split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
-  /* Equal heights, so the two panels end on one line. */
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: start;
   gap: 16px;
 }
 
-/* One action per line, each its own width: a short list of things to do next. */
-.quick {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-/* How many fund entries are waiting, in the button's own line of text. */
-.fresh {
-  color: var(--mint);
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
-}
-
-.contentLinks {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 24px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* A plain list on hairlines; the whole row is the link's hit area. */
-.contentLinks li {
-  position: relative;
-  display: grid;
-  gap: 2px;
-  padding: 11px 0;
-  border-top: 1px solid var(--line);
-}
-
-.contentLinks a {
-  justify-self: start;
-  font-weight: 500;
-}
-
-.contentLinks li:hover a {
-  color: var(--mint);
-}
-
-.contentLinks a::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  border-radius: 8px;
-}
-
-.contentLinks a:focus-visible {
-  outline: none;
-}
-
-.contentLinks a:focus-visible::after {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.contentLinks span {
-  color: var(--ink-dim);
-  font-size: 13px;
-}
-
-@media (max-width: 960px) {
+@media (max-width: 1000px) {
   .split {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 520px) {
-  .tiles > li {
-    flex-basis: 140px;
+  .greeting {
+    font-size: 22px;
   }
 
-  .tile {
-    padding: 14px 14px 13px;
+  .figureValue {
+    font-size: 24px;
   }
 
-  .value {
-    font-size: 26px;
+  /* The bars would crowd the figure in a half-width cell. */
+  .spark {
+    display: none;
   }
 
-  .contentLinks {
-    grid-template-columns: minmax(0, 1fr);
+  .rowAside {
+    max-width: 38%;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .contentLinks a,
-  .tile {
+  .row,
+  a.figure,
+  .sparkBar {
+    transition: background-color var(--quick) ease;
+  }
+
+  .go {
     transition:
-      background-color 0.12s ease,
-      color 0.12s ease;
+      opacity var(--quick) ease,
+      transform var(--swift) var(--ease-out);
+  }
+
+  /* The bars grow from the floor once, when the overview opens. */
+  .sparkBar {
+    transform-origin: bottom;
+    animation: grow 0.5s var(--ease-out) backwards;
+  }
+
+  .sparkSlot:nth-child(2) .sparkBar { animation-delay: 0.03s; }
+  .sparkSlot:nth-child(3) .sparkBar { animation-delay: 0.06s; }
+  .sparkSlot:nth-child(4) .sparkBar { animation-delay: 0.09s; }
+  .sparkSlot:nth-child(5) .sparkBar { animation-delay: 0.12s; }
+  .sparkSlot:nth-child(6) .sparkBar { animation-delay: 0.15s; }
+  .sparkSlot:nth-child(7) .sparkBar { animation-delay: 0.18s; }
+  .sparkSlot:nth-child(8) .sparkBar { animation-delay: 0.21s; }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
   }
 }

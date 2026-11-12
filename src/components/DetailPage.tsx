@@ -1,49 +1,37 @@
-// The pieces every detail page is built from (/wins/:id, /events/:id, /hackathons/:id), so the
-// three read as one family: the opener, the write-up sheet, the photos, the previous / next bar
-// and the not-found state.
+// The pieces the detail pages are built from (/wins/:id, the guides, and parts of /events/:id,
+// which lays out its own opening and write-up), so they read as one family: the opener, the
+// write-up and its side column, the photos, the previous / next bar and the not-found state.
 
 import type { ReactNode } from 'react'
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router'
 import { BRAND } from '../content/site'
 import { ApiError } from '../lib/api'
-import { paragraphs } from '../lib/detail'
+import { parseEventProse, type ProseBlock } from '../lib/eventProse'
 import { BuMark } from './BuMark'
 import { Gallery } from './Gallery'
-import { MaskLines } from './motion/MaskLines'
-import motion from './motion/motion.module.css'
-import { useReveal } from './motion/useReveal'
 import { LoadError } from './RouteStates'
 import { SampleTag } from './SampleTag'
 import ui from './ui.module.css'
 import styles from './DetailPage.module.css'
 
 export function DetailPage({ children }: { children: ReactNode }) {
-  const revealRef = useReveal<HTMLElement>()
-  return (
-    <article ref={revealRef} className={`${styles.page} ${motion.reveal}`}>
-      {children}
-    </article>
-  )
+  return <article className={styles.page}>{children}</article>
 }
 
 /**
- * The first screen, built like the home hero: the cover photo from the very top of the page down
- * to the copy, or the name set large on the harbor ground when there's no photo. In the copy, the first child
- * and the title take the left column and everything else the right. `hugeName: false` keeps the
- * photo-size title without a photo, for names that run to a sentence (event titles).
+ * The first screen: the cover photo edge to edge, or the name set huge on the field when there's
+ * none. `hugeName: false` keeps the photo-size title without a photo, for names that run to a
+ * sentence (event titles), where the huge setting would fill the screen on its own.
  */
 export function DetailOpener({
   photo,
   alt,
   hugeName = true,
-  credit,
   children,
 }: {
   photo: string | null | undefined
   alt: string
   hugeName?: boolean
-  /** For a stock or default cover: who took it, under what licence, and where it's from. */
-  credit?: { author: string; license: string; source: string }
   children: ReactNode
 }) {
   const kind = photo ? styles.withPhoto : `${styles.typeOnly} ${hugeName ? styles.hugeName : ''}`
@@ -54,62 +42,120 @@ export function DetailOpener({
           <img src={photo} alt={alt} fetchPriority="high" />
         </div>
       )}
-      {photo && credit && (
-        <p className={styles.credit}>
-          Photo by {credit.author},{' '}
-          <a href={credit.source} target="_blank" rel="noopener noreferrer">
-            {credit.license} via Wikimedia Commons
-          </a>
-        </p>
-      )}
-      <div className={styles.openerText}>
-        <div className={styles.openerGrid}>{children}</div>
-      </div>
+      <div className={styles.openerText}>{children}</div>
     </header>
   )
 }
 
-export function DetailTitle({ children, sample }: { children: string; sample: boolean }) {
+export function DetailTitle({ children, sample }: { children: ReactNode; sample: boolean }) {
   return (
-    <h1 className={styles.title}>
-      <MaskLines text={children} delay={100} />
+    <h1 className={styles.title} data-fog-clear>
+      {children}
       <SampleTag show={sample} />
     </h1>
   )
 }
 
-/** Plain text with blank lines between paragraphs, as the portal stores it. */
+/** Bold and links dropped on import leave a space before the punctuation that followed them. */
+const tidy = (text: string) => text.replace(/ +([,.;:!?])(?=\s|$)/g, '$1')
+
+/**
+ * A short line on its own with no full stop, inside a part: a smaller heading for what follows it
+ * ("01. Our starting point", "What we're proud of and what we learned").
+ */
+const isLabel = (text: string) => !text.includes('\n') && text.length <= 64 && !/[.!?:;,…]$/.test(text) && !text.startsWith('$')
+
+/** A formula pasted as LaTeX between `$$` marks: set apart as one, without the marks. */
+const FORMULA = /^\$\$([\s\S]+)\$\$$/
+
+/**
+ * A write-up as it was pasted (a Devpost page, mostly), set the way a guide's article is: its own
+ * headings ("Inspiration", "How we built it") over what they head, lists as lists, facts as
+ * facts, straight on the ground. The same reading of plain text an event's page uses.
+ */
 export function Prose({ text }: { text: string }) {
+  const { sections } = parseEventProse(text)
   return (
     <div className={styles.prose}>
-      {paragraphs(text).map((part, index) => (
-        <p key={index}>
-          {part}
-        </p>
+      {sections.map((section, index) => (
+        <div key={index} className={styles.part}>
+          {section.heading && (
+            <h3 className={styles.partHeading} data-fog-clear>
+              {section.heading}
+            </h3>
+          )}
+          {section.blocks.map((block, blockIndex) =>
+            block.kind === 'paragraph' && isLabel(block.text.trim()) && blockIndex < section.blocks.length - 1 ? (
+              <h4 key={blockIndex} className={styles.partLabel} data-fog-clear>
+                {block.text.trim()}
+              </h4>
+            ) : (
+              <ProseBlockView key={blockIndex} block={block} />
+            ),
+          )}
+        </div>
       ))}
     </div>
   )
 }
 
+function ProseBlockView({ block }: { block: ProseBlock }) {
+  if (block.kind === 'paragraph') {
+    const formula = FORMULA.exec(block.text.trim())
+    return formula ? (
+      <p className={styles.formula}>{formula[1].trim()}</p>
+    ) : (
+      <p data-fog-clear>{tidy(block.text)}</p>
+    )
+  }
+
+  if (block.kind === 'list') {
+    return (
+      <ul className={styles.proseList}>
+        {block.items.map((item, index) => (
+          <li key={index} data-fog-clear>
+            {tidy(item)}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  if (block.kind === 'facts') {
+    return (
+      <dl className={styles.proseFacts}>
+        {block.rows.map((row, index) => (
+          <div key={index}>
+            <dt>{row.key}</dt>
+            <dd>{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+
+  return (
+    <ul className={styles.proseList}>
+      {block.people.map((person, index) => (
+        <li key={index} data-fog-clear>
+          {person.role ? `${person.name}, ${person.role}` : person.name}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 /**
- * The write-up, as an editorial split: the side column (`aside`) on the left, pinned while the text
- * scrolls, and the main column (`main`) on the right. Either may be empty; with only one, it takes
- * the full width, and a main column on its own sets each section's title to the left of its text.
+ * The write-up: the main column (`main`) and the side column (`aside`) beside it, both straight on
+ * the ground. The side column is pinned while the text scrolls. Either may be empty; with only
+ * one, it takes the full width.
  */
 export function WriteUp({ main, aside }: { main?: ReactNode; aside?: ReactNode }) {
   if (!main && !aside) return null
   return (
     <div className={styles.sheet}>
-      {main && (
-        <div className={styles.main} data-reveal>
-          {main}
-        </div>
-      )}
-      {aside && (
-        <aside className={styles.aside} data-reveal>
-          {aside}
-        </aside>
-      )}
+      {main && <div className={styles.main}>{main}</div>}
+      {aside && <aside className={styles.aside}>{aside}</aside>}
     </div>
   )
 }
@@ -118,7 +164,7 @@ export function WriteUp({ main, aside }: { main?: ReactNode; aside?: ReactNode }
 export function WriteUpSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section className={styles.section} aria-labelledby={id}>
-      <h2 id={id} className={ui.sectionTitle}>
+      <h2 id={id} className={ui.sectionTitle} data-fog-clear>
         {title}
       </h2>
       {children}
@@ -130,7 +176,7 @@ export function WriteUpSection({ id, title, children }: { id: string; title: str
 export function AsideSection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section aria-labelledby={id}>
-      <h2 id={id} className={styles.asideTitle}>
+      <h2 id={id} className={styles.asideTitle} data-fog-clear>
         {title}
       </h2>
       {children}
@@ -151,7 +197,7 @@ export function PeopleList({ people }: { people: readonly Person[] }) {
     <ul className={styles.ruled}>
       {people.map((person, i) => (
         <li key={`${person.name}-${i}`}>
-          {person.href ? <OutLink href={person.href}>{person.name}</OutLink> : <span>{person.name}</span>}
+          {person.href ? <OutLink href={person.href}>{person.name}</OutLink> : <span data-fog-clear>{person.name}</span>}
           {person.bu && <BuMark />}
         </li>
       ))}
@@ -162,7 +208,7 @@ export function PeopleList({ people }: { people: readonly Person[] }) {
 /** A link out of the site, set like a name with a small arrow after it. */
 export function OutLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <a className={styles.person} href={href} target="_blank" rel="noopener noreferrer">
+    <a className={styles.person} href={href} target="_blank" rel="noopener noreferrer" data-fog-clear>
       {children}
       <span className={styles.arrow} aria-hidden="true">
         ↗
@@ -174,8 +220,8 @@ export function OutLink({ href, children }: { href: string; children: ReactNode 
 export function DetailGallery({ title, images, label }: { title: string; images: readonly string[]; label: string }) {
   if (images.length === 0) return null
   return (
-    <section className={styles.gallery} aria-labelledby="gallery" data-reveal>
-      <h2 id="gallery" className={ui.sectionTitle}>
+    <section className={styles.gallery} aria-labelledby="gallery">
+      <h2 id="gallery" className={ui.sectionTitle} data-fog-clear>
         {title}
       </h2>
       <Gallery images={images} label={label} />
@@ -183,11 +229,11 @@ export function DetailGallery({ title, images, label }: { title: string; images:
   )
 }
 
-/** A ruled panel of its own, for a part that reads after the photos. */
+/** A smaller glass panel of its own, for a part that reads after the photos. */
 export function DetailPanel({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section className={`${ui.panelDeep} ${styles.panel}`} aria-labelledby={id} data-reveal>
-      <h2 id={id} className={ui.sectionTitle}>
+    <section className={`${ui.panelDeep} ${styles.panel}`} aria-labelledby={id}>
+      <h2 id={id} className={ui.sectionTitle} data-fog-clear>
         {title}
       </h2>
       {children}
@@ -208,14 +254,16 @@ interface DetailNavProps {
   previousLabel: string
   nextLabel: string
   all: { to: string; label: string }
+  /** The names at reading size, two lines at most, for pages whose names run to a sentence (events). */
+  quiet?: boolean
 }
 
 /** The bar at the foot of the page: the one before, the way back to the list, the one after. */
-export function DetailNav({ label, previous, next, previousLabel, nextLabel, all }: DetailNavProps) {
+export function DetailNav({ label, previous, next, previousLabel, nextLabel, all, quiet }: DetailNavProps) {
   return (
-    <nav className={styles.neighbours} aria-label={label} data-reveal>
+    <nav className={`${styles.neighbours} ${quiet ? styles.quiet : ''}`} aria-label={label}>
       {previous ? <NeighbourLink item={previous} label={previousLabel} direction="previous" /> : <span />}
-      <Link className={`${ui.textLink} ${styles.all}`} to={all.to}>
+      <Link className={`${ui.textLink} ${styles.all}`} to={all.to} data-fog-clear>
         {all.label}
       </Link>
       {next ? <NeighbourLink item={next} label={nextLabel} direction="next" /> : <span />}
@@ -225,7 +273,7 @@ export function DetailNav({ label, previous, next, previousLabel, nextLabel, all
 
 function NeighbourLink({ item, label, direction }: { item: Neighbour; label: string; direction: 'previous' | 'next' }) {
   return (
-    <Link className={`${styles.neighbour} ${direction === 'next' ? styles.toNext : ''}`} to={item.to}>
+    <Link className={`${styles.neighbour} ${direction === 'next' ? styles.toNext : ''}`} to={item.to} data-fog-clear>
       <span className={styles.neighbourLabel}>
         {direction === 'previous' && <span aria-hidden="true">← </span>}
         {label}
@@ -253,13 +301,13 @@ export function DetailLoadError({ copy, to }: { copy: NotFoundCopy; to: string }
     <div className={ui.page}>
       <title>{`${copy.title} · ${BRAND.full}`}</title>
       <section className={styles.missing}>
-        <h1 className={ui.introTitle}>
+        <h1 className={ui.introTitle} data-fog-clear>
           {copy.title}
         </h1>
-        <p className={ui.introLede}>
+        <p className={ui.introLede} data-fog-clear>
           {copy.text}
         </p>
-        <Link className={ui.primary} to={to}>
+        <Link className={ui.primary} to={to} data-fog-clear="box">
           {copy.back}
         </Link>
       </section>

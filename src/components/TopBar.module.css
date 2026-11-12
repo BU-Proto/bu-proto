@@ -1,103 +1,132 @@
+/*
+ * The bar: name at the left, the nav pill in the middle, Join at the right. It holds its place at
+ * the top of the screen. The shell positions its children with a two-class rule, so this one is
+ * written a notch more specific to hold.
+ */
+header.top[class] {
+  position: sticky;
+  top: var(--bar-top);
+}
+
 .top {
-  position: fixed;
-  z-index: 50;
-  top: 0;
-  right: 0;
+  /* Over the page and anything in it that sticks or is drawn fixed. */
+  z-index: 20;
   display: flex;
-  align-items: stretch;
-  height: calc(var(--cell) * 3 + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
-  border-bottom: 1px solid var(--c-line);
-  border-left: 1px solid var(--c-line);
-  background: var(--c-paper);
-  color: var(--c-ink);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.13em;
-  line-height: 1;
-  text-transform: uppercase;
-  transition: border-color 0.2s ease;
+  /* One place on every page: the screen's width less its edge (of which the shell already gives
+     16px), so the name and Join never move as you go from page to page. */
+  margin-inline: calc(var(--edge) - max(16px, env(safe-area-inset-left, 0px)));
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--bar-h);
+  /* Only its own things take the pointer: the page shows, and can be used, between them. */
+  pointer-events: none;
 }
 
-.top:hover {
-  border-color: var(--c-ink);
+.top > * {
+  pointer-events: auto;
 }
 
+/* Bare at any scroll: no ground of its own, only a soft shade of harbor behind it so the mark
+   keeps an edge when something pale passes under. */
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 18px;
+  gap: 0.45em;
+  height: var(--bar-h);
+  filter: drop-shadow(0 1px 8px rgb(var(--harbor-rgb) / 0.55));
+  /* The name and its seal are sized from the bar's height, so they grow and shrink with it. */
+  font-size: calc(var(--bar-h) * 0.42);
   font-weight: 500;
+  letter-spacing: -0.015em;
 }
 
+/* The seal, cut out of the name's own colour. */
+.seal {
+  width: 1.45em;
+  height: 1.45em;
+  background: currentColor;
+  -webkit-mask: var(--seal) center / contain no-repeat;
+  mask: var(--seal) center / contain no-repeat;
+}
+
+/* The pill, centred on the bar whatever stands at either end. */
 .nav {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
-  align-items: stretch;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid rgb(var(--frost-rgb) / 0.12);
+  border-radius: 999px;
+  background: var(--pill);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
 }
 
 .nav > a {
   display: flex;
   align-items: center;
-  padding: 0 11px;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 13px;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgb(var(--harbor-rgb) / 0.3);
 }
 
 .nav > a:hover {
-  color: var(--c-blue);
+  color: var(--ink);
 }
 
-/* The page you're on is underlined by a thick rule along the tab's foot. */
 .nav > a[aria-current='page'] {
-  box-shadow: inset 0 -2px 0 var(--c-ink);
-}
-
-.join {
-  display: flex;
-  align-items: center;
-  margin-left: 7px;
-  padding: 0 18px;
-  position: relative;
-  isolation: isolate;
-  background: var(--c-ink);
-  color: var(--c-paper);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.join::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: var(--c-sheen);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.join:hover::after {
-  opacity: 1;
+  background: rgb(var(--frost-rgb) / 0.08);
+  color: var(--ink);
 }
 
 .logo:focus-visible,
-.nav > a:focus-visible,
-.join:focus-visible {
-  outline: 2px solid var(--c-blue);
-  outline-offset: -2px;
+.nav > a:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The primary button at the bar's height. */
+.join {
+  height: var(--bar-h);
+  padding: 0 calc(var(--bar-h) * 0.42);
+  font-size: calc(var(--bar-h) * 0.3);
 }
 
 .menu {
   display: none;
 }
 
-/* The items don't fit on narrow screens; the menu sheet has every page, Join too. */
+/* The pill doesn't fit between the name and Join on narrow screens: a menu button beside Join
+   opens the sheet, which has every page. */
 @media (max-width: 900px) {
-  .nav,
-  .join {
+  .nav {
     display: none;
   }
 
   .menu {
     display: contents;
+  }
+}
+
+@media (max-width: 560px) {
+  .actions {
+    gap: 6px;
+  }
+
+  .join {
+    padding: 0 14px;
   }
 }

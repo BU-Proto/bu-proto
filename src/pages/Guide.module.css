@@ -1,6 +1,6 @@
-/* A guide on the harbor ground. The opener is the detail pages': the photo at the top, the copy under it
-   on their two-column grid. Below it, the contents on the left and the text on the right: the words
-   keep a reading measure, while pictures and diagrams run the full width of the column. */
+/* A guide set like a magazine piece. The opener is the detail pages' (the photo under the
+   title); below it, the contents on the field and the text on deep glass. Inside the glass the
+   words keep a reading measure, while pictures, diagrams and pull quotes run wider. */
 
 /* ---- The opener ---- */
 
@@ -9,99 +9,87 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px 14px;
-  margin: 0 0 calc(var(--cell) * 1.5);
-  color: var(--c-ink);
+  margin: 0 0 clamp(14px, 2.4vh, 22px);
+  font-size: 16px;
 }
 
 .kicker a {
-  padding-bottom: 3px;
-  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 0 3px;
-  transition: background-size 0.45s var(--ease-out);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.5);
+  font-weight: 500;
 }
 
-.kicker a:hover,
-.kicker a:focus-visible {
-  background-size: 100% 3px;
+.kicker a:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
 }
 
 .kicker a:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
 .kickerCount {
-  color: var(--c-muted);
+  color: var(--ink-soft);
 }
 
-/* `h1` to outrank the opener grid's rule for its children: the title takes the left column and
-   every row the right column uses, as DetailTitle does. */
-h1.title {
-  grid-row: 2 / -1;
-  grid-column: 1;
+.title {
+  max-width: 13ch;
   margin: 0;
-  font-size: clamp(32px, 5.2vw, 82px);
-  font-weight: 400;
-  letter-spacing: -0.035em;
-  line-height: 0.92;
-  overflow-wrap: break-word;
-  text-transform: uppercase;
+  font-size: clamp(44px, 7.4vw, 112px);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.94;
   text-wrap: balance;
 }
 
 .lede {
-  margin: calc(var(--cell) * 1.5) 0 0;
-  color: var(--c-body);
-  font-size: clamp(15px, 1.45vw, 20px);
+  max-width: 40ch;
+  margin: clamp(16px, 2.6vh, 26px) 0 0;
+  font-size: clamp(18px, 1.7vw, 23px);
+  font-weight: 300;
   line-height: 1.4;
   text-wrap: pretty;
 }
 
-/* Level with the top of the title. */
-@media (min-width: 900px) {
-  .lede {
-    margin-top: 0;
-  }
-}
-
 .byline {
-  margin-top: calc(var(--cell) * 1.5);
+  margin-top: clamp(20px, 3.4vh, 32px);
 }
 
 .leadCredit {
-  margin: var(--cell) 0 0;
-  color: var(--c-muted);
+  margin: clamp(18px, 3vh, 28px) 0 0;
+  color: var(--ink-dim);
   font-size: 12.5px;
 }
 
 .leadCredit a {
-  text-decoration: underline dotted;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--frost-rgb) / 0.35);
   text-underline-offset: 3px;
 }
 
-/* ---- The contents beside the text ---- */
+/* ---- Contents beside the article, both straight on the ground ---- */
 
 .layout {
+  /* The article's one width, which the next guide's card under it keeps too. */
+  --article: 760px;
   display: grid;
   grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
-  gap: calc(var(--cell) * 4) calc(var(--cell) * 6);
+  gap: 32px clamp(24px, 3.4vw, 48px);
   align-items: start;
-  padding: calc(var(--cell) * 7) var(--inset, var(--gutter));
 }
 
-/* Sits clear of the fixed tab at the top of the page. */
 .contents {
   position: sticky;
-  top: calc(var(--cell) * 5);
+  top: var(--bar-clear);
   display: grid;
-  gap: var(--cell);
+  gap: 12px;
+  padding-top: clamp(28px, 4vw, 52px);
+  text-shadow: var(--on-field-shadow);
 }
 
 .contentsFold {
   display: grid;
-  gap: var(--cell);
+  gap: 12px;
 }
 
 /* Beside the text the fold is always open, so its summary is only a title. */
@@ -120,10 +108,15 @@ h1.title {
 
 .contentsTitle {
   margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .contentsCount {
   display: none;
+  color: var(--ink-dim);
+  font-size: 13.5px;
 }
 
 .contentsList {
@@ -131,203 +124,230 @@ h1.title {
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--c-line);
 }
 
+/* Set apart by space alone: the article beside it already has the page's rules. */
 .contentsList a {
   position: relative;
   display: block;
-  padding: 8px 0 8px 16px;
-  border-bottom: 1px solid var(--c-line);
-  color: var(--c-muted);
+  padding: 6px 0 6px 16px;
+  color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.4;
-  transition: color 0.2s ease;
+  transition: color 160ms ease;
 }
 
-/* Where you are: the text goes to ink and a small blue square sits in the gutter before it. */
+/* Where you are: the text brightens and a small mint dot sits in the gutter before it. */
 .contentsList a::before {
   content: '';
   position: absolute;
-  top: calc(8px + 0.7em - 3px);
+  top: calc(6px + 0.7em - 3px);
   left: 2px;
   width: 6px;
   height: 6px;
-  background: var(--c-blue);
+  border-radius: 50%;
+  background: var(--accent);
   opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
 }
 
 .contentsList a[aria-current='true'] {
-  color: var(--c-ink);
+  color: var(--ink);
   font-weight: 500;
 }
 
 .contentsList a[aria-current='true']::before {
   opacity: 1;
+  transform: none;
 }
 
 .contentsList a:hover {
-  color: var(--c-blue);
+  color: var(--accent);
 }
 
 .contentsList a:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
-/* ---- The text ---- */
-
+/* The article is not in a panel: its text stands on the harbor, on the column's own left edge.
+   One width for everything in it (text, rules, pictures, examples, graphics, the authors), so the
+   whole article keeps a single right-hand edge down the page. */
 .doc {
-  --measure: 64ch;
+  /* No side margin of its own; every block runs the article's full width. */
+  --pad: 0px;
+  --measure: 100%;
 
   display: grid;
   gap: 0;
-  color: var(--c-body);
-  font-size: clamp(15px, 1.15vw, 18px);
-  line-height: 1.62;
+  width: 100%;
+  max-width: var(--article);
+  min-width: 0;
+  padding: clamp(28px, 4vw, 52px) 0 0;
+  font-size: 17px;
+  line-height: 1.7;
 }
 
-/* The opening paragraph, set as the lead. */
+/* The opening paragraph, a size up from the body, like a magazine's stand-first. */
 .standfirst {
-  margin: 0 0 calc(var(--cell) * 5);
-  color: var(--c-ink);
-  font-size: clamp(26px, 3.4vw, 46px);
-  letter-spacing: -0.02em;
-  line-height: 1.06;
+  margin: 0 var(--pad) clamp(36px, 5vw, 56px);
+  color: var(--ink);
+  font-size: clamp(20px, 2vw, 25px);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .section {
-  position: relative;
   display: grid;
   gap: 18px;
-  padding: calc(var(--cell) * 5) 0;
-  /* Lands a contents jump clear of the fixed tab. */
-  scroll-margin-top: calc(var(--cell) * 3);
-}
-
-.rule {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 1px;
-  background: var(--c-line);
+  padding: clamp(36px, 4.6vw, 56px) 0;
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.16);
+  /* Lands a contents jump with a little air above the heading. */
+  scroll-margin-top: 24px;
 }
 
 /* Every block keeps to the text column unless it says otherwise below. */
 .section > * {
   max-width: var(--measure);
-  margin: 0;
-}
-
-.section > .rule {
-  position: absolute;
-  max-width: none;
+  margin: 0 var(--pad);
 }
 
 .section p {
   margin-block: 0;
+  text-wrap: pretty;
 }
 
-.section > .heading {
-  max-width: 16ch;
-  margin-bottom: var(--cell);
+.heading {
+  margin-bottom: 4px !important;
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  text-wrap: balance;
 }
 
 .section strong {
-  color: var(--c-ink);
-  font-weight: 500;
-}
-
-/* Justified with a left last line, as the rest of the site's body text. Lists stay left aligned:
-   short lines stretched to the column read badly. */
-.para {
-  text-align: justify;
-  text-align-last: left;
+  font-weight: 600;
 }
 
 .list {
   display: grid;
   gap: 10px;
-  padding-left: 1.1em;
-  list-style: square;
+  padding-left: 1.3em !important;
 }
 
 .list li {
   padding-left: 6px;
+  text-wrap: pretty;
 }
 
 .list li::marker {
-  color: var(--c-ink);
+  color: var(--accent);
 }
 
-/* Numbered steps, each behind a small pixel-cut badge. */
+/* Numbered steps, the numbers set big in a column of their own. */
 .steps {
   display: grid;
   padding: 0;
   list-style: none;
   counter-reset: step;
-  border-top: 1px solid var(--c-line);
 }
 
+/* No rules between them: the big numbers down the left already mark each one off. */
 .steps li {
   position: relative;
-  padding: var(--cell) 0 var(--cell) 36px;
-  border-bottom: 1px solid var(--c-line);
+  min-height: 58px;
+  padding: 13px 0 13px 72px;
   counter-increment: step;
+  text-wrap: pretty;
 }
 
 .steps li::before {
-  content: counter(step, decimal-leading-zero);
+  content: counter(step);
   position: absolute;
-  top: calc(var(--cell) + 2px);
+  top: 7px;
   left: 0;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  background: var(--c-navy);
-  clip-path: var(--px-corners-sm);
-  color: var(--c-paper);
-  font-family: var(--font-mono);
-  font-size: 9px;
+  width: 52px;
+  color: var(--accent);
+  font-size: 44px;
+  font-weight: 200;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
   line-height: 1;
 }
 
-/* A rule of thumb: the dark panel, inside the text column. */
+/* A rule of thumb: a short mint rule, a label, the line set a size up. */
 .callout {
   display: grid;
-  gap: var(--cell);
-  padding: clamp(26px, 4vw, 54px);
-  border-radius: var(--radius);
-  background: var(--c-ink);
-  color: var(--c-paper);
+  gap: 6px;
+  padding-block: 8px;
+}
+
+.callout::before {
+  content: '';
+  width: 40px;
+  height: 3px;
+  margin-bottom: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.calloutLabel {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .section .calloutText {
-  font-size: clamp(20px, 2.2vw, 30px);
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-size: clamp(19px, 1.8vw, 22px);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
 }
 
-.callout strong,
-.section .callout strong {
-  color: inherit;
-}
-
-/* A line from the text, set as the lead. */
+/* A line from the text, set large and indented off the column so it reads as an aside. */
 .section > .pull {
-  max-width: 18em;
-  margin-block: var(--cell);
-  color: var(--c-ink);
-  font-size: clamp(26px, 3.4vw, 46px);
-  letter-spacing: -0.02em;
-  line-height: 1.06;
+  max-width: 22em;
+  margin: 14px var(--pad) 14px calc(var(--pad) + clamp(0px, 8%, 80px));
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+/* The line stands between its two marks: one opening it above its first word, its match closing
+   it straight after its last, so the pair reads as one quotation whatever the line's length. */
+.pull::before,
+.pull::after {
+  color: var(--accent);
+  font-size: 2.2em;
+  font-weight: 500;
+}
+
+.pull::before {
+  content: '“';
+  display: block;
+  height: 0.5em;
+  line-height: 0.9;
+}
+
+/* No line height of its own, so it hangs off the last line without pushing the lines apart. */
+.pull::after {
+  content: '”';
+  display: inline-block;
+  margin-left: 0.06em;
+  line-height: 0;
+  vertical-align: -0.46em;
 }
 
 .checklist {
   display: grid;
-  gap: var(--cell);
+  gap: 8px;
   padding-top: 6px;
 }
 
@@ -337,16 +357,14 @@ h1.title {
   align-items: center;
   gap: 12px;
   margin: 0;
-  color: var(--c-ink);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.3;
 }
 
 .checkMark {
   flex: none;
-  clip-path: var(--px-corners-sm);
-  color: var(--c-navy);
+  color: var(--accent);
 }
 
 .checks {
@@ -354,41 +372,33 @@ h1.title {
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--c-line);
 }
 
-/* An empty box to tick, drawn so it lines up with the first line of text. */
+/* An empty box to tick, drawn so it lines up with the first line of text. The boxes mark the
+   items off, so nothing is ruled between them. */
 .checks li {
   position: relative;
-  padding: 11px 0 11px 34px;
-  border-bottom: 1px solid var(--c-line);
+  padding: 8px 0 8px 34px;
+  text-wrap: pretty;
 }
 
 .checks li::before {
   content: '';
   position: absolute;
-  top: calc(11px + 0.3em);
+  top: calc(8px + 0.38em);
   left: 3px;
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--c-ink);
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--accent);
+  border-radius: 4px;
 }
 
-/* From our wins: the project's cover beside the point it makes, ruled above and below. */
+/* From our wins: the project's cover beside the point it makes, set off by space. */
 .section > .example {
   display: grid;
   grid-template-columns: 148px minmax(0, 1fr);
   gap: 20px;
-  max-width: calc(var(--measure) + 40px);
-  padding: 18px 0;
-  border-top: 1px solid var(--c-line);
-  border-bottom: 1px solid var(--c-line);
-}
-
-/* Examples in a run share their rules. */
-.section > .example + .example {
-  margin-top: -19px;
-  border-top: 0;
+  padding: 10px 0;
 }
 
 .exampleThumb img {
@@ -396,15 +406,23 @@ h1.title {
   width: 100%;
   height: auto;
   aspect-ratio: 3 / 2;
+  border-radius: 10px;
   object-fit: cover;
+  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .exampleBody {
   display: grid;
   align-content: start;
   gap: 6px;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+.section .exampleLabel {
+  color: var(--accent);
+  font-size: 13px;
+  line-height: 1.3;
 }
 
 .exampleHead {
@@ -416,24 +434,24 @@ h1.title {
 }
 
 .exampleName {
-  color: var(--c-ink);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  transition: color 0.2s ease;
 }
 
 .exampleName:hover {
-  color: var(--c-blue);
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .exampleName:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
 }
 
 .section .examplePrize {
-  color: var(--c-muted);
+  color: var(--ink-soft);
   font-size: 14px;
 }
 
@@ -442,7 +460,7 @@ h1.title {
   align-items: center;
   gap: 8px;
   margin-top: 2px;
-  color: var(--c-muted);
+  color: var(--ink-soft);
   font-size: 13.5px;
 }
 
@@ -465,26 +483,38 @@ h1.title {
 .section > .examplePair {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  gap: 20px var(--cell);
+  gap: 20px clamp(20px, 3vw, 32px);
   max-width: none;
   margin-block: 10px;
-  padding-top: 20px;
-  border-top: 1px solid var(--c-line);
+  padding-top: 8px;
 }
 
 .exampleCard {
   display: grid;
   grid-template-rows: auto 1fr;
   align-content: start;
-  gap: var(--cell);
+  gap: 14px;
 }
 
 .exampleCard .exampleThumb img {
   aspect-ratio: 16 / 9;
+  border-radius: 12px;
 }
 
+.exampleCard .exampleBody {
+  font-size: 15px;
+}
+
+/* Lands on what follows with the same hairline the text's examples use. */
 .section > .examplePair + * {
   margin-top: 6px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .example:hover .exampleThumb img,
+  .exampleCard:hover .exampleThumb img {
+    transform: scale(1.03);
+  }
 }
 
 /* ---- Pictures ---- */
@@ -494,35 +524,37 @@ h1.title {
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 4px 20px;
-  color: var(--c-muted);
+  color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.5;
 }
 
 .figcaption > :first-child {
   max-width: 60ch;
+  text-wrap: pretty;
 }
 
 .credit {
-  color: var(--c-muted);
+  color: var(--ink-dim);
   font-size: 13px;
 }
 
 .credit a {
-  text-decoration: underline dotted;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--frost-rgb) / 0.3);
   text-underline-offset: 3px;
 }
 
 .credit a:hover {
-  color: var(--c-ink);
+  color: var(--ink);
 }
 
-/* Wide: the full width of the column. */
+/* Wide: out of the text's measure to the column's full width. */
 .section > .wide {
   display: grid;
   gap: 12px;
   max-width: none;
-  margin-block: var(--cell);
+  margin: 14px 0;
 }
 
 .wide img {
@@ -530,9 +562,14 @@ h1.title {
   width: 100%;
   height: auto;
   max-height: min(560px, 70vh);
+  border-radius: var(--radius-media);
   object-fit: cover;
   object-position: top;
-  background: var(--c-line-2);
+  background: var(--navy);
+}
+
+.wide .figcaption {
+  padding: 0 var(--pad);
 }
 
 /* Tall: a phone screen or a notebook page, beside its caption. */
@@ -542,56 +579,64 @@ h1.title {
   gap: 24px;
   align-items: end;
   max-width: none;
-  margin-block: var(--cell);
+  margin-block: 14px;
 }
 
 .tall img {
   display: block;
   width: 100%;
   height: auto;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px -30px rgb(var(--harbor-rgb) / 0.6);
 }
 
 .tall .figcaption {
   flex-direction: column;
   max-width: 34ch;
   padding-bottom: 8px;
+  font-size: 15px;
 }
 
 .section > .graphicSlot {
   max-width: none;
-  margin-block: var(--cell);
+  margin-block: 14px;
 }
 
 .facts {
   display: grid;
-  border-top: 1px solid var(--c-line);
 }
 
 .fact {
   display: grid;
   grid-template-columns: minmax(110px, 150px) minmax(0, 1fr);
   gap: 4px 20px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--c-line);
+  padding: 7px 0;
 }
 
 .fact dt {
-  color: var(--c-ink);
+  color: var(--ink-soft);
   font-weight: 500;
 }
 
 .fact dd {
   margin: 0;
+  text-wrap: pretty;
 }
 
-/* The dotted line comes from `ui.textLink`. */
 .link {
-  color: var(--c-ink);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.45);
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 
-.callout .link {
-  color: inherit;
+.link:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 2px;
 }
 
 /* ---- About the authors ---- */
@@ -599,19 +644,22 @@ h1.title {
 .authors {
   display: grid;
   gap: 20px;
-  padding: calc(var(--cell) * 3) 0 calc(var(--cell) * 4);
-  border-top: 1px solid var(--c-line);
-  scroll-margin-top: calc(var(--cell) * 3);
+  padding: clamp(32px, 4vw, 48px) var(--pad) clamp(32px, 4vw, 52px);
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.28);
+  scroll-margin-top: 24px;
 }
 
 .authorsTitle {
   margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .authorList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(var(--cell) * 2) calc(var(--cell) * 3);
+  gap: 28px clamp(24px, 4vw, 48px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -633,31 +681,36 @@ h1.title {
 
 .authorText p {
   margin: 0;
+  text-wrap: pretty;
 }
 
 .authorName {
-  color: var(--c-ink);
   font-size: 18px;
 }
 
 .authorWins {
-  color: var(--c-muted);
+  color: var(--ink-soft);
+}
+
+.authorWins .link {
+  color: var(--ink);
 }
 
 /* ---- Up next ---- */
 
-/* The guide doesn't stop at the authors: the next one, with its photo, in the dark panel. */
+/* The guide doesn't stop at the authors: the next one, with its photo, in the text's column. */
 .upNext {
   display: grid;
   gap: 18px;
   grid-column: 2;
+  width: 100%;
+  max-width: var(--article);
 }
 
-a.nextCard {
+.nextCard {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   align-items: stretch;
-  margin: 0;
   padding: 0;
   overflow: hidden;
 }
@@ -675,6 +728,7 @@ a.nextCard {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .nextText {
@@ -682,39 +736,55 @@ a.nextCard {
   align-content: center;
   justify-items: start;
   gap: 8px;
-  padding: clamp(26px, 4vw, 54px);
+  padding: clamp(24px, 3.4vw, 44px);
+}
+
+.nextLabel {
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .nextTitle {
-  max-width: 15ch;
-  font-size: clamp(30px, 4.4vw, 60px);
+  font-size: clamp(28px, 3.4vw, 44px);
+  font-weight: 400;
   letter-spacing: -0.03em;
-  line-height: 1.02;
+  line-height: 1.04;
+  text-wrap: balance;
 }
 
 .nextLine {
   max-width: 38ch;
-  color: rgb(246 251 255 / 0.7);
-  font-size: 15px;
+  color: var(--ink-soft);
+  font-size: 16px;
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .nextMeta {
-  color: rgb(246 251 255 / 0.5);
-  font-size: 14px;
+  color: var(--ink-dim);
+  font-size: 13.5px;
 }
 
 .nextButton {
   margin-top: 10px;
 }
 
-a.nextCard:hover .nextButton {
-  background: var(--c-sheen);
+.nextCard:hover .nextTitle {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
 }
 
-a.nextCard:focus-visible {
-  outline: 2px solid var(--c-blue);
+.nextCard:focus-visible {
+  outline: 2px solid var(--frost);
   outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nextCard:hover .nextImage img {
+    transform: scale(1.03);
+  }
 }
 
 .moreGuides {
@@ -722,12 +792,24 @@ a.nextCard:focus-visible {
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 10px 24px;
+  padding: 0 4px;
+  text-shadow: var(--on-field-shadow);
 }
 
 .moreLink {
-  color: var(--c-body);
+  color: var(--ink-soft);
   font-size: 14.5px;
-  font-weight: 400;
+}
+
+.moreLink:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.moreLink:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 2px;
 }
 
 /* ---- Not found ---- */
@@ -737,6 +819,7 @@ a.nextCard:focus-visible {
   justify-items: start;
   gap: 18px;
   max-width: 760px;
+  padding-top: clamp(12px, 6vh, 80px);
 }
 
 @media (max-width: 1020px) {
@@ -748,12 +831,12 @@ a.nextCard:focus-visible {
 @media (max-width: 860px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
-    row-gap: calc(var(--cell) * 2);
   }
 
   /* Above the text on narrow screens, so it doesn't stick over it. */
   .contents {
     position: static;
+    padding-top: 0;
   }
 
   .upNext {
@@ -772,15 +855,20 @@ a.nextCard:focus-visible {
 
   .contentsSummary {
     padding: 12px 0;
-    border-top: 1px solid var(--c-line);
-    border-bottom: 1px solid var(--c-line);
+    border-top: 1px solid rgb(var(--frost-rgb) / 0.28);
+    border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
     cursor: pointer;
     pointer-events: auto;
   }
 
   .contentsSummary:focus-visible {
-    outline: 2px solid var(--c-blue);
+    outline: 2px solid var(--frost);
     outline-offset: 2px;
+  }
+
+  .contentsTitle {
+    color: var(--ink);
+    font-size: 16px;
   }
 
   .contentsCount {
@@ -793,9 +881,10 @@ a.nextCard:focus-visible {
     content: '';
     width: 8px;
     height: 8px;
-    border-right: 1px solid currentColor;
-    border-bottom: 1px solid currentColor;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
     transform: translateY(-2px) rotate(45deg);
+    transition: transform 160ms ease;
   }
 
   .contentsFold[open] .contentsCount::after {
@@ -807,27 +896,21 @@ a.nextCard:focus-visible {
   }
 }
 
-@media (max-width: 680px) {
-  .para {
-    text-align: left;
-  }
-
-  .standfirst {
-    margin-bottom: calc(var(--cell) * 3);
-  }
-
-  .section {
-    padding-block: calc(var(--cell) * 4);
-  }
-
-  .layout {
-    padding-block: calc(var(--cell) * 4);
-  }
-}
-
 @media (max-width: 560px) {
   .contentsList {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc {
+    font-size: 16px;
+  }
+
+  .steps li {
+    padding-left: 52px;
+  }
+
+  .steps li::before {
+    font-size: 34px;
   }
 
   .section > .example {
@@ -845,12 +928,12 @@ a.nextCard:focus-visible {
     grid-template-columns: 88px minmax(0, 1fr);
     grid-template-rows: none;
     gap: 14px;
-    padding: 18px 0;
-    border-bottom: 1px solid var(--c-line);
+    padding: 12px 0;
   }
 
   .exampleCard .exampleThumb img {
     aspect-ratio: 3 / 2;
+    border-radius: 10px;
   }
 
   .section > .tall {
@@ -866,7 +949,11 @@ a.nextCard:focus-visible {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  a.nextCard {
+  .section > .pull {
+    margin-left: var(--pad);
+  }
+
+  .nextCard {
     grid-template-columns: minmax(0, 1fr);
   }
 

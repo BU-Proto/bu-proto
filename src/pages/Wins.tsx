@@ -1,34 +1,41 @@
 import { useLoaderData } from 'react-router'
 import type { Win } from '../../shared/api'
 import { showcaseOrder } from '../components/accolade'
+import { AccoladeFeatures, AccoladePlates } from '../components/Accolades'
 import { PageIntro } from '../components/PageIntro'
-import { WinSheet } from '../components/WinSheet'
 import { WinTally } from '../components/WinTally'
+import { WonAtBand } from '../components/WonAtBand'
 import ui from '../components/ui.module.css'
-import { WINS_EMPTY, WINS_INTRO } from '../content/wins'
+import { WIN_SHOWCASE, WINS_EMPTY, WINS_INTRO } from '../content/wins'
 import styles from './Wins.module.css'
 
-/** The record, then every win on the light sheet: the big placements first, then the rest. */
+/** The record, the schools it was won at, then the most recent win across the window's width, then every other prize. */
 export function Wins() {
   const wins = useLoaderData<Win[]>()
   const { featured, rest } = showcaseOrder(wins)
 
   return (
-    <>
-      <div className={ui.page}>
-        <PageIntro intro={WINS_INTRO} />
-        <WinTally wins={wins} />
-        {wins.length === 0 && (
-          <p className={ui.panel}>
-            {WINS_EMPTY}
-          </p>
-        )}
-      </div>
-      {wins.length > 0 && (
-        <div className={styles.bleed}>
-          <WinSheet wins={[...featured, ...rest]} />
+    <div className={ui.page}>
+      <PageIntro intro={WINS_INTRO} />
+      <WinTally wins={wins} />
+      <WonAtBand wins={wins} />
+      {wins.length === 0 ? (
+        <p className={ui.panel} data-fog-clear>
+          {WINS_EMPTY}
+        </p>
+      ) : (
+        <div className={styles.showcase}>
+          <AccoladeFeatures wins={featured} eagerFirst />
+          {rest.length > 0 && (
+            <section className={styles.more} aria-labelledby="more-prizes">
+              <h2 id="more-prizes" className={styles.moreTitle} data-fog-clear>
+                {WIN_SHOWCASE.moreTitle}
+              </h2>
+              <AccoladePlates wins={rest} />
+            </section>
+          )}
         </div>
       )}
-    </>
+    </div>
   )
 }

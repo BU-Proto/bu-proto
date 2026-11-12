@@ -1,27 +1,58 @@
-/* Sits right above the title, like the content editors' way back. */
-.back {
-  justify-self: start;
-  margin-bottom: -16px;
-  border-radius: 4px;
-  color: var(--ink-dim);
-  font-size: 13px;
+/* Who this is, above the form: a larger disc, the name, and the facts that don't change. */
+.who {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 4px 0;
 }
 
-.back:hover {
-  color: var(--ink);
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgb(var(--sky-rgb) / 0.13);
+  color: var(--sky);
+  font-size: 19px;
+  font-weight: 600;
 }
 
-.back:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+.whoText {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  gap: 2px 16px;
   margin: 0;
+  font-size: 13.5px;
   overflow-wrap: anywhere;
+}
+
+/* "Unsaved changes" beside the buttons in the bar. Empty, it takes no room. */
+.saveState {
+  color: var(--ink-dim);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.saveState:empty {
+  display: none;
 }
 
 .layout {
@@ -42,22 +73,17 @@
   gap: 12px;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  padding-top: 4px;
-}
 
-.live {
-  min-height: 20px;
-}
 
 .side {
   display: grid;
+  justify-items: start;
   gap: 16px;
   min-width: 0;
+}
+
+.side > section {
+  width: 100%;
 }
 
 .list {
@@ -102,7 +128,7 @@
 }
 
 .fundAmount {
-  color: var(--mint);
+  color: var(--ink-soft);
 }
 
 
@@ -119,17 +145,7 @@
   font-size: 13px;
 }
 
-.dangerZone {
-  display: grid;
-  justify-items: start;
-  gap: 10px;
-  border-color: var(--danger-edge);
-  background: linear-gradient(var(--danger-wash), var(--danger-wash)), var(--surface);
-}
 
-.dangerZone > h2 {
-  margin: 0;
-}
 
 @media (max-width: 860px) {
   .layout {

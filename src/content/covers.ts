@@ -24,6 +24,9 @@ const CDS: CoverPhoto = {
   source: 'https://commons.wikimedia.org/wiki/File:Boston_University_Center_for_Computing_and_Data_Sciences_June_2025_1.jpg',
 }
 
+/** A cover at thumbnail size: Commons serves a 500px copy beside the 1920px one. */
+export const coverThumb = (src: string) => src.replace('/1920px-', '/500px-')
+
 export const EVENT_COVERS: Record<EventKind, CoverPhoto> = {
   'Hack night': CDS,
   'Demo night': {

@@ -2,30 +2,17 @@
   display: inline-grid;
   place-items: center;
   margin-left: 8px;
-  padding: 2px 5px;
-  background: var(--bu-red);
-  clip-path: var(--px-corners-sm);
-  color: #fff;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  line-height: 1.4;
-  text-decoration: none;
-  text-shadow: none;
-  vertical-align: 0.15em;
-  cursor: help;
-}
-
-/* Inside the wins sheet it stays exactly as it has always been there. */
-[data-field-cover] .mark {
   padding: 1px 4px 0;
   border-radius: 3px;
-  clip-path: none;
+  background: var(--bu-red);
   color: var(--frost);
   font-family: var(--font-ui);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.5;
+  text-decoration: none;
+  text-shadow: none;
+  vertical-align: 0.15em;
+  cursor: help;
 }

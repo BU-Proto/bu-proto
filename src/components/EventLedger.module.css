@@ -1,8 +1,16 @@
 /* Hairlines run the full width; the words sit behind everything and the ledger in the right half. */
 .section {
+  /* The section's empty top and bottom, where the words dissolve so its edges never show as a line. */
+  --fade-top: clamp(96px, 16vh, 180px);
+  --fade-bottom: clamp(72px, 12vh, 140px);
   position: relative;
+  /* The stage's negative margin lets it stick until its top reaches the section's end, so it would
+     hang a full screen over the next section. Clip, not hidden: hidden would break the sticking. */
+  overflow: clip;
   min-height: 120vh;
-  padding-bottom: clamp(72px, 12vh, 140px);
+  padding-bottom: var(--fade-bottom);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
 }
 
 .stage {
@@ -26,7 +34,7 @@
 .body {
   position: relative;
   z-index: 1;
-  padding-top: clamp(96px, 16vh, 180px);
+  padding-top: var(--fade-top);
 }
 
 .head {
@@ -39,10 +47,9 @@
 .title {
   margin: 0;
   font-size: clamp(44px, 5.2vw, 76px);
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-weight: 300;
+  letter-spacing: -0.04em;
   line-height: 1;
-  text-transform: uppercase;
 }
 
 .count {
@@ -52,8 +59,9 @@
   margin: 0;
 }
 
+/* The trail's three glyphs, catching the field's light in turn. */
 .icon {
-  font-family: var(--font-mono);
+  font-family: var(--font-art);
   font-size: clamp(20px, 2vw, 28px);
   font-weight: 500;
   letter-spacing: -0.04em;
@@ -61,16 +69,17 @@
 }
 
 .number {
-  font-family: var(--font-mono);
   font-size: clamp(20px, 2vw, 28px);
-  font-weight: 400;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .group {
   display: grid;
   grid-template-columns: 1fr 1fr;
   padding: 16px var(--gutter);
-  border-top: 1px solid var(--c-line);
+  border-top: 1px solid var(--rule);
 }
 
 .kind {
@@ -81,6 +90,7 @@
   align-self: start;
   width: 40%;
   margin: 0;
+  color: var(--ink);
   font-size: 16px;
   font-weight: 400;
   line-height: 1.8;
@@ -88,7 +98,7 @@
 
 .glyph {
   color: var(--hue);
-  font-family: var(--font-mono);
+  font-family: var(--font-art);
   font-weight: 500;
 }
 
@@ -104,16 +114,16 @@
   display: grid;
   grid-template-columns: 7ch minmax(0, 1fr);
   gap: 20px;
-  color: var(--c-ink);
+  color: var(--ink);
   font-size: 16px;
   line-height: 1.8;
   transition: color 0.25s ease, transform 0.35s var(--ease-lusion);
 }
 
 .date {
-  color: var(--c-body);
-  font-family: var(--font-mono);
+  color: var(--ink-soft);
   font-size: 15px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -130,7 +140,7 @@
 /* A night that's been: still there, and crossed off. */
 .night[data-past],
 .night[data-past] .date {
-  color: var(--c-muted);
+  color: var(--ink-dim);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
@@ -138,21 +148,94 @@
 .empty {
   margin: 0;
   padding: 24px var(--gutter) 24px 50%;
-  border-top: 1px solid var(--c-line);
-  color: var(--c-body);
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+}
+
+/* A night's photo, raised in the empty half beside its row. Only for a pointer that can hover. */
+.photos {
+  display: none;
+}
+
+@media (hover: hover) and (min-width: 761px) {
+  .photos {
+    position: absolute;
+    z-index: 2;
+    display: block;
+    inset: 0;
+    pointer-events: none;
+  }
+}
+
+/* A duotone in the night's own hue: the photo's whites go to the light tone, its blacks to the
+   deep tone sunk into the harbor. */
+.photo {
+  position: absolute;
+  top: 0;
+  right: calc(50% + clamp(16px, 2.5vw, 40px));
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--hue), var(--frost) 40%);
+  clip-path: inset(8% 0 round var(--radius-sm));
+  isolation: isolate;
+  opacity: 0;
+  transition: opacity 0.2s ease, clip-path 0.2s ease;
+}
+
+.photo::before,
+.photo::after {
+  position: absolute;
+  content: '';
+  inset: 0;
+}
+
+.photo::after {
+  background: color-mix(in srgb, rgb(var(--hue-deep-rgb)) 45%, var(--harbor));
+  mix-blend-mode: lighten;
+}
+
+/* Over everything, so the mid-tones hold the hue instead of washing out to grey. */
+.photo::before {
+  z-index: 1;
+  background: var(--hue);
+  mix-blend-mode: color;
+}
+
+.photo img {
+  display: block;
+  /* Both limits with both sizes auto keep the photo's shape: a cover is often a flyer, too full to crop. */
+  width: auto;
+  max-width: clamp(220px, 26vw, 420px);
+  height: auto;
+  max-height: 62vh;
+  filter: grayscale(1) contrast(1.1);
+  mix-blend-mode: multiply;
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+.photo[data-raised] {
+  clip-path: inset(0 round var(--radius-sm));
+  opacity: 1;
+  transition: opacity 0.25s ease, clip-path 0.55s var(--ease-lusion);
+}
+
+.photo[data-raised] img {
+  transform: none;
+  transition: transform 0.55s var(--ease-lusion);
 }
 
 @keyframes glint {
   from {
-    color: var(--c-sky-300);
+    color: var(--sky);
   }
 
   50% {
-    color: var(--c-iris-300);
+    color: var(--iris);
   }
 
   to {
-    color: var(--c-rose-300);
+    color: var(--rose);
   }
 }
 
@@ -183,7 +266,17 @@
     animation: none;
   }
 
-  .night {
+  .night,
+  .photo,
+  .photo[data-raised],
+  .photo img,
+  .photo[data-raised] img {
     transition: none;
+  }
+
+  .photo,
+  .photo img {
+    clip-path: none;
+    transform: none;
   }
 }

@@ -54,18 +54,12 @@ export function hackathonName(event: string): string {
   return name.replace(/([a-z])(20\d\d)\b/i, '$1 $2')
 }
 
-export const isFeatured = (win: Win) => Number.isFinite(accoladeOf(win).weight)
-
 /**
- * The showcase's order: the big placements first, biggest at the top, then everything else in
- * the order the portal gives them. With nothing big, the first win leads so the page still opens
- * on one.
+ * The showcase's order: the most recent win leads on its own, whatever it won, so the page opens
+ * on what's new. Every other win follows in the order the portal gives them.
  */
 export function showcaseOrder(wins: readonly Win[]): { featured: Win[]; rest: Win[] } {
-  const featured = wins
-    .filter(isFeatured)
-    .sort((a, b) => accoladeOf(a).weight - accoladeOf(b).weight)
-  if (featured.length === 0) return { featured: wins.slice(0, 1), rest: wins.slice(1) }
+  const featured = newestWins(wins, 1)
   return { featured, rest: wins.filter((win) => !featured.includes(win)) }
 }
 

@@ -19,7 +19,9 @@ function partial(lines: readonly string[], progress: number, frame: number): str
 }
 
 interface AsciiFigureProps {
-  shape: FigureShape
+  /** One of the trail's glyphs, or `lines` for art drawn elsewhere (see asciiDrawing). */
+  shape?: FigureShape
+  lines?: readonly string[]
   rows?: number
   /** Milliseconds to wait after the figure comes into view. */
   delay?: number
@@ -30,8 +32,8 @@ interface AsciiFigureProps {
  * One of the trail's glyphs drawn big in the field's ramp. The first time it's seen it develops
  * out of loose glyphs, left to right. Screen readers skip it: it repeats the heading beside it.
  */
-export function AsciiFigure({ shape, rows = 22, delay = 0, className }: AsciiFigureProps) {
-  const lines = useMemo(() => asciiFigure(shape, rows), [shape, rows])
+export function AsciiFigure({ shape, lines: given, rows = 22, delay = 0, className }: AsciiFigureProps) {
+  const lines = useMemo(() => given ?? (shape ? asciiFigure(shape, rows) : []), [given, shape, rows])
   const final = useMemo(() => lines.join('\n'), [lines])
   const [ref, inView] = useInView<HTMLPreElement>('0px 0px -20% 0px')
   const [shown, setShown] = useState(() => (typeof window === 'undefined' || reducedMotion() ? final : partial(lines, 0, 0)))

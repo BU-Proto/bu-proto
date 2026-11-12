@@ -46,7 +46,7 @@ function lead(image: GuideImage): NonNullable<Guide['lead']> {
 export const GUIDES: readonly Guide[] = [
   {
     title: 'How to win a hackathon',
-    line: 'Plan first, pick an idea with an angle, aim at the tracks, use AI, polish the UI and practise the demo.',
+    line: 'Plan first, pick an idea with an angle, aim at the tracks, use AI, polish the UI and practice the demo.',
     slug: SLUGS.win,
     lead: lead(winImage(FLOWCAST, '005/691/302/datas/original.png', 'Flowcast’s 3D model of BU’s campus beside the Charles, each building outlined by how busy it is')),
   },

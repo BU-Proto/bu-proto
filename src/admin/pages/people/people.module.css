@@ -16,64 +16,12 @@
   margin-inline: auto;
 }
 
-.head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px 24px;
-  padding-bottom: 4px;
-}
-
-.headText {
-  display: grid;
-  flex: 1 1 320px;
-  gap: 6px;
-  min-width: 0;
-}
-
-.title {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  margin: 0;
-  font-size: 26px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-  text-wrap: balance;
-}
-
-/* A figure after a heading ("6 people"): the heading's own type, lighter and smaller. */
+/* A figure after a heading ("6 people"): the heading's own type, lighter. */
 .count {
   color: var(--ink-dim);
-  font-size: 15px;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
   white-space: nowrap;
-}
-
-/* Beside a panel title the figure stays at the title's size. */
-.panelTitle .count {
-  font-size: inherit;
-}
-
-.lede {
-  max-width: 68ch;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.headActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
 }
 
 .panel {
@@ -83,13 +31,14 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-panel);
   background: var(--surface);
+  box-shadow: var(--rim);
 }
 
 .panelTitle {
   margin: 0 0 14px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
 }
 
 .mono {
@@ -161,8 +110,8 @@
 
 .input {
   width: 100%;
-  min-height: 38px;
-  padding: 8px 11px;
+  min-height: 36px;
+  padding: 7px 11px;
   border: 1px solid var(--edge);
   border-radius: var(--radius-control);
   background: var(--surface-sunk);
@@ -258,8 +207,8 @@ input[type='date'].input {
   justify-self: start;
   gap: 6px;
   width: auto;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 34px;
+  padding: 0 13px;
   border: 1px solid var(--edge);
   border-radius: var(--radius-control);
   background: var(--fill);
@@ -274,7 +223,7 @@ input[type='date'].input {
 
 .small,
 .dangerSmall {
-  min-height: 30px;
+  min-height: 28px;
   padding: 0 10px;
   font-size: 12.5px;
 }
@@ -307,8 +256,7 @@ input[type='date'].input {
 .small:focus-visible,
 .danger:focus-visible,
 .dangerSmall:focus-visible,
-.link:focus-visible,
-.rowLink:focus-visible {
+.link:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -343,8 +291,9 @@ input[type='date'].input {
   justify-items: center;
   gap: 6px;
   margin: 0;
-  padding: 48px 24px;
+  padding: 56px 24px;
   color: var(--ink-soft);
+  font-size: 13.5px;
   text-align: center;
 }
 
@@ -352,23 +301,39 @@ input[type='date'].input {
 .empty h3 {
   margin: 0;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .empty p {
+  max-width: 44ch;
   margin: 0;
+}
+
+.empty > a,
+.empty > button {
+  margin-top: 10px;
 }
 
 /* ---- State ---- */
 
-/* A status is its word, in its colour, in the row's own type. */
+/* A status: a dot in its colour, then the word in the row's own type. Never a capsule. */
 .state {
-  color: var(--tone, var(--ink-soft));
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-soft);
   font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0;
   white-space: nowrap;
+}
+
+.state::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tone, var(--ink-dim));
 }
 
 .state[data-tone='approved'],
@@ -420,19 +385,19 @@ input[type='date'].input {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 30px;
-  padding: 0 12px;
+  min-height: 28px;
+  padding: 0 11px;
   border: 0;
   border-radius: 7px;
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .tab:hover {
-  background: var(--hover);
   color: var(--ink);
 }
 
@@ -441,8 +406,9 @@ input[type='date'].input {
 .tab[aria-pressed='true'] {
   background: var(--fill-hover);
   color: var(--ink);
-  font-weight: 500;
-  box-shadow: inset 0 0 0 1px var(--line-strong);
+  box-shadow:
+    inset 0 0 0 1px var(--line-strong),
+    0 1px 2px rgb(0 0 0 / 0.25);
 }
 
 .tab:focus-visible {
@@ -456,138 +422,11 @@ input[type='date'].input {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- Tables that become stacked rows on a phone ---- */
-
-.tableWrap {
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-  overflow-x: auto;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13.5px;
-}
-
-.table th {
-  height: 40px;
-  padding: 0 14px;
-  border-bottom: 1px solid var(--line-strong);
-  color: var(--ink-dim);
-  font-size: 12.5px;
-  font-weight: 500;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-  /* Baseline, so a mono email or a smaller note lines up with the name beside it. */
-  vertical-align: baseline;
-}
-
-.table th:first-child,
-.table td:first-child {
-  padding-left: 20px;
-}
-
-.table th:last-child,
-.table td:last-child {
-  padding-right: 20px;
-}
-
-.table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.table tbody tr:hover {
-  background: var(--hover);
-}
-
-/* The whole row is clickable through its name link's stretched ::after. */
-.table tbody tr {
-  position: relative;
-}
-
-.rowLink {
-  font-weight: 500;
-}
-
-.rowLink::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-}
-
-.rowLink:hover,
-.table tbody tr:hover .rowLink {
-  color: var(--mint);
-}
-
-@media (max-width: 720px) {
-  /* Hidden from sight only, so screen readers still hear the column names. */
-  .table.table thead {
-    position: absolute;
-    display: block;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
-  .table,
-  .table tbody,
-  .table tr,
-  .table td {
-    display: block;
-  }
-
-  .table tbody tr {
-    display: grid;
-    gap: 3px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .table tbody tr:last-child {
-    border-bottom: 0;
-  }
-
-  .table td,
-  .table td:first-child,
-  .table td:last-child {
-    padding: 0;
-    border: 0;
-  }
-
-  /* The same stacked row as the content tables: each value with its column name to its left. */
-  .table td[data-label]::before {
-    content: attr(data-label);
-    display: inline-block;
-    min-width: 84px;
-    margin-right: 10px;
-    color: var(--ink-dim);
-    /* Set outright: the value's cell may be in mono (an email), the name never is. */
-    font-family: var(--font-ui);
-    font-size: 12.5px;
-  }
-
-  .table td:first-child {
-    padding-bottom: 3px;
-  }
-}
-
 /* ---- Confirm dialog ---- */
 
 .dialog {
   width: min(440px, calc(100vw - 32px));
-  padding: 22px 22px 18px;
+  padding: 20px 20px 16px;
   border: 1px solid var(--edge);
   border-radius: var(--radius-dialog);
   background: var(--surface-raised);
@@ -600,11 +439,11 @@ input[type='date'].input {
 }
 
 .dialogTitle {
-  margin: 0 0 10px;
-  font-size: 18px;
+  margin: 0 0 8px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.3;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
 }
 
 .dialogBody {
@@ -612,6 +451,7 @@ input[type='date'].input {
   gap: 8px;
   margin-bottom: 10px;
   color: var(--ink-soft);
+  font-size: 13.5px;
   line-height: 1.55;
 }
 
@@ -656,23 +496,39 @@ input[type='date'].input {
   .danger,
   .dangerSmall,
   .tab,
-  .link,
-  .rowLink {
+  .link {
     transition:
-      background-color 0.12s ease,
-      border-color 0.12s ease,
-      box-shadow 0.12s ease,
-      color 0.12s ease;
+      background-color var(--quick) ease,
+      border-color var(--quick) ease,
+      box-shadow var(--quick) ease,
+      color var(--quick) ease,
+      transform var(--quick) var(--ease-out);
+  }
+
+  .small:active:not(:disabled),
+  .danger:active:not(:disabled),
+  .dangerSmall:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
   .dialog[open] {
-    animation: rise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: rise var(--calm) var(--ease-out);
+  }
+
+  .dialog[open]::backdrop {
+    animation: dim var(--calm) ease;
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.985);
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+@keyframes dim {
+  from {
+    opacity: 0;
   }
 }

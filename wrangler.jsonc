@@ -43,6 +43,32 @@
   // the portal's review queue.
   "triggers": { "crons": ["17 9 * * *"] },
 
+  // Branch previews (`wrangler preview`, run by Workers Builds on every non-main push). They get
+  // their own database, so a preview never reads or writes production. Its tables come from the
+  // same migrations: `npx wrangler d1 migrations apply bu-proto-preview --remote`. Previews have
+  // no RESEND_API_KEY, so their emails are logged, not sent.
+  "previews": {
+    "vars": {
+      "EMAIL_FROM": "BU Proto Preview <hello@buproto.com>",
+      "EMAIL_REPLY_TO": ""
+    },
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "bu-proto-preview",
+        "database_id": "816fbdec-b000-4fc0-8647-afbf19a1266a",
+        "migrations_dir": "./migrations"
+      }
+    ],
+    "ratelimits": [
+      {
+        "name": "FORM_LIMITER",
+        "namespace_id": "1002",
+        "simple": { "limit": 10, "period": 60 }
+      }
+    ]
+  },
+
   "vars": {
     // Sender for every email. buproto.com has to be verified in Resend before this sends.
     "EMAIL_FROM": "BU Proto <hello@buproto.com>",

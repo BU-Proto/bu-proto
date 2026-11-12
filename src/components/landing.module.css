@@ -1,0 +1,160 @@
+/*
+ * The landing's shared pieces, laid out as on main: a 14px cell, sections padded in cells, an
+ * editorial split (heading left, body right) and four-up steps. The type and colour are this
+ * site's own: Inter in light weights for anything large, frost ink with soft and dim tones, the
+ * field's sky, iris and rose for size, and no chips, capitals or mono labels.
+ */
+
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+}
+
+/* A section's padding: `proc` for a process or a list, `tight` for the opening lead. */
+.proc,
+.tight {
+  padding: calc(var(--cell) * 7) var(--gutter);
+}
+
+/* Editorial split: the heading on the left, the body on the right. */
+.split {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--cell) * 2);
+}
+
+@media (min-width: 860px) {
+  .split {
+    display: grid;
+    grid-template-columns: 0.82fr 1.18fr;
+    column-gap: calc(var(--cell) * 6);
+    align-items: end;
+  }
+}
+
+@media (max-width: 680px) {
+  .proc,
+  .tight {
+    padding-block: calc(var(--cell) * 4);
+  }
+}
+
+/* ---- Type, in the site's own voice ---- */
+
+.h2 {
+  max-width: 16ch;
+  margin: 0;
+  font-size: clamp(36px, 5vw, 68px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+/* The big opening paragraph. The second voice in the soft ink. */
+.lead {
+  margin: 0;
+  font-size: clamp(26px, 3.2vw, 42px);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.18;
+  text-wrap: pretty;
+}
+
+.lead em {
+  color: var(--ink-dim);
+  font-style: normal;
+}
+
+.body {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.small {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* A quiet line under a figure or heading: dim, small, sentence case. */
+.kicker {
+  margin: 14px 0 0;
+  color: var(--ink-dim);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ---- Four-up steps: `.step` holds `.stepHead` (`.badge` + `.stepTitle`) and `.stepText` ---- */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(var(--cell) * 2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 840px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.step {
+  transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) {
+  .steps:hover .step {
+    opacity: 0.55;
+  }
+
+  .steps .step:hover {
+    opacity: 1;
+  }
+}
+
+.stepHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.stepText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* A step's number: plain figures in the step's colour, not a chip. */
+.badge {
+  flex: none;
+  color: var(--hue, var(--ink-dim));
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* What main draws as a coloured tag: here it's the words in the beat's colour. */
+.tag {
+  color: var(--hue, var(--ink-soft));
+  font-size: 14px;
+  font-weight: 500;
+}

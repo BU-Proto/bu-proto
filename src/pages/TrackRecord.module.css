@@ -1,56 +1,45 @@
-/* One ruled row per wall, as an editorial split: what the wall is on the left, the logos on the right. */
+/* One ruled row per wall, straight on the field: what the wall is on the left, the logos on the right. */
 .walls {
   display: grid;
+  border-top: 1px solid rgb(var(--frost-rgb) / 0.4);
 }
 
 .wall {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: calc(var(--cell) * 2);
-  padding: calc(var(--cell) * 3) 0;
-  border-top: 1px solid var(--c-line);
-}
-
-.wall:last-child {
-  border-bottom: 1px solid var(--c-line);
-}
-
-@media (min-width: 860px) {
-  .wall {
-    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
-    column-gap: calc(var(--cell) * 6);
-    align-items: center;
-  }
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr);
+  gap: 16px clamp(28px, 5vw, 72px);
+  align-items: center;
+  padding: clamp(24px, 4vh, 36px) 0;
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.4);
+  text-shadow: var(--on-field-shadow);
 }
 
 .head {
   display: grid;
-  gap: var(--cell);
+  gap: 4px;
 }
 
 .title {
-  max-width: 16ch;
   margin: 0;
-  font-size: clamp(26px, 3.4vw, 46px);
+  font-size: clamp(22px, 2.4vw, 28px);
   font-weight: 400;
   letter-spacing: -0.02em;
-  line-height: 1.06;
+  line-height: 1.15;
 }
 
 .text {
   max-width: 44ch;
   margin: 0;
-  color: var(--c-muted);
-  font-size: 14px;
+  color: var(--ink-soft);
   text-wrap: pretty;
 }
 
-/* Logos turn ink, as in the band, so every brand sits in the same voice on the harbor ground. */
+/* Logos turn white, as in the band, so every brand sits in the same voice over the gradient. */
 .logos {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--cell) calc(var(--cell) * 3);
+  gap: 14px clamp(28px, 4vw, 56px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -67,41 +56,39 @@
 }
 
 .logo a:focus-visible > * {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .logo img {
   max-height: 100%;
   width: auto;
-  filter: brightness(0) invert(1);
+  filter: brightness(0) invert(1) drop-shadow(0 1px 8px rgb(var(--harbor-rgb) / 0.45));
 }
 
 .wordmark {
-  padding-bottom: 3px;
-  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 0 3px;
-  font-size: clamp(22px, 2.2vw, 30px);
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-size: clamp(22px, 2.6vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
   white-space: nowrap;
-  transition: background-size 0.45s var(--ease-out);
 }
 
 .logo a:hover .wordmark {
-  background-size: 100% 3px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
 }
 
 .empty {
   margin: 0;
-  color: var(--c-muted);
-  font-size: 14px;
+  color: var(--ink-soft);
+  font-style: italic;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .wordmark {
-    transition: none;
+@media (max-width: 760px) {
+  .wall {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
   }
 }

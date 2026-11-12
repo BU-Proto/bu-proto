@@ -3,16 +3,30 @@ import { Link } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { EVENT_LEDGER, KIND_HUE } from '../content/events'
 import { dateParts, daysUntil } from '../lib/dates'
+import { createLedgerWords } from '../lib/ledgerWords'
 import { onFrame } from '../lib/smoothScroll'
 import { reducedMotion } from '../lib/useInView'
-import { createWakeField } from '../lib/wakeField'
-import { MaskLines } from './motion/MaskLines'
+import { RevealWords } from './motion/RevealWords'
 import styles from './EventLedger.module.css'
 
 /** Each size of night, by its glyph from the trail: small ○, medium >, big _. */
 const HUE_GLYPH = { sky: '○', iris: '>', rose: '_' } as const
 
+/** The giant words are set in the site's own face, light, as the big type is everywhere else. */
+const WORDS_FONT = '300 {size} Inter, system-ui, sans-serif'
+
 const byDate = (a: ProtoEvent, b: ProtoEvent) => a.date.localeCompare(b.date) || a.id - b.id
+
+const LUMA_UPLOADS = 'https://images.lumacdn.com/uploads/'
+/** Keeps a raised photo clear of the top bar. */
+const NAV_CLEARANCE = 64
+const SCREEN_MARGIN = 16
+
+/** Imported covers stay on Luma's servers; its CDN sends them at the size they're shown. */
+function coverUrl(photo: string) {
+  if (!photo.startsWith(LUMA_UPLOADS)) return photo
+  return `https://images.lumacdn.com/cdn-cgi/image/format=auto,width=800,quality=80/uploads/${photo.slice(LUMA_UPLOADS.length)}`
+}
 
 /** The events by kind, the kind with the soonest upcoming night first; past nights at each kind's end. */
 function byKind(events: readonly ProtoEvent[]) {
@@ -24,8 +38,8 @@ function byKind(events: readonly ProtoEvent[]) {
   return [...groups]
 }
 
-/** The giant words and the cursor's wake, stuck to the screen while the section passes under it. */
-function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
+/** The giant words, stuck to the screen while the section passes under it. */
+function WordStage({ section }: { section: RefObject<HTMLElement | null> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const [failed, setFailed] = useState(false)
 
@@ -36,18 +50,21 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
     const alive = { current: true }
     const cleanup: { run: (() => void) | null } = { run: null }
 
-    // Built only as the section nears the screen: its big atlas shouldn't hold up the hero's opening.
-    // It's drawn from the display face, so it waits for that too.
-    const near = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return
-      near.disconnect()
-      void document.fonts.load('400 120px "Host Grotesk"', 'HACK').then(build)
-    }, { rootMargin: '100% 0px' })
+    // Built only as the section nears the screen: its big atlas shouldn't hold up the page's
+    // opening. It's drawn from Inter, so it waits for that too.
+    const near = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return
+        near.disconnect()
+        void document.fonts.load('300 120px Inter', EVENT_LEDGER.words.join('')).then(build, build)
+      },
+      { rootMargin: '100% 0px' },
+    )
     near.observe(box)
 
     const build = () => {
       if (!alive.current) return
-      const field = createWakeField(surface, EVENT_LEDGER.words, () => setFailed(true))
+      const field = createLedgerWords(surface, EVENT_LEDGER.words, WORDS_FONT, () => setFailed(true))
       if (!field) {
         setFailed(true)
         return
@@ -74,8 +91,8 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
       })
       sizes.observe(surface)
       const screen = new IntersectionObserver(([entry]) => {
-        state.onScreen = entry.isIntersecting
-        if (entry.isIntersecting) start()
+        state.onScreen = entry?.isIntersecting ?? false
+        if (state.onScreen) start()
         else stop()
       })
       screen.observe(box)
@@ -84,30 +101,18 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
         scrolled()
         if (still) field.frame(performance.now())
       }
-      const onMove = (event: PointerEvent) => {
-        if (still || event.pointerType === 'touch' || !state.onScreen) return
-        const rect = surface.getBoundingClientRect()
-        field.point(event.clientX - rect.left, event.clientY - rect.top)
-      }
-      const onOut = (event: PointerEvent) => {
-        if (!event.relatedTarget) field.point(null, 0)
-      }
       const onVisibility = () => {
         state.visible = !document.hidden
         if (state.visible) start()
         else stop()
       }
       window.addEventListener('scroll', onScroll, { passive: true })
-      window.addEventListener('pointermove', onMove, { capture: true, passive: true })
-      window.addEventListener('pointerout', onOut, { passive: true })
       document.addEventListener('visibilitychange', onVisibility)
       cleanup.run = () => {
         stop()
         sizes.disconnect()
         screen.disconnect()
         window.removeEventListener('scroll', onScroll)
-        window.removeEventListener('pointermove', onMove, { capture: true })
-        window.removeEventListener('pointerout', onOut)
         document.removeEventListener('visibilitychange', onVisibility)
         field.destroy()
       }
@@ -128,18 +133,37 @@ function WakeStage({ section }: { section: RefObject<HTMLElement | null> }) {
   )
 }
 
-/** Proto's nights as a ledger, over giant words that catch colour in the cursor's wake. */
+/** Proto's nights as a ledger, over giant words that slide as the page scrolls. */
 export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
   const section = useRef<HTMLElement>(null)
+  const head = useRef<HTMLElement>(null)
+  const frames = useRef(new Map<number, HTMLElement>())
+  const [raised, setRaised] = useState<number | null>(null)
+  const [broken, setBroken] = useState<ReadonlySet<number>>(() => new Set())
   const groups = byKind(events)
+
+  /** Raises a night's photo beside its row: on screen if it can be, and clear of the heading and the section's fades. */
+  const raise = (id: number, row: HTMLElement) => {
+    const frame = frames.current.get(id)
+    if (!frame || !section.current || !head.current) return
+    const box = section.current.getBoundingClientRect()
+    const rowBox = row.getBoundingClientRect()
+    const height = frame.offsetHeight
+    const onScreen = Math.max(NAV_CLEARANCE, Math.min(rowBox.top + (rowBox.height - height) / 2, window.innerHeight - height - SCREEN_MARGIN))
+    const lowest = box.height - parseFloat(getComputedStyle(section.current).paddingBottom) - height
+    const highest = head.current.getBoundingClientRect().bottom - box.top
+    frame.style.top = `${Math.max(highest, Math.min(onScreen - box.top, lowest))}px`
+    setRaised(id)
+  }
+  const lower = (id: number) => setRaised((current) => (current === id ? null : current))
 
   return (
     <section ref={section} className={styles.section} aria-labelledby="event-ledger">
-      <WakeStage section={section} />
+      <WordStage section={section} />
       <div className={styles.body}>
-        <header className={styles.head}>
-          <h2 id="event-ledger" className={styles.title}>
-            <MaskLines text={EVENT_LEDGER.title} />
+        <header ref={head} className={styles.head}>
+          <h2 id="event-ledger" className={styles.title} data-reveal="words">
+            <RevealWords text={EVENT_LEDGER.title} />
           </h2>
           <p className={styles.count} data-reveal="rise">
             <span className={styles.icon} aria-hidden="true">
@@ -164,7 +188,19 @@ export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
                   const { month, day } = dateParts(night.date)
                   return (
                     <li key={night.id}>
-                      <Link className={styles.night} data-past={daysUntil(night.date) < 0 || undefined} to={`/events/${night.id}`}>
+                      <Link
+                        className={styles.night}
+                        data-past={daysUntil(night.date) < 0 || undefined}
+                        to={`/events/${night.id}`}
+                        onPointerEnter={(event) => {
+                          if (event.pointerType !== 'touch') raise(night.id, event.currentTarget)
+                        }}
+                        onPointerLeave={() => lower(night.id)}
+                        onFocus={(event) => {
+                          if (event.currentTarget.matches(':focus-visible')) raise(night.id, event.currentTarget)
+                        }}
+                        onBlur={() => lower(night.id)}
+                      >
                         <span className={styles.date}>
                           {month} {String(day).padStart(2, '0')}
                         </span>
@@ -176,6 +212,36 @@ export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
               </ol>
             </div>
           ))
+        )}
+      </div>
+      {/* The titles are the rows' own text, so to a screen reader these photos add nothing. */}
+      <div className={styles.photos} aria-hidden="true">
+        {events.map((night) =>
+          night.photo && !broken.has(night.id) ? (
+            <div
+              key={night.id}
+              ref={(frame) => {
+                if (frame) frames.current.set(night.id, frame)
+                else frames.current.delete(night.id)
+              }}
+              className={styles.photo}
+              data-hue={KIND_HUE[night.kind]}
+              data-raised={raised === night.id || undefined}
+            >
+              <img
+                src={coverUrl(night.photo)}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                onLoad={(event) => {
+                  // The frame takes the photo's shape, so a row raised before it loaded needs placing again.
+                  const row = section.current?.querySelector<HTMLElement>(`a[href="/events/${night.id}"]`)
+                  if (row && event.currentTarget.parentElement?.dataset.raised !== undefined) raise(night.id, row)
+                }}
+                onError={() => setBroken((failed) => new Set(failed).add(night.id))}
+              />
+            </div>
+          ) : null,
         )}
       </div>
     </section>

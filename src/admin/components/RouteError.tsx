@@ -29,7 +29,7 @@ export function RouteError() {
         <PageHeader title="Not found" lede="There’s nothing at this address. It may have been deleted, or the link is off." />
         <p>
           <Link className={styles.button} to="/admin">
-            Back to the dashboard
+            Back to the overview
           </Link>
         </p>
       </div>
@@ -46,8 +46,8 @@ export function RouteError() {
         <h2>This page couldn’t load.</h2>
         <p>{message}</p>
         <p className={styles.dim}>
-          Try again, or go back to the dashboard.
-          {statusOf(error) ? <span className={styles.mono}> (HTTP {statusOf(error)})</span> : null}
+          Try again, or go back to the overview.
+          {statusOf(error) ? <span> (HTTP {statusOf(error)})</span> : null}
         </p>
 
         <div className={styles.actions}>
@@ -55,7 +55,7 @@ export function RouteError() {
             Try again
           </button>
           <Link className={styles.ghost} to="/admin">
-            Dashboard
+            Overview
           </Link>
         </div>
       </div>

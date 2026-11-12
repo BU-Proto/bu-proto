@@ -7,70 +7,67 @@
 
 .loading {
   margin: 0;
+  padding-top: clamp(12px, 4vh, 40px);
 }
 
-/* Three cells stepping on and off, one after another. */
-.pixels {
+/* The trail's three glyphs, lighting up one after another. */
+.glyphs {
   display: inline-flex;
-  gap: 1px;
+  gap: 0.35em;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  line-height: 1;
+  text-shadow: var(--on-field-shadow);
 }
 
-.pixels > span {
-  width: var(--cell);
-  height: var(--cell);
-  background: var(--c-navy);
-}
-
-.pixels > span:nth-child(2) {
-  background: var(--c-blue);
-}
-
-.pixels > span:nth-child(3) {
-  background: var(--c-gold);
+.glyphs > span {
+  opacity: 0.35;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .pixels > span {
-    animation: blink 0.9s steps(1) infinite;
+  .glyphs > span {
+    animation: pulse 1.2s ease-in-out infinite;
   }
 
-  .pixels > span:nth-child(2) {
-    animation-delay: 0.15s;
+  .glyphs > span:nth-child(2) {
+    animation-delay: 0.2s;
   }
 
-  .pixels > span:nth-child(3) {
-    animation-delay: 0.3s;
+  .glyphs > span:nth-child(3) {
+    animation-delay: 0.4s;
   }
 }
 
-@keyframes blink {
+@keyframes pulse {
   0%,
+  60%,
   100% {
-    opacity: 1;
+    opacity: 0.25;
   }
 
-  50% {
-    opacity: 0.12;
+  30% {
+    opacity: 1;
   }
 }
 
 .error {
   display: grid;
   justify-items: start;
-  gap: var(--cell);
+  gap: 12px;
   max-width: 620px;
 }
 
 .title {
   margin: 0;
-  font-size: clamp(26px, 3.4vw, 46px);
+  font-size: clamp(24px, 3vw, 34px);
   font-weight: 400;
   letter-spacing: -0.02em;
-  line-height: 1.06;
+  line-height: 1.1;
 }
 
 .text {
   max-width: 52ch;
   margin: 0 0 6px;
-  color: var(--c-body);
+  color: var(--ink-soft);
 }

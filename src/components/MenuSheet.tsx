@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
 import { BRAND, NAV_ITEMS } from '../content/site'
+import { IconButton } from './IconButton'
 import { CloseIcon, MenuIcon } from './icons'
-import { ProtoMark } from './ProtoMark'
 import styles from './MenuSheet.module.css'
 
 /**
@@ -21,21 +21,15 @@ export function MenuSheet() {
 
   return (
     <>
-      <button
-        type="button"
-        className={styles.open}
-        aria-label="Menu"
-        title="Menu"
-        aria-haspopup="dialog"
-        onClick={() => dialogRef.current?.showModal()}
-      >
+      <IconButton label="Menu" aria-haspopup="dialog" onClick={() => dialogRef.current?.showModal()}>
         <MenuIcon />
-      </button>
+      </IconButton>
 
       <dialog
         ref={dialogRef}
         className={styles.sheet}
         aria-label="All pages"
+        data-fog-ignore
         onClick={(event) => {
           // A click on the backdrop lands on the dialog itself.
           if (event.target === event.currentTarget) event.currentTarget.close()
@@ -44,12 +38,12 @@ export function MenuSheet() {
         <div className={styles.inner}>
           <div className={styles.head}>
             <span className={styles.title}>
-              <ProtoMark size={18} />
+              <img src={BRAND.seal} alt="" width={20} height={20} />
               {BRAND.full}
             </span>
-            <button type="button" className={styles.close} aria-label="Close menu" title="Close menu" onClick={close}>
+            <IconButton label="Close menu" onClick={close}>
               <CloseIcon />
-            </button>
+            </IconButton>
           </div>
 
           <nav aria-label="All pages">

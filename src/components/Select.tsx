@@ -321,6 +321,7 @@ export function Select<T extends string>({
           data-up={place?.up || undefined}
           hidden={!open}
           tabIndex={-1}
+          data-fog-ignore
           // Keep focus (and the highlight) on the trigger while choosing with a pointer.
           onMouseDown={(event) => event.preventDefault()}
         >

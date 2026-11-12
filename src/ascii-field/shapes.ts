@@ -1,18 +1,18 @@
 import { GRADIENT_COLORMAP, type Colormap } from './colormap'
-import { PALETTE_V2 } from './palettePreview'
 
 /**
  * The shapes the field's light can take. `bloom` is the hero gradient sampled from the reference
  * design; the others are painted here from the same pigments (picked out of that gradient), so
  * every shape is in the site's one palette and only the silhouette changes.
  */
-export const SHAPES = ['tides', 'bloom', 'eclipse', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
+export const SHAPES = ['tides', 'bloom', 'eclipse', 'trails', 'ripple', 'aurora', 'rays', 'strata', 'dawn'] as const
 export type ShapeName = (typeof SHAPES)[number]
 
 export const SHAPE_LABELS: Record<ShapeName, string> = {
   tides: 'Tides',
   bloom: 'Bloom',
   eclipse: 'Eclipse',
+  trails: 'Trails',
   ripple: 'Ripple',
   aurora: 'Aurora',
   rays: 'Rays',
@@ -36,22 +36,15 @@ const P = {
   deep: hex('046aa8'),
   sky: hex('039ac8'),
   lagoon: hex('00a4d0'),
-  iris: hex(PALETTE_V2 ? '857fd7' : '8488b5'),
+  iris: hex('8488b5'),
   haze: hex('cec1be'),
   peach: hex('f8928a'),
   rose: hex('da346f'),
-  /** The site's frost and navy: the highlights on the tides' currents, and the deeper ground
-      between them. */
+  /** A violet between the iris and the rose, for the tides' middle currents. */
+  violet: hex('7a5fd0'),
+  /** The site's frost: the highlights on the tides' currents. */
   frost: hex('f6fbff'),
-  navy: hex('0b2a46'),
 } as const
-
-/** A pale ice blue between the frost and the field's sky, for the tides' brightest currents. */
-const ICE: RGB = [
-  P.frost[0] + (P.sky[0] - P.frost[0]) * 0.45,
-  P.frost[1] + (P.sky[1] - P.frost[1]) * 0.45,
-  P.frost[2] + (P.sky[2] - P.frost[2]) * 0.45,
-]
 
 /** Painted shapes are drawn on a 16:10 canvas, the hero's own proportion. */
 const PW = 96
@@ -125,15 +118,13 @@ const HALF = unit(LIGHT[0], LIGHT[1], LIGHT[2] + 1)
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
 /**
- * A surface of color `base` facing `n`: its shadow side is a deeper shade of its own color (never
- * black, so the glyphs keep covering it, and never mixed with another hue, so a pink current
- * doesn't shade to purple), its lit side is its own color, with a frost highlight on top.
+ * A surface of color `base` facing `n`: its shadow side sinks toward the deep blue (never black,
+ * so the glyphs keep covering it), its lit side is its own color, with a frost highlight on top.
  */
 function lit(base: RGB, n: Vec3, gloss: number, shine: number): RGB {
   const diffuse = clamp01(dot(n, LIGHT))
   const spec = Math.pow(clamp01(dot(n, HALF)), gloss)
-  const shade: RGB = [base[0] * 0.68, base[1] * 0.68, base[2] * 0.68]
-  return over(mixRGB(shade, base, 0.2 + 0.8 * diffuse), P.frost, spec * shine)
+  return over(mixRGB(mixRGB(base, P.deep, 0.55), base, 0.2 + 0.8 * diffuse), P.frost, spec * shine)
 }
 
 /** Gaussian blur in place (separable, edges clamped), sigma in map pixels. */
@@ -172,11 +163,11 @@ function soften(map: GradientMap, sigma: number, scratch: Float32Array = new Flo
 }
 
 /**
- * The tides: four currents of light, bundled tight at the left edge and spreading wide as they
- * cross to the right. Each is a glossy tube with a soft glow of its own color and a faint shadow,
- * in the field's own colors: two in ice and the field's blues, two in its warm pinks and peach,
- * over a ground sunk toward navy so each current stands out as its own shape. The lower ones pass
- * in front where they overlap in the bundle.
+ * The tides ("Gathering"): four currents of light, spread wide on the left that draw together as
+ * they cross the screen, gathering into one tight, bright bundle as they leave through the right
+ * edge. Each is a glossy tube with a soft glow of its own color and a faint shadow, warming from
+ * the top down: pale iris, then violet, then rose and peach. The lower ones pass in front where
+ * they overlap in the bundle.
  *
  * The currents stay where they are; only their width moves. Each one ripples up and down in place,
  * swelling at some points as it settles at others, in a pattern exactly two ripples to the
@@ -184,13 +175,12 @@ function soften(map: GradientMap, sigma: number, scratch: Float32Array = new Flo
  * same amount of its color: the balance of color on screen never changes.
  */
 const CURRENTS = [
-  // Colors run from the right edge (first) to the bundle (last). Each current blends within its
-  // own family, and the warm ones only through peach, never straight from pink into blue.
-  { base: 0.06, tones: [P.sky, ICE, P.lagoon] },
-  { base: 0.22, tones: [P.rose, P.peach, P.rose] },
-  { base: 0.38, tones: [P.peach, P.rose, P.peach] },
-  { base: 0.54, tones: [P.lagoon, ICE, P.sky] },
-].map(({ base, tones }, k) => ({ base, tones, R: 0.09 + 0.012 * k }))
+  // Colors run from the left edge (first) to the bundle (last).
+  { base: 0.06, tones: [P.haze, P.iris, P.violet] },
+  { base: 0.22, tones: [P.iris, P.violet, P.rose] },
+  { base: 0.38, tones: [P.peach, P.rose, P.violet] },
+  { base: 0.54, tones: [P.rose, P.peach, P.haze] },
+].map(({ base, tones }, k) => ({ base, tones, R: 0.08 + 0.012 * k }))
 
 /**
  * The ripples: how far they swell and settle a current (a share of its radius), how long one
@@ -204,22 +194,20 @@ const RIPPLE_K = (2 * 2 * Math.PI) / ASPECT
 /** Painted finer than the other shapes, so the currents' highlights stay crisp, and softened a little. */
 const TIDES_W = 128
 const TIDES_H = 80
-const TIDES_SOFTEN = 1.5
+const TIDES_SOFTEN = 1.7
 
 /**
- * Where current `k` runs at `u` (measured from the right edge, 0, to the left, 1.6, so the bundle
- * sits on the left). It never moves: a gentle curve, the same for every current at a given u.
+ * Where current `k` runs at `u` (measured from the left edge, 0, to the right, 1.6, so the bundle
+ * sits on the right). It never moves: a gentle wave on the left that settles as they gather.
  */
 function currentY(k: number, u: number): number {
   const { base } = CURRENTS[k]
   const pull = smooth(-0.1, 1.75, u)
   const meet = 0.3 + (k - 1.5) * 0.045
-  const wave = 0.035 * Math.sin(2.4 * u) * (1 - pull)
-  const roll = 0.028 * Math.sin(1.2 * u) * (0.35 + 0.65 * (1 - pull))
-  return base + (meet - base) * pull + wave + roll
+  return base + (meet - base) * pull + 0.035 * Math.sin(2.4 * u + k * 1.3) * (1 - pull)
 }
 
-/** What doesn't move under the tides: the ground sunk toward navy, with a soft lagoon glow over the bundle. */
+/** What doesn't move under the tides: the field's blue ground, with a soft iris glow behind the bundle. */
 let tidesGround: Float32Array | null = null
 /** The tides' buffers, repainted in place. */
 let tidesData: Float32Array | null = null
@@ -235,8 +223,7 @@ function paintTides(time: number): GradientMap {
       for (let i = 0; i < W; i++) {
         const x = (i / (W - 1)) * ASPECT
         const y = j / (H - 1)
-        let c = over(over(groundAt(x, y), P.deep, 0.6), P.navy, 0.32)
-        c = over(c, P.lagoon, smooth(1.5, 0, Math.hypot(x - 0.4, y - 0.3)) * 0.2)
+        const c = over(groundAt(x, y), P.iris, smooth(1.5, 0, Math.hypot(x - 1.2, y - 0.3)) * 0.3)
         tidesGround.set(c, (j * W + i) * 3)
       }
     }
@@ -253,11 +240,11 @@ function paintTides(time: number): GradientMap {
   const radii = new Float32Array(W * n)
   const tones: RGB[] = new Array(W * n)
   for (let i = 0; i < W; i++) {
-    const u = ASPECT - (i / (W - 1)) * ASPECT
+    const u = (i / (W - 1)) * ASPECT
     const along = clamp01((u + 0.15) / 1.9)
     for (let k = 0; k < n; k++) {
       const o = i * n + k
-      const slope = (currentY(k, u - 0.002) - currentY(k, u + 0.002)) / 0.004
+      const slope = (currentY(k, u + 0.002) - currentY(k, u - 0.002)) / 0.004
       const len = Math.sqrt(1 + slope * slope)
       centers[o] = currentY(k, u)
       acrossX[o] = -slope / len
@@ -283,7 +270,7 @@ function paintTides(time: number): GradientMap {
         const d = (y - centers[o]) * acrossY[o]
         offsets[k] = d
         const dist = Math.abs(d)
-        c = over(c, P.navy, gauss((dist - radii[o] - 0.03) / 0.06) * 0.3)
+        c = over(c, P.deep, gauss((dist - radii[o] - 0.03) / 0.06) * 0.28)
         c = over(c, tones[o], gauss(dist / (radii[o] * 2.3)) * 0.4)
       }
       for (let k = 0; k < n; k++) {
@@ -293,7 +280,7 @@ function paintTides(time: number): GradientMap {
         const t = Math.min(1, across)
         const side = Math.sign(offsets[k]) * t
         const normal = unit(acrossX[o] * side, acrossY[o] * side, Math.sqrt(1 - t * t))
-        let col = lit(tones[o], normal, 50, 0.6)
+        let col = lit(tones[o], normal, 50, 0.8)
         col = over(col, P.lagoon, Math.pow(1 - normal[2], 3) * 0.3)
         c = over(c, col, smooth(1.06, 0.88, across) * 0.95)
       }
@@ -304,6 +291,18 @@ function paintTides(time: number): GradientMap {
   }
   return soften({ width: W, height: H, data }, TIDES_SOFTEN, tidesScratch as Float32Array)
 }
+
+/** The trails' climb: about twenty degrees above level. */
+const TRAIL_COS = Math.cos(0.36)
+const TRAIL_SIN = Math.sin(0.36)
+/** Each trail: where it runs across the climb, where its head is, its length, width, colour, strength. */
+const TRAILS: readonly [at: number, head: number, length: number, width: number, pigment: RGB, alpha: number][] = [
+  [0.3, 1.52, 1.3, 0.05, P.lagoon, 0.5],
+  [0.5, 1.3, 1.3, 0.075, P.peach, 0.9],
+  [0.7, 1.46, 1.6, 0.06, P.rose, 0.85],
+  [0.93, 1.22, 1.35, 0.08, P.violet, 0.8],
+  [1.12, 1.4, 1.5, 0.06, P.peach, 0.65],
+]
 
 const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
   // Currents of light flowing across the top of the landing (see paintTides).
@@ -331,6 +330,29 @@ const PAINTERS: Record<ShapeName, (time: number) => GradientMap> = {
       c = over(c, P.deep, smooth(R * 0.95, R * 0.55, d) * 0.92)
       const bead = Math.hypot(x - (cx + R * Math.cos(-0.75)), y - (cy + R * Math.sin(-0.75)))
       return over(c, P.haze, gauss(bead / 0.11))
+    }),
+
+  // Light trails climbing from the lower left to the upper right, like a long exposure of
+  // departures: each a soft streak with a faint tail and a brighter head, bending upward as it
+  // goes. No object anywhere, only the way out. For the fund, which pays for getting there.
+  trails: () =>
+    painted((x, y, ground) => {
+      // Along the climb (u) and across it (v); the climb is tilted up to the right.
+      const u = x * TRAIL_COS - y * TRAIL_SIN
+      const v = x * TRAIL_SIN + y * TRAIL_COS
+      // A violet dusk over the upper right, so the trails have something to climb into.
+      let c = over(ground, P.iris, 0.5 * smooth(0.1, 1.3, u) * smooth(0.95, 0.2, v))
+      for (const [at, head, length, width, pigment, alpha] of TRAILS) {
+        const along = (u - (head - length)) / length
+        // Each trail lifts off its line as it goes, so the bundle fans a little toward the top.
+        const lift = 0.3 * along * along
+        const across = (v - at + lift) / (width * (0.55 + 0.45 * clamp01(along)))
+        const body = gauss(across) * smooth(0, 0.7, along) * smooth(1.12, 0.96, along)
+        c = over(c, pigment, body * alpha)
+        // The head: a pale bead where the trail is newest.
+        c = over(c, P.haze, gauss(across * 1.5) * gauss((along - 0.97) / 0.1) * alpha * 0.6)
+      }
+      return c
     }),
 
   // Rings rolling out from beyond the top-left corner, as if something dropped in just off the

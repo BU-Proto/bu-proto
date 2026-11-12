@@ -1,7 +1,7 @@
 // The Proto fund: hackathon travel grants. It isn't funded yet: this page explains the plan and
 // collects interest. Nothing here may read as an open application, or as money that exists.
 
-import type { Link, PageIntro } from './types'
+import type { PageIntro } from './types'
 
 export const GRANTS_INTRO: PageIntro = {
   path: '~/proto/grants',
@@ -21,11 +21,16 @@ export interface Fact {
   text: string
 }
 
-/** The plan in one line, the caveat under it, and the two things people ask first beside it. */
+/**
+ * The plan, printed as a ticket: where from and where to, the plan in one line, the two things
+ * people ask first, and on the stub the caveat that it's still only a plan.
+ */
 export const PLAN = {
   title: 'The plan',
+  from: 'Boston',
+  to: 'Your hackathon',
   headline: '$50 to $500 toward getting there, paid before you go.',
-  caveat: 'A plan, not a promise. The amounts firm up once the fund is funded.',
+  caveat: { lead: 'A plan, not a promise.', text: 'The amounts firm up once the fund is funded.' },
   facts: [
     {
       title: 'Travel only, for now',
@@ -40,7 +45,9 @@ export interface Stop {
   text: string
 }
 
-/** The four stops on the way, in order. The last is the one thing asked back. */
+/**
+ * The four stops on the way, in order. The last is the one thing asked back.
+ */
 export const ROUTE = {
   title: 'How it’ll work',
   lede: 'Four stops, quick enough that you can still book in time.',
@@ -62,35 +69,6 @@ export const ROUTE = {
       text: 'The one thing we ask back, at a hack night or demo night. It doesn’t have to win, or work.',
     },
   ] satisfies Stop[],
-} as const
-
-export interface Contrast {
-  topic: string
-  ignite: string
-  proto: string
-}
-
-/** Ignite next to the plan, a row per difference. Only what each one does, nothing about who. */
-export const IGNITE = {
-  title: 'Next to Spark!’s Ignite',
-  link: {
-    label: 'Spark!’s Ignite Travel Fund',
-    href: 'https://www.bu.edu/spark/resources/travel-fund/',
-  } satisfies Link,
-  intro: 'pays for hackathon travel too, and you should use it. This is planned to cover what it doesn’t.',
-  heads: { ignite: 'Ignite', proto: 'This fund, as planned' },
-  rows: [
-    {
-      topic: 'When it pays',
-      ignite: 'Reimbursed after the event',
-      proto: 'Up front, before you go',
-    },
-    {
-      topic: 'How often',
-      ignite: 'One event a year',
-      proto: 'Not capped at one trip a year',
-    },
-  ] satisfies Contrast[],
 } as const
 
 /** The interest list. Page copy for the schema's fields, trip first, then who you are. */

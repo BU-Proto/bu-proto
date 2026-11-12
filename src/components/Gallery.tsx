@@ -2,14 +2,13 @@ import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from
 import { flushSync } from 'react-dom'
 import { LIGHTBOX } from '../content/site'
 import { CloseIcon } from './icons'
-import { useDragScroll } from './motion/useDragScroll'
 import styles from './Gallery.module.css'
 
 const COPY = LIGHTBOX
 
 /**
  * A filmstrip of photos at their own shape: screenshots, diagrams and photos alike, never cropped.
- * It scrolls sideways (swipe, trackpad, a mouse drag or the arrow buttons) and each photo opens full screen in a
+ * It scrolls sideways (swipe, trackpad or the arrow buttons) and each photo opens full screen in a
  * modal lightbox. `label` names them in alt text.
  */
 export function Gallery({ images, label }: { images: readonly string[]; label: string }) {
@@ -23,7 +22,7 @@ export function Gallery({ images, label }: { images: readonly string[]; label: s
   const alt = (index: number) => `${label}, photo ${index + 1} of ${total}`
 
   // The strip's own arrows, shown only when there's more to scroll to on that side.
-  const track = useDragScroll<HTMLUListElement>()
+  const track = useRef<HTMLUListElement>(null)
   const [edges, setEdges] = useState({ start: true, end: true })
   useEffect(() => {
     const node = track.current
@@ -56,7 +55,7 @@ export function Gallery({ images, label }: { images: readonly string[]; label: s
       node.removeEventListener('wheel', onWheel)
       observer.disconnect()
     }
-  }, [images, track])
+  }, [images])
   const scrollStrip = (direction: 1 | -1) => {
     const node = track.current
     if (node) node.scrollBy({ left: direction * node.clientWidth * 0.8, behavior: 'smooth' })

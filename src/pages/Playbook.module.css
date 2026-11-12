@@ -1,24 +1,17 @@
-/* The playbook as a contents page. The lead guide's photo large with its title beside it, the next
-   few set like carousel slides, the rest as a ruled list. Square pictures, hairlines, no panels. */
-
-/* ---- The lead guide ---- */
+/* ---- The lead guide: its photo large, the title and byline beside it on the field ---- */
 
 .featured {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: calc(var(--cell) * 2);
-}
-
-@media (min-width: 860px) {
-  .featured {
-    grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
-    align-items: end;
-    column-gap: calc(var(--cell) * 6);
-  }
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: end;
+  gap: clamp(24px, 4vw, 56px);
 }
 
 .featuredImage {
   display: block;
+  overflow: hidden;
+  border-radius: 26px;
+  box-shadow: 0 30px 80px -40px rgb(var(--harbor-rgb) / 0.7);
 }
 
 .featuredImage img {
@@ -27,101 +20,136 @@
   height: auto;
   aspect-ratio: 16 / 10;
   object-fit: cover;
+  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .featuredText {
   display: grid;
   justify-items: start;
-  gap: var(--cell);
+  gap: 16px;
+  padding-bottom: 6px;
+  text-shadow: var(--on-field-shadow);
 }
 
-.featuredTitle a {
-  transition: color 0.2s ease;
+.featuredLabel {
+  margin: 0;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.featuredTitle {
+  margin: 0;
+  font-size: clamp(36px, 4.6vw, 64px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+  text-wrap: balance;
 }
 
 .featuredTitle a:hover {
-  color: var(--c-blue);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 8px;
 }
 
 .featuredTitle a:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.featuredLine {
+  max-width: 40ch;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 
 .read {
-  margin-top: var(--cell);
+  margin-top: 6px;
 }
 
-/* ---- The rest ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .featured:has(a:hover) .featuredImage img {
+    transform: scale(1.025);
+  }
+}
 
+/* ---- The rest, each with its picture ---- */
+
+/* Straight on the ground, not in a panel: the guides are a list to read, not a sheet. */
 .book {
-  display: grid;
-  gap: calc(var(--cell) * 5);
+  padding-top: clamp(8px, 2vw, 20px);
 }
 
+/* The next few, a picture over each title, across the top. */
 .tier {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  gap: calc(var(--cell) * 3) 28px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 28px clamp(20px, 3vw, 36px);
   margin: 0;
-  padding: 0;
+  padding: 0 0 clamp(20px, 3vw, 30px);
   list-style: none;
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.22);
 }
 
 .card {
   display: grid;
   align-content: start;
-  justify-items: center;
-  text-align: center;
+  gap: 14px;
 }
 
 .cardImage {
   display: block;
-  width: 100%;
+  overflow: hidden;
+  border-radius: 16px;
 }
 
 .cardImage img {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 6 / 5;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
-}
-
-.card .entryText {
-  justify-items: center;
-  margin-top: 20px;
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .cardTitle {
-  font-size: clamp(22px, 2.2vw, 30px);
-  font-weight: 500;
+  font-size: clamp(21px, 2vw, 26px);
+  font-weight: 400;
   letter-spacing: -0.02em;
-  line-height: 1.1;
-  transition: color 0.2s ease;
-}
-
-.card .line {
-  max-width: 32ch;
+  line-height: 1.15;
+  text-wrap: balance;
 }
 
 a.card:hover .cardTitle {
-  color: var(--c-blue);
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 a.card:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 4px;
+  border-radius: 16px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a.card:hover .cardImage img {
+    transform: scale(1.03);
+  }
 }
 
 .toc {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 calc(var(--cell) * 3);
+  gap: 0 clamp(24px, 4vw, 48px);
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--c-line);
 }
 
 .entry {
@@ -130,8 +158,8 @@ a.card:focus-visible {
   align-items: center;
   gap: 18px;
   height: 100%;
-  padding: var(--cell) 0;
-  border-bottom: 1px solid var(--c-line);
+  padding: 20px 0;
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
 }
 
 .thumb {
@@ -139,7 +167,9 @@ a.card:focus-visible {
   width: 100%;
   height: auto;
   aspect-ratio: 3 / 2;
+  border-radius: 12px;
   object-fit: cover;
+  transition: transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .entryText {
@@ -148,43 +178,56 @@ a.card:focus-visible {
 }
 
 .title {
-  font-size: clamp(18px, 1.6vw, 22px);
-  font-weight: 500;
+  font-size: clamp(19px, 1.8vw, 23px);
+  font-weight: 400;
   letter-spacing: -0.015em;
   line-height: 1.2;
-  transition: color 0.2s ease;
 }
 
 .line {
-  color: var(--c-body);
+  color: var(--ink-soft);
   font-size: 14.5px;
-  line-height: 1.5;
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 
 a.entry:hover .title {
-  color: var(--c-blue);
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 a.entry:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a.entry:hover .thumb {
+    transform: translateY(-2px);
+  }
 }
 
 /* ---- Still being written: quiet, no pictures ---- */
 
 .soon {
   display: grid;
-  gap: var(--cell);
+  gap: 10px;
+  padding-top: 26px;
 }
 
 .soonTitle {
   margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .soonList {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--cell) calc(var(--cell) * 3);
+  gap: 14px clamp(20px, 3vw, 36px);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -193,23 +236,27 @@ a.entry:focus-visible {
 .soonList li {
   display: grid;
   gap: 2px;
-  padding-top: var(--cell);
-  border-top: 1px solid var(--c-line);
 }
 
 .soonName {
-  color: var(--c-ink);
-  font-size: 15px;
-  font-weight: 500;
+  color: var(--ink-soft);
+  font-size: 16px;
 }
 
 .soonList .line {
-  color: var(--c-muted);
+  color: var(--ink-dim);
   font-size: 13.5px;
 }
 
 @media (max-width: 860px) {
-  .toc,
+  .featured {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .toc {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .soonList {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -219,6 +266,11 @@ a.entry:focus-visible {
   .entry {
     grid-template-columns: 96px minmax(0, 1fr);
     gap: 14px;
+    padding: 16px 0;
+  }
+
+  .featuredImage {
+    border-radius: 18px;
   }
 
   /* Stacked on a phone, so the pictures go wider and shorter to keep the list moving. */

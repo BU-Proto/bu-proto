@@ -63,15 +63,15 @@ export const DEMO: GuideDoc = {
       ],
     },
     {
-      id: 'practise',
-      title: 'Practise it',
+      id: 'practice',
+      title: 'Practice it',
       body: [
         'A demo that works the first time in front of judges has usually worked twenty times in front of the team. Rehearsal is part of the build, so put it in the plan.',
         {
           checklist: [
             'Freeze features early enough to rehearse. A rehearsed demo of fewer features beats a fresh demo of more.',
             'Run it out loud at least three times, timed, with someone on the team playing a judge.',
-            'Practise the questions too: “What was the hardest part?”, “What did you build this weekend?”, “Who would use this?”',
+            'Practice the questions too: “What was the hardest part?”, “What did you build this weekend?”, “Who would use this?”',
             'Decide who talks and who drives the laptop. Two people works well: one tells the story, one clicks.',
             'Rehearse on the deployed version, on the venue Wi-Fi, with the screen you’ll present on.',
           ],

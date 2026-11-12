@@ -8,6 +8,7 @@ import { accoladeOf, hackathonName, teamParts } from './accolade'
 import { BuMark } from './BuMark'
 import motion from './motion/motion.module.css'
 import { SampleTag } from './SampleTag'
+import ui from './ui.module.css'
 import styles from './WinSheet.module.css'
 
 const LETTER_COPIES = [0, 1, 2, 3]
@@ -20,46 +21,76 @@ const DECODE_NOISE = 5
 const noiseGlyphs = (count: number) =>
   Array.from({ length: count }, () => DECODE_GLYPHS[Math.floor(Math.random() * DECODE_GLYPHS.length)]).join('')
 
-/** "HACKHARVARD 2026 • 1ST PLACE BEST WEB API • TEAM OF 4", without the team when it isn't known. */
-function tagLine(win: Win): string {
+/**
+ * Where, what and who, as separate parts: "HackHarvard 2026", "1st Place, Best Web API", "Team of
+ * 4", the team left off when it isn't known. They're set apart by space, not a separator.
+ */
+function tagParts(win: Win): string[] {
   const { prize, rank } = accoladeOf(win)
   const size = win.team.filter((person) => person.name.trim()).length
-  const parts = [hackathonName(win.event), rank ? `${rank} ${prize}` : prize]
+  const parts = [hackathonName(win.event), rank ? `${rank}, ${prize}` : prize]
   if (size > 0) parts.push(WIN_SHEET.teamOf(size))
-  return parts.join(WIN_SHEET.separator).toUpperCase()
+  return parts
 }
 
-/** The tag line, typed out behind a few loose glyphs. Its hidden twin holds the line's height. */
-function TagLine({ text, inView }: { text: string; inView: boolean }) {
+/**
+ * The tag line, typed out behind a few loose glyphs, one part after another. Its hidden twin holds
+ * the line's height, and a screen reader gets the parts as one plain sentence.
+ */
+function TagLine({ parts, inView }: { parts: readonly string[]; inView: boolean }) {
   const live = useRef<HTMLSpanElement>(null)
+  const key = parts.join('\n')
 
   useEffect(() => {
     const node = live.current
     if (!node) return
-    // One text node rewritten in place: replacing it each frame would have Layout's watch on the
-    // page's content re-measure the field's text sixty times a second.
-    const words = document.createTextNode(inView && reducedMotion() ? text : '')
-    node.replaceChildren(words)
+    const texts = key.split('\n')
+    const total = texts.reduce((sum, text) => sum + text.length, 0)
+    // One text node per part, rewritten in place: replacing them each frame would have Layout's
+    // watch on the page's content re-measure the field's text sixty times a second.
+    const settled = inView && reducedMotion()
+    const words = texts.map((text) => document.createTextNode(settled ? text : ''))
+    node.replaceChildren(
+      ...words.map((text) => {
+        const part = document.createElement('span')
+        part.append(text)
+        return part
+      }),
+    )
     if (!inView || reducedMotion()) return
+    // The whole line's characters, split back across the parts by length.
+    const show = (line: string) => {
+      let at = 0
+      texts.forEach((text, index) => {
+        words[index].data = line.slice(at, at + text.length)
+        at += text.length
+      })
+    }
     const frame = { id: 0 }
     const start = performance.now()
+    const full = texts.join('')
     const tick = (now: number) => {
       const shown = Math.floor(DECODE_RATE * ((now - start) / 1000))
       const real = Math.max(0, shown - DECODE_NOISE)
-      if (real >= text.length) {
-        words.data = text
+      if (real >= total) {
+        show(full)
         return
       }
-      words.data = text.slice(0, real) + noiseGlyphs(Math.min(DECODE_NOISE, text.length - real))
+      show(full.slice(0, real) + noiseGlyphs(Math.min(DECODE_NOISE, total - real)))
       frame.id = requestAnimationFrame(tick)
     }
     frame.id = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame.id)
-  }, [text, inView])
+  }, [key, inView])
 
   return (
-    <p className={styles.tag} aria-label={text}>
-      <span className={styles.tagTwin}>{text}</span>
+    <p className={styles.tag}>
+      <span className={ui.srOnly}>{parts.join(', ')}</span>
+      <span className={styles.tagTwin} aria-hidden="true">
+        {parts.map((part, index) => (
+          <span key={index}>{part}</span>
+        ))}
+      </span>
       <span ref={live} className={styles.tagLive} aria-hidden="true" />
     </p>
   )
@@ -107,7 +138,7 @@ function Art({ win, alt, eager }: { win: Win; alt: string; eager: boolean }) {
   const lines = useMemo(() => (win.photo ? null : asciiWord(win.project).join('\n')), [win.photo, win.project])
   if (win.photo) return <img src={win.photo} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
   return (
-    <pre className={`${motion.figure} ${styles.ascii}`} aria-hidden="true">
+    <pre className={`${motion.figure} ${styles.ascii}`} aria-hidden="true" data-trail-art>
       {lines}
     </pre>
   )
@@ -191,7 +222,7 @@ export function WinTile({ win, side, details = false, eager = false }: WinTilePr
         <Art win={win} alt={`${win.project} at ${hackathon}`} eager={eager} />
       </Media>
       <div ref={wordsRef} data-in={wordsIn || undefined} className={styles.words}>
-        <TagLine text={tagLine(win)} inView={wordsIn} />
+        <TagLine parts={tagParts(win)} inView={wordsIn} />
         <RollingTitle text={win.project} />
       </div>
       {win.placeholder && (

@@ -1,6 +1,5 @@
 import { Field, Form } from '../components/Form'
 import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
-import { MaskLines } from '../components/motion/MaskLines'
 import { PageIntro } from '../components/PageIntro'
 import { PrivacyNote } from '../components/PrivacyNote'
 import { Select } from '../components/Select'
@@ -17,19 +16,18 @@ export function Join() {
 
       <div className={styles.layout}>
         <section className={styles.perks} aria-labelledby="perks">
-          <h2 id="perks" className={ui.h2}>
-            <MaskLines text={JOIN_FORM.perksTitle} />
+          <h2 id="perks" className={ui.sectionTitle} data-fog-clear>
+            {JOIN_FORM.perksTitle}
           </h2>
-          <ul className={ui.pts}>
-            {PERKS.map((perk, index) => (
-              <li key={perk.title}>
-                <span className={ui.n} aria-hidden="true">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <div className={styles.perk}>
-                  <h3 className={styles.perkTitle}>{perk.title}</h3>
-                  <p className={styles.perkText}>{perk.text}</p>
-                </div>
+          <ul className={styles.perkList}>
+            {PERKS.map((perk) => (
+              <li key={perk.title} className={styles.perk}>
+                <h3 className={styles.perkTitle} data-fog-clear>
+                  {perk.title}
+                </h3>
+                <p className={styles.perkText} data-fog-clear>
+                  {perk.text}
+                </p>
               </li>
             ))}
           </ul>
@@ -37,8 +35,8 @@ export function Join() {
 
         <div className={styles.side}>
           <section className={ui.panel} aria-labelledby="join-form">
-            <h2 id="join-form" className={`${ui.h2} ${styles.formTitle}`}>
-              <MaskLines text={JOIN_FORM.title} />
+            <h2 id="join-form" className={`${ui.sectionTitle} ${styles.formTitle}`} data-fog-clear>
+              {JOIN_FORM.title}
             </h2>
             <Form
               submitLabel={JOIN_FORM.submit}

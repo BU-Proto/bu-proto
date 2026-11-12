@@ -5,9 +5,6 @@ import type { Hue, Link, TrackName } from './types'
 
 export const HERO_COPY = {
   headline: 'Proto is the home base for building things at BU',
-  lede: 'We’re BU students who build things together: a hack night every week, trips to hackathons as a group, and a demo night each semester.',
-  primaryCta: { label: 'Join Proto', href: '/join' },
-  secondaryCta: { label: 'See hack nights', href: '/events' },
 } as const
 
 export type NoteIconName = 'grants' | 'handoff'
@@ -115,6 +112,8 @@ export const NEXT_UP = {
   closes: 'Closes',
 } as const
 
+export const WINS_TITLE = 'Latest wins'
+
 export const HOME_EMPTY = {
   next: {
     title: 'Nothing on the calendar yet',
@@ -134,7 +133,7 @@ export const JOIN_CTA: {
   cta: Link
 } = {
   title: 'Come build with us',
-  tag: 'BU PROTO',
+  tag: 'BU Proto',
   lede: 'No application and no experience needed. Tell us your track and we’ll see you at hack night.',
   hint: 'No application needed',
   aside: ['Nobody arrives ready.', 'We said come anyway.', 'They built something.'],

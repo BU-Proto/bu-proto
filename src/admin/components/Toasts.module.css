@@ -1,0 +1,154 @@
+/* Bottom right, over everything but a modal's own top layer. */
+.stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 60;
+  display: grid;
+  gap: 10px;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.region {
+  display: grid;
+  gap: 10px;
+}
+
+.region:empty {
+  display: none;
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: start;
+  gap: 0 10px;
+  padding: 12px 10px 12px 14px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  box-shadow: var(--pop);
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.45;
+  pointer-events: auto;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 20px;
+  color: var(--ok-ink);
+}
+
+.mark svg {
+  width: 15px;
+  height: 15px;
+}
+
+.toast[data-tone='error'] .mark {
+  color: var(--danger-ink);
+}
+
+.toast[data-tone='info'] .mark {
+  color: var(--ink-dim);
+}
+
+.text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title,
+.detail {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.title {
+  font-weight: 500;
+}
+
+.detail {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.action,
+.close {
+  display: grid;
+  place-items: center;
+  height: 24px;
+  margin-top: -2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.action {
+  padding: 0 8px;
+  color: var(--mint);
+}
+
+.close {
+  width: 24px;
+  padding: 0;
+}
+
+.action:hover,
+.close:hover {
+  background: var(--fill-hover);
+  color: var(--ink);
+}
+
+.action:focus-visible,
+.close:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+@media (max-width: 860px) {
+  .stack {
+    right: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: in 0.32s var(--ease-out);
+  }
+
+  /* Out faster than in, and without the travel. */
+  .toast[data-leaving] {
+    animation: out 0.16s ease forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast[data-leaving] {
+    opacity: 0;
+  }
+}
+
+@keyframes in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+@keyframes out {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}

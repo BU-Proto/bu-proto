@@ -1,11 +1,19 @@
 // Turns a portal email (plain text, written by an admin) into the HTML and text each recipient
 // gets. The layout is nested tables with inline styles, the only thing Gmail, Outlook and Apple
-// Mail all render the same. The header, event card and footer carry the site's ASCII field as real
-// text (see emailArt.ts), so nothing hangs on images loading. The <style> block only adds things a
-// client may drop without harm: the phone layout and dark mode.
+// Mail all render the same.
+//
+// It's built from the site's own pieces: a banner of the field with the seal and name on it,
+// then everything else straight on the harbor: the headline, the message, an event as a navy
+// slab with its date in the large iris figure, the frost button, mint links. The banner is a
+// picture of the site's hero (public/email/hero.jpg), so the colours are the real ones. Where
+// pictures are blocked the cell's own colour stands in; every word is text, not part of the
+// picture, so nothing is lost.
+//
+// The email is dark for everyone, as the site is; every colour is set outright on its own cell,
+// so it doesn't depend on a client's dark mode. The <style> block only adds the phone layout.
 
 import { EMAIL_VARIABLES } from '../../shared/api'
-import { artGround, artHtmlRows, artTextRows, rampRule, type ArtOptions } from './emailArt'
+import { artTextRows, rampRule } from './emailArt'
 
 /** One person an email goes to. Members have an unsubscribe token and a track; RSVPs and fund sign-ups don't. */
 export interface Recipient {
@@ -41,16 +49,32 @@ export interface RenderedEmail {
   headers?: Record<string, string>
 }
 
-const NAVY = '#061a2e'
+// The site's palette (src/index.css), as the solid colours email needs. Where the site lays frost
+// over a ground at some strength, the mix is worked out here.
+const HARBOR = '#061a2e'
+const NAVY = '#0b2a46'
+const FROST = '#f6fbff'
 const MINT = '#9df0a8'
-const INK = '#14212e'
-const INK_SOFT = '#4a5a6a'
-const MUTED = '#6b7a89'
-const LINK = '#0a6aa1'
-const PAGE = '#eef2f6'
-const RULE = '#e2e8ef'
+const IRIS = '#ab9dff'
+/** Body copy: the palette's paper, a touch softer than frost over a long read. */
+const INK = '#e3eaf0'
+/** Frost at the site's "soft" and "dim" strengths, on the harbor. */
+const INK_SOFT = '#c1cad1'
+const MUTED = '#919ca7'
+const LINK = MINT
+/** The slab's lit edge on the harbor: a card's border, and the rule above the footer. */
+const EDGE = '#253749'
+/** The same edge where it sits on navy. */
+const EDGE_ON_NAVY = '#2a455e'
+/** The field's blue-violet under the banner's corner, shown in its place where pictures are blocked. */
+const FIELD = '#786c9f'
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace"
+/** What the site puts under copy that sits on the field, so it holds against the light behind it. */
+const ON_FIELD = 'text-shadow:0 1px 2px rgba(6,26,46,0.5),0 0 18px rgba(6,26,46,0.35)'
+
+/** The email's pictures, served by the site itself from public/email. */
+const heroImage = (origin: string) => `${origin}/email/hero.jpg`
+const sealImage = (origin: string) => `${origin}/email/seal.png`
 
 export function escapeHtml(value: string): string {
   return value
@@ -134,7 +158,7 @@ function linkify(line: string): string {
     while (/[.,;:!?)\]]$/.test(url) && !(url.endsWith(')') && count(url, '(') >= count(url, ')'))) url = url.slice(0, -1)
     const start = match.index
     html += escapeHtml(line.slice(last, start))
-    html += `<a href="${escapeHtml(url)}" class="pe-link" style="color:${LINK};text-decoration:underline">${escapeHtml(url)}</a>`
+    html += `<a href="${escapeHtml(url)}" style="color:${LINK};text-decoration:underline">${escapeHtml(url)}</a>`
     last = start + url.length
   }
   return html + escapeHtml(line.slice(last))
@@ -158,17 +182,13 @@ function buttonLabel(url: string): string {
 
 
 /**
- * A button sized to its label. The colour sits on the cell, so Word's renderer, which ignores
- * padding on links, still draws it with mso-padding-alt.
+ * The site's frost button: a full round, sized to its label. The colour sits on the cell, so
+ * Word's renderer, which ignores padding on links, still draws it with mso-padding-alt.
  */
-function button(url: string, label: string, tone: 'dark' | 'light'): string {
-  const bg = tone === 'dark' ? NAVY : '#ffffff'
-  const fg = tone === 'dark' ? '#ffffff' : NAVY
-  const cls = tone === 'dark' ? ' class="pe-btn"' : ''
-  const linkCls = tone === 'dark' ? ' class="pe-btn-a"' : ''
+function button(url: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate">
-<tr><td${cls} align="center" bgcolor="${bg}" style="border-radius:6px;background-color:${bg};mso-padding-alt:12px 20px">
-<a${linkCls} href="${escapeHtml(url)}" target="_blank" style="display:inline-block;padding:12px 20px;border-radius:6px;font-family:${FONT};font-size:15px;font-weight:500;line-height:20px;color:${fg};text-decoration:none;word-break:break-word;overflow-wrap:anywhere">${escapeHtml(label)}</a>
+<tr><td align="center" bgcolor="${FROST}" style="border-radius:999px;background-color:${FROST};mso-padding-alt:12px 22px">
+<a class="pe-btn-a" href="${escapeHtml(url)}" target="_blank" style="display:inline-block;padding:12px 22px;border-radius:999px;font-family:${FONT};font-size:14px;font-weight:500;line-height:20px;color:${NAVY};text-decoration:none;word-break:break-word;overflow-wrap:anywhere">${escapeHtml(label)}</a>
 </td></tr>
 </table>`
 }
@@ -182,6 +202,7 @@ function paragraphs(body: string): string[] {
     .trim()
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
 }
 
 /** A first paragraph that reads as a title: one short line with no link. */
@@ -190,21 +211,22 @@ function isHeadline(paragraph: string): boolean {
 }
 
 /**
- * Blank lines split paragraphs; single newlines become <br>. A paragraph that's only a URL becomes
- * a button. A short first line ("Welcome to BU Proto, Ada") becomes the email's headline, set
- * large and tight like the site's headings.
+ * The message in two parts. A short first line ("Welcome to BU Proto, Ada") is the email's
+ * headline, which goes up on the field the way the site's page titles do; the rest is the copy.
  */
-function bodyHtml(body: string): string {
-  return paragraphs(body)
-    .map((paragraph, index) => {
+function splitBody(body: string): { headline: string | null; rest: string[] } {
+  const all = paragraphs(body)
+  return all.length > 0 && isHeadline(all[0]) ? { headline: all[0], rest: all.slice(1) } : { headline: null, rest: all }
+}
+
+/** Paragraphs as HTML. Single newlines become <br>, and a paragraph that's only a URL becomes a button. */
+function copyHtml(rest: string[]): string {
+  return rest
+    .map((paragraph) => {
       if (LONE_URL.test(paragraph)) {
-        return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 26px 0"><tr><td>${button(paragraph, buttonLabel(paragraph), 'dark')}</td></tr></table>`
+        return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 26px 0"><tr><td>${button(paragraph, buttonLabel(paragraph))}</td></tr></table>`
       }
-      const html = paragraph.split('\n').map(linkify).join('<br>')
-      if (index === 0 && isHeadline(paragraph)) {
-        return `<h1 class="pe-ink pe-head1" style="margin:0 0 22px 0;font-family:${FONT};font-size:34px;font-weight:400;line-height:40px;letter-spacing:-1px;color:${NAVY};mso-line-height-rule:exactly">${html}</h1>`
-      }
-      return `<p class="pe-ink" style="${P_STYLE}">${html}</p>`
+      return `<p style="${P_STYLE}">${paragraph.split('\n').map(linkify).join('<br>')}</p>`
     })
     .join('\n')
 }
@@ -216,42 +238,47 @@ function preheaderText(body: string): string {
   return text.length > 140 ? `${text.slice(0, 139)}…` : text
 }
 
-// ---- ASCII art ----------------------------------------------------------------------------------
+// ---- Hero --------------------------------------------------------------------------------------
 
-/** Each kind of email gets its own field, the same every time. */
+/** Each kind of email gets its own strip of glyphs in the plain-text version, the same every time. */
 const ART_SEED: Record<EmailReason['kind'], number> = { member: 1, event: 2, fund: 3, test: 4, admin: 5, board: 6 }
 
-// Wide enough to fill the 600px card at 9px (a 0.6em cell is 5.4px); phones crop the right side.
-const ART_COLS = 110
-
-/**
- * A block of art in a fixed-layout table, so its long rows can't widen the card: the cell clips
- * them on phones. A <pre> keeps the spaces in every client, Outlook's Word renderer included.
- */
-function artBlock(art: ArtOptions, padding: string, heading = ''): string {
-  const ground = artGround(art.band ?? [0.3, 0.75])
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${NAVY}" style="width:100%;table-layout:fixed;background-color:${NAVY}">
-<tr><td bgcolor="${NAVY}" style="padding:${padding};background-color:${NAVY};background-image:${ground};overflow:hidden">
-${heading}<div style="width:100%;overflow:hidden">
-<pre aria-hidden="true" style="margin:0;padding:0;font-family:${MONO};font-size:9px;line-height:10px;mso-line-height-rule:exactly;letter-spacing:0;font-variant-ligatures:none;font-feature-settings:'liga' 0, 'calt' 0;white-space:pre;word-wrap:normal;overflow:hidden;color:#9fc3dc">${artHtmlRows(art).join('\n')}</pre>
-</div>
-</td></tr>
-</table>`
+/** The seal and the name, as the site's top bar and footer set them. */
+function brand(origin: string, name: string, size: number, style: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td valign="middle" style="padding-right:${Math.round(size / 3)}px;font-size:0;line-height:0"><img src="${escapeHtml(sealImage(origin))}" width="${size}" height="${size}" alt="" style="display:block;border:0;outline:none;width:${size}px;height:${size}px"></td>
+<td valign="middle" style="font-family:${FONT};${style}">${name}</td>
+</tr></table>`
 }
 
 /**
- * The header: the Proto wordmark in the site's own type, set over the field the way the hero sets
- * its headline, with the field's glyphs running under it and thinning out at the top.
+ * The banner: a strip of the site's field, the currents and their glyphs down to the first of
+ * the blue under them, with the seal and name in its corner. Its top corners are rounded and its
+ * foot is square. The headline and the message start under it, on the harbor, not on the picture.
+ *
+ * The picture is the cell's background (600 by 230 here). The spacer under the name is sized as
+ * a share of the column's width, so the cell keeps the picture's proportions on a phone, and
+ * `cover` trims whatever small difference is left. Classic Outlook shows no cell backgrounds, so
+ * it skips the spacer and gets a plain band in the field's colour with the name in it.
  */
-function headerArt(kind: EmailReason['kind']): string {
-  const wordmark = `<div style="padding:30px 44px 18px 44px;font-family:${FONT};font-size:40px;font-weight:300;line-height:44px;letter-spacing:-1.2px;color:#ffffff;mso-line-height-rule:exactly">Proto<span style="color:${MINT}">_</span></div>`
-  return artBlock({ cols: ART_COLS, rows: 8, seed: ART_SEED[kind], band: [0.25, 0.65], fadeTop: true }, '0 0 12px 4px', wordmark)
+function bannerHtml(origin: string): string {
+  const image = escapeHtml(heroImage(origin))
+  return `<tr><td class="pe-hero" background="${image}" bgcolor="${FIELD}" valign="top" style="padding:26px 40px 0 40px;border-radius:22px 22px 0 0;background-color:${FIELD};background-image:url('${image}');background-repeat:no-repeat;background-position:center center;background-size:cover">
+${brand(origin, 'Proto', 24, `font-size:16px;font-weight:500;line-height:24px;letter-spacing:-0.1px;color:#ffffff;${ON_FIELD}`)}
+<!--[if !mso]><!--><div class="pe-gap" style="height:0;line-height:0;font-size:0;padding-bottom:34.6%"></div><!--<![endif]-->
+<!--[if mso]><div style="height:22px;line-height:22px;font-size:1px">&nbsp;</div><![endif]-->
+</td></tr>`
 }
 
-/** The plain-text header: a narrow strip of the field with the wordmark set into its middle row. */
+/** The headline, when the message opens with one: large and light on the harbor, like the site's page titles. */
+function headlineHtml(headline: string): string {
+  return `<h1 class="pe-head1" style="margin:0 0 18px 0;font-family:${FONT};font-size:34px;font-weight:300;line-height:40px;letter-spacing:-1px;color:${FROST};mso-line-height-rule:exactly">${linkify(headline)}</h1>`
+}
+
+/** The plain-text header: a narrow strip of the field with the name set into its middle row. */
 function textHeader(kind: EmailReason['kind']): string[] {
   const rows = artTextRows({ cols: 56, rows: 3, seed: ART_SEED[kind] }).map((row) => row.padEnd(56))
-  rows[1] = `${rows[1].slice(0, 3)}  Proto_  ${rows[1].slice(12)}`
+  rows[1] = `${rows[1].slice(0, 3)}  BU Proto  ${rows[1].slice(15)}`
   return rows.map((row) => row.trimEnd())
 }
 
@@ -265,30 +292,26 @@ function eventDateParts(day: string): { day: number; month: string; weekday: str
   return { day: date.getUTCDate(), month: part({ month: 'long' }), weekday: part({ weekday: 'long' }) }
 }
 
+/**
+ * The event, as the site's own event card sets it: the day in the large iris figure with the
+ * month and weekday beside it, the title under that, when and where, and the way to its page.
+ */
 function eventHtml(event: EventDetails, origin: string): string {
   const parts = eventDateParts(event.date)
   const date = parts
-    ? `<div class="pe-day" style="font-family:${FONT};font-size:60px;font-weight:200;line-height:56px;letter-spacing:-3px;color:#ffffff;mso-line-height-rule:exactly">${parts.day}</div>
-<div style="padding-top:10px;font-family:${FONT};font-size:14px;line-height:19px;color:#c9d6e2">${parts.month}<br><span style="color:${MINT}">${parts.weekday}</span></div>`
-    : `<div style="font-family:${FONT};font-size:15px;line-height:22px;color:#c9d6e2">${escapeHtml(event.date)}</div>`
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td valign="bottom" style="padding-right:14px;font-family:${FONT};font-size:64px;font-weight:200;line-height:58px;letter-spacing:-3px;color:${IRIS};mso-line-height-rule:exactly">${parts.day}</td>
+<td valign="bottom" style="padding-bottom:5px;font-family:${FONT};font-size:14px;line-height:20px;color:${INK_SOFT}">${parts.month}<br>${parts.weekday}</td>
+</tr></table>`
+    : `<div style="font-family:${FONT};font-size:15px;line-height:22px;color:${INK_SOFT}">${escapeHtml(event.date)}</div>`
   const meta = [event.time, event.place].filter((value) => value.trim()).map(escapeHtml)
-  const texture = { cols: ART_COLS, rows: 4, seed: 40, band: [0.4, 0.6] as [number, number] }
-  return `<tr><td class="pe-px" style="padding:6px 48px 10px 48px">
-<table role="presentation" class="pe-eventbox" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${NAVY}" style="width:100%;table-layout:fixed;border-collapse:separate;border-radius:14px;background-color:${NAVY};overflow:hidden">
-<tr><td style="border-radius:14px 14px 0 0;overflow:hidden">${artBlock(texture, '8px 0 8px 0')}</td></tr>
-<tr><td class="pe-event" bgcolor="${NAVY}" style="padding:16px 28px 30px 28px;background-color:${NAVY};border-radius:0 0 14px 14px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr>
-<td class="pe-date" width="104" valign="top" style="width:104px;padding:4px 20px 0 0">
+  return `<tr><td class="pe-px" style="padding:6px 40px 10px 40px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${NAVY}" style="width:100%;border-collapse:separate;border:1px solid ${EDGE_ON_NAVY};border-radius:22px;background-color:${NAVY}">
+<tr><td class="pe-event" style="padding:28px 30px 30px 30px;word-break:break-word">
 ${date}
-</td>
-<td class="pe-copy" valign="top" style="word-break:break-word">
-<div style="font-family:${FONT};font-size:23px;font-weight:400;line-height:29px;letter-spacing:-0.4px;color:#ffffff">${escapeHtml(event.title)}</div>
-${meta.length ? `<div style="padding-top:8px;font-family:${FONT};font-size:15px;line-height:23px;color:#c9d6e2">${meta.join('<br>')}</div>` : ''}
-<div style="padding-top:22px">${button(`${origin}/events`, 'See the event', 'light')}</div>
-</td>
-</tr>
-</table>
+<div style="padding-top:20px;font-family:${FONT};font-size:26px;font-weight:300;line-height:32px;letter-spacing:-0.6px;color:${FROST}">${escapeHtml(event.title)}</div>
+${meta.length ? `<div style="padding-top:8px;font-family:${FONT};font-size:15px;line-height:23px;color:${INK_SOFT}">${meta.join('<br>')}</div>` : ''}
+<div style="padding-top:22px">${button(`${origin}/events`, 'See the event')}</div>
 </td></tr>
 </table>
 </td></tr>`
@@ -326,41 +349,24 @@ function reasonText(reason: EmailReason): string {
 
 const EMPTY_BODY = 'Your message goes here'
 
-// Dark mode for clients that honour it (Apple Mail, Outlook for Mac and iOS, some Android).
-// The navy art, event block and footer never change. Clients that invert on their own (Gmail apps,
-// Outlook.com) leave the art's colours mostly alone, and the [data-ogsc]/[data-ogsb] rules steer Outlook.com.
+// The email is dark already, so there's nothing for a client's dark mode to do; saying so keeps
+// the ones that listen from re-tinting it. What's left is the phone layout: narrower gutters, the
+// banner's spacer re-proportioned for them, and the type a step down.
 const STYLE = `<style>
-:root { color-scheme: light dark; supported-color-schemes: light dark; }
+:root { color-scheme: dark; supported-color-schemes: dark; }
 body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
 table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+img { -ms-interpolation-mode: bicubic; }
 a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
 @media screen and (max-width: 620px) {
-  .pe-outer { padding: 10px 8px 28px 8px !important; }
-  .pe-px { padding-left: 22px !important; padding-right: 22px !important; }
-  .pe-body { padding-top: 30px !important; }
-  .pe-head1 { font-size: 28px !important; line-height: 34px !important; letter-spacing: -0.6px !important; }
-  .pe-event { padding: 14px 20px 26px 20px !important; }
-  .pe-date, .pe-copy { display: block !important; width: auto !important; }
-  .pe-date { padding: 0 0 18px 0 !important; }
-  .pe-footpad { padding-left: 22px !important; padding-right: 22px !important; }
-  .pe-foot { padding-left: 14px !important; padding-right: 14px !important; }
-  .pe-btn-a { padding: 12px 18px !important; font-size: 14px !important; }
+  .pe-outer { padding: 12px 12px 32px 12px !important; }
+  .pe-hero { padding: 18px 14px 0 14px !important; border-radius: 18px 18px 0 0 !important; }
+  .pe-gap { padding-bottom: 29% !important; }
+  .pe-body { padding-top: 24px !important; }
+  .pe-head1 { font-size: 28px !important; line-height: 34px !important; letter-spacing: -0.7px !important; }
+  .pe-px { padding-left: 14px !important; padding-right: 14px !important; }
+  .pe-event { padding: 24px 20px 26px 20px !important; }
 }
-@media (prefers-color-scheme: dark) {
-  .pe-page { background-color: #020c17 !important; }
-  .pe-card { background-color: #0b1d30 !important; border-color: #1a3047 !important; }
-  .pe-ink { color: #e7eef5 !important; }
-  .pe-soft { color: #a9b8c6 !important; }
-  .pe-link { color: ${MINT} !important; }
-  .pe-btn { background-color: #ffffff !important; }
-  .pe-btn-a { color: ${NAVY} !important; }
-  .pe-eventbox { border: 1px solid #23405c !important; }
-}
-[data-ogsb] .pe-page { background-color: #020c17 !important; }
-[data-ogsb] .pe-card { background-color: #0b1d30 !important; }
-[data-ogsc] .pe-ink { color: #e7eef5 !important; }
-[data-ogsc] .pe-soft { color: #a9b8c6 !important; }
-[data-ogsc] .pe-link { color: ${MINT} !important; }
 </style>`
 
 /**
@@ -384,9 +390,10 @@ export function renderEmail(input: {
   const unsubscribe = recipient.unsubscribeToken ? unsubscribeUrl(origin, recipient.unsubscribeToken) : null
   const why = reasonText(reason)
   const event = reason.kind === 'event' ? reason.event : null
+  const { headline, rest } = splitBody(body)
   const contentHtml = body
-    ? bodyHtml(body)
-    : `<p class="pe-soft" style="${P_STYLE};color:${MUTED};font-style:italic">${EMPTY_BODY}</p>`
+    ? `${headline ? headlineHtml(headline) : ''}${copyHtml(rest)}`
+    : `<p style="${P_STYLE};color:${MUTED};font-style:italic">${EMPTY_BODY}</p>`
   const site = origin.replace(/^https?:\/\//, '')
 
   const text = [
@@ -407,7 +414,7 @@ export function renderEmail(input: {
   const preheader = escapeHtml(preheaderText(body))
   const filler = '&#847;&zwnj;&nbsp;'.repeat(60)
   const footerLink = unsubscribe
-    ? `<br><a href="${escapeHtml(unsubscribe)}" class="pe-soft" style="color:${INK_SOFT};text-decoration:underline">Unsubscribe</a>`
+    ? `<br><a href="${escapeHtml(unsubscribe)}" style="color:${INK_SOFT};text-decoration:underline">Unsubscribe</a>`
     : ''
 
   const html = `<!DOCTYPE html>
@@ -418,44 +425,35 @@ export function renderEmail(input: {
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="x-apple-disable-message-reformatting">
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-<meta name="color-scheme" content="light dark">
-<meta name="supported-color-schemes" content="light dark">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
 <title>${escapeHtml(subject)}</title>
 <!--[if !mso]><!-->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap" rel="stylesheet">
 <!--<![endif]-->
 <!--[if mso]>
 <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-<style>td, div, p, a, h1 { font-family: Arial, sans-serif !important; } pre { font-family: 'Courier New', monospace !important; }</style>
+<style>td, div, p, a, h1 { font-family: Arial, sans-serif !important; }</style>
 <![endif]-->
 ${STYLE}
 </head>
-<body class="pe-page" style="margin:0;padding:0;width:100%;background-color:${PAGE};word-spacing:normal">
-<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;font-size:1px;line-height:1px;color:${PAGE}">${preheader}${filler}</div>
-<table role="presentation" class="pe-page" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${PAGE}" style="width:100%;background-color:${PAGE}">
-<tr><td class="pe-outer" align="center" style="padding:32px 16px 40px 16px">
+<body bgcolor="${HARBOR}" style="margin:0;padding:0;width:100%;background-color:${HARBOR};word-spacing:normal">
+<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;font-size:1px;line-height:1px;color:${HARBOR}">${preheader}${filler}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${HARBOR}" style="width:100%;background-color:${HARBOR}">
+<tr><td class="pe-outer" align="center" style="padding:20px 16px 44px 16px">
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
-<table role="presentation" class="pe-card" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;table-layout:fixed;border-collapse:separate;background-color:#ffffff;border:1px solid ${RULE};border-radius:18px;overflow:hidden">
-<tr><td bgcolor="${NAVY}" style="padding:0;background-color:${NAVY};border-radius:17px 17px 0 0;overflow:hidden">
-${headerArt(reason.kind)}
-</td></tr>
-<tr><td class="pe-px pe-body" style="padding:44px 48px 12px 48px;word-break:break-word;overflow-wrap:anywhere">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${HARBOR}" style="width:100%;max-width:600px;table-layout:fixed;border-collapse:separate;background-color:${HARBOR}">
+${bannerHtml(origin)}
+<tr><td class="pe-px pe-body" style="padding:32px 40px 6px 40px;word-break:break-word;overflow-wrap:anywhere">
 ${contentHtml}
 </td></tr>
 ${event ? eventHtml(event, origin) : ''}
-<tr><td style="padding:28px 0 0 0;font-size:0;line-height:0">&nbsp;</td></tr>
-<tr><td class="pe-px" bgcolor="${NAVY}" style="padding:0 48px;background-color:${NAVY}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #23415c;font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>
-<tr><td class="pe-footpad" bgcolor="${NAVY}" style="padding:22px 48px 34px 48px;background-color:${NAVY};border-radius:0 0 17px 17px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="font-family:${FONT};font-size:22px;font-weight:300;line-height:28px;letter-spacing:-0.6px;color:#ffffff">Proto<span style="color:${MINT}">_</span></td></tr>
-<tr><td style="padding-top:6px;font-family:${FONT};font-size:14px;line-height:21px;color:#c9d6e2">For anyone at BU who makes things. Hack nights, hackathon trips and demo nights, all year.</td></tr>
-<tr><td style="padding-top:14px;font-family:${FONT};font-size:14px;line-height:21px"><a href="${escapeHtml(origin)}" target="_blank" style="color:#ffffff;text-decoration:underline">${escapeHtml(site)}</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/events" target="_blank" style="color:#ffffff;text-decoration:underline">Events</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/resources/playbook" target="_blank" style="color:#ffffff;text-decoration:underline">Playbook</a></td></tr>
-</table>
-</td></tr>
-</table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
-<tr><td class="pe-soft pe-foot" style="padding:20px 28px 0 28px;font-family:${FONT};font-size:12px;line-height:19px;color:${MUTED};word-break:break-word">
-${escapeHtml(why)}${footerLink}
+<tr><td class="pe-px" style="padding:26px 40px 0 40px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid ${EDGE};font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>
+<tr><td class="pe-px" style="padding:22px 40px 0 40px">
+${brand(origin, 'BU Proto', 20, `font-size:15px;font-weight:500;line-height:20px;color:${FROST}`)}
+<div style="padding-top:10px;font-family:${FONT};font-size:14px;line-height:21px;color:${INK_SOFT}">Hack nights, hackathon trips and demo nights for BU students who make things.</div>
+<div style="padding-top:12px;font-family:${FONT};font-size:14px;line-height:21px"><a href="${escapeHtml(origin)}" target="_blank" style="color:${FROST};text-decoration:underline">${escapeHtml(site)}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/events" target="_blank" style="color:${FROST};text-decoration:underline">Events</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/hackathons" target="_blank" style="color:${FROST};text-decoration:underline">Hackathons</a></div>
+<div style="padding-top:22px;font-family:${FONT};font-size:12px;line-height:19px;color:${MUTED};word-break:break-word">${escapeHtml(why)}${footerLink}</div>
 </td></tr>
 </table>
 <!--[if mso]></td></tr></table><![endif]-->

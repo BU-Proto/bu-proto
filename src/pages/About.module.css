@@ -1,149 +1,233 @@
 /*
- * The about page. Most of it is built from the shared section patterns; what lives here is the
- * opening's clearance, the tracks as three steps, and the offers as a ruled directory of the site.
+ * The about page, on the reading ground: the statement on the field, everything after it on
+ * harbor. What, why and who are set as rows, their name small on the left and the words large on
+ * the right, so they read as one sheet. The offers break out of that as a directory of the site,
+ * the page's one big moment: each offer's name, what it is, and the page it lives on.
  */
 
-/* The opening clears the fixed tab. The first section below brings its own padding. */
-.top {
-  padding: calc(var(--cell) * 10) var(--gutter) 0;
+.page {
+  gap: 0;
+  /* Only the title and lede stand on the field, so only they clear it and carry its shadow. */
+  padding-bottom: clamp(48px, 8vh, 96px);
 }
 
-/* Paragraphs stacked in the right-hand column. */
-.copy {
-  display: grid;
-  gap: calc(var(--cell) * 1.5);
-  justify-items: start;
-}
-
-/* ---- The tracks ---- */
-
-.process {
-  display: grid;
-  gap: calc(var(--cell) * 3);
-  margin-top: calc(var(--cell) * 5);
-}
-
-/* Three tracks, so three columns. Doubled up to beat the shared four-up. */
-.tracks.tracks {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-/* ---- Why ---- */
-
-.whyText {
+/* The landing's title and lede, so the two pages read as one voice. */
+.title {
   margin: 0;
-  color: rgb(246 251 255 / 0.82);
-  font-size: clamp(20px, 2.2vw, 30px);
-  letter-spacing: -0.015em;
+  font-size: clamp(40px, 6.4vw, 84px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.lede {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* ---- On the field ---------------------------------------------------------------------------- */
+
+.intro {
+  display: grid;
+  gap: 22px;
+  max-width: 980px;
+  /* Room for the field to drain away under it before harbor starts. */
+  padding-bottom: clamp(72px, 14vh, 150px);
+}
+
+.intro .title {
+  max-width: 16ch;
+  text-shadow: 0 2px 30px rgb(var(--harbor-rgb, 6 26 46) / 0.4);
+}
+
+.intro .lede {
+  color: var(--ink, #f6fbff);
+  text-shadow: var(--on-field-shadow);
+}
+
+/* ---- What, why and who: a name on the left, the words on the right --------------------------- */
+
+/* The directory's own three columns, so a row's words start where an offer's line does. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) minmax(120px, 2fr);
+  gap: 20px clamp(20px, 3vw, 48px);
+  padding: clamp(40px, 7vh, 72px) 0;
+  border-top: 1px solid var(--rule, rgb(246 251 255 / 0.16));
+}
+
+.rowTitle {
+  margin: 0;
+  /* On the statement's first line, not floating above it. */
+  padding-top: 0.32em;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+.rowBody {
+  grid-column: 2 / -1;
+  display: grid;
+  justify-items: start;
+  gap: 20px;
+}
+
+.statement {
+  max-width: 30ch;
+  margin: 0;
+  font-size: clamp(24px, 2.6vw, 34px);
+  font-weight: 300;
+  letter-spacing: -0.022em;
   line-height: 1.24;
   text-wrap: pretty;
 }
 
-/* ---- What we offer ---- */
+.note {
+  max-width: 46ch;
+  margin: 12px 0 0;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* The tracks in order, each with the glyph it carries on the landing. */
+.tracks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px clamp(20px, 3vw, 40px);
+  justify-self: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule-strong, rgb(246 251 255 / 0.32));
+}
+
+/* Each track in its own light, as on the landing's stair: Start sky, Build iris, Launch rose. */
+.glyph {
+  color: var(--hue, var(--accent, #9df0a8));
+  font-size: 22px;
+  line-height: 1;
+}
+
+.trackName {
+  margin-top: 8px;
+  font-size: clamp(26px, 2.4vw, 32px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.trackWho {
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+/* ---- What we offer: the directory ------------------------------------------------------------ */
 
 .offer {
-  scroll-margin-top: calc(var(--cell) * 3);
+  display: grid;
+  gap: clamp(36px, 6vh, 64px);
+  /* No room below: the next row's rule closes the directory. */
+  padding: clamp(72px, 12vh, 140px) 0 0;
+  border-top: 1px solid var(--rule, rgb(246 251 255 / 0.16));
+  scroll-margin-top: 24px;
+}
+
+.offerHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px 48px;
+}
+
+.offerLede {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 17px;
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
 .directory {
-  margin: calc(var(--cell) * 4) 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
-  border-bottom: 1px solid var(--c-line);
 }
 
-/* One offer: its name, what it is beside it, and the page it lives on at the far edge. */
+/* One offer: its name large, what it is beside it, and the page it lives on at the far edge. */
 .entry {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) minmax(120px, 2fr);
   align-items: baseline;
-  gap: 8px calc(var(--cell) * 3);
-  padding: calc(var(--cell) * 1.5) 0;
-  border-top: 1px solid var(--c-line);
-  transition: opacity 0.2s ease;
+  gap: 8px clamp(20px, 3vw, 48px);
+  padding: clamp(22px, 3.6vh, 32px) 0;
+  border-top: 1px solid var(--rule, rgb(246 251 255 / 0.16));
 }
 
-/* The rhythm's beats mark their rule with a short length of colour. */
-.entry[data-beat]::before {
+/* The rhythm's beats carry their colour as a short length of their rule, like the landing's
+   score: hack night sky, the trip iris, demo night rose. */
+.entry[data-hue]::before {
   content: '';
   position: absolute;
   top: -1px;
   left: 0;
   width: 56px;
-  height: 1px;
-  background: var(--c-blue);
-}
-
-.entry[data-beat='iris']::before {
-  background: var(--c-gold);
-}
-
-.entry[data-beat='rose']::before {
-  background: var(--c-red);
-}
-
-/* The rest of the list steps back from the row being pointed at. */
-@media (hover: hover) {
-  .directory:hover .entry {
-    opacity: 0.45;
-  }
-
-  .directory .entry:hover {
-    opacity: 1;
-  }
+  height: 2px;
+  background: var(--hue, transparent);
 }
 
 .entryName {
   margin: 0;
-  font-size: clamp(22px, 2.2vw, 30px);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: clamp(26px, 2.8vw, 40px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
   text-wrap: balance;
 }
 
 .entryText {
   max-width: 42ch;
   margin: 0;
-  color: var(--c-body);
-  font-size: 15px;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 16px;
   line-height: 1.5;
   text-wrap: pretty;
 }
 
 .where {
   justify-self: end;
-  color: var(--c-body);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+  font-size: 15px;
+  font-weight: 500;
   white-space: nowrap;
+  border-bottom: 1px solid transparent;
 }
 
-/* The dotted line grows under the page's name once the row is pointed at. */
-.whereLabel {
-  padding-bottom: 3px;
-  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 0 3px;
-  transition: background-size 0.45s var(--ease-out);
-}
-
-.entry:has(.stretch:hover) .whereLabel,
-.entry:has(.stretch:focus-visible) .whereLabel {
-  background-size: 100% 3px;
-}
-
-/* Not running yet: the name steps back, and the note says so first. */
+/* Not running yet: the name steps back, and the "not yet" colour says so first. */
 .entry[data-soon] .entryName {
-  color: var(--c-muted);
+  color: var(--ink-soft, rgb(246 251 255 / 0.78));
 }
 
 .soon {
-  color: var(--c-ink);
+  color: var(--amber, #ffd38a);
   font-weight: 500;
 }
 
@@ -160,34 +244,46 @@
 }
 
 .entry:has(.stretch:focus-visible) {
-  outline: 2px solid var(--c-blue);
-  outline-offset: 2px;
+  outline: 2px solid var(--frost, #f6fbff);
+  outline-offset: 4px;
+  border-radius: 6px;
 }
 
-/* ---- Who runs it ---- */
+.entry:has(.stretch:hover) .entryName a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+/* The page it lives on, underlined like a link once the row is pointed at. */
+.entry:has(.stretch:hover) .where,
+.entry:has(.stretch:focus-visible) .where {
+  color: var(--ink, #f6fbff);
+  border-bottom-color: currentColor;
+}
+
+/* ---- Who runs it ------------------------------------------------------------------------------ */
 
 .seats {
   display: grid;
   gap: 10px;
-  margin-top: var(--cell);
+  margin-top: 8px;
 }
 
 .seatsLead {
   margin: 0;
-  color: var(--c-body);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  color: var(--accent, #9df0a8);
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .seatList {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 6px 28px;
   margin: 0;
   padding: 0;
+  font-size: 17px;
   list-style: none;
 }
 
@@ -195,20 +291,27 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px 28px;
-  margin: var(--cell) 0 0;
+  margin: 10px 0 0;
   font-size: 15px;
 }
 
-/* ---- The ask ---- */
+/* ---- The ask ---------------------------------------------------------------------------------- */
 
-.ctaLede {
-  max-width: 46ch;
-  margin: 0 auto calc(var(--cell) * 3);
-  text-align: center;
-  text-align-last: center;
+.join {
+  display: grid;
+  justify-items: start;
+  gap: 22px;
+  padding: clamp(64px, 11vh, 120px) 0 0;
+  border-top: 1px solid var(--rule, rgb(246 251 255 / 0.16));
 }
 
-/* ---- Narrow screens ---- */
+.joinButton {
+  margin-top: 8px;
+  padding: 15px 26px;
+  font-size: 15px;
+}
+
+/* ---- Narrow screens --------------------------------------------------------------------------- */
 
 @media (max-width: 900px) {
   .entry {
@@ -225,14 +328,39 @@
   }
 }
 
-@media (max-width: 680px) {
-  .top {
-    padding-top: calc(var(--cell) * 7);
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
   }
 
-  .tracks.tracks {
+  .rowBody {
+    grid-column: 1;
+  }
+
+  .rowTitle {
+    padding-top: 0;
+  }
+
+  .tracks {
     grid-template-columns: minmax(0, 1fr);
-    gap: calc(var(--cell) * 1.5);
+    gap: 0;
+  }
+
+  /* Stacked, each track a line: glyph, name, then who it's for. */
+  .track {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 4px 12px;
+    padding: 14px 0;
+  }
+
+  .glyph {
+    grid-row: span 2;
+    padding-top: 4px;
+  }
+
+  .trackName {
+    margin-top: 0;
   }
 
   /* The page it lives on drops under what it is, so the name keeps the full width. */
@@ -245,12 +373,7 @@
     grid-row: auto;
     justify-self: start;
     margin-top: 4px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .entry,
-  .whereLabel {
-    transition: none;
+    color: var(--ink, #f6fbff);
+    border-bottom-color: rgb(var(--frost-rgb, 246 251 255) / 0.4);
   }
 }

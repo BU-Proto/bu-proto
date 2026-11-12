@@ -1,46 +1,37 @@
-/* Applications open, closing soon or closed: a small pixel-cut tag with a square lamp. */
+/* Applications open, closing soon or closed, as on a departures board. */
 .status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
-  background: var(--c-line-2);
-  clip-path: var(--px-corners-sm);
-  color: var(--c-body);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-size: 13px;
 }
 
 .status::before {
   content: '';
   flex: none;
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: currentColor;
 }
 
 .status[data-status='open'] {
-  background: var(--c-blue);
-  color: var(--c-paper);
+  color: var(--accent);
 }
 
 .status[data-status='closing'] {
-  background: var(--c-gold);
-  color: var(--c-ink);
+  color: var(--amber);
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .status[data-status='closing']::before {
-    animation: lamp 1.6s steps(2) infinite;
+    animation: lamp 1.6s ease-in-out infinite;
   }
 }
 
 @keyframes lamp {
   50% {
-    opacity: 0.2;
+    opacity: 0.3;
   }
 }

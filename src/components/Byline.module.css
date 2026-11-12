@@ -1,7 +1,7 @@
 .byline {
   display: flex;
   align-items: center;
-  gap: var(--cell);
+  gap: 14px;
 }
 
 /* The photos overlap a little, like a pair, rather than sitting in a row of avatars. */
@@ -11,36 +11,36 @@
 }
 
 .photos > * + * {
-  margin-left: -8px;
+  margin-left: -10px;
 }
 
 .photo {
   display: block;
   width: 36px;
   height: 36px;
-  background: var(--c-line-2);
-  clip-path: var(--px-corners-sm);
+  border: 2px solid rgb(var(--navy-rgb) / 0.9);
+  border-radius: 50%;
+  background: rgb(var(--navy-rgb) / 0.7);
   object-fit: cover;
 }
 
 .large {
   width: 64px;
   height: 64px;
+  border-width: 0;
 }
 
 .initials {
   display: grid;
   place-items: center;
-  background: var(--c-navy);
-  color: var(--c-paper);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .large.initials {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .text {
@@ -49,7 +49,7 @@
 }
 
 .names {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.4;
 }
 
@@ -59,32 +59,22 @@
 }
 
 .name {
-  padding-bottom: 3px;
-  background-image: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px);
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 0 3px;
   font-weight: 500;
-  transition: background-size 0.45s var(--ease-out);
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.4);
 }
 
-.name:hover,
-.name:focus-visible {
-  background-size: 100% 3px;
+.name:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
 }
 
 .name:focus-visible {
-  outline: 2px solid var(--c-blue);
+  outline: 2px solid var(--frost);
   outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .date {
-  color: var(--c-muted);
+  color: var(--ink-soft);
   font-size: 14px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .name {
-    transition: none;
-  }
 }

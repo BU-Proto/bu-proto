@@ -1,8 +1,10 @@
 import { useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 import { EMAIL_VARIABLES, type AdminEvent, type AudienceCount, type EmailAudience, type EmailCampaign, type FundStatus, type Track } from '../../../shared/api'
 import { FUND_STATUSES, TRACKS } from '../../../shared/constants'
 import ui from '../admin.module.css'
+import { SendIcon } from '../components/icons'
+import { PageHeader } from '../components/PageHeader'
 import { api } from '../../lib/api'
 import { daysUntil, formatDay } from '../../lib/dates'
 import { ConfirmDialog } from './people/ConfirmDialog'
@@ -219,17 +221,20 @@ export function Component() {
 
   return (
     <div className={`${shared.page} ${styles.root}`}>
-      <title>Email · Admin · BU Proto</title>
-
-      <header className={shared.head}>
-        <div className={shared.headText}>
-          <h1 className={shared.title}>Email</h1>
-          <p className={shared.lede}>Write once, send to a list. Every send is logged below.</p>
-        </div>
-        <Link className={ui.button} to="/admin/email/automatic">
-          Automatic emails
-        </Link>
-      </header>
+      <PageHeader
+        title="Email"
+        lede="Write once, send to a list. Every send is logged below."
+        actions={
+          <>
+            <span className={styles.sendHint}>
+              {!composeReady ? 'Add a subject and a message to send' : recipients === 0 ? 'No one is on that list yet' : ''}
+            </span>
+            <button type="button" className={ui.primary} onClick={openConfirm} disabled={!canSend} aria-busy={sending || undefined}>
+              <SendIcon /> {sending ? 'Sending…' : recipients ? `Send to ${plural(recipients, 'person', 'people')}` : 'Send'}
+            </button>
+          </>
+        }
+      />
 
       <div aria-live="polite">{sent && <SentResult campaign={sent} audienceText={describeAudience(sent.audience, titles)} />}</div>
 
@@ -386,18 +391,6 @@ export function Component() {
             </div>
           </form>
 
-          <div className={styles.sendBar}>
-            <button type="button" className={ui.primary} onClick={openConfirm} disabled={!canSend} aria-busy={sending || undefined}>
-              {sending ? 'Sending…' : recipients ? `Send to ${plural(recipients, 'person', 'people')}…` : 'Send…'}
-            </button>
-            <p className={shared.hint}>
-              {!composeReady
-                ? 'Add a subject and a message to send.'
-                : recipients === 0
-                  ? 'No one is on that list yet.'
-                  : 'You’ll confirm before anything goes out.'}
-            </p>
-          </div>
         </div>
 
         <aside className={`${shared.panel} ${styles.preview}`} aria-labelledby="preview-title">
@@ -629,7 +622,10 @@ function History({ campaigns, titles }: { campaigns: ReturnType<typeof useApi<{ 
       {!campaigns.data && campaigns.loading ? (
         <p className={shared.dim}>Loading…</p>
       ) : campaigns.data && items.length === 0 ? (
-        <p className={`${shared.panel} ${shared.empty}`}>Nothing sent yet.</p>
+        <div className={`${shared.panel} ${shared.empty}`}>
+          <h3>Nothing sent yet</h3>
+          <p>Each send shows here with who it went to and how it did.</p>
+        </div>
       ) : (
         <ul className={styles.campaigns}>
           {items.map((campaign) => (
@@ -653,9 +649,7 @@ function History({ campaigns, titles }: { campaigns: ReturnType<typeof useApi<{ 
                     <time className={shared.figure} dateTime={stampToIso(campaign.createdAt)}>
                       {formatStamp(campaign.createdAt)}
                     </time>
-                    <span className={shared.dim}>
-                      by <span className={shared.mono}>{campaign.sentBy}</span>
-                    </span>
+                    <span className={shared.dim}>by {campaign.sentBy}</span>
                   </span>
                 </summary>
                 <div className={styles.campaignBody}>

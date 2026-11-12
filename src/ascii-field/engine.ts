@@ -361,12 +361,6 @@ export class AsciiFieldEngine {
     this.raf = requestAnimationFrame(this.frame)
   }
 
-  /** Whether an opaque `data-field-cover` element fills the screen, so nothing here can be seen. */
-  private covered(): boolean {
-    const box = document.querySelector('[data-field-cover]')?.getBoundingClientRect()
-    return Boolean(box && box.top <= 0 && box.bottom >= window.innerHeight)
-  }
-
   private stop(): void {
     this.running = false
     cancelAnimationFrame(this.raf)
@@ -381,10 +375,6 @@ export class AsciiFieldEngine {
     this.lastFrame = now
     if (dt > 0.05) dt = 0.05
     else if (dt <= 0) dt = 0.016
-    if (this.covered()) {
-      this.raf = requestAnimationFrame(this.frame)
-      return
-    }
     const time = now / 1000
     fluid.step(dt, this.settings.trailLength, this.renderer.canWarp ? this.settings.push : 0)
     this.texTime += dt
@@ -697,7 +687,7 @@ export class AsciiFieldEngine {
     if (this.clearFrame || this.destroyed) return
     this.clearFrame = requestAnimationFrame(() => {
       this.clearFrame = 0
-      if (!this.booted || this.destroyed || this.covered()) return
+      if (!this.booted || this.destroyed) return
       this.measureClearMask(document.querySelectorAll(CLEAR_SELECTOR))
     })
   }

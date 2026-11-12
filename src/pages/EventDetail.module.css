@@ -1,86 +1,687 @@
-/* What only an event's page has; the shared layout is in components/DetailPage.module.css. */
+/*
+ * An event's own page. One skeleton for every event: the opening on the field (title, lede, when
+ * and where, the way in, and the picture), then the write-up and its side notes on harbor. Only
+ * the opening re-flows, by the picture's shape (data-shape on the page):
+ *   flyer   portrait or square, usually with words on it: shown whole beside the text
+ *   banner  wide: across the whole column under the text
+ */
+.page {
+  /* The side column, and the gutter beside it. The flyer and the side notes share both, so the
+     picture and what's under it keep one right-hand edge down the page. */
+  --rail: clamp(280px, 30vw, 380px);
+  --gap: clamp(32px, 5.4vw, 72px);
+  /* Soft ink for the small lines in the opening, a touch brighter than usual: they sit on the
+     field's brightest part. */
+  --on-field-soft: rgb(var(--frost-rgb) / 0.9);
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(20px, 5vh, 48px) 0 48px;
+}
 
-/* The date: the day huge, the month and weekday beside it in a mono label. */
-.date {
+/* ---- The opening ---- */
+
+.opening {
+  position: relative;
+  isolation: isolate;
+  text-shadow: var(--on-field-shadow);
+}
+
+/* The site's pool of harbor behind an intro, wider than the words and gone well before its own
+   edges, so the small lines hold over the field without a box. */
+.opening::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -90px 24% -70px -150px;
+  background: radial-gradient(closest-side, rgb(var(--harbor-rgb) / 0.5), rgb(var(--harbor-rgb) / 0));
+  pointer-events: none;
+}
+
+/* Flyer: the text on the left, the picture standing on the right, and a second row for the RSVP
+   form, so opening it never moves the lines above it. The whole opening is the page's intro: the
+   field drains into harbor under whichever of the two is taller. */
+[data-shape='flyer'] .opening {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--rail);
+  grid-template-areas:
+    'head picture'
+    'form .';
+  column-gap: var(--gap);
+}
+
+[data-shape='flyer'] .intro {
+  display: contents;
+}
+
+/* Where the drain starts beside a flyer: `--lift` above the opening's foot, where only its first,
+   faintest rows pass behind the buttons. The gap under the opening is then the rest of the drain,
+   so the write-up and the hosts start on solid harbor, clear of the fade. */
+[data-shape='flyer'] .opening {
+  --lift: 56px;
+  margin-bottom: max(0px, calc(var(--drain-h, 0px) - var(--lift) - 32px));
+}
+
+.opening .groundMark[data-ground-after] {
+  position: absolute;
+  bottom: var(--lift);
+  left: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+/* Banner: the text is the intro, so the field drains away behind the picture under it and has
+   gone by the picture's foot. An ordinary gap here, in place of the intro's usual long one. */
+[data-shape='banner'] .intro[data-ground-after] {
+  margin-bottom: 28px;
+}
+
+/* The text as a column, so beside a flyer its lower half can sit toward the flyer's foot. */
+.head {
+  grid-area: head;
   display: flex;
-  align-items: flex-end;
-  gap: clamp(14px, 1.6vw, 22px);
-  margin: 0 0 clamp(14px, 2.6vh, 26px);
+  flex-direction: column;
+  min-width: 0;
 }
 
-.day {
-  font-size: clamp(88px, 11vw, 160px);
-  font-weight: 400;
-  letter-spacing: -0.05em;
-  line-height: 0.8;
-  font-variant-numeric: tabular-nums;
+/* Beside a flyer taller than the text, the when and where and the buttons drop toward the flyer's
+   foot, so the opening closes as one rectangle. Only so far: under a short title the rest of the
+   difference is left below, not opened up as a hole in the middle. */
+[data-shape='flyer'] .head::before {
+  content: '';
+  order: 1;
+  flex: 1 1 0;
+  max-height: var(--drop, 150px);
 }
 
-.monthWeek {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  line-height: 1.6;
-  text-transform: uppercase;
+.title {
+  margin: 0;
+  font-weight: 500;
+  text-wrap: balance;
 }
 
-.meta {
+/* Three sizes by length: a name is set large, a sentence as a heading you read, so neither runs
+   past three lines on a desktop. */
+.title[data-size='short'] {
+  font-size: clamp(38px, 4.7vw, 60px);
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+.title[data-size='medium'] {
+  font-size: clamp(32px, 3.7vw, 48px);
+  letter-spacing: -0.035em;
+  line-height: 1.06;
+}
+
+.title[data-size='long'] {
+  max-width: 19.5em;
+  font-size: clamp(27px, 1.5vw + 19px, 40px);
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+
+/* The sample mark rides high beside the title, as on the other detail pages. */
+.title > span {
+  vertical-align: 0.6em;
+}
+
+.lede {
+  max-width: 660px;
+  margin: clamp(14px, 2vh, 18px) 0 0;
+  font-size: clamp(17px, 1.4vw, 19px);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* A paragraph-long lede is set a size down, so it stays a standfirst of about three lines. */
+.lede[data-long] {
+  max-width: 690px;
+  font-size: clamp(16.5px, 1.3vw, 18px);
+}
+
+/* When and where, then the way in. Under a banner they share one line, the buttons hung at its
+   right end over the picture's corner; beside a flyer the buttons sit under the facts. */
+.entry {
+  order: 2;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 1.1em;
-  margin-top: clamp(14px, 2.2vh, 20px);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 22px 40px;
+  margin-top: clamp(24px, 3.6vh, 34px);
 }
 
-.time {
-  font-weight: 500;
+[data-shape='flyer'] .entry {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.past {
-  margin: clamp(20px, 3vh, 28px) 0 0;
-  font-size: 15px;
+/* Two blocks set apart by space alone: the day, and the place. */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18px clamp(28px, 4vw, 52px);
+  margin: 0;
 }
 
-/* The RSVP opens in a ruled sheet of its own under the buttons. */
-.rsvp {
-  max-width: 560px;
-  margin-top: var(--cell);
-  color: var(--c-ink);
+.facts dd {
+  margin: 0;
 }
 
-/* A run of show: the time in a column of its own, so the lines scan down the left. */
-.agenda > li {
-  display: grid;
-  grid-template-columns: 3.4em minmax(0, 1fr);
-  gap: 12px;
-  align-items: baseline;
-  font-size: 15px;
-  font-weight: 400;
-  letter-spacing: 0;
+/* Top-aligned, so the month and the place's name start on one line across the two blocks. */
+.when time {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
 }
 
-.agendaTime {
-  color: var(--c-muted);
-  font-family: var(--font-mono);
-  font-size: 12px;
+/* The day in its kind's colour, as on the events list: the one place the hue shows on the page. */
+.day {
+  color: var(--hue);
+  font-size: 60px;
+  font-weight: 300;
+  letter-spacing: -0.05em;
+  line-height: 0.86;
   font-variant-numeric: tabular-nums;
 }
 
-.place {
-  margin: 4px 0 0;
-  font-size: 18px;
-  letter-spacing: -0.01em;
+/* A fact's lines: the one that names it in full ink, the rest softer under it. */
+.lines {
+  display: grid;
+  justify-items: start;
+  gap: 1px;
+  color: var(--on-field-soft);
+  font-size: 15px;
   line-height: 1.4;
 }
 
-.map {
-  margin: 10px 0 0;
-  font-size: 15px;
+.strong {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
+.where {
+  max-width: 22em;
+}
+
+.map {
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.mapArrow {
+  color: var(--on-field-soft);
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* A past event has nothing to press: one plain line where the buttons were. */
+.past {
+  margin: 0;
+  color: var(--on-field-soft);
+  font-size: 16px;
+}
+
+/* The RSVP form opens under the buttons, in the page's one slab. */
+.rsvp {
+  grid-area: form;
+  max-width: 560px;
+  margin-top: 18px;
+  text-shadow: none;
+}
+
+/* Over a banner the opening is three things: the title, then the day on the left and the buttons
+   on the right of one line, just over the photo's top corners. The place reads under the photo. The form opens under the buttons, against the same edge. */
+[data-shape='banner'] .entry {
+  margin-top: clamp(18px, 2.6vh, 24px);
+}
+
+@media (min-width: 1000px) {
+  [data-shape='banner'] .rsvp {
+    margin-left: auto;
+  }
+}
+
+/* ---- The picture ---- */
+
+/* A flyer: whole, at its own shape, never cropped and nothing over it. As wide as the side column
+   unless the screen is short, when it narrows so its foot still shows. */
+.flyer {
+  grid-area: picture;
+  position: relative;
+  isolation: isolate;
+  align-self: start;
+  justify-self: end;
+  width: min(100%, calc(max(320px, 100svh - 230px) * var(--ratio)));
+  aspect-ratio: var(--ratio);
+  margin: 0;
+}
+
+.flyerImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Until the picture's own shape is known it sits whole in a 4:5 slot. */
+  object-fit: contain;
+  border-radius: var(--radius-media);
+  box-shadow:
+    0 0 0 1px var(--slab-edge),
+    var(--slab-shadow);
+}
+
+/* A little of the flyer's own colour around it: a blurred, dimmed copy of itself. Nothing else
+   on the page takes its colour. */
+.glow {
+  position: absolute;
+  z-index: -1;
+  top: 6%;
+  left: -7%;
+  width: 114%;
+  height: 99%;
+  object-fit: cover;
+  filter: blur(44px) saturate(1.15);
+  opacity: 0.36;
+}
+
+.banner {
+  margin: 0;
+}
+
+/* A wide photo: a banner the width of the column, nothing laid over it. Short enough that the
+   write-up's first line shows under it on the first screen, never so short that it stops covering
+   the field's drain behind it. */
+.frame {
+  width: 100%;
+  aspect-ratio: 2.7;
+  min-height: 260px;
+  max-height: max(260px, 100svh - 480px);
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--navy);
+  box-shadow:
+    0 0 0 1px var(--slab-edge),
+    var(--slab-shadow);
+}
+
+.bannerImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The event's own wide picture fills the same banner, cropped about its middle like a campus
+   cover. One wider than the banner keeps its own shape, so nothing is cut from its ends. */
+.banner[data-fit='own'] .frame {
+  aspect-ratio: max(2.7, var(--ratio));
+}
+
+/* Under a default campus cover: what it shows on the left, who took it on the right. */
+.caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px 24px;
+  margin: 10px 2px 0;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  line-height: 1.45;
+  text-shadow: none;
+}
+
+.caption a {
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--frost-rgb) / 0.3);
+  text-underline-offset: 2px;
+}
+
+.caption a:hover {
+  color: var(--ink);
+}
+
+.caption a:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---- The body: the write-up, and its side notes ---- */
+
+/* Straight on harbor: no panel, no rules. Beside a flyer it starts where the opening's long gap
+   ends, just under the drain's foot; under a banner the picture has already covered the drain. */
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--rail);
+  align-items: start;
+  gap: 44px var(--gap);
+  margin-top: 40px;
+}
+
+[data-shape='banner'] .body {
+  margin-top: clamp(36px, 6vh, 56px);
+}
+
+/* Only the write-up, or only the notes: one column, at its own measure. */
+.body[data-columns='1'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.writeUp {
+  display: grid;
+  gap: 40px;
+  container-type: inline-size;
+}
+
+/* A part of the write-up: its label, then what it says. */
+.section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 24px;
+}
+
+/* With room, the labels hang in a column of their own down the left and everything they name
+   starts on one shared edge beside them. */
+@container (min-width: 600px) {
+  .section {
+    grid-template-columns: 176px minmax(0, 1fr);
+  }
+
+  .section > .prose {
+    grid-column: 2;
+  }
+
+  /* The dashes hang in the gutter, so list text keeps the paragraphs' left edge. */
+  .list > li {
+    padding-left: 0;
+  }
+
+  .list > li::before {
+    left: -20px;
+  }
+}
+
+/* A label: of a part of the write-up, or of a side note. */
+.label {
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.7;
+}
+
+.prose {
+  max-width: 62ch;
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.prose > * {
+  margin: 0;
+}
+
+.prose > * + * {
+  margin-top: 1em;
+}
+
+/* Line breaks typed into a paragraph are kept. */
+.prose p {
+  white-space: pre-line;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each item behind a short dash. */
+.list > li {
+  position: relative;
+  padding-left: 20px;
+}
+
+.list > li::before {
+  content: '';
+  position: absolute;
+  top: 0.85em;
+  left: 0;
+  width: 9px;
+  height: 1px;
+  background: var(--ink-dim);
+}
+
+/* Facts as facts: the key dim in a narrow column, the value in full ink. Space, no rules. */
+.factRows {
+  display: grid;
+  grid-template-columns: minmax(4.2em, auto) minmax(0, 1fr);
+  gap: 8px 20px;
+}
+
+.factRows > div {
+  display: contents;
+}
+
+.factRows dt {
+  color: var(--ink-dim);
+}
+
+.factRows dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+/* A speaker: the name, then the role in softer ink under it. */
+.people {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.people > li {
+  display: grid;
+}
+
+.personName {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* The side notes: the schedule, then the hosts. Unboxed, each under its label. */
+.notes {
+  display: grid;
+  align-content: start;
+  gap: 32px;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+/* On their own, with no write-up beside them, they sit side by side instead. */
+.body[data-columns='1'] .notes {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), var(--rail)));
+  gap: 32px var(--gap);
+}
+
+.note {
+  display: grid;
+  gap: 6px;
+}
+
+/* The run of show: the times down a column of their own, so the eye can run down either. */
+.agenda {
+  display: grid;
+  grid-template-columns: minmax(3.1em, auto) minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agenda > li {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: baseline;
+}
+
+.agendaTime {
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A line with no time of its own runs the full width. */
+.agendaWhole {
+  grid-column: 1 / -1;
+}
+
+.hosts {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Where it is, in the side notes under a banner: the name, the rest of the address softer. */
+.place {
+  display: grid;
+  margin: 0;
+}
+
+.placeAddress {
+  color: var(--ink-soft);
+}
+
+.note .map {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.photos {
+  margin-top: clamp(56px, 9vh, 88px);
+}
+
+/* ---- Narrower ---- */
+
+/* The side notes go under the write-up. */
+@media (max-width: 860px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding-top: 16px;
+  }
+
+  .opening::before {
+    inset: -60px -40px -60px;
+  }
+
+  /* The flyer first, whole and centred at about four fifths of the width, so the title, the date
+     and the buttons still make the first screen. The text's parts become the opening's own rows,
+     so they can be put in order around the form. */
+  [data-shape='flyer'] .opening {
+    /* Stacked, text runs to the opening's foot, so the drain starts under it, not behind it. */
+    --lift: 0px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none;
+  }
+
+  [data-shape='flyer'] .head {
+    display: contents;
+  }
+
+  [data-shape='flyer'] .head::before {
+    content: none;
+  }
+
+  .flyer {
+    grid-area: auto;
+    order: -1;
+    justify-self: center;
+    width: min(80%, 340px, calc(max(320px, 100svh - 230px) * var(--ratio)));
+    margin-bottom: 24px;
+  }
+
+  [data-shape='flyer'] .entry {
+    order: 1;
+  }
+
+  [data-shape='flyer'] .rsvp {
+    grid-area: auto;
+    order: 2;
+  }
+
+  /* A paragraph-long lede goes under the buttons (and the form, when it's open), so when, where
+     and the way in stay on the first screen. A line-long one stays under the title. */
+  [data-shape='flyer'] .lede[data-long] {
+    order: 3;
+    margin-top: 24px;
+  }
+
+  .prose,
+  .notes {
+    font-size: 16px;
+  }
+}
+
+/* The caption runs on as one line of text: what the photo shows, then its credit. */
+@media (max-width: 640px) {
+  .caption {
+    display: block;
+  }
+
+  .caption > :first-child::after {
+    content: '. ';
+  }
+}
+
+/* ---- Arriving ---- */
+
 @media (prefers-reduced-motion: no-preference) {
+  .head > *,
+  .flyer,
+  .banner {
+    animation: rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .head > :nth-child(2) {
+    animation-delay: 60ms;
+  }
+
+  .head > :nth-child(n + 3),
+  .flyer,
+  .banner {
+    animation-delay: 120ms;
+  }
+
   .rsvp {
-    animation: open 0.24s steps(4);
+    animation: open 200ms ease-out;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
   }
 }
 

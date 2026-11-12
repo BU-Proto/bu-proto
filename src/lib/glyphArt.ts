@@ -103,7 +103,7 @@ export function asciiWord(word: string, cols = 156, rows = 61, aspect = 0.6): st
   ctx.strokeStyle = '#fff'
   ctx.lineWidth = size * 0.035
   lines.forEach((line, index) => {
-    const y = (rows / aspect) / 2 + (index - (lines.length - 1) / 2) * size * 1.1
+    const y = rows / aspect / 2 + (index - (lines.length - 1) / 2) * size * 1.1
     ctx.fillText(line, cols / 2, y)
     ctx.strokeText(line, cols / 2, y)
   })
@@ -122,6 +122,50 @@ export function asciiWord(word: string, cols = 156, rows = 61, aspect = 0.6): st
     out.push(line)
   }
   wordCache.set(key, out)
+  return out
+}
+
+const drawingCache = new Map<string, string[]>()
+
+/**
+ * A line drawing rasterized into the fine ramp, the way asciiWord does its letters: dense in the
+ * strokes, a few loose glyphs around them, the field's ribs running down through it. `draw` works
+ * in a -1..1 square with a round white pen already set; `name` keeps the result between renders.
+ */
+export function asciiDrawing(name: string, draw: (ctx: CanvasRenderingContext2D) => void, rows = 16, aspect = 0.6): string[] {
+  const key = `${name}|${rows}`
+  const cached = drawingCache.get(key)
+  if (cached) return cached
+  const cols = Math.round(rows / aspect)
+  const canvas = typeof document === 'undefined' ? null : document.createElement('canvas')
+  const ctx = canvas?.getContext('2d', { willReadFrequently: true })
+  if (!canvas || !ctx) return []
+  canvas.width = cols
+  canvas.height = rows
+  // Cells aren't square, so the square is stretched over the grid to come out true on screen.
+  ctx.translate(cols / 2, rows / 2)
+  ctx.scale(cols / 2, rows / 2)
+  ctx.lineWidth = 0.25
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.strokeStyle = '#fff'
+  ctx.fillStyle = '#fff'
+  draw(ctx)
+  const { data } = ctx.getImageData(0, 0, cols, rows)
+  const top = FINE_RAMP.length - 1
+  const out: string[] = []
+  for (let j = 0; j < rows; j++) {
+    let line = ''
+    for (let i = 0; i < cols; i++) {
+      const ink = data[(j * cols + i) * 4 + 3] / 255
+      const rib = 0.86 + 0.14 * Math.cos(i * 1.15)
+      const grain = (hash(i, j) - 0.5) * 0.2
+      const v = ink > 0.25 ? clamp01((0.68 + 0.32 * ink) * rib + grain) : hash(j, i) < 0.05 ? 0.1 : 0
+      line += FINE_RAMP[Math.round(v * top)]
+    }
+    out.push(line)
+  }
+  drawingCache.set(key, out)
   return out
 }
 

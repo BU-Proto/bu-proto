@@ -1,8 +1,5 @@
 import { Link } from 'react-router'
 import { Byline } from '../components/Byline'
-import { MaskLines } from '../components/motion/MaskLines'
-import motion from '../components/motion/motion.module.css'
-import { useReveal } from '../components/motion/useReveal'
 import { PageIntro } from '../components/PageIntro'
 import ui from '../components/ui.module.css'
 import { CONTENTS_LABEL, GUIDE_PAGE, GUIDES, guidePath, PLAYBOOK_HREF, PLAYBOOK_INTRO, type Guide } from '../content/resources'
@@ -30,19 +27,17 @@ function Featured({ guide }: { guide: Written }) {
         <img src={image.src} alt="" fetchPriority="high" />
       </Link>
       <div className={styles.featuredText}>
-        <p className={ui.mono}>
+        <p className={styles.featuredLabel} data-fog-clear>
           {GUIDE_PAGE.featured}
         </p>
-        <h2 id="featured" className={`${ui.h2} ${styles.featuredTitle}`}>
-          <Link to={href}>
-            <MaskLines text={guide.title} />
-          </Link>
+        <h2 id="featured" className={styles.featuredTitle} data-fog-clear>
+          <Link to={href}>{guide.title}</Link>
         </h2>
-        <p className={ui.body}>
+        <p className={styles.featuredLine} data-fog-clear>
           {guide.line}
         </p>
         <Byline authors={authors} updated={updated} copy={GUIDE_PAGE} />
-        <Link className={`${ui.primary} ${styles.read}`} to={href}>
+        <Link className={`${ui.primary} ${styles.read}`} to={href} data-fog-clear="box">
           {GUIDE_PAGE.readGuide}
         </Link>
       </div>
@@ -53,9 +48,8 @@ function Featured({ guide }: { guide: Written }) {
 /** The playbook as a magazine's contents: the lead guide large, the next few as a row of pictures,
  * the rest as a two-column list, and the ones still being written listed quietly after them. */
 export function Playbook() {
-  const reveal = useReveal<HTMLDivElement>()
   return (
-    <div ref={reveal} className={`${ui.page} ${motion.reveal}`}>
+    <div className={ui.page}>
       <PageIntro intro={PLAYBOOK_INTRO} />
 
       {FEATURED && <Featured guide={FEATURED} />}
@@ -70,12 +64,12 @@ export function Playbook() {
             const href = guidePath(guide) ?? PLAYBOOK_HREF
             const image = guide.lead.image
             return (
-              <li key={guide.title} data-reveal>
+              <li key={guide.title}>
                 <Link className={styles.card} to={href}>
                   <span className={styles.cardImage}>
                     <img src={image.thumb ?? image.src} alt="" loading="lazy" />
                   </span>
-                  <span className={styles.entryText}>
+                  <span className={styles.entryText} data-fog-clear>
                     <span className={styles.cardTitle}>{guide.title}</span>
                     <span className={styles.line}>{guide.line}</span>
                   </span>
@@ -97,8 +91,9 @@ export function Playbook() {
                     src={image.thumb ?? image.src}
                     alt=""
                     loading="lazy"
+                   
                   />
-                  <span className={styles.entryText}>
+                  <span className={styles.entryText} data-fog-clear>
                     <span className={styles.title}>{guide.title}</span>
                     <span className={styles.line}>{guide.line}</span>
                   </span>
@@ -110,12 +105,12 @@ export function Playbook() {
 
         {SOON.length > 0 && (
           <div className={styles.soon}>
-            <h3 className={`${ui.mono} ${styles.soonTitle}`}>
+            <h3 className={styles.soonTitle} data-fog-clear>
               {GUIDE_PAGE.stillWriting}
             </h3>
             <ul className={styles.soonList}>
               {SOON.map((guide) => (
-                <li key={guide.title}>
+                <li key={guide.title} data-fog-clear>
                   <span className={styles.soonName}>{guide.title}</span>
                   <span className={styles.line}>{guide.line}</span>
                 </li>

@@ -17,3 +17,13 @@ export function agendaLine(line: string): { time: string | null; what: string } 
   if (!match) return { time: null, what: line.trim() }
   return { time: match[1].replace(/\s+/g, ' '), what: match[2].trim() }
 }
+
+/**
+ * A place as its name and the rest of its address, split at the first comma: "CDS, 665
+ * Commonwealth Ave" → { name: "CDS", address: "665 Commonwealth Ave" }. No comma: all name.
+ */
+export function placeLines(place: string): { name: string; address: string | null } {
+  const comma = place.indexOf(',')
+  if (comma < 0) return { name: place.trim(), address: null }
+  return { name: place.slice(0, comma).trim(), address: place.slice(comma + 1).trim() || null }
+}

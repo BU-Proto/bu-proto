@@ -1,146 +1,167 @@
+import type { CSSProperties } from 'react'
 import { Field, Form } from '../components/Form'
-import { BU_EMAIL_PATTERN } from '../components/formFields'
-import { MaskLines } from '../components/motion/MaskLines'
-import motion from '../components/motion/motion.module.css'
-import { useReveal } from '../components/motion/useReveal'
+import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
+import { AsciiFigure } from '../components/motion/AsciiFigure'
 import { PageIntro } from '../components/PageIntro'
-import { PixelFlow } from '../components/PixelFlow'
 import { PrivacyNote } from '../components/PrivacyNote'
 import { Select } from '../components/Select'
 import ui from '../components/ui.module.css'
-import { GRANTS_INTRO, IGNITE, INTEREST, PLAN, ROUTE, STATUS } from '../content/grants'
+import { GRANTS_INTRO, INTEREST, PLAN, ROUTE, STATUS } from '../content/grants'
 import { api } from '../lib/api'
+import { asciiDrawing, hash } from '../lib/glyphArt'
 import { FUND_AMOUNTS, YEARS } from '../../shared/constants'
 import styles from './Grants.module.css'
 
-/** A list number with its leading zero: 01, 02. */
-const numbered = (index: number) => String(index + 1).padStart(2, '0')
+type Pen = (ctx: CanvasRenderingContext2D) => void
 
 /**
- * The fund's coming-soon page. The plan in one line, then the way it'll work drawn as a band of
- * pixels over its four stops, then Ignite side by side on the dark panel, then the interest list.
+ * A sign for each stop, as pen strokes in a -1..1 square: a question, a yes, the way there, and
+ * play. They're drawn in the field's characters.
+ */
+const SIGNS: Record<'ask' | 'yes' | 'go' | 'demo', Pen> = {
+  ask: (ctx) => {
+    ctx.beginPath()
+    ctx.arc(0, -0.38, 0.4, Math.PI * 0.95, Math.PI * 2.5)
+    ctx.lineTo(0, 0.3)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.arc(0, 0.72, 0.17, 0, Math.PI * 2)
+    ctx.fill()
+  },
+  yes: (ctx) => {
+    ctx.beginPath()
+    ctx.moveTo(-0.64, 0.06)
+    ctx.lineTo(-0.2, 0.52)
+    ctx.lineTo(0.66, -0.52)
+    ctx.stroke()
+  },
+  go: (ctx) => {
+    ctx.beginPath()
+    ctx.moveTo(-0.7, 0)
+    ctx.lineTo(0.66, 0)
+    ctx.moveTo(0.18, -0.48)
+    ctx.lineTo(0.68, 0)
+    ctx.lineTo(0.18, 0.48)
+    ctx.stroke()
+  },
+  demo: (ctx) => {
+    ctx.beginPath()
+    ctx.moveTo(-0.4, -0.58)
+    ctx.lineTo(0.56, 0)
+    ctx.lineTo(-0.4, 0.58)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+  },
+}
+
+/** The stops' signs, in order. */
+const STOP_SIGNS = ['ask', 'yes', 'go', 'demo'] as const
+
+/** Rows of glyphs in a sign: enough that a curve reads as a curve. */
+const SIGN_ROWS = 28
+
+const sign = (name: keyof typeof SIGNS) => asciiDrawing(name, SIGNS[name], SIGN_ROWS)
+
+/**
+ * The line between the ticket's two places, in the field's characters: `=` rails with the odd `+`
+ * and `#`. Long enough to cross the widest ticket; the rest is clipped.
+ */
+const RAIL = Array.from({ length: 200 }, (_, i) => {
+  const v = hash(i, 2)
+  return v > 0.92 ? '#' : v > 0.8 ? '+' : '='
+}).join('')
+
+/** The stub's code: bars and gaps in the same characters, a few rows deep so the bars join up. */
+const CODE = Array.from({ length: 56 }, (_, i) => (hash(i, 9) > 0.42 ? '|' : ' ')).join('')
+
+/**
+ * The fund's coming-soon page, on plain harbor like the other inner pages. The plan is printed as
+ * the thing it pays for, a ticket; then the way it'll work as a row of signs in the field's
+ * characters; then the interest list.
  */
 export function Grants() {
   const { fields } = INTEREST
-  const root = useReveal<HTMLDivElement>()
 
   return (
-    <div ref={root} className={`${ui.page} ${motion.reveal} ${styles.page}`}>
+    <div className={styles.page}>
       <PageIntro intro={GRANTS_INTRO}>
         {/* Said once, before anything else: there is no money yet. */}
-        <p className={styles.status}>
-          <strong className={`${ui.tag} ${ui.tagGold} ${styles.statusWord}`}>{STATUS.word}</strong> {STATUS.text}{' '}
+        <p className={styles.status} data-fog-clear>
+          <strong className={styles.statusWord}>{STATUS.word}</strong> {STATUS.text}{' '}
           <a className={ui.textLink} href="#interest">
             {STATUS.link}
           </a>
         </p>
       </PageIntro>
 
-      <section className={ui.split} aria-labelledby="plan">
+      <section className={styles.ticket} aria-labelledby="plan">
         <h2 id="plan" className={ui.srOnly}>
           {PLAN.title}
         </h2>
-        <div className={styles.planLead}>
-          <p className={ui.h2}>
-            <MaskLines text={PLAN.headline} />
+        <div className={styles.ticketBody}>
+          <p className={styles.leg}>
+            <span>{PLAN.from}</span>
+            <span className={ui.srOnly}> to </span>
+            <span className={styles.rail} aria-hidden="true">
+              {RAIL}
+            </span>
+            <span>{PLAN.to}</span>
           </p>
-          <p className={ui.small} data-reveal>
-            {PLAN.caveat}
-          </p>
-        </div>
-        <ul className={ui.pts} data-reveal>
-          {PLAN.facts.map((fact, index) => (
-            <li key={fact.title}>
-              <span className={ui.n} aria-hidden="true">
-                {numbered(index)}
-              </span>
-              <div>
+          <p className={styles.headline}>{PLAN.headline}</p>
+          <ul className={styles.facts}>
+            {PLAN.facts.map((fact) => (
+              <li key={fact.title} className={styles.fact}>
                 <h3 className={styles.factTitle}>{fact.title}</h3>
                 <p className={styles.factText}>{fact.text}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
+        {/* The stub: what's still unsettled about all of the above. */}
+        <div className={styles.stub}>
+          <p className={styles.code} aria-hidden="true">
+            {CODE}
+            {'\n'}
+            {CODE}
+            {'\n'}
+            {CODE}
+          </p>
+          <p className={styles.caveat}>
+            <strong className={styles.caveatLead}>{PLAN.caveat.lead}</strong> {PLAN.caveat.text}
+          </p>
+        </div>
       </section>
 
       <section className={styles.route} aria-labelledby="route">
-        <div className={ui.split}>
-          <h2 id="route" className={ui.h2}>
-            <MaskLines text={ROUTE.title} />
+        <div className={styles.head}>
+          <h2 id="route" className={styles.subtitle}>
+            {ROUTE.title}
           </h2>
-          <p className={ui.body} data-reveal>
-            {ROUTE.lede}
-          </p>
+          <p className={styles.lede}>{ROUTE.lede}</p>
         </div>
 
-        <PixelFlow variant="bands" />
-
-        <ol className={ui.steps} data-reveal>
+        {/* The page's one motion: each sign develops out of loose glyphs, one after the other. */}
+        <ol className={styles.steps}>
           {ROUTE.stops.map((stop, index) => (
-            <li key={stop.title} className={ui.step}>
-              <div className={ui.stepHead}>
-                <span className={ui.badge} aria-hidden="true">
-                  {numbered(index)}
-                </span>
-                <h3 className={ui.stepTitle}>{stop.title}</h3>
-              </div>
-              <p className={ui.stepText}>{stop.text}</p>
+            <li key={stop.title} className={styles.stop} style={{ '--col': index } as CSSProperties}>
+              <AsciiFigure lines={sign(STOP_SIGNS[index]!)} delay={index * SIGN_DELAY} className={styles.sign} />
+              <h3 className={styles.stopTitle}>{stop.title}</h3>
+              <p className={styles.stopText}>{stop.text}</p>
             </li>
           ))}
         </ol>
       </section>
 
-      <section className={`${ui.dark} ${styles.ignite}`} aria-labelledby="ignite" data-reveal>
-        <div className={`${ui.wrap} ${ui.split}`}>
-          <div className={styles.igniteHead}>
-            <h2 id="ignite" className={ui.darkTitle}>
-              {IGNITE.title}
-            </h2>
-            <p className={styles.igniteLede}>
-              <a className={ui.textLink} href={IGNITE.link.href} target="_blank" rel="noreferrer">
-                {IGNITE.link.label}
-              </a>{' '}
-              {IGNITE.intro}
-            </p>
-          </div>
-          <table className={styles.compare}>
-            <thead>
-              <tr>
-                <td />
-                <th scope="col" className={ui.darkLabel}>
-                  {IGNITE.heads.ignite}
-                </th>
-                <th scope="col" className={`${ui.darkLabel} ${styles.colProto}`}>
-                  {IGNITE.heads.proto}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {IGNITE.rows.map((row) => (
-                <tr key={row.topic}>
-                  <th scope="row" className={`${ui.darkLabel} ${styles.topic}`}>
-                    {row.topic}
-                  </th>
-                  <td className={styles.was}>{row.ignite}</td>
-                  <td className={styles.will}>{row.proto}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="interest" className={`${ui.split} ${styles.interest}`} aria-labelledby="interest-title">
-        <div className={styles.interestHead}>
-          <h2 id="interest-title" className={ui.h2}>
-            <MaskLines text={INTEREST.title} />
+      <section id="interest" className={`${styles.section} ${styles.interest}`} aria-labelledby="interest-title">
+        <div className={styles.head}>
+          <h2 id="interest-title" className={styles.subtitle}>
+            {INTEREST.title}
           </h2>
-          <p className={ui.body} data-reveal>
-            {INTEREST.lede}
-          </p>
+          <p className={styles.lede}>{INTEREST.lede}</p>
         </div>
 
-        <div className={styles.formWrap} data-reveal>
+        <div className={`${ui.panel} ${styles.formWrap}`}>
           {/* Interest list only, never an application. The trip first, then who you are. */}
           <Form
             className={styles.form}
@@ -151,7 +172,7 @@ export function Grants() {
           >
             <Field label={fields.target.label}>
               <input
-                className={styles.input}
+                className={inputClass}
                 name="target"
                 placeholder={fields.target.placeholder}
                 maxLength={200}
@@ -160,7 +181,7 @@ export function Grants() {
             </Field>
             <Field label={fields.spend.label}>
               <input
-                className={styles.input}
+                className={inputClass}
                 name="spend"
                 placeholder={fields.spend.placeholder}
                 maxLength={1000}
@@ -168,29 +189,17 @@ export function Grants() {
               />
             </Field>
             <Field label={fields.amount.label}>
-              <Select
-                className={styles.input}
-                name="amount"
-                options={FUND_AMOUNTS}
-                placeholder={fields.amount.placeholder}
-                required
-              />
+              <Select name="amount" options={FUND_AMOUNTS} placeholder={fields.amount.placeholder} required />
             </Field>
             <Field label={fields.year.label}>
-              <Select
-                className={styles.input}
-                name="year"
-                options={YEARS}
-                placeholder={fields.year.placeholder}
-                required
-              />
+              <Select name="year" options={YEARS} placeholder={fields.year.placeholder} required />
             </Field>
             <Field label={fields.name.label}>
-              <input className={styles.input} name="name" autoComplete="name" maxLength={80} required />
+              <input className={inputClass} name="name" autoComplete="name" maxLength={80} required />
             </Field>
             <Field label={fields.email.label}>
               <input
-                className={styles.input}
+                className={inputClass}
                 name="email"
                 type="email"
                 autoComplete="email"
@@ -207,3 +216,6 @@ export function Grants() {
     </div>
   )
 }
+
+/** Milliseconds between one sign starting to develop and the next. */
+const SIGN_DELAY = 180

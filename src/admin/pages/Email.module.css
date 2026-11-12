@@ -152,17 +152,21 @@
   flex: 1 1 220px;
 }
 
-/* The page's one irreversible action, last in the column, with what happens next beside it. */
-.sendBar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-  padding: 2px 4px 0;
+/* Why Send is off, beside it in the bar. Empty, it takes no room. */
+.sendHint {
+  color: var(--ink-dim);
+  font-size: 13px;
+  white-space: nowrap;
 }
 
-.sendBar p {
-  flex: 1 1 200px;
+.sendHint:empty {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .sendHint {
+    white-space: normal;
+  }
 }
 
 /* ---- Variables ---- */
@@ -326,19 +330,20 @@
   color: var(--ink-soft);
   font: inherit;
   font-size: 12.5px;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .mode:hover {
-  background: var(--hover);
   color: var(--ink);
 }
 
 .mode[aria-pressed='true'] {
   background: var(--fill-hover);
   color: var(--ink);
-  font-weight: 500;
-  box-shadow: inset 0 0 0 1px var(--line-strong);
+  box-shadow:
+    inset 0 0 0 1px var(--line-strong),
+    0 1px 2px rgb(0 0 0 / 0.25);
 }
 
 .mode:focus-visible {

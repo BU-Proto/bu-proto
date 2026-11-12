@@ -1,20 +1,23 @@
+import type { CSSProperties } from 'react'
 import { Link, NavLink } from 'react-router'
+import { JOIN_CTA } from '../content/home'
 import { BRAND, NAV_ITEMS } from '../content/site'
 import { MenuSheet } from './MenuSheet'
 import { NavMenu } from './NavMenu'
-import { ProtoMark } from './ProtoMark'
+import ui from './ui.module.css'
 import styles from './TopBar.module.css'
 
 /**
- * The tab fixed to the top right of every page: Proto's mark, the main pages, and Join. A tab item
- * with pages under it (About) opens them in a small menu. On phones the items don't fit, so the
- * menu sheet takes their place and carries every page; the footer lists the rest on desktop.
+ * The bar at the top of every page, in the same place on all of them: the seal and name at the
+ * left, the nav pill in the middle, Join at the right. A pill item with pages under it (About)
+ * opens them in a small menu. Where the pill doesn't fit, a menu button beside Join opens a sheet
+ * with every page. The bar holds its place as the page scrolls.
  */
 export function TopBar() {
   return (
     <header className={styles.top}>
-      <Link className={styles.logo} to="/">
-        <ProtoMark size={18} />
+      <Link className={styles.logo} to="/" data-fog-clear>
+        <span className={styles.seal} style={{ '--seal': `url(${BRAND.seal})` } as CSSProperties} aria-hidden="true" />
         {BRAND.short}
       </Link>
 
@@ -23,18 +26,20 @@ export function TopBar() {
           item.children ? (
             <NavMenu key={item.to} item={item} />
           ) : (
-            <NavLink key={item.to} to={item.to}>
+            <NavLink key={item.to} to={item.to} data-fog-clear="box">
               {item.label}
             </NavLink>
           ),
         )}
       </nav>
 
-      <Link className={styles.join} to="/join">
-        Join Proto
-      </Link>
-      <div className={styles.menu}>
-        <MenuSheet />
+      <div className={styles.actions}>
+        <Link className={`${ui.primary} ${styles.join}`} to={JOIN_CTA.cta.href} data-fog-clear="box">
+          {JOIN_CTA.cta.label}
+        </Link>
+        <div className={styles.menu}>
+          <MenuSheet />
+        </div>
       </div>
     </header>
   )
