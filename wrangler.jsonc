@@ -9,6 +9,10 @@
 
   // The site lives at buproto.com (its DNS is on Cloudflare). Kept here so a deploy never drops it.
   "routes": [{ "pattern": "buproto.com", "custom_domain": true }],
+  // No <name>.workers.dev address for production, but keep Preview URLs on: every deploy applies
+  // these, and left unset they drift off, which leaves branch previews without a link.
+  "workers_dev": false,
+  "preview_urls": true,
   "observability": { "enabled": true },
 
   // The site is the Vite build. Every unknown path serves index.html for the client router;
