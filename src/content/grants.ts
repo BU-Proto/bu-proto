@@ -1,7 +1,7 @@
 // The Proto fund: hackathon travel grants. It isn't funded yet: this page explains the plan and
 // collects interest. Nothing here may read as an open application, or as money that exists.
 
-import type { Link, PageIntro } from './types'
+import type { PageIntro } from './types'
 
 export const GRANTS_INTRO: PageIntro = {
   path: '~/proto/grants',
@@ -69,35 +69,6 @@ export const ROUTE = {
       text: 'The one thing we ask back, at a hack night or demo night. It doesn’t have to win, or work.',
     },
   ] satisfies Stop[],
-} as const
-
-export interface Contrast {
-  topic: string
-  ignite: string
-  proto: string
-}
-
-/** Ignite next to the plan, a row per difference. Only what each one does, nothing about who. */
-export const IGNITE = {
-  title: 'Next to Spark!’s Ignite',
-  link: {
-    label: 'Spark!’s Ignite Travel Fund',
-    href: 'https://www.bu.edu/spark/resources/travel-fund/',
-  } satisfies Link,
-  intro: 'pays for hackathon travel too, and you should use it. This is planned to cover what it doesn’t.',
-  heads: { ignite: 'Ignite', proto: 'This fund, as planned' },
-  rows: [
-    {
-      topic: 'When it pays',
-      ignite: 'Reimbursed after the event',
-      proto: 'Up front, before you go',
-    },
-    {
-      topic: 'How often',
-      ignite: 'One event a year',
-      proto: 'Not capped at one trip a year',
-    },
-  ] satisfies Contrast[],
 } as const
 
 /** The interest list. Page copy for the schema's fields, trip first, then who you are. */
