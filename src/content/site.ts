@@ -36,6 +36,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     children: [
       { label: 'What we offer', to: '/about#offer', line: 'Hack nights, trips and the playbook' },
       { label: 'The board', to: '/board', line: 'Who runs Proto, and the open seats' },
+      { label: 'Open roles', to: '/roles', line: 'The parts of Proto that need someone' },
     ],
   },
   { label: 'Hackathons', to: '/hackathons', inPill: true },
@@ -124,6 +125,7 @@ export const FOOTER = {
       title: 'Get involved',
       links: [
         { label: 'Join Proto', to: '/join' },
+        { label: 'Open roles', to: '/roles' },
         { label: 'Grants', to: '/grants' },
       ],
     },

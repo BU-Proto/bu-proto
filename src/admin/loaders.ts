@@ -3,7 +3,7 @@
 // per-property lazy), and so the component files only export components.
 
 import { data, type LoaderFunctionArgs, type ShouldRevalidateFunction } from 'react-router'
-import type { Admin, FundInterest, Me, Member, Rsvp, Stats } from '../../shared/api'
+import type { Admin, FundInterest, Me, Member, RoleApplication, Rsvp, Stats } from '../../shared/api'
 import { api } from '../lib/api'
 import { specFor, type ContentRow } from './lib/content'
 import { isUnauthorized } from './lib/session'
@@ -29,16 +29,17 @@ export async function dashboardLoader({ request }: LoaderFunctionArgs) {
     api<{ items: T[] }>(path, { signal })
       .then((body) => body.items)
       .catch(() => [] as T[])
-  const [stats, events, hackathons, members, fund] = await Promise.all([
+  const [stats, events, hackathons, members, fund, applications] = await Promise.all([
     api<Stats>('/admin/stats', { signal }),
     list<ContentRow>('/admin/content/events'),
     list<ContentRow>('/admin/content/hackathons'),
     list<Member>('/admin/members'),
     list<FundInterest>('/admin/fund'),
+    list<RoleApplication>('/admin/applications'),
   ])
   // The time the page was loaded: "today" and "this week" are worked out from it, so a re-render
   // can't land on a different day than the data did.
-  return { stats, events, hackathons, members, fund, now: Date.now() }
+  return { stats, events, hackathons, members, fund, applications, now: Date.now() }
 }
 
 export async function contentListLoader({ params, request }: LoaderFunctionArgs) {

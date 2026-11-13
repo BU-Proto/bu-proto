@@ -152,7 +152,7 @@ function Shell({ me, stats }: { me: Me; stats: Stats | null }) {
             <Kbd>{COMMAND_KEYS}</Kbd>
           </button>
 
-          <Nav pathname={pathname} badges={{ '/admin/fund': stats?.fundNew ?? 0 }} onNavigate={close} />
+          <Nav pathname={pathname} badges={{ '/admin/fund': stats?.fundNew ?? 0, '/admin/roles': stats?.applicationsNew ?? 0 }} onNavigate={close} />
 
           <Account me={me} onSignOut={signOut} />
         </div>

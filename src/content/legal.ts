@@ -72,6 +72,10 @@ export const PRIVACY: LegalDoc = {
               { strong: 'The fund interest list.' },
               ' Your name, BU email, year, the hackathon or project you have in mind, what you’d spend the money on and a rough amount.',
             ],
+            [
+              { strong: 'Applying for a role or a board seat.' },
+              ' Your name, BU email and year, which role or seat, and what you send with it: for a role, your résumé (a PDF), a link if you add one and your answers to any questions it asks; for a board seat, what you write about why you want it. Applying again for the same role with the same email replaces what you sent before, résumé included.',
+            ],
             [{ strong: 'Event RSVPs.' }, ' Your name and an email address (any address works, not just BU).'],
             [
               { strong: 'Visiting the site.' },
@@ -79,7 +83,7 @@ export const PRIVACY: LegalDoc = {
             ],
             [
               { strong: 'The human check on our forms.' },
-              ' The join, fund interest and RSVP forms run Cloudflare Turnstile, a quick check that tells people from bots. While the form is open, it looks at signals from your browser and device (such as your IP address and browser details) and, now and then, asks you to tick a box. We only get back a pass or fail, never those signals.',
+              ' Our forms run Cloudflare Turnstile, a quick check that tells people from bots. While the form is open, it looks at signals from your browser and device (such as your IP address and browser details) and, now and then, asks you to tick a box. We only get back a pass or fail, never those signals.',
             ],
             [
               { strong: 'Admins.' },
@@ -98,6 +102,7 @@ export const PRIVACY: LegalDoc = {
           list: [
             'Member details let us email you about hack nights, trips and events, and help us plan things like team matching and which track needs what.',
             'Fund interest sign-ups tell us how much demand there is, which we show sponsors as totals, and let us email you when the fund opens or changes.',
+            'Applications for a role or a board seat are read by the students who run Proto, to decide who takes it on and to write to you about it.',
             'RSVPs let us plan food and space, and email you about that event (a room change, a reminder).',
             'Request details keep the site running and safe: rate limiting, spotting abuse and fixing errors.',
           ],
@@ -186,7 +191,7 @@ export const PRIVACY: LegalDoc = {
       id: 'keep',
       title: 'How long we keep it',
       body: [
-        'Member, fund interest and RSVP records stay until you ask us to delete them, or until we clear out old records ourselves. Unsubscribing stops the emails but keeps your record so we know not to email you. Admin sign-in sessions end after 14 days. Cloudflare’s request logs are kept only for a short time.',
+        'Member, fund interest, application and RSVP records stay until you ask us to delete them, or until we clear out old records ourselves. Unsubscribing stops the emails but keeps your record so we know not to email you. Admin sign-in sessions end after 14 days. Cloudflare’s request logs are kept only for a short time.',
       ],
     },
     {
@@ -197,7 +202,7 @@ export const PRIVACY: LegalDoc = {
           list: [
             [
               { strong: 'Unsubscribe.' },
-              ' Every member email has a one-click unsubscribe link at the bottom. Joining again turns member emails back on. Emails about an event you RSVP’d to, or about the fund, don’t have that link: reply to one or email us and we’ll take you off.',
+              ' Every member email has a one-click unsubscribe link at the bottom. Joining again turns member emails back on. Emails about an event you RSVP’d to, the fund or an application don’t have that link: reply to one or email us and we’ll take you off.',
             ],
             [
               { strong: 'Get a copy, fix or delete.' },

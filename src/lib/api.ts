@@ -14,13 +14,16 @@ export class ApiError extends Error {
 
 /**
  * Call the Worker's API. JSON in, JSON out; throws ApiError on any non-2xx. 204 resolves to
- * undefined. Cookies ride along, so admin calls work once signed in.
+ * undefined. Cookies ride along, so admin calls work once signed in. A FormData body goes as a
+ * multipart form instead of JSON, for the one form that carries a file.
  */
 export async function api<T>(path: string, init: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
+  const form = init.body instanceof FormData ? init.body : null
   const response = await fetch(`/api${path}`, {
     method: init.method ?? (init.body === undefined ? 'GET' : 'POST'),
-    headers: init.body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    // The browser writes a multipart form's own Content-Type, boundary and all.
+    headers: init.body === undefined || form ? undefined : { 'Content-Type': 'application/json' },
+    body: form ?? (init.body === undefined ? undefined : JSON.stringify(init.body)),
     signal: init.signal,
     credentials: 'same-origin',
   })

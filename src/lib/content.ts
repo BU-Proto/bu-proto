@@ -1,7 +1,7 @@
-// The site's content (events, hackathons, wins, the board) lives in D1 and is edited in the
+// The site's content (events, hackathons, wins, the board, roles) lives in D1 and is edited in the
 // portal. Route loaders in App.tsx fetch it through here.
 
-import type { ContentTypes, Hackathon, ProtoEvent, Win } from '../../shared/api'
+import type { ContentTypes, Hackathon, ProtoEvent, Role, Win } from '../../shared/api'
 import type { ContentResource } from '../../shared/constants'
 import { api } from './api'
 import { imageRatio } from './imageRatio'
@@ -64,4 +64,19 @@ export async function fetchEventPage(id: string | undefined, signal?: AbortSigna
   )
   const [{ event, photoRatio }, events] = await Promise.all([measuredEvent, fetchContent('events', signal)])
   return { event, events: events.toSorted(byDate), photoRatio }
+}
+
+export interface RolePageData {
+  role: Role
+  /** Every published role, in display order, for the others still open. */
+  roles: Role[]
+}
+
+/** One role for its own page, plus the list so the page can point at the others. */
+export async function fetchRolePage(id: string | undefined, signal?: AbortSignal): Promise<RolePageData> {
+  const [{ item }, roles] = await Promise.all([
+    api<{ item: Role }>(`/content/roles/${encodeURIComponent(id ?? '')}`, { signal }),
+    fetchContent('roles', signal),
+  ])
+  return { role: item, roles }
 }

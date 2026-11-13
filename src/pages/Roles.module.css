@@ -1,0 +1,79 @@
+/* The roles page: the intro, the sign-up sheet on solid ground under it, then where to go when
+   what you'd do isn't on the sheet. */
+
+.page {
+  gap: clamp(40px, 7vh, 72px);
+}
+
+.open {
+  display: grid;
+  gap: clamp(18px, 3vh, 28px);
+}
+
+/* Nothing open: the same plain setting as the sheet's lines, with the two ways to stay close. */
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: clamp(28px, 5vh, 48px) 0;
+  border-block: 1px solid var(--rule);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.emptyText {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+  margin-top: 10px;
+}
+
+/* The heading on the left, the two answers on the right: the sheet's own two columns. */
+.else {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 14px clamp(24px, 4vw, 64px);
+  align-items: start;
+  padding-bottom: clamp(16px, 4vh, 40px);
+}
+
+.elseText {
+  display: grid;
+  gap: 12px;
+  max-width: 56ch;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.elseText p {
+  margin: 0;
+}
+
+.elseText a {
+  color: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .else {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
