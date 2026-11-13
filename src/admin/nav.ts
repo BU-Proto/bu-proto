@@ -2,7 +2,7 @@
 // menu all read, so a page is named and found the same way everywhere.
 
 import type { ComponentType, SVGProps } from 'react'
-import { CalendarIcon, CodeIcon, CoinIcon, HomeIcon, KeyIcon, MailIcon, PeopleIcon, SeatIcon, TrophyIcon } from './components/icons'
+import { CalendarIcon, CodeIcon, CoinIcon, HomeIcon, KeyIcon, MailIcon, PeopleIcon, SeatIcon, SheetIcon, TrophyIcon } from './components/icons'
 
 export type Icon = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -75,6 +75,16 @@ export const NAV: readonly NavGroup[] = [
           { to: '/admin/board/interest', label: 'Interest', command: 'Board interest' },
         ],
         create: { to: '/admin/board/new', label: 'New board member' },
+      },
+      {
+        to: '/admin/roles',
+        label: 'Roles',
+        icon: SheetIcon,
+        tabs: [
+          { to: '/admin/roles', label: 'All roles' },
+          { to: '/admin/roles/applications', label: 'Applications', command: 'Role applications' },
+        ],
+        create: { to: '/admin/roles/new', label: 'New role' },
       },
     ],
   },

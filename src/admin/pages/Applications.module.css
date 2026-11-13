@@ -1,0 +1,41 @@
+/* Role applications. The entries themselves are Fund.module.css's; this is what's theirs alone. */
+
+/* The status tabs, and the role to narrow them to at the far end. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.roleFilter {
+  flex: 0 1 260px;
+  min-width: 180px;
+}
+
+/* A long address breaks rather than widening the panel. */
+.url {
+  overflow-wrap: anywhere;
+}
+
+/* One of the role's own questions: the question over its answer, across both columns. */
+.asked {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 3px !important;
+  padding-top: 6px;
+}
+
+/* The résumé's file name, with the mark of something that opens in its own tab. */
+.resume {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow-wrap: anywhere;
+}
+
+.resume svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}

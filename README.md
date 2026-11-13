@@ -42,6 +42,7 @@ npm run dev                      # http://localhost:5173
 | `/resources/playbook` | The playbook index; each guide is at `/resources/playbook/<slug>` (old `/resources/<slug>` links redirect) |
 | `/events` | Upcoming events with RSVP |
 | `/board` | The board |
+| `/roles` | The parts of Proto that need someone, as a sign-up sheet; each role's page (`/roles/<id>`) has its write-up and the application form |
 | `/join` | What you get, the sign-up form and the Discord |
 
 Anything else renders the 404 page. Every route is a client-side route; the Worker serves `index.html` for any path that isn't a file or under `/api` (`not_found_handling` in `wrangler.jsonc`), so deep links work on refresh.
@@ -50,11 +51,13 @@ The portal lives at `/admin`; see [Admin portal](#admin-portal).
 
 ## Admin portal
 
-`/admin` is where the team edits events, hackathons, wins and the board; looks after members and the fund interest list; reads an event's RSVPs; emails people; and decides who else gets in. It's a separate, lazy-loaded part of the app with its own layout (no ASCII field), so none of it ships to public visitors.
+`/admin` is where the team edits events, hackathons, wins, the board and roles; looks after members, the fund interest list and role applications; reads an event's RSVPs; emails people; and decides who else gets in. It's a separate, lazy-loaded part of the app with its own layout (no ASCII field), so none of it ships to public visitors.
 
 **Who gets in.** Sign-in is Google only (any Google account: Gmail, or BU's Google Workspace). Emails in the `ADMIN_EMAILS` secret (comma-separated) are owners: always allowed, never removable in the portal. Owners and admins add everyone else on the Admins page, by email; the new admin gets an email with the sign-in link (a *Resend email* button sends it again, at most every 10 minutes). They must sign in with a Google account whose verified address is exactly that email. Removing someone ends their sessions right away. Sessions are an HttpOnly cookie holding a random token (only its SHA-256 is stored) and last 14 days. Every state-changing API request must come from the site's own origin.
 
 **Local sign-in.** Under `npm run dev`, on localhost, the Google button skips Google and signs you straight in as the first email in `ADMIN_EMAILS` (or `you@localhost` when that's empty). It's behind `import.meta.env.DEV`, which Vite compiles to `false` for production, so none of it ships.
+
+**Roles.** A role is posted under Roles: a title, one or two lines, the time it takes, an optional apply-by day, the write-up, and optionally up to five questions of its own for applicants. Every application asks for a name, BU email, year, an optional link and a résumé (PDF). Published roles show on `/roles`; one past its apply-by day leaves the list and its form closes. Applications land under Roles → Applications, each with the résumé to open, a status (new, reviewing, accepted, declined) and private notes, and can be downloaded as a CSV. The applicant gets a confirmation email and the owners a note; nothing tells an applicant their status, so someone has to write to them. Applying again for the same role with the same email replaces the earlier answers.
 
 **Email.** The Email page sends through [Resend](https://resend.com) to all members, one track, an event's RSVPs, or the fund list by status. Subject and body take variables (`{{name}}`, `{{fullName}}`, `{{email}}`, `{{track}}`, and `{{event}}`, `{{eventDate}}`, `{{eventTime}}`, `{{eventPlace}}` for event emails), and the live preview renders exactly what each real recipient will get. Member emails carry a one-click unsubscribe link. Every send is logged with its counts. Without `RESEND_API_KEY` nothing leaves: emails are printed to the dev server console and the campaign is marked *logged*.
 
@@ -92,11 +95,11 @@ Sends go out in batches of 100 inside the request, which is fine for a few thous
 
 ## Content
 
-Events, hackathons, wins and the board live in D1 and are edited in the portal at `/admin`. The pages load them from `GET /api/content/<resource>` (published rows only) through route loaders in `src/App.tsx`. Every row has a **Sample content** box: while it's ticked the item renders with a small **sample** tag, so fake hackathons, wins or people can't ship unnoticed. Untick it only once the item is real and checked.
+Events, hackathons, wins, the board and roles live in D1 and are edited in the portal at `/admin`. The pages load them from `GET /api/content/<resource>` (published rows only) through route loaders in `src/App.tsx`. Every row has a **Sample content** box: while it's ticked the item renders with a small **sample** tag, so fake hackathons, wins or people can't ship unnoticed. Untick it only once the item is real and checked.
 
 All other copy lives in `src/content/`, one typed file per page plus `site.ts` for the brand, the nav and hack night's time and place. Copy that's made up there carries `placeholder: true` and gets the same tag. `trackRecord.ts` takes real, verified logos only and has no samples on purpose.
 
-The forms post to the Worker: `/join` to `POST /api/join`, the `/grants` interest list to `POST /api/fund-interest`, and RSVPs on `/events` to `POST /api/events/:id/rsvp` (remembered in the browser, so the button stays "going"). The browser validates first; the server's per-field messages show under the matching field. Each form carries a hidden `website` honeypot.
+The forms post to the Worker: `/join` to `POST /api/join`, the `/grants` interest list to `POST /api/fund-interest`, the board's open seats to `POST /api/board-interest`, a role's application to `POST /api/roles/:id/apply` (a multipart form, since it carries a résumé: a PDF of up to 5 MB, kept in D1 in 1 MB parts because D1 holds at most 2 MB in one value), and RSVPs on `/events` to `POST /api/events/:id/rsvp` (remembered in the browser, so the button stays "going"). The browser validates first; the server's per-field messages show under the matching field. Each form carries a hidden `website` honeypot.
 
 ## Using the field
 
@@ -137,7 +140,7 @@ shared/
   constants.ts           plain values (tracks, years, statuses) the public site can import without zod
 worker/
   index.ts               the Hono app: same-origin check on /api, admin session check on /api/admin
-  routes/                auth, admins, content, public forms, people (members, fund, stats), email
+  routes/                auth, admins, content, public forms, people (members, fund, role applications, stats), email
   lib/                   sessions, validation, content mapping, Resend, the email template
 migrations/              D1 schema and the sample content seed
 wrangler.jsonc           the Worker, its assets, D1, the form rate limiter, vars
@@ -221,7 +224,7 @@ It's one Cloudflare Worker: Workers Static Assets serve the built site, and only
 
 ## Form protection (Turnstile)
 
-The three public forms (join, fund interest, RSVP) carry Cloudflare Turnstile, the "Verify you are human" check. It runs with `appearance: 'interaction-only'` on a **Managed** widget: most people never see it, and the checkbox only appears when Cloudflare wants a click. The Worker checks every token with Siteverify (`worker/lib/turnstile.ts`) after the rate limit and before anything is written, and also requires the token's action to match the form and its hostname to be `buproto.com`. The honeypot stays as a second line.
+The public forms (join, fund interest, board seat, role application, RSVP) carry Cloudflare Turnstile, the "Verify you are human" check. It runs with `appearance: 'interaction-only'` on a **Managed** widget: most people never see it, and the checkbox only appears when Cloudflare wants a click. The Worker checks every token with Siteverify (`worker/lib/turnstile.ts`) after the rate limit and before anything is written, and also requires the token's action to match the form and its hostname to be `buproto.com`. The honeypot stays as a second line.
 
 | Value | Where it lives | Notes |
 | --- | --- | --- |

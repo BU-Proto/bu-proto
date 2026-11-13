@@ -57,7 +57,7 @@ interface Attention {
 }
 
 export function Component() {
-  const { stats, events, hackathons, members, fund, now } = useLoaderData<typeof dashboardLoader>()
+  const { stats, events, hackathons, members, fund, applications, now } = useLoaderData<typeof dashboardLoader>()
   const { me } = useSession()
   const clock = new Date(now)
   const today = isoDay(clock)
@@ -94,11 +94,22 @@ export function Component() {
 
   // Things that are waiting on an admin. Each is a link to where it gets dealt with.
   const fundNew = fund.filter((entry) => entry.status === 'new')
+  const applicationsNew = applications.filter((entry) => entry.status === 'new')
   const eventDrafts = events.filter((row) => !row.published)
   const hackathonDrafts = hackathons.filter((row) => !row.published)
   const closing = hackathons.filter((row) => row.published && isDay(row.applyBy) && row.applyBy >= today && daysUntil(row.applyBy, today) <= 7)
   const soonest = events.find((row) => row.published && isDay(row.date) && row.date >= today)
   const attention: Attention[] = [
+    applicationsNew.length > 0 && {
+      key: 'applications',
+      to: '/admin/roles/applications?status=new',
+      text: `${plural(applicationsNew.length, 'role application')} to read`,
+      detail:
+        applicationsNew
+          .slice(0, 3)
+          .map((entry) => `${entry.name.split(/\s+/)[0]} for ${entry.roleTitle}`)
+          .join(', ') + (applicationsNew.length > 3 ? ` and ${applicationsNew.length - 3} more` : ''),
+    },
     fundNew.length > 0 && {
       key: 'fund',
       to: '/admin/fund?status=new',
