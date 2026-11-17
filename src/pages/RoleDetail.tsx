@@ -1,4 +1,4 @@
-import { useRef, type MouseEvent } from 'react'
+import { useRef, type MouseEvent, type ReactNode } from 'react'
 import { Link, useLoaderData } from 'react-router'
 import { MAX_ROLE_QUESTIONS, RESUME_MAX_BYTES, RESUME_TYPE, YEARS } from '../../shared/constants'
 import { DetailLoadError, Prose } from '../components/DetailPage'
@@ -11,6 +11,7 @@ import { SampleTag } from '../components/SampleTag'
 import { Select } from '../components/Select'
 import ui from '../components/ui.module.css'
 import { ROLE_FORM, ROLE_NOT_FOUND, ROLE_PAGE, ROLE_THANKS, ROLES_LIST } from '../content/roles'
+import { SEAT_SECTIONS, seatFor, type Seat } from '../content/seats'
 import { BRAND } from '../content/site'
 import { api } from '../lib/api'
 import type { RolePageData } from '../lib/content'
@@ -33,14 +34,74 @@ function toApplication(values: FormValues, resume: File | null) {
   return body
 }
 
+/** One line of a seat's pitch: its heading (and a note under it) on the left, the answer on the right. */
+function PitchRow({ id, title, note, children }: { id: string; title: string; note?: string; children: ReactNode }) {
+  return (
+    <section className={styles.row} aria-labelledby={id}>
+      <div className={styles.rowLead}>
+        <h2 id={id} className={styles.rowTitle}>
+          {title}
+        </h2>
+        {note && <p className={styles.rowNote}>{note}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 /**
- * One role: what it is and what it takes, the write-up, then the application on a sheet of its
- * own. Once the apply-by day has passed the page stays up, without the form.
+ * What a board seat is, between the role's head and its form, as one ruled sheet on the same
+ * columns as the form under it: what you'd own and get, the first month as the bar for taking it,
+ * and who it suits.
+ */
+function SeatPitch({ seat }: { seat: Seat }) {
+  return (
+    <div className={styles.pitch}>
+      <PitchRow id="seat-own" title={SEAT_SECTIONS.own}>
+        <ul className={styles.points}>
+          {seat.own.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </PitchRow>
+      <PitchRow id="seat-get" title={SEAT_SECTIONS.get}>
+        <ul className={styles.points}>
+          {seat.get.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </PitchRow>
+      <PitchRow id="seat-month" title={SEAT_SECTIONS.firstMonth.title} note={SEAT_SECTIONS.firstMonth.text}>
+        <ol className={styles.points}>
+          {seat.firstMonth.map((item, index) => (
+            <li key={item} className={styles.step}>
+              <span className={styles.stepNumber} aria-hidden="true">
+                {index + 1}
+              </span>
+              {item}
+            </li>
+          ))}
+        </ol>
+      </PitchRow>
+      <PitchRow id="seat-fit" title={SEAT_SECTIONS.fit}>
+        {/* The data finishes the heading's sentence; set on its own line, it starts one. */}
+        <p className={styles.fit}>{seat.fit.charAt(0).toUpperCase() + seat.fit.slice(1)}</p>
+      </PitchRow>
+    </div>
+  )
+}
+
+/**
+ * One role: what it is and what it takes, the write-up, what the seat is (for the board seats),
+ * then the application on a sheet of its own. Once the apply-by day has passed the page stays up,
+ * without the form.
  */
 export function RoleDetail() {
   const { role, roles } = useLoaderData<RolePageData>()
   const open = roleIsOpen(role)
   const deadline = deadlineOf(role, ROLES_LIST.untilFilled)
+  const seat = seatFor(role.title)
+  const lede = seat?.headline ?? role.summary
   const questions = role.questions.slice(0, MAX_ROLE_QUESTIONS)
   const others = roles.filter((other) => other.id !== role.id && roleIsOpen(other)).slice(0, 3)
   const formRef = useRef<HTMLElement>(null)
@@ -67,9 +128,9 @@ export function RoleDetail() {
           {role.title}
           <SampleTag show={role.placeholder} />
         </h1>
-        {role.summary && (
+        {lede && (
           <p className={styles.lede} data-fog-clear>
-            {role.summary}
+            {lede}
           </p>
         )}
 
@@ -87,7 +148,7 @@ export function RoleDetail() {
             </div>
           )}
           <div data-fog-clear>
-            <dt>{ROLE_PAGE.facts.applyBy}</dt>
+            <dt>{role.applyBy ? ROLE_PAGE.facts.applyBy : ROLE_PAGE.facts.timeline}</dt>
             <dd className={deadline.soon ? styles.soon : undefined}>
               {role.applyBy ? formatDay(role.applyBy) : ROLES_LIST.untilFilled}
               {deadline.soon && <span className={styles.soonNote}>{deadline.text}</span>}
@@ -108,6 +169,8 @@ export function RoleDetail() {
           <Prose text={role.description} />
         </div>
       )}
+
+      {seat && <SeatPitch seat={seat} />}
 
       {open ? (
         <section ref={formRef} id={ROLE_FORM.id} className={`${ui.panelDeep} ${styles.apply}`} aria-labelledby="apply-title">

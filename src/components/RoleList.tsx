@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import type { Role } from '../../shared/api'
 import { ROLES_LIST } from '../content/roles'
+import { seatFor } from '../content/seats'
 import { deadlineOf } from '../lib/roles'
 import { SampleTag } from './SampleTag'
 import styles from './RoleList.module.css'
@@ -21,6 +22,8 @@ export function RoleList({ roles, compact }: { roles: readonly Role[]; compact?:
 
 function RoleRow({ role }: { role: Role }) {
   const deadline = deadlineOf(role, ROLES_LIST.untilFilled)
+  // A board seat leads with its pitch; any other role with the summary from the portal.
+  const line = seatFor(role.title)?.headline ?? role.summary
 
   return (
     <li className={styles.role}>
@@ -32,7 +35,7 @@ function RoleRow({ role }: { role: Role }) {
           </Link>
           <SampleTag show={role.placeholder} />
         </h3>
-        {role.summary && <p className={styles.summary}>{role.summary}</p>}
+        {line && <p className={styles.summary}>{line}</p>}
       </div>
 
       <p className={styles.terms}>
