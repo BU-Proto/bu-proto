@@ -424,13 +424,16 @@ const buEmail = z
   .toLowerCase()
   .regex(/^[^@\s]+@bu\.edu$/, 'Use your @bu.edu address')
 
+/** Any student can join, from BU or not, so joining takes any email. */
+const anyEmail = z.string().trim().toLowerCase().pipe(z.email('Enter an email').max(254))
+
 /** Bots fill every field; people never see this one. Must be empty. */
 const honeypot = { website: z.literal('').optional() }
 
 /** POST /api/join → 201 { ok: true }. Joining again with the same email updates the row (200). */
 export const joinInput = z.object({
   name: text(80),
-  email: buEmail,
+  email: anyEmail,
   year: z.enum(YEARS),
   track: z.enum(TRACKS),
   ...honeypot,

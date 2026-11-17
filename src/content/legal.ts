@@ -67,7 +67,7 @@ export const PRIVACY: LegalDoc = {
         'Only what you type into a form, plus what any website sees when you visit:',
         {
           list: [
-            [{ strong: 'Joining.' }, ' Your name, BU email, year and track. If you join again with the same email, we update what we have instead of making a second entry.'],
+            [{ strong: 'Joining.' }, ' Your name, email, year and track. If you join again with the same email, we update what we have instead of making a second entry.'],
             [
               { strong: 'The fund interest list.' },
               ' Your name, BU email, year, the hackathon or project you have in mind, what you’d spend the money on and a rough amount.',
