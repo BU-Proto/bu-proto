@@ -77,9 +77,13 @@ select.input option {
   border-color: var(--coral);
 }
 
+/* The buttons end the form at its right edge. Laid out in reverse, so the submit is the one at
+   the edge and anything beside it (an RSVP's Cancel) sits to its left, while the submit still
+   comes first for the keyboard. */
 .actions {
   grid-column: 1 / -1;
   display: flex;
+  flex-direction: row-reverse;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;

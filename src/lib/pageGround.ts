@@ -75,8 +75,8 @@ export const GROUNDS: Record<GroundName, PageGround> = {
     light: [0.7, 0.9],
     reach: 'top',
   },
-  // Join and the board: forms and names, so the field frames the header and the form stands on
-  // solid harbor.
+  // Join, the board and the roles: forms and names, so the field frames the header and the form
+  // stands on solid harbor.
   membership: {
     name: 'membership',
     field: field({ shape: 'eclipse', ramp: 'classic', cellSize: 10, baseColor: 0.6, glyphContrast: 0.45, ribbing: 0.5, drift: 0.5 }),
@@ -111,6 +111,7 @@ const ROUTES: readonly [prefix: string, ground: GroundName][] = [
   ['/join', 'membership'],
   ['/grants', 'fund'],
   ['/board', 'membership'],
+  ['/roles', 'membership'],
   ['/privacy', 'legal'],
   ['/terms', 'legal'],
 ]

@@ -1,0 +1,190 @@
+/*
+ * Roles as a sign-up sheet, straight on the ground: a rule over each line, the role set large on
+ * the left, what it takes beside it, and a dashed blank at the end where a name would go.
+ */
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.role {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.75fr) minmax(190px, auto);
+  gap: 12px clamp(20px, 4vw, 64px);
+  align-items: start;
+  padding: clamp(26px, 4.4vh, 40px) 0;
+  border-top: 1px solid var(--rule);
+}
+
+.role:first-child {
+  border-top-color: var(--rule-strong);
+}
+
+.role:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.what {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+/* The sample tag sits on the title's baseline rather than at cap height. */
+.title > span {
+  vertical-align: 0.35em;
+}
+
+.link::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+}
+
+.link:focus-visible {
+  outline: none;
+}
+
+.role:has(.link:focus-visible) {
+  outline: 2px solid var(--frost);
+  outline-offset: 6px;
+  border-radius: 10px;
+}
+
+.summary {
+  max-width: 50ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* What it takes: the team, the time, and how long it's open. One line each, no labels. */
+.terms {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding-top: 8px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.team {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.terms > span:not(.team) {
+  color: var(--ink-soft);
+}
+
+.terms > .deadline {
+  color: var(--ink-dim);
+}
+
+/* Amber is the site's "not for long": the same tone a hackathon closing soon takes. */
+.terms > .soon {
+  color: var(--amber);
+}
+
+/* The blank at the end of the line. Dashed while it's empty; the hover inks it in. */
+.slot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  align-self: start;
+  margin-top: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgb(var(--frost-rgb) / 0.42);
+  color: var(--ink-soft);
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.arrow {
+  display: inline-block;
+}
+
+.role:has(.link:hover) .slot {
+  border-bottom: 1px solid var(--mint);
+  color: var(--ink);
+}
+
+.role:has(.link:hover) .arrow {
+  color: var(--mint);
+}
+
+/* The shorter sheet under a role's own page: the same lines at reading size. */
+.compact .role {
+  padding: clamp(18px, 3vh, 26px) 0;
+}
+
+.compact .title {
+  font-size: clamp(22px, 2.2vw, 28px);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.compact .summary {
+  font-size: 15px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .slot {
+    transition:
+      color 160ms ease-out,
+      border-color 160ms ease-out;
+  }
+
+  .arrow {
+    transition: transform 240ms var(--ease-out);
+  }
+
+  .role:has(.link:hover) .arrow {
+    transform: translateX(4px);
+  }
+}
+
+@media (max-width: 900px) {
+  .role {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr);
+  }
+
+  .slot {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-width: min(100%, 260px);
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .role {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .terms {
+    padding-top: 0;
+  }
+
+  .slot {
+    justify-self: stretch;
+  }
+}

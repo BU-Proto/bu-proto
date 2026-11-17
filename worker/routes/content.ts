@@ -4,8 +4,8 @@ import { adminSelect, inputToColumns, PUBLIC_ROWS, rowToItem, specFor, type DbRo
 import { ApiError, idParam, readBody } from '../lib/http'
 import type { AppEnv } from '../types'
 
-// Content the portal edits (events, hackathons, wins, board), driven by RESOURCE_SPECS, plus the
-// admin view of event RSVPs.
+// Content the portal edits (events, hackathons, wins, board, roles), driven by RESOURCE_SPECS, plus
+// the admin view of event RSVPs.
 
 const app = new Hono<AppEnv>()
 

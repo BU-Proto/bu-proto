@@ -21,12 +21,15 @@ export function specFor(resource: string): ResourceSpec {
 }
 
 /**
- * What to select (and RETURN) for admin views. Events carry their RSVP count; it's the one
- * per-resource query, so the portal can show it without a request per row.
+ * What to select (and RETURN) for admin views. Events carry their RSVP count and roles their
+ * application count, so the portal can show them without a request per row.
  */
 export function adminSelect(spec: ResourceSpec): string {
-  if (spec.resource !== 'events') return '*'
-  return `*, (SELECT COUNT(*) FROM rsvps WHERE rsvps.event_id = ${spec.table}.id) AS rsvp_count`
+  if (spec.resource === 'events') return `*, (SELECT COUNT(*) FROM rsvps WHERE rsvps.event_id = ${spec.table}.id) AS rsvp_count`
+  if (spec.resource === 'roles') {
+    return `*, (SELECT COUNT(*) FROM role_applications WHERE role_applications.role_id = ${spec.table}.id) AS application_count`
+  }
+  return '*'
 }
 
 function fromColumn(field: FieldSpec, value: unknown): unknown {
@@ -69,13 +72,14 @@ function toColumn(field: FieldSpec, value: unknown): string | number | null {
   }
 }
 
-/** A D1 row as the API object: field keys, plus id/createdAt/updatedAt (and rsvpCount when selected). */
+/** A D1 row as the API object: field keys, plus id/createdAt/updatedAt (and rsvpCount or applicationCount when selected). */
 export function rowToItem(spec: ResourceSpec, row: DbRow): Item {
   const item: Item = { id: row.id }
   for (const field of spec.fields) item[field.key] = fromColumn(field, row[field.column])
   item.createdAt = row.created_at
   item.updatedAt = row.updated_at
   if ('rsvp_count' in row) item.rsvpCount = Number(row.rsvp_count)
+  if ('application_count' in row) item.applicationCount = Number(row.application_count)
   return item
 }
 

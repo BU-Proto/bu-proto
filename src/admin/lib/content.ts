@@ -9,6 +9,7 @@ export type ContentRow = Record<string, unknown> & {
   createdAt: string
   updatedAt: string
   rsvpCount?: number
+  applicationCount?: number
 }
 
 /** The spec for /admin/:resource, or a 404 for anything that isn't a content type. */
@@ -229,6 +230,16 @@ const SECTIONS: Partial<Record<ContentResource, SectionPlan[]>> = {
     { title: 'Photos', keys: ['photo', 'gallery'] },
     { title: 'Publishing', keys: ['position', 'placeholder', 'published'] },
   ],
+  roles: [
+    { title: 'Basics', keys: ['title', 'team', 'summary', 'commitment', 'applyBy'] },
+    { title: 'Role page', hint: 'The write-up on the role’s own page, above the application.', keys: ['description'] },
+    {
+      title: 'Application',
+      hint: 'Changing a question doesn’t touch applications already sent: each keeps the questions it was asked.',
+      keys: ['questions'],
+    },
+    { title: 'Publishing', keys: ['position', 'placeholder', 'published'] },
+  ],
 }
 
 const LAYOUT: Partial<Record<ContentResource, Record<string, FieldLayout>>> = {
@@ -249,6 +260,11 @@ const LAYOUT: Partial<Record<ContentResource, Record<string, FieldLayout>>> = {
     funding: { wide: true },
     description: { rows: 10 },
     nextSteps: { rows: 4 },
+  },
+  roles: {
+    summary: { wide: true },
+    description: { rows: 12 },
+    questions: { rows: 5 },
   },
 }
 

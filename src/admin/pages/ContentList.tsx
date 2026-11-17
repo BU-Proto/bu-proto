@@ -44,7 +44,13 @@ export function Component() {
     return words.every((word) => text.includes(word))
   }
   const rows = items.filter(active.test).filter(matches)
-  const isEvents = resource === 'events'
+  // The one figure a row carries beyond its own columns: an event's RSVPs, a role's applications.
+  const tally =
+    resource === 'events'
+      ? { label: 'RSVPs', of: (row: ContentRow) => row.rsvpCount ?? 0 }
+      : resource === 'roles'
+        ? { label: 'Applications', of: (row: ContentRow) => row.applicationCount ?? 0 }
+        : null
   const lower = spec.label.toLowerCase()
 
   // The filter and the search live in the URL, so Back and a shared link land on the same list.
@@ -135,9 +141,9 @@ export function Component() {
                         {field?.label ?? key}
                       </th>
                     ))}
-                    {isEvents && (
+                    {tally && (
                       <th scope="col" className={admin.num}>
-                        RSVPs
+                        {tally.label}
                       </th>
                     )}
                     <th scope="col" className={styles.stateCol}>
@@ -169,9 +175,9 @@ export function Component() {
                           )}
                         </td>
                       ))}
-                      {isEvents && (
-                        <td className={`${admin.num} ${row.rsvpCount ? '' : admin.dim}`} data-label="RSVPs">
-                          {row.rsvpCount ?? 0}
+                      {tally && (
+                        <td className={`${admin.num} ${tally.of(row) ? '' : admin.dim}`} data-label={tally.label}>
+                          {tally.of(row)}
                         </td>
                       )}
                       <td data-label="Status">

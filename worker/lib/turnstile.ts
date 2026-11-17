@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import type { AppEnv } from '../types'
-import { ApiError } from './http'
+import { ApiError, bodyFields } from './http'
 
 // Cloudflare Turnstile on the public forms: the browser widget (src/components/Turnstile.tsx)
 // hands the form a token, and we check it with Siteverify before the route touches the database.
@@ -59,14 +59,14 @@ export async function verifyTurnstile(env: Env, token: string, ip: string | unde
 }
 
 /**
- * Route middleware for one public form: reads the token from the JSON body and refuses the request
- * unless Siteverify accepts it for this form (`action`, the same one the widget was rendered with)
- * on our hostname. Hono caches the parsed body, so the route can read it again.
+ * Route middleware for one public form: reads the token from the body (JSON, or a multipart form
+ * for the one that carries a file) and refuses the request unless Siteverify accepts it for this
+ * form (`action`, the same one the widget was rendered with) on our hostname. Hono caches the
+ * parsed body, so the route can read it again.
  */
 export function requireHuman(action: string): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
-    const raw: unknown = await c.req.json().catch(() => null)
-    const token = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>)[TOKEN_FIELD] : undefined
+    const token = (await bodyFields(c))?.[TOKEN_FIELD]
     if (typeof token !== 'string' || token === '' || token.length > 2048) {
       throw new ApiError(400, NOT_HUMAN, { [TOKEN_FIELD]: NOT_HUMAN })
     }

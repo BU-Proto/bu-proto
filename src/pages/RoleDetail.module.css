@@ -1,0 +1,158 @@
+/* One role: its name and what it takes over the field, the write-up on the ground at reading
+   width, then the application on a sheet of its own. */
+
+.page {
+  gap: clamp(40px, 7vh, 72px);
+}
+
+.head {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  max-width: 900px;
+}
+
+/* The same pool of ground the page intros stand on, so the words hold over the field. */
+.head::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -30% -30% -30% -20%;
+  background: radial-gradient(closest-side, rgb(var(--harbor-rgb) / 0.6), rgb(var(--harbor-rgb) / 0));
+  pointer-events: none;
+}
+
+.back {
+  display: inline-flex;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  text-shadow: var(--on-field-shadow);
+}
+
+.back:hover {
+  color: var(--ink);
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.title {
+  max-width: 14ch;
+}
+
+.title > span {
+  vertical-align: 0.6em;
+}
+
+.lede {
+  max-width: 46ch;
+  margin: 0;
+  font-size: clamp(17px, 1.6vw, 21px);
+  line-height: 1.45;
+  text-wrap: pretty;
+  text-shadow: var(--on-field-shadow);
+}
+
+/* What it takes, as a short row of answers under quiet questions. */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px clamp(28px, 4vw, 56px);
+  margin: 8px 0 0;
+  text-shadow: var(--on-field-shadow);
+}
+
+.facts > div {
+  display: grid;
+  gap: 3px;
+}
+
+.facts dt {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.facts dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.soon {
+  color: var(--amber);
+}
+
+.soonNote {
+  margin-left: 0.6em;
+  font-weight: 400;
+}
+
+.toForm {
+  margin-top: 8px;
+}
+
+/* The write-up stands on the ground at the width a guide's article keeps. */
+.about {
+  max-width: 760px;
+}
+
+/* The application: who's asking and why on the left, the fields on the right. */
+.apply {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: start;
+  padding: clamp(22px, 3.4vw, 40px);
+  /* Clear of the top bar when the button scrolls here. */
+  scroll-margin-top: var(--bar-clear);
+}
+
+.applyLead {
+  display: grid;
+  gap: 12px;
+}
+
+/* Which role the sheet is for, in the accent of what's open. */
+.applyFor {
+  margin: -4px 0 4px;
+  color: var(--mint);
+  font-size: 15px;
+}
+
+.applyText {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.privacy {
+  margin-top: 4px;
+}
+
+.closed {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: clamp(24px, 4vh, 40px) 0;
+  border-block: 1px solid var(--rule);
+}
+
+.others {
+  display: grid;
+  gap: clamp(14px, 2.4vh, 22px);
+}
+
+@media (max-width: 960px) {
+  .apply {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

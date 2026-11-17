@@ -1,4 +1,4 @@
-/* Fund interest and board interest: a summary, then one panel per person. */
+/* Fund interest, board interest and role applications: a summary, then one panel per person. */
 
 /* Board interest: how many people per seat, as a quiet line of names and figures. */
 .seats {
@@ -178,7 +178,8 @@
   --tone: var(--warn-ink);
 }
 
-.status button[data-tone='approved'] {
+.status button[data-tone='approved'],
+.status button[data-tone='accepted'] {
   --tone: var(--mint);
 }
 

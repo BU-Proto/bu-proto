@@ -29,8 +29,8 @@ app.use('/api/admin/*', requireAdmin)
 app.route('/', auth) //         /api/auth/*
 app.route('/', admins) //       /api/admin/me, /api/admin/admins
 app.route('/', content) //      /api/content/*, /api/admin/content/*, RSVP admin
-app.route('/', publicForms) //  /api/join, /api/fund-interest, /api/events/:id/rsvp
-app.route('/', people) //       /api/admin/members, /api/admin/fund, /api/admin/stats
+app.route('/', publicForms) //  /api/join, /api/fund-interest, /api/roles/:id/apply, /api/events/:id/rsvp
+app.route('/', people) //       /api/admin/members, /api/admin/fund, /api/admin/applications, /api/admin/stats
 app.route('/', email) //        /api/admin/email/*, /api/unsubscribe
 app.route('/', imports) //      /api/admin/hackathon-imports/*
 app.route('/', devpost) //      /api/admin/devpost/* (projects → win drafts)

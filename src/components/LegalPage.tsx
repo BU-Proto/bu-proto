@@ -49,7 +49,7 @@ function BlockView({ block }: { block: Block }) {
   )
 }
 
-/** Privacy and Terms: a contents list on the field beside the long text on deep glass. */
+/** Privacy and Terms: a contents list beside the long text, both straight on the ground. */
 export function LegalPage({ doc }: { doc: LegalDoc }) {
   return (
     <div className={ui.page}>
@@ -75,7 +75,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
           </ol>
         </nav>
 
-        <article className={`${ui.panelDeep} ${styles.doc}`}>
+        <article className={styles.doc}>
           {doc.sections.map((section) => (
             <section key={section.id} id={section.id} className={styles.section} aria-labelledby={`${section.id}-title`}>
               <h2 id={`${section.id}-title`} className={styles.heading} data-fog-clear>

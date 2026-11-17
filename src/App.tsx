@@ -4,7 +4,7 @@ import { Layout } from './components/Layout'
 import { LoadError, PageLoading } from './components/RouteStates'
 import { PLAYBOOK_HREF } from './content/guides/links'
 import { ORGS } from './content/resourcesHub'
-import { fetchContent, fetchEventPage, fetchHome, fetchWinPage } from './lib/content'
+import { fetchContent, fetchEventPage, fetchHome, fetchRolePage, fetchWinPage } from './lib/content'
 import { Board } from './pages/Board'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
 import { Events } from './pages/Events'
@@ -17,6 +17,8 @@ import { OrgPage } from './pages/OrgPage'
 import { Playbook } from './pages/Playbook'
 import { Privacy } from './pages/Privacy'
 import { Resources } from './pages/Resources'
+import { RoleDetail, RoleLoadError } from './pages/RoleDetail'
+import { Roles } from './pages/Roles'
 import { Terms } from './pages/Terms'
 import { TrackRecord } from './pages/TrackRecord'
 import { WinDetail, WinLoadError } from './pages/WinDetail'
@@ -86,6 +88,15 @@ const router = createBrowserRouter([
         HydrateFallback: PageLoading,
       },
       { path: 'board', Component: Board, loader: ({ request }) => fetchContent('board', request.signal), ...dataRoute },
+      // The parts of Proto that need someone, and each one's page with its application.
+      { path: 'roles', Component: Roles, loader: ({ request }) => fetchContent('roles', request.signal), ...dataRoute },
+      {
+        path: 'roles/:id',
+        Component: RoleDetail,
+        loader: ({ params, request }) => fetchRolePage(params.id, request.signal),
+        HydrateFallback: PageLoading,
+        ErrorBoundary: RoleLoadError,
+      },
       { path: 'join', Component: Join },
       { path: 'privacy', Component: Privacy },
       { path: 'terms', Component: Terms },

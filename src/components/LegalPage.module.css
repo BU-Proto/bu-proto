@@ -5,7 +5,7 @@
   text-shadow: var(--on-field-shadow);
 }
 
-/* Contents on the field at the left, the text at a reading measure beside it. */
+/* Contents at the left, the text at a reading measure beside it, both straight on the ground. */
 .layout {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 820px);
@@ -35,13 +35,12 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid rgb(var(--frost-rgb) / 0.28);
 }
 
+/* Set apart by space alone, as in a guide's contents. */
 .contentsList a {
   display: block;
-  padding: 7px 0;
-  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.14);
+  padding: 6px 0;
   color: var(--ink);
   font-size: 14px;
 }
@@ -55,10 +54,12 @@
   outline-offset: 2px;
 }
 
+/* Not in a panel: the text stands on the harbor at the column's own left edge, like a guide. */
 .doc {
   display: grid;
   gap: clamp(28px, 3.4vw, 40px);
-  padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 56px);
+  min-width: 0;
+  padding: clamp(18px, 2.6vw, 28px) 0 0;
   font-size: 16px;
   line-height: 1.7;
 }

@@ -117,6 +117,16 @@ export function SeatIcon(props: IconProps) {
   )
 }
 
+/** A sign-up sheet on a clipboard: the roles and who's applied for them. */
+export function SheetIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 4.5H6.5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-14a1 1 0 0 0-1-1H15" />
+      <path d="M9.5 3h5v3h-5zM9 11.5h6M9 15.5h4" />
+    </Svg>
+  )
+}
+
 export function PeopleIcon(props: IconProps) {
   return (
     <Svg {...props}>

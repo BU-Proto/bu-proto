@@ -12,12 +12,15 @@
 
 import { z } from 'zod'
 import {
+  APPLICATION_STATUSES,
   BOARD_SEATS,
   EVENT_KINDS,
   FUND_AMOUNTS,
   FUND_STATUSES,
+  MAX_ROLE_QUESTIONS,
   TRACKS,
   YEARS,
+  type ApplicationStatus,
   type ContentResource,
   type FundStatus,
 } from './constants'
@@ -139,10 +142,30 @@ export const boardMemberInput = z.object({
   ...flags,
 })
 
+/** A piece of Proto that needs someone: listed on /roles, applied for on its own page. */
+export const roleInput = z.object({
+  title: text(80),
+  /** The part of Proto it belongs to, e.g. Events or Design. Optional. */
+  team: optionalText(40),
+  /** One or two lines for the list. */
+  summary: optionalText(300),
+  /** How much time it takes, in words. Optional. */
+  commitment: optionalText(80),
+  /** The last day to apply (yyyy-mm-dd); empty while it's open until filled. */
+  applyBy: z.union([z.literal(''), isoDay]),
+  /** The write-up on the role's page: plain text, blank lines between paragraphs. */
+  description: optionalText(8000),
+  /** Questions of its own the application asks, on top of the usual ones. */
+  questions: z.array(text(200)).max(MAX_ROLE_QUESTIONS, `Up to ${MAX_ROLE_QUESTIONS} questions`),
+  position: z.number().int(),
+  ...flags,
+})
+
 export type EventInput = z.input<typeof eventInput>
 export type HackathonInput = z.input<typeof hackathonInput>
 export type WinInput = z.input<typeof winInput>
 export type BoardMemberInput = z.input<typeof boardMemberInput>
+export type RoleInput = z.input<typeof roleInput>
 
 interface Row {
   id: number
@@ -154,6 +177,7 @@ export type ProtoEvent = z.output<typeof eventInput> & Row
 export type Hackathon = z.output<typeof hackathonInput> & Row
 export type Win = z.output<typeof winInput> & Row
 export type BoardMember = z.output<typeof boardMemberInput> & Row
+export type Role = z.output<typeof roleInput> & Row
 
 /** GET /api/content/:resource/:id → { item }: one published row, or 404. */
 export interface ContentTypes {
@@ -161,6 +185,7 @@ export interface ContentTypes {
   hackathons: Hackathon
   wins: Win
   board: BoardMember
+  roles: Role
 }
 
 export const CONTENT_INPUTS = {
@@ -168,6 +193,7 @@ export const CONTENT_INPUTS = {
   hackathons: hackathonInput,
   wins: winInput,
   board: boardMemberInput,
+  roles: roleInput,
 } as const
 
 // ---- How each content resource maps to D1 and to the portal's editor ------------------------
@@ -350,6 +376,44 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       ...FLAG_FIELDS,
     ],
   },
+  roles: {
+    resource: 'roles',
+    table: 'roles',
+    label: 'Roles',
+    singular: 'Role',
+    titleKey: 'title',
+    summaryKeys: ['team', 'applyBy'],
+    orderBy: 'position ASC, id ASC',
+    fields: [
+      { key: 'title', column: 'title', label: 'Title', type: 'text', hint: 'What the person would be, e.g. Head of Partnerships.' },
+      { key: 'team', column: 'team', label: 'Team', type: 'text', hint: 'Optional: the part of Proto it belongs to, e.g. Board, Events.' },
+      { key: 'summary', column: 'summary', label: 'One or two lines', type: 'textarea', hint: 'Shown on the list of roles and under the title on the role’s page.' },
+      { key: 'commitment', column: 'commitment', label: 'Time it takes', type: 'text', hint: 'In words, e.g. About 3 hours a week, or One trip a semester.' },
+      {
+        key: 'applyBy',
+        column: 'apply_by',
+        label: 'Apply by',
+        type: 'date',
+        hint: 'Optional. The day after, the role leaves the list and its form closes. Leave it empty to keep it open until you unpublish it.',
+      },
+      {
+        key: 'description',
+        column: 'description',
+        label: 'About the role',
+        type: 'textarea',
+        hint: 'What they’d do, who it suits, what they’d get out of it. Blank lines make paragraphs. A short line on its own heads what follows it, and short lines under it become a list.',
+      },
+      {
+        key: 'questions',
+        column: 'questions',
+        label: 'Questions for applicants',
+        type: 'list',
+        hint: `Optional. One per line, up to ${MAX_ROLE_QUESTIONS}. Every application already asks for a name, BU email, year, a link and a résumé; these come after, and each needs an answer.`,
+      },
+      { key: 'position', column: 'position', label: 'Order', type: 'number', hint: 'Lower shows first.' },
+      ...FLAG_FIELDS,
+    ],
+  },
 }
 
 // ---- Public forms -----------------------------------------------------------------------------
@@ -407,6 +471,68 @@ export interface BoardInterest {
   note: string
   createdAt: string
 }
+
+/**
+ * A link someone typed by hand: "linkedin.com/in/ada" is given its https://, and only http(s)
+ * links pass, since the portal renders it as a link. Empty stays empty.
+ */
+const typedLink = z
+  .string()
+  .trim()
+  .max(300)
+  .transform((value) => (value === '' || /^https?:\/\//i.test(value) ? value : `https://${value}`))
+  .refine((value) => {
+    if (value === '') return true
+    try {
+      const url = new URL(value)
+      return (url.protocol === 'https:' || url.protocol === 'http:') && url.hostname.includes('.')
+    } catch {
+      return false
+    }
+  }, 'Paste a full link, like linkedin.com/in/you')
+
+/**
+ * POST /api/roles/:id/apply → 201 { ok: true }: an application for one published role. Sent as
+ * multipart/form-data, not JSON, because it carries a file: these fields, plus `resume` (a PDF of
+ * at most RESUME_MAX_BYTES, required) and each answer as `answers.0`, `answers.1`… Applying again
+ * with the same email replaces the earlier answers and résumé (200). A role past its apply-by day
+ * answers 400. `answers` line up with the role's `questions`, one each, all required.
+ */
+export const roleApplicationInput = z.object({
+  name: text(80),
+  email: buEmail,
+  year: z.enum(YEARS),
+  /** Something they've made, or a profile. Optional. */
+  link: typedLink.default(''),
+  answers: z.array(optionalText(1500)).max(MAX_ROLE_QUESTIONS).default([]),
+  ...honeypot,
+})
+export type RoleApplicationInput = z.input<typeof roleApplicationInput>
+
+/**
+ * GET /api/admin/applications → { items }: newest first.
+ * PATCH /api/admin/applications/:id → { item }. DELETE /api/admin/applications/:id → 204.
+ * GET /api/admin/applications/:id/resume → the PDF itself, to open in the browser.
+ */
+export interface RoleApplication {
+  id: number
+  /** Null once the role itself has been deleted; `roleTitle` still says what it was for. */
+  roleId: number | null
+  roleTitle: string
+  name: string
+  email: string
+  year: string
+  link: string
+  /** The résumé's file name and size in bytes; null for an application that somehow has none. */
+  resume: { name: string; size: number } | null
+  answers: { question: string; answer: string }[]
+  status: ApplicationStatus
+  notes: string
+  createdAt: string
+  updatedAt: string
+}
+
+export const applicationPatch = z.object({ status: z.enum(APPLICATION_STATUSES), notes: optionalText(2000) }).partial()
 
 /** POST /api/events/:id/rsvp → 201 { ok: true, count } (200 if already RSVP'd). Any email, not just BU. */
 export const rsvpInput = z.object({
@@ -537,6 +663,9 @@ export interface Stats {
   upcomingRsvps: number
   fundNew: number
   fundTotal: number
+  /** Applications for a role nobody has looked at yet, and all of them. */
+  applicationsNew: number
+  applicationsTotal: number
   admins: number
   /** Published wins that aren't samples: the number the site's record shows. */
   wins: number
@@ -838,8 +967,8 @@ export interface EventImportPreview {
 
 // ---- Portal: automatic emails -------------------------------------------------------------------
 
-/** The emails the public forms send on their own: a welcome, an RSVP, a fund and a board confirmation. */
-export const AUTOMATIC_EMAIL_KEYS = ['welcome', 'rsvp', 'fund', 'board'] as const
+/** The emails the public forms send on their own: a welcome, and an RSVP, fund, board and role application confirmation. */
+export const AUTOMATIC_EMAIL_KEYS = ['welcome', 'rsvp', 'fund', 'board', 'application'] as const
 export type AutomaticEmailKey = (typeof AUTOMATIC_EMAIL_KEYS)[number]
 
 /**

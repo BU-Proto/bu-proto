@@ -1,5 +1,5 @@
-// The emails the public forms send back: a welcome for a new member, a confirmation for an RSVP
-// and for the fund list. Each is sent from waitUntil after the form has answered, and never
+// The emails the public forms send back: a welcome for a new member, and a confirmation for an
+// RSVP, the fund list, a board seat and an application for a role. Each is sent from waitUntil after the form has answered, and never
 // throws, so a slow or failing Resend can't hold up or undo a sign-up. The portal previews and
 // test-sends them through the same builders, so what it shows is what people get.
 
@@ -141,4 +141,46 @@ function boardNoticeDrafts(env: Env, origin: string, person: BoardInterest): Dra
 export async function sendBoardInterest(env: Env, origin: string, person: BoardInterest) {
   await sendDraft(env, boardDraft(person), origin, 'board')
   for (const notice of boardNoticeDrafts(env, origin, person)) await sendDraft(env, notice, origin, 'board')
+}
+
+/** An application as the emails need it: who sent it, for which role, and what they wrote. */
+export interface ApplicationNotice {
+  name: string
+  email: string
+  year: string
+  roleTitle: string
+  link: string
+  answers: { question: string; answer: string }[]
+}
+
+export function applicationDraft(person: { name: string; email: string }, roleTitle: string): Draft {
+  const body = [
+    'We’ve got your application, {{name}}',
+    `Thanks for putting your name down for ${roleTitle}. Everyone who runs Proto is a student doing it around class, so give us a little time: we read every application, and we’ll write to your BU email if it’s a fit.`,
+    'In the meantime, the best way to get a feel for Proto is to come to a hack night.',
+    'Want to send a newer résumé? Send the form again with the same email and we’ll keep the newer one, or just reply to this email.',
+  ].join('\n\n')
+  return { recipient: person, subject: `We got your application: ${roleTitle}`, body, reason: { kind: 'role' } }
+}
+
+/** Tells the owners (ADMIN_EMAILS) an application came in, with what it says. */
+function applicationNoticeDrafts(env: Env, origin: string, application: ApplicationNotice): Draft[] {
+  const body = [
+    `${application.name} applied for ${application.roleTitle}`,
+    `${application.name} (${application.email}, ${application.year}) applied for ${application.roleTitle}.`,
+    ...application.answers.map(({ question, answer }) => `${question}\n${answer}`),
+    ...(application.link ? [`Their link: ${application.link}`] : []),
+    `Their résumé and every other application: ${origin}/admin/roles/applications`,
+  ].join('\n\n')
+  return [...owners(env)].map((email) => ({
+    recipient: { email, name: '' },
+    subject: `Application: ${application.name}, ${application.roleTitle}`,
+    body,
+    reason: { kind: 'role' },
+  }))
+}
+
+export async function sendApplicationEmails(env: Env, origin: string, application: ApplicationNotice) {
+  await sendDraft(env, applicationDraft(application, application.roleTitle), origin, 'application')
+  for (const notice of applicationNoticeDrafts(env, origin, application)) await sendDraft(env, notice, origin, 'application')
 }

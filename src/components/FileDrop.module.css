@@ -1,0 +1,169 @@
+/*
+ * A place to drop one file. Dashed while it's empty, like the blank on the roles sheet and an open
+ * seat's frame on the board; a solid edge once it holds something. It keeps the form fields'
+ * ground, corner and ink so it reads as one of them.
+ */
+
+.drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 92px;
+  padding: 18px 20px;
+  border: 1px dashed rgb(var(--frost-rgb) / 0.42);
+  border-radius: 12px;
+  background: var(--harbor);
+  color: var(--ink);
+}
+
+/* The real input, over the whole area and see-through: it takes the click, the drop and the
+   keyboard, and the browser's "choose a file" bubble points at the area. */
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* The browser draws its own button inside the input; the pointer should say "click" over that too. */
+.input::file-selector-button {
+  cursor: pointer;
+}
+
+.drop:hover {
+  border-color: rgb(var(--frost-rgb) / 0.7);
+}
+
+.drop:has(.input:focus-visible) {
+  border-style: solid;
+  border-color: var(--frost);
+  box-shadow: 0 0 0 3px rgb(var(--frost-rgb) / 0.2);
+}
+
+/* A sheet of paper with its corner turned: two lines on it while it's blank, a tick once it's in. */
+.page {
+  flex: none;
+  width: 30px;
+  height: 38px;
+  fill: none;
+  stroke: var(--ink-soft);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tick {
+  stroke: var(--mint);
+  stroke-width: 2;
+}
+
+.text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.prompt {
+  font-size: 15px;
+  text-wrap: pretty;
+}
+
+/* The words that say it can be clicked, with the site's mint rule under them. */
+.choose {
+  border-bottom: 1px solid rgb(var(--mint-rgb) / 0.62);
+  font-weight: 500;
+}
+
+.drop:hover .choose {
+  border-bottom-color: var(--mint);
+}
+
+.rules {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.problem {
+  color: var(--coral);
+  font-size: 13px;
+}
+
+.name {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Above the see-through input, or the click would open the file picker instead. */
+.remove {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  padding: 6px 2px;
+  border: 0;
+  border-bottom: 1px solid rgb(var(--frost-rgb) / 0.32);
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.remove:hover {
+  border-bottom-color: var(--frost);
+  color: var(--ink);
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Holding a file: the edge inked in, as the sheet's blank is on hover. */
+.drop[data-state='filled'] {
+  border-style: solid;
+  border-color: var(--rule-strong);
+}
+
+.drop[data-state='filled'] .page {
+  stroke: var(--ink);
+}
+
+/* A file held over it: mint, the colour of acting. */
+.drop[data-state='over'] {
+  border-style: solid;
+  border-color: var(--mint);
+  background: rgb(var(--mint-rgb) / 0.07);
+}
+
+.drop[data-state='over'] .page {
+  stroke: var(--mint);
+}
+
+/* Refused, by the browser's check or the server's. */
+.drop[data-problem],
+.drop:has(.input[aria-invalid='true']) {
+  border-color: var(--coral);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .drop {
+    transition:
+      border-color 160ms ease-out,
+      background-color 160ms ease-out;
+  }
+}
+
+@media (max-width: 480px) {
+  .drop {
+    gap: 14px;
+    padding: 16px;
+  }
+}
