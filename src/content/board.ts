@@ -33,7 +33,7 @@ export const BOARD_FORMING = {
 export const OPEN_SEATS: readonly { role: Exclude<BoardSeat, 'Not sure yet'>; detail: string }[] = [
   {
     role: 'Head of Partnerships',
-    detail: 'Outside BU: sponsors, companies, and partner organisations and hackathons.',
+    detail: 'Outside BU: sponsors, companies, and partner organizations and hackathons.',
   },
   {
     role: 'Head of the Fund',
@@ -57,7 +57,7 @@ export const OPEN_SEAT = {
 export const BOARD_FORM = {
   id: 'throw-your-hat-in',
   title: 'Throw your hat in the ring',
-  text: 'Tell us which seat and what you’d bring to it: what you’ve built, run or organised before, and what you’d take on first. We read every note and reach out about the ones that fit.',
+  text: 'Tell us which seat and what you’d bring to it: what you’ve built, run or organized before, and what you’d take on first. We read every note and reach out about the ones that fit.',
   submit: 'Throw your hat in',
   privacy: 'We use this only to talk to you about joining the board.',
 } as const

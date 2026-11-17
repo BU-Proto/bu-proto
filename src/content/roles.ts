@@ -6,16 +6,17 @@ import type { PageIntro } from './types'
 
 export const ROLES_INTRO: PageIntro = {
   path: '~/proto/roles',
-  title: 'Help run Proto',
-  lede: 'Proto is run by BU students in the hours around class. Nobody’s paid: you get a say in how it runs and something real to point to. These are the parts that need someone now.',
+  title: 'Founding board',
+  lede: 'Proto is picking its first board. Four seats, each one you’d build from zero, with your name on it and a real thing to point to when you’re done.',
 }
 
 export const ROLES_LIST = {
-  /** "4 roles open now" */
-  title: (count: number) => `${count} ${count === 1 ? 'role' : 'roles'} open now`,
+  /** "4 founding seats open" */
+  title: (count: number) => `${count} founding ${count === 1 ? 'seat' : 'seats'} open`,
   /** The line each role ends on, set on a dashed rule like a blank on a sign-up sheet. */
   cta: 'Put your name down',
-  untilFilled: 'Open until filled',
+  /** Said of a role with no apply-by day of its own. */
+  untilFilled: 'First board picked Dec 5',
 } as const
 
 export const ROLES_EMPTY = {
@@ -34,8 +35,9 @@ export const ROLES_ELSE = {
 } as const
 
 export const ROLE_PAGE = {
-  back: 'All roles',
-  facts: { team: 'Team', commitment: 'Time it takes', applyBy: 'Apply by' },
+  back: 'Founding board',
+  /** `timeline` stands in for `applyBy` when a role has no apply-by day. */
+  facts: { team: 'Team', commitment: 'Time it takes', applyBy: 'Apply by', timeline: 'Timeline' },
   apply: 'Put your name down',
   others: 'Also open',
   closed: {
