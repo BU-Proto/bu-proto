@@ -10,6 +10,7 @@ import motion from './motion/motion.module.css'
 import { SampleTag } from './SampleTag'
 import ui from './ui.module.css'
 import styles from './WinSheet.module.css'
+import { winPath } from '../lib/paths'
 
 const LETTER_COPIES = [0, 1, 2, 3]
 const ROLL_STEP = 62.5
@@ -242,7 +243,7 @@ export function WinTile({ win, side, details = false, eager = false }: WinTilePr
           {content}
         </a>
       ) : (
-        <Link className={styles.tile} data-link to={`/wins/${win.id}`}>
+        <Link className={styles.tile} data-link to={winPath(win)}>
           {content}
         </Link>
       )}

@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono'
 import { CONTENT_INPUTS, type ResourceSpec, type Rsvp } from '../../shared/api'
+import { NAME_FIELDS, slugOf, type NamedResource } from '../../shared/slug'
 import { adminSelect, inputToColumns, PUBLIC_ROWS, rowToItem, specFor, type DbRow, type Item } from '../lib/content'
 import { ApiError, idParam, readBody } from '../lib/http'
 import type { AppEnv } from '../types'
@@ -9,13 +10,38 @@ import type { AppEnv } from '../types'
 
 const app = new Hono<AppEnv>()
 
-/** Validate a content body against its schema, plus the rules a single field can't express. */
-async function readContent(c: Context<AppEnv>, spec: ResourceSpec): Promise<Item> {
+const KIND_NAMES: Record<NamedResource, string> = { events: 'event', wins: 'win', roles: 'role' }
+
+/**
+ * Validate a content body against its schema, plus the rules a single field can't express. `id`
+ * is the row being edited, if it's an edit.
+ */
+async function readContent(c: Context<AppEnv>, spec: ResourceSpec, id?: number): Promise<Item> {
   const input = (await readBody(c, CONTENT_INPUTS[spec.resource])) as Item
   if (spec.resource === 'hackathons' && String(input.ends) < String(input.starts)) {
     throw new ApiError(400, 'Check the highlighted fields.', { ends: 'Ends before it starts' })
   }
+  if (spec.resource in NAME_FIELDS) await assertOwnName(c, spec.resource as NamedResource, input, id)
   return input
+}
+
+/**
+ * Event, win and role pages live at their name (/events/spring-demo-night), so no two of one kind
+ * may come out the same in a URL, drafts included, or one would hide the other once published.
+ */
+async function assertOwnName(c: Context<AppEnv>, resource: NamedResource, input: Item, id?: number) {
+  const field = NAME_FIELDS[resource]
+  const slug = slugOf(String(input[field] ?? ''))
+  if (!slug) throw new ApiError(400, 'Check the highlighted fields.', { [field]: 'Needs at least one letter or number' })
+  const { results } = await c.env.DB.prepare(`SELECT id, ${field} AS name FROM ${resource} WHERE id IS NOT ?`)
+    .bind(id ?? null)
+    .all<{ id: number; name: string }>()
+  const taken = results.find((row) => slugOf(row.name) === slug)
+  if (taken) {
+    throw new ApiError(409, 'Check the highlighted fields.', {
+      [field]: `Another ${KIND_NAMES[resource]} is called “${taken.name}”. The name is its web address, so give this one its own.`,
+    })
+  }
 }
 
 // Public site: published rows only. no-store so an edit in the portal shows up on the next load.
@@ -61,7 +87,7 @@ app.post('/api/admin/content/:resource', async (c) => {
 app.put('/api/admin/content/:resource/:id', async (c) => {
   const spec = specFor(c.req.param('resource'))
   const id = idParam(c)
-  const { columns, values } = inputToColumns(spec, await readContent(c, spec))
+  const { columns, values } = inputToColumns(spec, await readContent(c, spec, id))
   const row = await c.env.DB.prepare(
     `UPDATE ${spec.table} SET ${columns.map((column) => `${column} = ?`).join(', ')}, updated_at = datetime('now')
      WHERE id = ? RETURNING ${adminSelect(spec)}`,

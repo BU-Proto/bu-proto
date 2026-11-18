@@ -41,6 +41,7 @@ import { useRsvp } from '../lib/useRsvp'
 import { glyphTexture, rhythmColumn } from '../lib/glyphArt'
 import { GROUND } from '../lib/pageGround'
 import styles from './Home.module.css'
+import { eventPath } from '../lib/paths'
 
 const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 
@@ -100,7 +101,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
         </span>
       </p>
       <h4 className={styles.eventTitle} data-reveal="rise" style={after(80)}>
-        <Link to={`/events/${event.id}`}>{event.title}</Link>
+        <Link to={eventPath(event)}>{event.title}</Link>
         <SampleTag show={event.placeholder} />
       </h4>
       {/* Kind, time and place, set apart by space and tone rather than separators. */}
@@ -116,7 +117,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
       )}
       <div className={styles.actions} data-reveal="rise" style={after(260)}>
         <RsvpButton rsvp={rsvp} prominent />
-        <Link className={ui.textLink} to={`/events/${event.id}`}>
+        <Link className={ui.textLink} to={eventPath(event)}>
           {NEXT_EVENT.details}
           <span className={ui.srOnly}> about {event.title}</span>
         </Link>

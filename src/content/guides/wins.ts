@@ -1,7 +1,9 @@
-// The wins the guides point at. The ids match the wins table in production (7 to 16), so
-// `/wins/<id>` links hold. If a win is re-imported under a new id, update it here. The covers
-// and photos are the ones in each win's Devpost gallery, which the import copies too.
+// The wins the guides point at. Links go to each win's page by its project name
+// (/wins/super-artificial-bros), so `project` (or `listedAs`) must match its name in the portal. The ids
+// match the wins table in production (7 to 16). The covers and photos are the ones in each win's
+// Devpost gallery, which the import copies too.
 
+import { winPath } from '../../lib/paths'
 import type { GuideImage, GuideLink, WinRef } from './types'
 
 const DEVPOST_PHOTOS = 'https://d112y698adiu2z.cloudfront.net/photos/production/software_photos/'
@@ -22,6 +24,7 @@ export const NEMO: WinRef = {
 export const ECOAPI: WinRef = {
   id: 7,
   project: 'EcoApi',
+  listedAs: 'EcoApi(Recost)',
   prize: 'Best Web API (1st Place)',
   event: 'HackIllinois 2026',
   cover: devpost('004/386/258/datas/original.png'),
@@ -92,7 +95,7 @@ export const SUPER_ARTIFICIAL_BROS: WinRef = {
 }
 
 export function winHref(win: WinRef): string {
-  return `/wins/${win.id}`
+  return winPath({ project: win.listedAs ?? win.project })
 }
 
 /** An inline link to a win's page, named by the project. */

@@ -18,6 +18,7 @@ import { agendaLine, isPast, placeLines } from '../lib/events'
 import { rememberImageRatio } from '../lib/imageRatio'
 import { useRsvp, type RsvpState } from '../lib/useRsvp'
 import styles from './EventDetail.module.css'
+import { eventPath } from '../lib/paths'
 
 /** Width over height from which a picture is wide enough to run across the page as a banner. */
 const BANNER_FROM = 1.25
@@ -44,7 +45,7 @@ export function EventDetail() {
   const { event, events, photoRatio } = useLoaderData<EventPageData>()
   const { previous, next } = neighboursOf(events, event.id)
   const neighbour = (other: ProtoEvent) => ({
-    to: `/events/${other.id}`,
+    to: eventPath(other),
     name: clipAtWord(other.title, NEIGHBOUR_NAME_MAX),
     meta: formatDay(other.date),
   })
@@ -128,7 +129,7 @@ type Shape = 'flyer' | 'banner'
  * place reads under the photo (see Body) and the lede is left to the events list.
  */
 function Head({ event, past, rsvp, shape }: { event: ProtoEvent; past: boolean; rsvp: RsvpState; shape: Shape }) {
-  const pageUrl = `${window.location.origin}/events/${event.id}`
+  const pageUrl = `${window.location.origin}${eventPath(event)}`
   const ics = `data:text/calendar;charset=utf-8,${encodeURIComponent(eventToIcs(event, pageUrl))}`
 
   return (
