@@ -24,7 +24,7 @@ export function About() {
 
   return (
     <div className={`${ui.page} ${styles.page}`}>
-      <title>{`${ABOUT_INTRO.tab} · ${BRAND.full}`}</title>
+      <title>{`${ABOUT_INTRO.tab} · ${BRAND.name}`}</title>
 
       <header className={styles.intro} data-ground-after="">
         <h1 className={styles.title} data-fog-clear>

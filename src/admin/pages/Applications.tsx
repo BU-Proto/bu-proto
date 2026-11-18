@@ -221,7 +221,7 @@ function Entry({ entry, onSaved, onRoleFilled, onDelete }: EntryProps) {
   const [saving, setSaving] = useState<'status' | 'notes' | 'role' | null>(null)
   const [error, setError] = useState('')
   const first = entry.name.trim().split(/\s+/)[0]
-  const mail = `mailto:${entry.email}?subject=${encodeURIComponent(`Your BU Proto application: ${entry.roleTitle}`)}`
+  const mail = `mailto:${entry.email}?subject=${encodeURIComponent(`Your Proto application: ${entry.roleTitle}`)}`
 
   const patch = async (kind: 'status' | 'notes', body: { status?: ApplicationStatus; notes?: string }, undo = true) => {
     if (saving) return

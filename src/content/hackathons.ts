@@ -27,6 +27,6 @@ export const CARD = {
   travel: 'Travel',
   covered: 'Covered',
   notConfirmed: 'Not confirmed',
-  going: (count: number) => (count === 1 ? 'BU Proto is going, 1 of us so far' : `BU Proto is going, ${count} of us so far`),
+  going: (count: number) => (count === 1 ? 'Proto is going, 1 of us so far' : `Proto is going, ${count} of us so far`),
   newTab: '(opens the hackathon’s site in a new tab)',
 } as const

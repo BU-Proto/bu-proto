@@ -7,8 +7,8 @@
   "compatibility_date": "2026-11-01",
   "upload_source_maps": true,
 
-  // The site lives at buproto.com (its DNS is on Cloudflare). Kept here so a deploy never drops it.
-  "routes": [{ "pattern": "buproto.com", "custom_domain": true }],
+  // The site lives at proto.boston (its DNS is on Cloudflare). Kept here so a deploy never drops it.
+  "routes": [{ "pattern": "proto.boston", "custom_domain": true }],
   "observability": { "enabled": true },
 
   // The site is the Vite build. Every unknown path serves index.html for the client router;
@@ -49,7 +49,7 @@
   // no RESEND_API_KEY, so their emails are logged, not sent.
   "previews": {
     "vars": {
-      "EMAIL_FROM": "BU Proto Preview <hello@buproto.com>",
+      "EMAIL_FROM": "Proto Preview <hello@proto.boston>",
       "EMAIL_REPLY_TO": ""
     },
     "d1_databases": [
@@ -70,8 +70,8 @@
   },
 
   "vars": {
-    // Sender for every email. buproto.com has to be verified in Resend before this sends.
-    "EMAIL_FROM": "BU Proto <hello@buproto.com>",
+    // Sender for every email. proto.boston has to be verified in Resend before this sends.
+    "EMAIL_FROM": "Proto <hello@proto.boston>",
     // Optional reply-to address for every email.
     "EMAIL_REPLY_TO": ""
   }
@@ -82,5 +82,5 @@
   //                                            portal. Comma-separated; a secret so personal
   //                                            emails stay out of this public repo
   //   RESEND_API_KEY                           leave unset locally to log emails instead of sending
-  //   TURNSTILE_SECRET_KEY                     the buproto.com widget's secret; empty locally uses the test key
+  //   TURNSTILE_SECRET_KEY                     the proto.boston widget's secret; empty locally uses the test key
 }

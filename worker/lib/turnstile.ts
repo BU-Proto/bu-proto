@@ -14,7 +14,7 @@ export const TOKEN_FIELD = 'cf-turnstile-response'
 const NOT_HUMAN = 'Couldn’t confirm you’re human. Try again.'
 
 /** Where the widget may be solved in production. Never localhost: a token minted there isn't ours. */
-const HOSTNAMES = ['buproto.com']
+const HOSTNAMES = ['proto.boston']
 
 /** Cloudflare's always-pass test secret. Its answers carry sample hostname and action values. */
 const TEST_SECRET = '1x0000000000000000000000000000000AA'

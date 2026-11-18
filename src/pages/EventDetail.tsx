@@ -52,7 +52,7 @@ export function EventDetail() {
 
   return (
     <>
-      <title>{`${event.title} · ${BRAND.full}`}</title>
+      <title>{`${event.title} · ${BRAND.name}`}</title>
       {/* Keyed by id: moving to the next event starts its RSVP, and its picture's shape, afresh. */}
       <EventPage key={event.id} event={event} photoRatio={photoRatio}>
         <DetailNav

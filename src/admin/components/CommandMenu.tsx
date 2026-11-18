@@ -142,7 +142,7 @@ export function CommandMenu({ open, onClose, onSignOut }: CommandMenuProps) {
         id: 'site',
         group: 'Account',
         label: 'View the site',
-        keywords: 'public open buproto',
+        keywords: 'public open proto boston',
         icon: ArrowOutIcon,
         run: () => window.open('/', '_blank', 'noreferrer'),
       },

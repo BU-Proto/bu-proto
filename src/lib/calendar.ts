@@ -133,7 +133,7 @@ export function eventToIcs(event: CalendarEvent, url: string, now = new Date()):
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//BU Proto//Events//EN',
+    'PRODID:-//Proto//Events//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     ...(range ? NEW_YORK : []),

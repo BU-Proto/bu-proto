@@ -11,12 +11,12 @@
 
   /* Grounds, darkest first: the frame round everything, the sheet pages sit on (the site's own
      harbor), panels a step above it, and what floats over those. Inputs are sunk into panels. */
-  --side: #04131f;
+  --side: #000;
   --ground: var(--harbor);
   --surface: color-mix(in srgb, var(--navy) 58%, var(--harbor));
   --surface-raised: var(--navy);
   --surface-sunk: rgb(var(--harbor-rgb) / 0.66);
-  --scrim: rgb(2 10 18 / 0.66);
+  --scrim: rgb(0 0 0 / 0.66);
 
   /* Lines and fills, all frost at low strength so they sit on any of the grounds above. */
   --line: rgb(var(--frost-rgb) / 0.07);

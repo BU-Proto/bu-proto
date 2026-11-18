@@ -14,7 +14,7 @@ export const BOARD_INTRO: PageIntro = {
 export const BOARD_CONTACT = {
   lead: 'Questions, sponsorships or a project you want to pitch:',
   email: CONTACT_EMAIL,
-  linkedin: 'Follow BU Proto on LinkedIn',
+  linkedin: 'Follow Proto on LinkedIn',
 } as const
 
 const SEAT_COUNTS: Record<number, string> = { 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six' }

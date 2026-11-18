@@ -10,7 +10,7 @@ export function Footer() {
       <div className={styles.about}>
         <p className={styles.brand} data-fog-clear>
           <img src={BRAND.seal} alt="" width={20} height={20} />
-          {BRAND.full}
+          {BRAND.name}
         </p>
         <p className={styles.line} data-fog-clear>
           {FOOTER.line}

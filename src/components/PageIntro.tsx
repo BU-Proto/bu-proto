@@ -19,7 +19,7 @@ export function PageIntro({
 }) {
   return (
     <header className={ui.intro} data-ground-after={groundAfter ? '' : undefined}>
-      <title>{`${intro.title} · ${BRAND.full}`}</title>
+      <title>{`${intro.title} · ${BRAND.name}`}</title>
       <h1 className={ui.introTitle} data-fog-clear>
         {intro.title}
       </h1>

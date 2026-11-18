@@ -186,7 +186,7 @@ function gatherFacts(units: Unit[]): Unit[] {
 
 /**
  * The names in a closing "Hosted by A | B | C", or null when the line is anything more than a
- * bare list of names: "Hosted by the BU Proto board, with food from Rionium." is a sentence.
+ * bare list of names: "Hosted by the Proto board, with food from Rionium." is a sentence.
  */
 function hostNames(block: string): string[] | null {
   if (block.includes('\n') || /[.!?]$/.test(block)) return null

@@ -1,6 +1,6 @@
-# BU Proto concept
+# Proto concept
 
-BU Proto (working name). a BU-sponsored home base for anyone who makes things: first-time CS students, hackathon regulars, student founders. not framed as a club, don't use the word "club" anywhere on the site.
+Proto (working name). a BU-sponsored home base for anyone who makes things: first-time CS students, hackathon regulars, student founders. not framed as a club, don't use the word "club" anywhere on the site.
 
 ## three tracks
 

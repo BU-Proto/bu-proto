@@ -118,7 +118,7 @@ export function RoleDetail() {
 
   return (
     <article className={`${ui.page} ${styles.page}`}>
-      <title>{`${role.title} · ${BRAND.full}`}</title>
+      <title>{`${role.title} · ${BRAND.name}`}</title>
 
       <header className={styles.head} data-ground-after="">
         <Link className={styles.back} to="/roles" data-fog-clear>

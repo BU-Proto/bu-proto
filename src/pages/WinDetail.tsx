@@ -34,7 +34,7 @@ export function WinDetail() {
 
   return (
     <DetailPage>
-      <title>{`${win.project} · ${BRAND.full}`}</title>
+      <title>{`${win.project} · ${BRAND.name}`}</title>
 
       <DetailOpener photo={win.photo} alt={`${win.project} at ${win.event}`}>
         <p className={detail.kicker} data-hue="rose" data-fog-clear>

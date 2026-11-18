@@ -203,7 +203,7 @@ export function Home() {
 
   return (
     <>
-      <title>{`${BRAND.full} · The home base for building things at BU`}</title>
+      <title>{`${BRAND.name} · The home base for building things at BU`}</title>
       <Hero />
 
       {/* Everything below the hero settles in as it comes up the screen (see motion/useReveal). */}

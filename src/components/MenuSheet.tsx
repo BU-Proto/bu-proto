@@ -39,7 +39,7 @@ export function MenuSheet() {
           <div className={styles.head}>
             <span className={styles.title}>
               <img src={BRAND.seal} alt="" width={20} height={20} />
-              {BRAND.full}
+              {BRAND.name}
             </span>
             <IconButton label="Close menu" onClick={close}>
               <CloseIcon />

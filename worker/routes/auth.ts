@@ -39,9 +39,9 @@ function finish(c: Context<AppEnv>, popup: boolean, to: string): Response {
   const target = JSON.stringify(to).replaceAll('<', '\\u003c')
   const message = JSON.stringify({ type: AUTH_CHANNEL, to }).replaceAll('<', '\\u003c')
   c.header('Cache-Control', 'no-store')
-  return c.html(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Signing in · BU Proto</title>
+  return c.html(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Signing in · Proto</title>
 <meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;display:grid;place-items:center;min-height:100vh;background:#061a2e;color:#f6fbff;font:15px/1.5 Inter,system-ui,sans-serif">
+<body style="margin:0;display:grid;place-items:center;min-height:100vh;background:#000;color:#fff;font:15px/1.5 Inter,system-ui,sans-serif">
 <p>Signing you in…</p>
 <script>
 (function () {

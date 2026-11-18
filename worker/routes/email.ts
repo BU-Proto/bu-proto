@@ -312,41 +312,41 @@ function page(title: string, content: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="dark">
-<title>${escapeHtml(title)} · BU Proto</title>
+<title>${escapeHtml(title)} · Proto</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; }
-  html { background: #061a2e; }
-  body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; color: #f6fbff;
+  html { background: #000; }
+  body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; grid-template-rows: auto 1fr auto; color: #fff;
     padding: max(18px, env(safe-area-inset-top, 0px)) 16px max(20px, env(safe-area-inset-bottom, 0px));
     font: 15px/1.55 Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased;
     background:
       radial-gradient(38% 46% at 42% 30%, rgba(233, 161, 157, .95), rgba(214, 161, 171, .55) 45%, rgba(214, 161, 171, 0) 100%),
       radial-gradient(45% 55% at 82% 92%, rgba(193, 186, 206, .9), rgba(193, 186, 206, 0) 100%),
       radial-gradient(60% 80% at 0% 0%, #0576ad, rgba(5, 118, 173, 0) 100%),
-      linear-gradient(115deg, #0477ac 0%, #0391c2 38%, #3aa7c8 62%, #1ea4cc 100%) #061a2e; }
+      linear-gradient(115deg, #0477ac 0%, #0391c2 38%, #3aa7c8 62%, #1ea4cc 100%) #000; }
   .brand { color: inherit; text-decoration: none; font-size: 18px; font-weight: 400;
-    letter-spacing: -.01em; text-shadow: 0 1px 2px rgba(0, 25, 55, .55), 0 0 18px rgba(0, 25, 55, .45); justify-self: start; }
+    letter-spacing: -.01em; text-shadow: 0 1px 2px rgba(0, 0, 0, .55), 0 0 18px rgba(0, 0, 0, .45); justify-self: start; }
   main { align-self: center; justify-self: center; width: min(440px, 100%); display: grid; gap: 14px; padding: 26px 28px 28px;
     border: 1px solid rgba(255, 255, 255, .36); border-radius: 28px;
-    background: linear-gradient(rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)), rgba(6, 30, 56, .34);
+    background: linear-gradient(rgba(255, 255, 255, .15), rgba(255, 255, 255, .15)), rgba(0, 0, 0, .34);
     -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%);
-    box-shadow: 0 40px 90px -40px rgba(0, 15, 35, .85), inset 0 1px 0 rgba(255, 255, 255, .35);
-    text-shadow: 0 1px 2px rgba(0, 25, 55, .3); }
-  .path { margin: 0; color: rgba(246, 251, 255, .76); font: 12px 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
+    box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .85), inset 0 1px 0 rgba(255, 255, 255, .35);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
+  .path { margin: 0; color: rgba(255, 255, 255, .76); font: 12px 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
   .caret { margin-left: 2px; color: #9df0a8; }
   h1 { margin: 0; font-size: clamp(28px, 6vw, 34px); font-weight: 300; letter-spacing: -.03em; line-height: 1.1; text-wrap: balance; }
-  p { margin: 0; color: rgba(246, 251, 255, .82); }
+  p { margin: 0; color: rgba(255, 255, 255, .82); }
   form { margin: 6px 0 0; }
   button { width: 100%; min-height: 48px; padding: 12px 20px; border: 1px solid #fff; border-radius: 999px; background: #fff;
-    color: #0b2a46; font: 500 14px Inter, system-ui, sans-serif; cursor: pointer; box-shadow: 0 14px 34px -16px rgba(0, 25, 55, .7); }
+    color: #000; font: 500 14px Inter, system-ui, sans-serif; cursor: pointer; box-shadow: 0 14px 34px -16px rgba(0, 0, 0, .7); }
   button:hover { background: #eefbf0; }
   button:focus-visible, a:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-  .fine { color: rgba(246, 251, 255, .7); font: 11px/1.6 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
+  .fine { color: rgba(255, 255, 255, .7); font: 11px/1.6 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
   .fine::before { content: '> '; color: #9df0a8; }
-  .home { justify-self: center; color: rgba(246, 251, 255, .85); font-size: 13px; text-decoration: none;
-    text-shadow: 0 1px 2px rgba(0, 25, 55, .55), 0 0 18px rgba(0, 25, 55, .45); }
+  .home { justify-self: center; color: rgba(255, 255, 255, .85); font-size: 13px; text-decoration: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .55), 0 0 18px rgba(0, 0, 0, .45); }
   .home:hover { color: #fff; }
   @media (prefers-reduced-motion: no-preference) {
     main { animation: rise 500ms cubic-bezier(.2, .8, .2, 1); }
@@ -364,7 +364,7 @@ function page(title: string, content: string): string {
 <p class="path">~/unsubscribe<span class="caret">_</span></p>
 ${content}
 </main>
-<a class="home" href="/">Back to BU Proto</a>
+<a class="home" href="/">Back to Proto</a>
 </body>
 </html>
 `
@@ -388,7 +388,7 @@ const badLink = (c: Context) =>
     c,
     'Link incomplete',
     `<h1>This link looks incomplete.</h1>
-<p>Open the unsubscribe link from the bottom of a BU Proto email again, or just reply to the email and we'll take you off the list.</p>`,
+<p>Open the unsubscribe link from the bottom of a Proto email again, or just reply to the email and we'll take you off the list.</p>`,
     400,
   )
 
@@ -398,8 +398,8 @@ app.get('/api/unsubscribe', (c) => {
   return htmlPage(
     c,
     'Unsubscribe',
-    `<h1>Unsubscribe from BU Proto emails?</h1>
-<p>You'll stop getting member emails from BU Proto. You can join again any time from the site.</p>
+    `<h1>Unsubscribe from Proto emails?</h1>
+<p>You'll stop getting member emails from Proto. You can join again any time from the site.</p>
 <form method="post" action="/api/unsubscribe?token=${escapeHtml(encodeURIComponent(token))}">
 <button type="submit">Unsubscribe</button>
 </form>
@@ -419,7 +419,7 @@ app.post('/api/unsubscribe', async (c) => {
     c,
     "You're unsubscribed",
     `<h1>You're unsubscribed.</h1>
-<p>BU Proto won't send you member emails anymore. Event updates for things you RSVP to may still come through.</p>
+<p>Proto won't send you member emails anymore. Event updates for things you RSVP to may still come through.</p>
 <p class="fine">Still hearing from us? Reply to any of our emails and we'll take you off by hand.</p>`,
   )
 })
