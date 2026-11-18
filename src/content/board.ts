@@ -41,11 +41,11 @@ export const OPEN_SEATS: readonly { role: Exclude<BoardSeat, 'Not sure yet'>; de
   },
   {
     role: 'Head of Community',
-    detail: 'Inside BU: our contact for Spark!, Innovate@BU, departments and other student groups, keeping those relationships going for every event we run together.',
+    detail: 'Inside BU: runs our hack nights and events, and is our contact for Spark!, Innovate@BU, clubs and departments.',
   },
   {
-    role: 'Head of Growth',
-    detail: 'Runs our events and reaches more BU students: outreach, socials, posters and getting each event in front of the right people.',
+    role: 'Head of Scouting',
+    detail: 'Finds the builders and founders at BU and brings them into Proto: leads a small scouting team, the wins wall, member spotlights and our socials.',
   },
 ]
 
