@@ -29,6 +29,11 @@ export const MAX_ROLE_QUESTIONS = 5
 
 /** An application's résumé: a PDF of at most this many bytes (5 MB). */
 export const RESUME_MAX_BYTES = 5 * 1024 * 1024
+
+/** The most an uploaded picture may weigh once the portal has shrunk it (1.5 MB): D1 holds 2 MB in one value. */
+export const UPLOAD_MAX_BYTES = 1.5 * 1024 * 1024
+/** The longest side, in pixels, the portal shrinks an uploaded picture to before sending it. */
+export const UPLOAD_MAX_SIDE = 1600
 export const RESUME_TYPE = 'application/pdf'
 
 /** The BroadcastChannel the admin sign-in pop-up reports its result on. */
