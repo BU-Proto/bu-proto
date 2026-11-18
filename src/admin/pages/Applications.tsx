@@ -85,6 +85,10 @@ export function Component() {
     void revalidate()
   }
 
+  // Filling a role changes it for every application to that role, not just the one it was done from.
+  const setRoleFilled = (roleId: number, filled: boolean) =>
+    setData((prev) => prev && { items: prev.items.map((entry) => (entry.roleId === roleId ? { ...entry, roleFilled: filled } : entry)) })
+
   const remove = async () => {
     if (!deleting) return
     setBusy(true)
@@ -179,7 +183,7 @@ export function Component() {
       ) : (
         <ul className={entries.entries}>
           {shown.map((entry) => (
-            <Entry key={entry.id} entry={entry} onSaved={replace} onDelete={() => setDeleting(entry)} />
+            <Entry key={entry.id} entry={entry} onSaved={replace} onRoleFilled={setRoleFilled} onDelete={() => setDeleting(entry)} />
           ))}
         </ul>
       )}
@@ -206,14 +210,15 @@ export function Component() {
 interface EntryProps {
   entry: RoleApplication
   onSaved: (item: RoleApplication) => void
+  onRoleFilled: (roleId: number, filled: boolean) => void
   onDelete: () => void
 }
 
-function Entry({ entry, onSaved, onDelete }: EntryProps) {
+function Entry({ entry, onSaved, onRoleFilled, onDelete }: EntryProps) {
   const id = useId()
   const toast = useToast()
   const [notes, setNotes] = useState(entry.notes)
-  const [saving, setSaving] = useState<'status' | 'notes' | null>(null)
+  const [saving, setSaving] = useState<'status' | 'notes' | 'role' | null>(null)
   const [error, setError] = useState('')
   const first = entry.name.trim().split(/\s+/)[0]
   const mail = `mailto:${entry.email}?subject=${encodeURIComponent(`Your BU Proto application: ${entry.roleTitle}`)}`
@@ -240,6 +245,26 @@ function Entry({ entry, onSaved, onDelete }: EntryProps) {
     } catch (failure) {
       const apiError = toApiError(failure)
       setError(apiError.issues.notes ?? apiError.issues.status ?? apiError.message)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  // Marks the role filled (or open again, from the undo). The role leaves /roles and the board page.
+  const fillRole = async (filled: boolean, undo = true) => {
+    if (saving || entry.roleId === null) return
+    const roleId = entry.roleId
+    setSaving('role')
+    setError('')
+    try {
+      await api<{ filled: boolean }>(`/admin/roles/${roleId}/filled`, { method: 'PATCH', body: { filled } })
+      onRoleFilled(roleId, filled)
+      toast({
+        text: filled ? `${entry.roleTitle} marked filled` : `${entry.roleTitle} is open again`,
+        action: undo ? { label: 'Undo', onAction: () => void fillRole(!filled, false) } : undefined,
+      })
+    } catch (failure) {
+      setError(toApiError(failure).message)
     } finally {
       setSaving(null)
     }
@@ -280,6 +305,17 @@ function Entry({ entry, onSaved, onDelete }: EntryProps) {
         </div>
       </div>
 
+      {entry.status === 'accepted' && entry.roleFilled === false && (
+        <div className={styles.fill}>
+          <p>
+            <strong>{entry.roleTitle}</strong> is still open on the site. Mark it filled to take it off the roles list and the board page.
+          </p>
+          <button type="button" className={`${ui.button} ${ui.small}`} disabled={saving !== null} onClick={() => fillRole(true)}>
+            {saving === 'role' ? 'Saving…' : 'Mark role filled'}
+          </button>
+        </div>
+      )}
+
       <dl className={entries.answers}>
         <div>
           <dt>Role</dt>
@@ -289,9 +325,12 @@ function Entry({ entry, onSaved, onDelete }: EntryProps) {
                 {entry.roleTitle} <span className={shared.dim}>(role since deleted)</span>
               </>
             ) : (
-              <Link to={`/admin/roles/${entry.roleId}`} className={shared.link}>
-                {entry.roleTitle}
-              </Link>
+              <>
+                <Link to={`/admin/roles/${entry.roleId}`} className={shared.link}>
+                  {entry.roleTitle}
+                </Link>
+                {entry.roleFilled && <span className={shared.dim}> (filled)</span>}
+              </>
             )}
           </dd>
         </div>

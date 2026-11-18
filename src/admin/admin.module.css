@@ -887,6 +887,11 @@ tr:has(> .rowGo) a.rowTitle:hover {
   --tone: var(--amber);
 }
 
+/* Taken: done, not waiting on anything. */
+.state[data-tone='filled'] {
+  --tone: var(--sky);
+}
+
 /* Words after a title, for the few places a state still rides in the title's own cell. */
 .flags {
   display: inline-flex;

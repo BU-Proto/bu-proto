@@ -224,42 +224,9 @@
   height: 14px;
 }
 
-/* The one form for every open seat, on solid navy: the pitch on the left, the fields on the right. */
-.apply {
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-  gap: clamp(24px, 4vw, 56px);
-  align-items: start;
-  margin-top: clamp(24px, 6vh, 56px);
-  padding: clamp(22px, 3.4vw, 40px);
-  scroll-margin-top: 24px;
-}
-
-.applyLead {
-  display: grid;
-  gap: 12px;
-}
-
-.applyText {
-  max-width: 40ch;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 15px;
-  line-height: 1.55;
-  text-wrap: pretty;
-}
-
-.privacy {
-  margin-top: 4px;
-}
-
 @media (max-width: 960px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .apply {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -273,7 +240,7 @@
     max-width: 420px;
   }
 
-  /* Full-height empty frames would make a phone scroll past four blanks, so open seats shrink to
+  /* Full-height empty frames would make a phone scroll past three blanks, so open seats shrink to
      a small frame beside their copy. Members keep the full portrait. */
   .vacancy {
     grid-template-columns: 84px minmax(0, 1fr);

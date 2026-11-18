@@ -7,7 +7,7 @@ import type { PageIntro } from './types'
 export const ROLES_INTRO: PageIntro = {
   path: '~/proto/roles',
   title: 'Founding board',
-  lede: 'Proto is picking its first board. Four seats, each one you’d build from zero, with your name on it and a real thing to point to when you’re done.',
+  lede: 'Proto is picking its first board. Each seat is one you’d build from zero, with your name on it and a real thing to point to when you’re done.',
 }
 
 export const ROLES_LIST = {
@@ -43,6 +43,13 @@ export const ROLE_PAGE = {
   closed: {
     title: 'Applications for this one have closed',
     text: (day: string) => `They closed on ${day}. The roles that are open now are on the list.`,
+    back: 'See open roles',
+  },
+  /** Said in place of `closed` once someone has taken the role. */
+  filled: {
+    fact: 'Filled',
+    title: 'This one’s been filled',
+    text: 'Someone has taken it, so it isn’t taking applications. The roles that are open now are on the list.',
     back: 'See open roles',
   },
 } as const

@@ -1,23 +1,18 @@
-import { useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
-import { useLoaderData } from 'react-router'
-import type { BoardMember } from '../../shared/api'
-import { BOARD_SEATS, YEARS, type BoardSeat } from '../../shared/constants'
-import { Field, Form } from '../components/Form'
-import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
+import { useMemo, useState, type CSSProperties } from 'react'
+import { Link, useLoaderData } from 'react-router'
+import type { BoardMember, Role } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
-import { PrivacyNote } from '../components/PrivacyNote'
-import { Select } from '../components/Select'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
-import { BOARD_CONTACT, BOARD_FORM, BOARD_FORMING, BOARD_INTRO, BOARD_THANKS, OPEN_SEAT, OPEN_SEATS } from '../content/board'
+import { BOARD_CONTACT, BOARD_FORMING, BOARD_INTRO, OPEN_SEAT } from '../content/board'
 import { PROTO_LINKEDIN } from '../content/site'
-import { api } from '../lib/api'
+import type { BoardPageData } from '../lib/content'
 import { glyphTexture } from '../lib/glyphArt'
-import { reducedMotion } from '../lib/useInView'
+import { rolePath } from '../lib/paths'
+import { openSeats } from '../lib/roles'
 import styles from './Board.module.css'
 
 type MemberLink = BoardMember['links'][number]
-type OpenSeat = (typeof OPEN_SEATS)[number]
 
 // Faint enough that the empty frame reads as a gap in the board, not a picture.
 const EMPTY_INK = 'rgba(246, 251, 255, 0.4)'
@@ -40,10 +35,6 @@ const isLinkedIn = (link: MemberLink) => {
     return false
   }
 }
-
-// A member whose role names a seat ("Head of the Fund", "Head of Scouting and socials") fills it.
-const fills = (member: BoardMember, seat: OpenSeat) =>
-  member.role.toLowerCase().includes(seat.role.toLowerCase().replace(/^the /, ''))
 
 function LinkedInGlyph() {
   return (
@@ -120,14 +111,10 @@ function Member({ member }: { member: BoardMember }) {
 
 /**
  * A seat nobody has taken yet, laid out like a member so the board reads as one table: an empty
- * frame where the portrait would be, the role where the name would be.
+ * frame where the portrait would be, the role where the name would be. The button goes to the
+ * seat's own role page, where the application is.
  */
-function Vacancy({ seat, texture, onPick }: { seat: OpenSeat; texture: string; onPick: (seat: BoardSeat) => void }) {
-  const pick = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault()
-    onPick(seat.role)
-  }
-
+function Vacancy({ seat, texture }: { seat: Role; texture: string }) {
   return (
     <li className={`${styles.seat} ${styles.vacancy}`}>
       <div
@@ -137,41 +124,30 @@ function Vacancy({ seat, texture, onPick }: { seat: OpenSeat; texture: string; o
       />
       <div className={styles.text}>
         <h3 className={styles.name} data-fog-clear>
-          {seat.role}
+          {seat.title}
         </h3>
         <p className={styles.status} data-fog-clear>
           {OPEN_SEAT.status}
         </p>
-        <p className={styles.detail} data-fog-clear>
-          {seat.detail}
-        </p>
-        {/* A plain anchor underneath, so it still lands on the form without JS. */}
-        <a className={`${ui.secondary} ${styles.pick}`} href={`#${BOARD_FORM.id}`} onClick={pick} data-fog-clear="box">
+        {seat.summary && (
+          <p className={styles.detail} data-fog-clear>
+            {seat.summary}
+          </p>
+        )}
+        <Link className={`${ui.secondary} ${styles.pick}`} to={rolePath(seat)} data-fog-clear="box">
           {OPEN_SEAT.cta}
-          <span className={ui.srOnly}> for {seat.role}</span>
-        </a>
+          <span className={ui.srOnly}>: {seat.title}</span>
+        </Link>
       </div>
     </li>
   )
 }
 
 export function Board() {
-  const board = useLoaderData<BoardMember[]>()
+  const { board, roles } = useLoaderData<BoardPageData>()
   const texture = useMemo(() => glyphTexture(EMPTY_INK), [])
-  const open = OPEN_SEATS.filter((seat) => !board.some((member) => fills(member, seat)))
-  // Only the seats still open, plus Not sure yet, are worth offering in the form.
-  const seatOptions = BOARD_SEATS.filter((seat) => seat === 'Not sure yet' || open.some((item) => item.role === seat))
-  const [seat, setSeat] = useState<BoardSeat | ''>('')
-  const formRef = useRef<HTMLElement>(null)
-  const nameRef = useRef<HTMLInputElement>(null)
-
-  const pick = (role: BoardSeat) => {
-    setSeat(role)
-    formRef.current?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })
-    // The seat is chosen for them, so the next thing to type is their name. Not on touch screens,
-    // where focusing would throw the keyboard up over the scroll.
-    if (window.matchMedia('(pointer: fine)').matches) nameRef.current?.focus({ preventScroll: true })
-  }
+  // A seat is open until its role is marked filled in the portal.
+  const open = openSeats(roles)
 
   return (
     <div className={ui.page}>
@@ -202,7 +178,7 @@ export function Board() {
               {BOARD_FORMING.title}
             </h2>
             <p className={styles.leadText} data-fog-clear>
-              {BOARD_FORMING.text}
+              {BOARD_FORMING.text(open.length)}
             </p>
           </div>
         ) : (
@@ -216,53 +192,10 @@ export function Board() {
             <Member key={member.id} member={member} />
           ))}
           {open.map((item) => (
-            <Vacancy key={item.role} seat={item} texture={texture} onPick={pick} />
+            <Vacancy key={item.id} seat={item} texture={texture} />
           ))}
         </ul>
       </section>
-
-      {open.length > 0 && (
-        <section ref={formRef} id={BOARD_FORM.id} className={`${ui.panelDeep} ${styles.apply}`} aria-labelledby="board-form">
-          <div className={styles.applyLead}>
-            <h2 id="board-form" className={ui.sectionTitle}>
-              {BOARD_FORM.title}
-            </h2>
-            <p className={styles.applyText}>{BOARD_FORM.text}</p>
-            <PrivacyNote text={BOARD_FORM.privacy} className={styles.privacy} />
-          </div>
-          <Form
-            submitLabel={BOARD_FORM.submit}
-            thanks={BOARD_THANKS}
-            turnstile="board-interest"
-            onSubmit={(values) => api<{ ok: true }>('/board-interest', { body: values })}
-          >
-            <Field label="Name" wide>
-              <input ref={nameRef} className={inputClass} name="name" autoComplete="name" maxLength={80} required />
-            </Field>
-            <Field label="BU email" wide>
-              <input
-                className={inputClass}
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@bu.edu"
-                pattern={BU_EMAIL_PATTERN}
-                title="Use your @bu.edu address"
-                required
-              />
-            </Field>
-            <Field label="Year">
-              <Select name="year" options={YEARS} required />
-            </Field>
-            <Field label="Seat">
-              <Select name="role" options={seatOptions} required value={seat} onChange={setSeat} />
-            </Field>
-            <Field label="What you’d take on" hint="Optional. A few lines is plenty." wide>
-              <textarea className={inputClass} name="note" maxLength={1000} rows={4} />
-            </Field>
-          </Form>
-        </section>
-      )}
     </div>
   )
 }

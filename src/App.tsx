@@ -4,7 +4,7 @@ import { Layout } from './components/Layout'
 import { LoadError, PageLoading } from './components/RouteStates'
 import { PLAYBOOK_HREF } from './content/guides/links'
 import { ORGS } from './content/resourcesHub'
-import { fetchContent, fetchEventPage, fetchHome, fetchRolePage, fetchWinPage } from './lib/content'
+import { fetchBoardPage, fetchContent, fetchEventPage, fetchHome, fetchRolePage, fetchWinPage } from './lib/content'
 import { eventPath, rolePath, winPath } from './lib/paths'
 import { Board } from './pages/Board'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
@@ -92,13 +92,13 @@ const router = createBrowserRouter([
       },
       {
         path: 'about',
-        // The open seats it lists come from the board. If that can't load, the page still shows,
+        // The open seats it lists come from the roles. If those can't load, the page still shows,
         // just without them: it's mostly words, so a failed fetch shouldn't cost the whole page.
-        loader: ({ request }) => fetchContent('board', request.signal).catch(() => null),
+        loader: ({ request }) => fetchContent('roles', request.signal).catch(() => null),
         lazy: { Component: async () => (await import('./pages/About')).About },
         HydrateFallback: PageLoading,
       },
-      { path: 'board', Component: Board, loader: ({ request }) => fetchContent('board', request.signal), ...dataRoute },
+      { path: 'board', Component: Board, loader: ({ request }) => fetchBoardPage(request.signal), ...dataRoute },
       // The parts of Proto that need someone, and each one's page with its application.
       { path: 'roles', Component: Roles, loader: ({ request }) => fetchContent('roles', request.signal), ...dataRoute },
       {

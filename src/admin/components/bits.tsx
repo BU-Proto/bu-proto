@@ -23,7 +23,7 @@ export function RowFlags({ placeholder, published }: { placeholder?: boolean; pu
  * A content row's state for a list's Status column: a dot and a word. Sample content is the one
  * to notice (it's made up), then whether the row is out or still a draft.
  */
-export function RowState({ placeholder, published }: { placeholder?: boolean; published?: boolean }) {
+export function RowState({ placeholder, published, filled }: { placeholder?: boolean; published?: boolean; filled?: boolean }) {
   if (placeholder) {
     return (
       <span className={styles.state} data-tone="sample" title="Made-up sample content. The site marks it as a sample.">
@@ -31,11 +31,22 @@ export function RowState({ placeholder, published }: { placeholder?: boolean; pu
       </span>
     )
   }
-  return published === false ? (
-    <span className={styles.state} data-tone="draft">
-      Draft
-    </span>
-  ) : (
+  if (published === false) {
+    return (
+      <span className={styles.state} data-tone="draft">
+        Draft
+      </span>
+    )
+  }
+  // A role someone has taken: still on the site at its address, but off the lists.
+  if (filled) {
+    return (
+      <span className={styles.state} data-tone="filled" title="Taken. Its page says so; it’s off /roles and the board page.">
+        Filled
+      </span>
+    )
+  }
+  return (
     <span className={styles.state} data-tone="live">
       Published
     </span>

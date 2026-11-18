@@ -181,7 +181,7 @@ export function Component() {
                         </td>
                       )}
                       <td data-label="Status">
-                        <RowState placeholder={row.placeholder} published={row.published} />
+                        <RowState placeholder={row.placeholder} published={row.published} filled={resource === 'roles' && row.filled === true} />
                       </td>
                       <td className={admin.rowGo} aria-hidden="true">
                         <ChevronRightIcon />

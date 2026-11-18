@@ -5,6 +5,7 @@ import {
   applicationPatch,
   fundPatch,
   memberPatch,
+  roleFilledPatch,
   type ApplicationStatus,
   type BoardInterest,
   type FundInterest,
@@ -234,6 +235,8 @@ interface ApplicationRow {
   id: number
   role_id: number | null
   role_title: string
+  /** From the role itself: 0 or 1, or null once it's been deleted. */
+  role_filled: number | null
   name: string
   email: string
   year: string
@@ -249,6 +252,13 @@ interface ApplicationRow {
 
 const APPLICATION_COLUMNS =
   'id, role_id, role_title, name, email, year, link, resume_name, resume_size, answers, status, notes, created_at, updated_at'
+
+/** Each application with whether its role has been filled, so the portal can offer to fill it. */
+const APPLICATIONS_WITH_ROLE = `SELECT ${APPLICATION_COLUMNS
+  .split(', ')
+  .map((column) => `a.${column}`)
+  .join(', ')}, r.filled AS role_filled
+  FROM role_applications a LEFT JOIN roles r ON r.id = a.role_id`
 
 function parseAnswers(value: string): RoleApplication['answers'] {
   try {
@@ -268,6 +278,7 @@ const toApplication = (row: ApplicationRow): RoleApplication => ({
   id: row.id,
   roleId: row.role_id,
   roleTitle: row.role_title,
+  roleFilled: row.role_filled === null ? null : row.role_filled === 1,
   name: row.name,
   email: row.email,
   year: row.year,
@@ -281,20 +292,31 @@ const toApplication = (row: ApplicationRow): RoleApplication => ({
 })
 
 app.get('/api/admin/applications', async (c) => {
-  const { results } = await c.env.DB.prepare(
-    `SELECT ${APPLICATION_COLUMNS} FROM role_applications ORDER BY created_at DESC, id DESC`,
-  ).all<ApplicationRow>()
+  const { results } = await c.env.DB.prepare(`${APPLICATIONS_WITH_ROLE} ORDER BY a.created_at DESC, a.id DESC`).all<ApplicationRow>()
   return c.json({ items: results.map(toApplication) })
 })
 
 app.patch('/api/admin/applications/:id', async (c) => {
   const id = idParam(c)
   const { sql, values } = setClause(await readBody(c, applicationPatch))
-  const row = await c.env.DB.prepare(`UPDATE role_applications SET ${sql} WHERE id = ? RETURNING ${APPLICATION_COLUMNS}`)
-    .bind(...values, id)
-    .first<ApplicationRow>()
+  const [, read] = await c.env.DB.batch<ApplicationRow>([
+    c.env.DB.prepare(`UPDATE role_applications SET ${sql} WHERE id = ?`).bind(...values, id),
+    c.env.DB.prepare(`${APPLICATIONS_WITH_ROLE} WHERE a.id = ?`).bind(id),
+  ])
+  const row = read.results[0]
   if (!row) throw new ApiError(404, 'No such application.')
   return c.json({ item: toApplication(row) })
+})
+
+// Filling a role (or opening it again) from one of its applications, without the whole role editor.
+app.patch('/api/admin/roles/:id/filled', async (c) => {
+  const id = idParam(c)
+  const { filled } = await readBody(c, roleFilledPatch)
+  const row = await c.env.DB.prepare(`UPDATE roles SET filled = ?, updated_at = datetime('now') WHERE id = ? RETURNING filled`)
+    .bind(filled ? 1 : 0, id)
+    .first<{ filled: number }>()
+  if (!row) throw new ApiError(404, 'No such role.')
+  return c.json({ filled: row.filled === 1 })
 })
 
 // The résumé itself, put back together from its parts. Only ever a PDF (checked on the way in),

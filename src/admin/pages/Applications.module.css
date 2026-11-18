@@ -14,6 +14,32 @@
   min-width: 180px;
 }
 
+/* On an accepted application whose role is still open: the nudge to mark it filled. */
+.fill {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid rgb(var(--sky-rgb) / 0.28);
+  border-radius: 10px;
+  background: rgb(var(--sky-rgb) / 0.08);
+}
+
+.fill p {
+  flex: 1 1 280px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.fill strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 /* A long address breaks rather than widening the panel. */
 .url {
   overflow-wrap: anywhere;

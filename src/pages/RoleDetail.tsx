@@ -93,8 +93,8 @@ function SeatPitch({ seat }: { seat: Seat }) {
 
 /**
  * One role: what it is and what it takes, the write-up, what the seat is (for the board seats),
- * then the application on a sheet of its own. Once the apply-by day has passed the page stays up,
- * without the form.
+ * then the application on a sheet of its own. Once it's filled or its apply-by day has passed, the
+ * page stays up without the form.
  */
 export function RoleDetail() {
   const { role, roles } = useLoaderData<RolePageData>()
@@ -148,11 +148,15 @@ export function RoleDetail() {
             </div>
           )}
           <div data-fog-clear>
-            <dt>{role.applyBy ? ROLE_PAGE.facts.applyBy : ROLE_PAGE.facts.timeline}</dt>
-            <dd className={deadline.soon ? styles.soon : undefined}>
-              {role.applyBy ? formatDay(role.applyBy) : ROLES_LIST.untilFilled}
-              {deadline.soon && <span className={styles.soonNote}>{deadline.text}</span>}
-            </dd>
+            <dt>{role.applyBy && !role.filled ? ROLE_PAGE.facts.applyBy : ROLE_PAGE.facts.timeline}</dt>
+            {role.filled ? (
+              <dd>{ROLE_PAGE.filled.fact}</dd>
+            ) : (
+              <dd className={deadline.soon ? styles.soon : undefined}>
+                {role.applyBy ? formatDay(role.applyBy) : ROLES_LIST.untilFilled}
+                {deadline.soon && <span className={styles.soonNote}>{deadline.text}</span>}
+              </dd>
+            )}
           </div>
         </dl>
 
@@ -236,11 +240,11 @@ export function RoleDetail() {
       ) : (
         <section className={styles.closed} aria-labelledby="closed-title">
           <h2 id="closed-title" className={ui.sectionTitle}>
-            {ROLE_PAGE.closed.title}
+            {role.filled ? ROLE_PAGE.filled.title : ROLE_PAGE.closed.title}
           </h2>
-          <p className={styles.applyText}>{ROLE_PAGE.closed.text(formatDay(role.applyBy))}</p>
+          <p className={styles.applyText}>{role.filled ? ROLE_PAGE.filled.text : ROLE_PAGE.closed.text(formatDay(role.applyBy))}</p>
           <Link className={ui.primary} to="/roles">
-            {ROLE_PAGE.closed.back}
+            {role.filled ? ROLE_PAGE.filled.back : ROLE_PAGE.closed.back}
           </Link>
         </section>
       )}

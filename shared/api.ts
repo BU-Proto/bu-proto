@@ -157,6 +157,8 @@ export const roleInput = z.object({
   description: optionalText(8000),
   /** Questions of its own the application asks, on top of the usual ones. */
   questions: z.array(text(200)).max(MAX_ROLE_QUESTIONS, `Up to ${MAX_ROLE_QUESTIONS} questions`),
+  /** Someone has taken it: it leaves the list, and its page stays up without the form. */
+  filled: z.boolean(),
   position: z.number().int(),
   ...flags,
 })
@@ -386,7 +388,13 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
     orderBy: 'position ASC, id ASC',
     fields: [
       { key: 'title', column: 'title', label: 'Title', type: 'text', hint: 'What the person would be, e.g. Head of Partnerships.' },
-      { key: 'team', column: 'team', label: 'Team', type: 'text', hint: 'Optional: the part of Proto it belongs to, e.g. Board, Events.' },
+      {
+        key: 'team',
+        column: 'team',
+        label: 'Team',
+        type: 'text',
+        hint: 'Optional: the part of Proto it belongs to, e.g. Events. A Board role is also an open seat on the board page until it’s filled.',
+      },
       { key: 'summary', column: 'summary', label: 'One or two lines', type: 'textarea', hint: 'Shown on the list of roles and under the title on the role’s page.' },
       { key: 'commitment', column: 'commitment', label: 'Time it takes', type: 'text', hint: 'In words, e.g. About 3 hours a week, or One trip a semester.' },
       {
@@ -394,7 +402,7 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
         column: 'apply_by',
         label: 'Apply by',
         type: 'date',
-        hint: 'Optional. The day after, the role leaves the list and its form closes. Leave it empty to keep it open until you unpublish it.',
+        hint: 'Optional. The day after, the role leaves the list and its form closes. Leave it empty to keep it open until it’s filled.',
       },
       {
         key: 'description',
@@ -409,6 +417,13 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
         label: 'Questions for applicants',
         type: 'list',
         hint: `Optional. One per line, up to ${MAX_ROLE_QUESTIONS}. Every application already asks for a name, BU email, year, a link and a résumé; these come after, and each needs an answer.`,
+      },
+      {
+        key: 'filled',
+        column: 'filled',
+        label: 'Filled',
+        type: 'boolean',
+        hint: 'Someone’s taken it. It leaves the list of roles (and the board page, for a Board role), and its page stays up saying it’s filled, without the form. Accepting an application offers to tick this for you.',
       },
       { key: 'position', column: 'position', label: 'Order', type: 'number', hint: 'Lower shows first.' },
       ...FLAG_FIELDS,
@@ -522,6 +537,8 @@ export interface RoleApplication {
   /** Null once the role itself has been deleted; `roleTitle` still says what it was for. */
   roleId: number | null
   roleTitle: string
+  /** Whether the role has been filled; null once it's been deleted. */
+  roleFilled: boolean | null
   name: string
   email: string
   year: string
@@ -536,6 +553,9 @@ export interface RoleApplication {
 }
 
 export const applicationPatch = z.object({ status: z.enum(APPLICATION_STATUSES), notes: optionalText(2000) }).partial()
+
+/** PATCH /api/admin/roles/:id/filled → { filled }: mark a role filled, or open again, from an application. */
+export const roleFilledPatch = z.object({ filled: z.boolean() })
 
 /** POST /api/events/:id/rsvp → 201 { ok: true, count } (200 if already RSVP'd). Any email, not just BU. */
 export const rsvpInput = z.object({

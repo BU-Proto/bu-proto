@@ -3,8 +3,14 @@
 import type { Role } from '../../shared/api'
 import { daysUntil, formatDay } from './dates'
 
-/** Still taking applications: no apply-by day, or one that hasn't passed. */
-export const roleIsOpen = (role: Pick<Role, 'applyBy'>) => !role.applyBy || daysUntil(role.applyBy) >= 0
+/** Still taking applications: not filled, and no apply-by day or one that hasn't passed. */
+export const roleIsOpen = (role: Pick<Role, 'applyBy' | 'filled'>) => !role.filled && (!role.applyBy || daysUntil(role.applyBy) >= 0)
+
+/** A role on the board, by its team in the portal. */
+export const isBoardRole = (role: Pick<Role, 'team'>) => role.team.trim().toLowerCase() === 'board'
+
+/** The board seats still open, in the portal's order: what /board and /about list as open. */
+export const openSeats = (roles: readonly Role[]) => roles.filter((role) => isBoardRole(role) && roleIsOpen(role))
 
 /** How long a role has left, and whether that's soon enough to say so in amber. */
 export function deadlineOf(role: Pick<Role, 'applyBy'>, untilFilled: string): { text: string; soon: boolean } {
