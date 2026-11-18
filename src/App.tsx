@@ -5,6 +5,7 @@ import { LoadError, PageLoading } from './components/RouteStates'
 import { PLAYBOOK_HREF } from './content/guides/links'
 import { ORGS } from './content/resourcesHub'
 import { fetchContent, fetchEventPage, fetchHome, fetchRolePage, fetchWinPage } from './lib/content'
+import { eventPath, rolePath, winPath } from './lib/paths'
 import { Board } from './pages/Board'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
 import { Events } from './pages/Events'
@@ -28,6 +29,15 @@ import { Wins } from './pages/Wins'
 // at once and only the page shows its fallback; the field never remounts when the data lands.
 const dataRoute = { HydrateFallback: PageLoading, ErrorBoundary: LoadError }
 
+/**
+ * Event, win and role pages live at their name (/wins/sapling). Reached any other way, by an old
+ * numbered link (/wins/13) or a name typed in other capitals, the page sends you on to its name.
+ */
+function onName<T>(slug: string | undefined, page: T, pathOf: (page: T) => string) {
+  const path = pathOf(page)
+  return path.endsWith(`/${slug}`) ? page : redirect(path)
+}
+
 // Every page renders inside Layout, so the field and the top bar mount once and stay put.
 const router = createBrowserRouter([
   {
@@ -46,9 +56,9 @@ const router = createBrowserRouter([
       { path: 'grants', Component: Grants },
       { path: 'wins', Component: Wins, loader: ({ request }) => fetchContent('wins', request.signal), ...dataRoute },
       {
-        path: 'wins/:id',
+        path: 'wins/:slug',
         Component: WinDetail,
-        loader: ({ params, request }) => fetchWinPage(params.id, request.signal),
+        loader: async ({ params, request }) => onName(params.slug, await fetchWinPage(params.slug, request.signal), (page) => winPath(page.win)),
         HydrateFallback: PageLoading,
         // Detail pages: like LoadError, but a missing or unpublished row gets a not-found state.
         ErrorBoundary: WinLoadError,
@@ -73,9 +83,10 @@ const router = createBrowserRouter([
       },
       { path: 'events', Component: Events, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
       {
-        path: 'events/:id',
+        path: 'events/:slug',
         Component: EventDetail,
-        loader: ({ params, request }) => fetchEventPage(params.id, request.signal),
+        loader: async ({ params, request }) =>
+          onName(params.slug, await fetchEventPage(params.slug, request.signal), (page) => eventPath(page.event)),
         HydrateFallback: PageLoading,
         ErrorBoundary: EventLoadError,
       },
@@ -91,9 +102,9 @@ const router = createBrowserRouter([
       // The parts of Proto that need someone, and each one's page with its application.
       { path: 'roles', Component: Roles, loader: ({ request }) => fetchContent('roles', request.signal), ...dataRoute },
       {
-        path: 'roles/:id',
+        path: 'roles/:slug',
         Component: RoleDetail,
-        loader: ({ params, request }) => fetchRolePage(params.id, request.signal),
+        loader: async ({ params, request }) => onName(params.slug, await fetchRolePage(params.slug, request.signal), (page) => rolePath(page.role)),
         HydrateFallback: PageLoading,
         ErrorBoundary: RoleLoadError,
       },

@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import type { Role } from '../../shared/api'
 import { ROLES_LIST } from '../content/roles'
 import { seatFor } from '../content/seats'
+import { rolePath } from '../lib/paths'
 import { deadlineOf } from '../lib/roles'
 import { SampleTag } from './SampleTag'
 import styles from './RoleList.module.css'
@@ -30,7 +31,7 @@ function RoleRow({ role }: { role: Role }) {
       <div className={styles.what}>
         <h3 className={styles.title}>
           {/* Stretched over the whole line, so a click anywhere on it opens the role. */}
-          <Link className={styles.link} to={`/roles/${role.id}`}>
+          <Link className={styles.link} to={rolePath(role)}>
             {role.title}
           </Link>
           <SampleTag show={role.placeholder} />

@@ -10,6 +10,7 @@ import { dateParts, daysUntil, formatMonth } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useRsvp } from '../lib/useRsvp'
 import styles from './Events.module.css'
+import { eventPath } from '../lib/paths'
 
 const HACK_NIGHT_COVER = EVENT_COVERS['Hack night']
 
@@ -100,7 +101,7 @@ function HackNight({ next }: { next: ProtoEvent | undefined }) {
       {next && date && (
         <p className={styles.rhythmText} data-fog-clear>
           {HACK_NIGHT.next}{' '}
-          <Link className={ui.textLink} to={`/events/${next.id}`}>
+          <Link className={ui.textLink} to={eventPath(next)}>
             {date.weekdayLong}, {date.monthLong} {date.day}
           </Link>
         </p>
@@ -150,7 +151,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
         </p>
 
         <h2 id="next-event" className={styles.leadTitle}>
-          <Link to={`/events/${event.id}`}>{event.title}</Link>
+          <Link to={eventPath(event)}>{event.title}</Link>
           <SampleTag show={event.placeholder} />
         </h2>
         {/* Kind, time and place, set apart by space and tone rather than separators. */}
@@ -163,7 +164,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
 
         <div className={styles.actions}>
           <RsvpButton rsvp={rsvp} prominent />
-          <Link className={ui.textLink} to={`/events/${event.id}`}>
+          <Link className={ui.textLink} to={eventPath(event)}>
             {NEXT_EVENT.details}
             <span className={ui.srOnly}> about {event.title}</span>
           </Link>
@@ -217,7 +218,7 @@ function EventRow({ event }: { event: ProtoEvent }) {
       <div className={styles.body}>
         <h4 className={styles.title} data-fog-clear>
           {/* Stretched over the whole row, so a click anywhere opens the event's page. */}
-          <Link className={styles.rowLink} to={`/events/${event.id}`}>
+          <Link className={styles.rowLink} to={eventPath(event)}>
             {event.title}
           </Link>
           <SampleTag show={event.placeholder} />

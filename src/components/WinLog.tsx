@@ -7,6 +7,7 @@ import { accoladeOf, teamParts } from './accolade'
 import { BuMark } from './BuMark'
 import { SampleTag } from './SampleTag'
 import styles from './WinLog.module.css'
+import { winPath } from '../lib/paths'
 
 /**
  * The landing's latest wins, as a log: when, the cover shown whole at a small size, then the
@@ -29,7 +30,7 @@ export function WinLog({ wins }: { wins: readonly Win[] }) {
             style={{ '--d': `${index * 70}ms` } as CSSProperties}
           >
             {/* The row is one link for the pointer; screen readers and the tab order get the name. */}
-            <Link className={styles.overlay} to={`/wins/${win.id}`} tabIndex={-1} aria-hidden="true" />
+            <Link className={styles.overlay} to={winPath(win)} tabIndex={-1} aria-hidden="true" />
             <p className={styles.when}>
               {when && (
                 <time dateTime={win.date}>
@@ -57,7 +58,7 @@ export function WinLog({ wins }: { wins: readonly Win[] }) {
                 {WIN_SHOWCASE.at} {hackathon}
               </p>
               <p className={styles.project}>
-                <Link className={styles.name} to={`/wins/${win.id}`}>
+                <Link className={styles.name} to={winPath(win)}>
                   {win.project}
                 </Link>
                 <SampleTag show={win.placeholder} />

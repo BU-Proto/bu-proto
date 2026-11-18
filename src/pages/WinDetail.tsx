@@ -20,6 +20,7 @@ import type { WinPageData } from '../lib/content'
 import { formatMonth } from '../lib/dates'
 import { filled, neighboursOf } from '../lib/detail'
 import styles from './WinDetail.module.css'
+import { winPath } from '../lib/paths'
 
 /** A win's project page: the cover, then the write-up, the team, the stack and the photos. */
 export function WinDetail() {
@@ -127,8 +128,8 @@ export function WinDetail() {
         label="More wins"
         previousLabel={WIN_DETAIL.previous}
         nextLabel={WIN_DETAIL.next}
-        previous={previous && { to: `/wins/${previous.id}`, name: previous.project, meta: previous.placement }}
-        next={next && { to: `/wins/${next.id}`, name: next.project, meta: next.placement }}
+        previous={previous && { to: winPath(previous), name: previous.project, meta: previous.placement }}
+        next={next && { to: winPath(next), name: next.project, meta: next.placement }}
         all={{ to: '/wins', label: WIN_DETAIL.allWins }}
       />
     </DetailPage>

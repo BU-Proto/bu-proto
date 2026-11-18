@@ -5,6 +5,7 @@ import type { ContentTypes, Hackathon, ProtoEvent, Role, Win } from '../../share
 import type { ContentResource } from '../../shared/constants'
 import { api } from './api'
 import { imageRatio } from './imageRatio'
+import { findByName } from './paths'
 
 /** Published rows of one resource, already in display order. */
 export async function fetchContent<R extends ContentResource>(resource: R, signal?: AbortSignal) {
@@ -33,13 +34,13 @@ export interface WinPageData {
   wins: Win[]
 }
 
-/** One win for its project page, plus the list so the page can link to its neighbours. */
-export async function fetchWinPage(id: string | undefined, signal?: AbortSignal): Promise<WinPageData> {
-  const [{ item }, wins] = await Promise.all([
-    api<{ item: Win }>(`/content/wins/${encodeURIComponent(id ?? '')}`, { signal }),
-    fetchContent('wins', signal),
-  ])
-  return { win: item, wins }
+/**
+ * One win for its project page, named by the project (or an old number), plus the list so the
+ * page can link to its neighbours. The list holds every published win in full.
+ */
+export async function fetchWinPage(param: string | undefined, signal?: AbortSignal): Promise<WinPageData> {
+  const wins = await fetchContent('wins', signal)
+  return { win: findByName(wins, param, (win) => win.project), wins }
 }
 
 export interface EventPageData {
@@ -56,13 +57,14 @@ export interface EventPageData {
 
 const byDate = (a: ProtoEvent, b: ProtoEvent) => a.date.localeCompare(b.date) || a.id - b.id
 
-/** One event for its own page, plus the rest so it can link to the ones either side. */
-export async function fetchEventPage(id: string | undefined, signal?: AbortSignal): Promise<EventPageData> {
-  // The photo is measured while the list is still on its way, so it rarely adds to the wait.
-  const measuredEvent = api<{ item: ProtoEvent }>(`/content/events/${encodeURIComponent(id ?? '')}`, { signal }).then(
-    async ({ item }) => ({ event: item, photoRatio: item.photo ? await imageRatio(item.photo) : null }),
-  )
-  const [{ event, photoRatio }, events] = await Promise.all([measuredEvent, fetchContent('events', signal)])
+/**
+ * One event for its own page, named by its title (or an old number), plus the rest so it can link
+ * to the ones either side. The list holds every published event in full.
+ */
+export async function fetchEventPage(param: string | undefined, signal?: AbortSignal): Promise<EventPageData> {
+  const events = await fetchContent('events', signal)
+  const event = findByName(events, param, (item) => item.title)
+  const photoRatio = event.photo ? await imageRatio(event.photo) : null
   return { event, events: events.toSorted(byDate), photoRatio }
 }
 
@@ -72,11 +74,11 @@ export interface RolePageData {
   roles: Role[]
 }
 
-/** One role for its own page, plus the list so the page can point at the others. */
-export async function fetchRolePage(id: string | undefined, signal?: AbortSignal): Promise<RolePageData> {
-  const [{ item }, roles] = await Promise.all([
-    api<{ item: Role }>(`/content/roles/${encodeURIComponent(id ?? '')}`, { signal }),
-    fetchContent('roles', signal),
-  ])
-  return { role: item, roles }
+/**
+ * One role for its own page, named by its title (or an old number), plus the list so the page can
+ * point at the others. The list holds every published role in full.
+ */
+export async function fetchRolePage(param: string | undefined, signal?: AbortSignal): Promise<RolePageData> {
+  const roles = await fetchContent('roles', signal)
+  return { role: findByName(roles, param, (role) => role.title), roles }
 }

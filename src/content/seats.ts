@@ -1,4 +1,4 @@
-// What each founding board seat is, for its row on /roles and its own page at /roles/:id. The
+// What each founding board seat is, for its row on /roles and its own page at /roles/:slug. The
 // roles themselves (title, team, apply-by day, the form's questions) live in D1 and are posted in
 // the portal; this is the pitch for each one, matched to its role by title. A role with no entry
 // here just shows its summary and write-up from the portal.
@@ -36,17 +36,24 @@ export const SEATS: Readonly<Record<string, Seat>> = {
   },
   'Head of Community': {
     headline: 'Be the person every builder group at BU knows.',
-    own: ['Spark!', 'Innovate@BU', 'Departments and other clubs'],
+    own: ['Hack nights and Proto events', 'Spark!, Innovate@BU, clubs, departments'],
     get: ['A direct line to the people who run BU’s innovation programs', 'Co-host credit on every joint event'],
-    firstMonth: ['Intro meetings with Spark! and Innovate@BU', '1 co-hosted event on the calendar'],
+    firstMonth: [
+      '1 hack night run end to end',
+      'Intro meetings with Spark! and Innovate@BU',
+      '1 co-hosted event on the calendar',
+    ],
     fit: 'you already know half the club presidents.',
   },
-  'Head of Growth': {
-    headline: 'Make Proto the thing every BU builder has heard of.',
-    own: ['Events', 'Socials and posters', 'Outreach'],
-    get: ['A growth story with real numbers', 'Something real to talk about in interviews'],
-    firstMonth: ['A content calendar', '1 event run end to end', 'A signup number you’re going after'],
-    fit: 'you’ve grown an account, a club, or a launch before.',
+  'Head of Scouting': {
+    headline: 'Find every builder at BU before anyone else does.',
+    own: ['Scouting team of 3 to 5', 'Bringing builders and founders into Proto', 'Wins wall and member spotlights', 'Socials'],
+    get: [
+      'You built and ran a talent pipeline, the same work VC scouts do',
+      'You’re the one who brings founders into the VC sessions',
+    ],
+    firstMonth: ['Recruit 2 scouts', '25 builders found and contacted', '5 spotlights posted'],
+    fit: 'you always know who’s building what.',
   },
 }
 
