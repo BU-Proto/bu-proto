@@ -59,7 +59,7 @@ export function RsvpPanel({ eventId, initial }: { eventId: number; initial: Rsvp
             <button type="button" className={`${admin.button} ${admin.small}`} onClick={copyEmails}>
               Copy all emails
             </button>
-            <Link className={`${admin.button} ${admin.small}`} to={`/admin/email?event=${eventId}`}>
+            <Link className={`${admin.button} ${admin.small}`} to={`/admin/email/compose?event=${eventId}`}>
               Email these people
             </Link>
           </div>

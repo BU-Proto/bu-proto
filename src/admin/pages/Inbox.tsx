@@ -75,10 +75,10 @@ export function Component() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="Email"
-        tabTitle="Inbox"
+        title="Inbox"
+        back={{ to: '/admin/email', label: 'Email' }}
         count={unread ? `${unread} unread` : undefined}
-        lede="One-to-one email: everything sent to proto.boston, and the replies to our asks. Claude reads each email and says what it needs; press Reply and it drafts the answer for you to check and send. List emails to members stay on Compose."
+        lede="One-to-one email: everything sent to proto.boston, and the replies to our asks. Claude reads each email and says what it needs; press Reply and it drafts the answer for you to check and send. Emails to a whole list go out from Write to a list."
         actions={
           <Link to="/admin/email/asks/new" className={ui.primary}>
             <PlusIcon /> Ask someone

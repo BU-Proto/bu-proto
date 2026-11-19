@@ -49,8 +49,8 @@ export function Component() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="Email"
-        tabTitle="Automatic emails"
+        title="Automatic emails"
+        back={{ to: '/admin/email', label: 'Email' }}
         lede="What the site sends on its own when someone joins, RSVPs or signs up for grants. Shown with your name and the next real event."
       />
 

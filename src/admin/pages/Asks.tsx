@@ -37,29 +37,40 @@ export function AskState({ ask }: { ask: Ask }) {
   )
 }
 
-/** Shown when a key is missing: without Claude's there are no drafts, without Resend's nothing leaves. */
+/** "a", "a and b", "a, b and c". */
+const listOf = (parts: string[]) => (parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`)
+
+/**
+ * Shown when a key is missing: without Claude's there are no drafts, without Resend's nothing
+ * leaves, without the webhook nothing comes back. One line says what that means; the secrets an
+ * owner sets fold out under it.
+ */
 export function SetupNote({ setup }: { setup: AskSetup | undefined }) {
   if (!setup || (setup.claude && setup.resend && setup.inbox)) return null
+  const missing = [
+    !setup.claude && { name: 'Claude', effect: 'drafts are stand-ins', secret: 'ANTHROPIC_API_KEY', does: 'lets Claude read mail and write drafts' },
+    !setup.resend && { name: 'sending', effect: 'Send only logs the email', secret: 'RESEND_API_KEY', does: 'sends email' },
+    !setup.inbox && {
+      name: 'receiving',
+      effect: 'replies go to the sender’s own inbox',
+      secret: 'RESEND_WEBHOOK_SECRET',
+      does: 'brings mail to proto.boston into the Inbox (see the README)',
+    },
+  ].filter((entry) => entry !== false)
+  const effects = listOf(missing.map((entry) => entry.effect))
   return (
-    <div className={styles.setup}>
-      {!setup.claude && (
-        <p>
-          <strong>Claude isn’t set up here.</strong> An owner adds the <code>ANTHROPIC_API_KEY</code> secret. Until then, drafts on a local
-          copy are stand-ins (your request as typed), and the live site can’t draft.
-        </p>
-      )}
-      {!setup.resend && (
-        <p>
-          <strong>Email isn’t set up here.</strong> Without <code>RESEND_API_KEY</code>, Send only logs the email; nothing leaves.
-        </p>
-      )}
-      {!setup.inbox && (
-        <p>
-          <strong>Receiving isn’t set up here.</strong> Until an owner connects Resend’s webhook (<code>RESEND_WEBHOOK_SECRET</code>, see the README),
-          replies go to the inbox of whoever sent the email, not here.
-        </p>
-      )}
-    </div>
+    <details className={styles.setup}>
+      <summary>
+        <strong>Not set up here: {listOf(missing.map((entry) => entry.name))}.</strong> {effects.charAt(0).toUpperCase() + effects.slice(1)}.
+      </summary>
+      <ul>
+        {missing.map((entry) => (
+          <li key={entry.secret}>
+            <code>{entry.secret}</code> {entry.does}.
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }
 
@@ -77,8 +88,8 @@ export function Component() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="Email"
-        tabTitle="Asks"
+        title="Asks"
+        back={{ to: '/admin/email', label: 'Email' }}
         count={ready ? `${ready} to check` : undefined}
         lede="Emails to people we need something from: a room, a form, an answer. Say what you need; Claude writes the email and answers any web forms; you check it and press Send. Replies show up here and in the Inbox, with Claude’s take on whether they give us what we asked for."
         actions={

@@ -1,25 +1,33 @@
 /* Asks: the list, a new ask, one ask (its draft, questions, forms and sent emails), contacts and facts. */
 
-/* A note above the page when a key is missing: quiet, not an error. */
+/* A line above the page when a key is missing: quiet, not an error. The secrets fold out under it. */
 .setup {
-  display: grid;
-  gap: 4px;
-  padding: 14px 18px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-panel);
-  background: var(--surface-sunk);
-  color: var(--ink-soft);
-  font-size: 13.5px;
+  color: var(--ink-dim);
+  font-size: 13px;
   line-height: 1.5;
 }
 
-.setup strong {
-  color: var(--ink);
-  font-weight: 600;
+.setup summary {
+  cursor: pointer;
+  width: fit-content;
+  border-radius: 6px;
 }
 
-.setup p {
-  margin: 0;
+.setup summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.setup strong {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.setup ul {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding-left: 18px;
 }
 
 .what {

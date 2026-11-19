@@ -78,8 +78,8 @@ export function Component() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="Email"
-        tabTitle="Proto facts"
+        title="Proto facts"
+        back={{ to: '/admin/email', label: 'Email' }}
         lede="What Claude knows about Proto when it writes and fills forms: our name, what we do, our advisor, our address. It never makes a fact up. What isn’t here, it asks, and an answer about Proto itself lands here so it’s never asked twice."
         actions={
           <button type="button" className={ui.primary} onClick={() => edit(null)}>

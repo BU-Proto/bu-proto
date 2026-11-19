@@ -1,0 +1,74 @@
+/* Email's landing page. Rows and the "Waiting on you" list come from the Overview's styles
+   (Dashboard.module.css); this file only adds what Email needs on top. */
+
+/* Where things stand, in one line under the bar. */
+.summary {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Two panels side by side, one column on narrower screens. */
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+/* Who, then what it's about in lighter type on the same line. */
+.title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.subject {
+  overflow: hidden;
+  margin-left: 8px;
+  color: var(--ink-soft);
+  font-weight: 400;
+  text-overflow: ellipsis;
+}
+
+.title .subject {
+  margin-left: 0;
+}
+
+/* An unread conversation: its name at full weight, and a word for it. */
+[data-unread] .title {
+  font-weight: 600;
+}
+
+.unread {
+  color: var(--mint);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Receipts and newsletters, folded into one quiet line under the people. */
+.tucked {
+  min-height: 44px;
+}
+
+.quiet {
+  margin: 0;
+  padding: 18px 16px;
+  color: var(--ink-dim);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.skeletonFlush {
+  display: grid;
+  gap: 14px;
+  padding: 18px 16px;
+}
+
+@media (max-width: 1000px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

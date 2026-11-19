@@ -233,7 +233,8 @@ export function Component() {
   return (
     <div className={`${shared.page} ${styles.root}`}>
       <PageHeader
-        title="Email"
+        title="Write to a list"
+        back={{ to: '/admin/email', label: 'Email' }}
         lede="Write once, send to a list. Every send is logged below."
         actions={
           <>

@@ -78,8 +78,8 @@ export function Component() {
   return (
     <div className={shared.page}>
       <PageHeader
-        title="Email"
-        tabTitle="Contacts"
+        title="Contacts"
+        back={{ to: '/admin/email', label: 'Email' }}
         lede="Who we ask things of: BU offices, sponsors, organizers, speakers. What you write about each one, Claude reads when it writes to them."
         actions={
           <button type="button" className={ui.primary} onClick={() => edit(null)}>

@@ -21,6 +21,11 @@ export interface NavItem {
   end?: boolean
   /** Pages inside the section, shown as tabs under its heading. The first is the section itself. */
   tabs?: readonly NavTab[]
+  /**
+   * Pages inside a section that has its own landing page instead of tabs (Email): reached from that
+   * page and the command menu, each with a way back to the section.
+   */
+  pages?: readonly NavTab[]
   /** Something new in this section, for the command menu ("New event"). */
   create?: { to: string; label: string }
 }
@@ -97,8 +102,8 @@ export const NAV: readonly NavGroup[] = [
         to: '/admin/email',
         label: 'Email',
         icon: MailIcon,
-        tabs: [
-          { to: '/admin/email', label: 'Compose' },
+        pages: [
+          { to: '/admin/email/compose', label: 'Write to a list', command: 'Write to a list' },
           { to: '/admin/email/inbox', label: 'Inbox', command: 'Inbox' },
           { to: '/admin/email/asks', label: 'Asks', command: 'Asks' },
           { to: '/admin/email/contacts', label: 'Contacts', command: 'Email contacts' },
