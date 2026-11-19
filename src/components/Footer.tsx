@@ -1,9 +1,12 @@
-import { Link } from 'react-router'
+import { NavLink } from 'react-router'
 import { CONTACT_EMAIL, LEGAL_LINKS } from '../content/legal'
 import { BRAND, FOOTER, PROTO_LINKEDIN } from '../content/site'
 import styles from './Footer.module.css'
 
-/** One block: who we are on the left, the site sorted into columns beside it. */
+/**
+ * One block: who we are on the left, the site sorted into columns beside it. Each link to a page
+ * of the site marks itself current on that page (exactly that page, not the pages under it).
+ */
 export function Footer() {
   return (
     <footer className={styles.footer}>
@@ -29,9 +32,9 @@ export function Footer() {
             <ul className={styles.links}>
               {group.links.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} data-fog-clear>
+                  <NavLink to={item.to} end data-fog-clear>
                     {item.label}
-                  </Link>
+                  </NavLink>
                 </li>
               ))}
             </ul>
@@ -56,9 +59,9 @@ export function Footer() {
             )}
             {LEGAL_LINKS.map((item) => (
               <li key={item.href}>
-                <Link to={item.href} data-fog-clear>
+                <NavLink to={item.href} end data-fog-clear>
                   {item.label}
-                </Link>
+                </NavLink>
               </li>
             ))}
           </ul>

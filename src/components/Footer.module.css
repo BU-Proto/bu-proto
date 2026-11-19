@@ -70,8 +70,21 @@
   list-style: none;
 }
 
-.links a:hover {
+.links a:hover,
+.links a[aria-current='page'] {
   color: var(--ink);
+}
+
+/* The page you're on, marked the way the menu sheet marks it: brighter, with the accent dot. */
+.links a[aria-current='page']::after {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: middle;
 }
 
 .links a:focus-visible {

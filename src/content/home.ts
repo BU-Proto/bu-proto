@@ -37,7 +37,7 @@ export const TRACKS: readonly Track[] = [
     name: 'Start',
     glyph: '○',
     hue: 'sky',
-    who: 'Any CS student, no projects yet.',
+    who: 'Any student, any major, no projects yet.',
     offers: [
       'Beginner workshops',
       '"First hackathon" squads paired with a veteran',
