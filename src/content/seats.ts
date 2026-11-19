@@ -3,6 +3,8 @@
 // the portal; this is the pitch for each one, matched to its role by title. A role with no entry
 // here just shows its summary and write-up from the portal.
 
+import { slugOf } from '../../shared/slug.ts'
+
 export interface Seat {
   /** The one line under the title, on the list and on the role's page. */
   headline: string
@@ -57,8 +59,15 @@ export const SEATS: Readonly<Record<string, Seat>> = {
   },
 }
 
-/** The pitch for a role, if it's one of the seats above. */
-export const seatFor = (title: string): Seat | undefined => SEATS[title]
+/** The seats above by the address their role's page is at, so a title matches however it's typed. */
+const SEATS_BY_SLUG: ReadonlyMap<string, Seat> = new Map(Object.entries(SEATS).map(([title, seat]) => [slugOf(title), seat]))
+
+/**
+ * The pitch for a role, if it's one of the seats above. Matched the way the role's URL is, by
+ * slug, so a title retyped in the portal ("Head of scouting", a trailing space, "Head of
+ * Scouting!") still finds its pitch instead of quietly dropping to the summary.
+ */
+export const seatFor = (title: string): Seat | undefined => SEATS_BY_SLUG.get(slugOf(title))
 
 /** The headings for a seat's sections on its page. */
 export const SEAT_SECTIONS = {
