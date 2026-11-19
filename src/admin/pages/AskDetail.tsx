@@ -1,12 +1,13 @@
 import { useId, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import type { AskDetail, AskForm, AskSetup, AskStatus, FormAnswer } from '../../../shared/api'
+import type { AskDetail, AskForm, AskSetup, AskStatus, Fact, FormAnswer } from '../../../shared/api'
 import { TYPED_SOURCE } from '../../../shared/constants'
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
 import { Field } from '../components/Field'
 import { ArrowOutIcon, SendIcon, TrashIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { RememberFact, type RememberValue } from '../components/RememberFact'
 import { FOLLOW_UP_CHOICES } from '../lib/asks'
 import { useToast } from '../lib/toast'
 import { ConfirmDialog } from './people/ConfirmDialog'
@@ -231,9 +232,12 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
   const [subject, setSubject] = useState(ask.subject)
   const [body, setBody] = useState(ask.body)
   const [notes, setNotes] = useState(ask.notes)
-  const [answers, setAnswers] = useState<Record<string, { answer: string; remember: boolean }>>(() =>
-    Object.fromEntries(ask.questions.map((question) => [question.question, { answer: '', remember: question.remember }])),
+  const [answers, setAnswers] = useState<Record<string, RememberValue>>(() =>
+    Object.fromEntries(ask.questions.map((question) => [question.question, { answer: '', remember: question.remember, factLabel: '' }])),
   )
+  // The facts a remembered answer can update, offered by name.
+  const facts = useApi<{ items: Fact[] }>(ask.questions.length ? '/admin/facts' : null)
+  const factLabels = facts.data?.items.map((fact) => fact.label) ?? []
   const [confirmSend, setConfirmSend] = useState(false)
 
   const open = ask.status === 'draft' || ask.status === 'waiting'
@@ -242,7 +246,7 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
   const given = ask.questions
     .map((question) => ({ question: question.question, ...answers[question.question] }))
     .filter((entry) => entry.answer?.trim())
-    .map((entry) => ({ question: entry.question, answer: entry.answer.trim(), remember: entry.remember }))
+    .map((entry) => ({ question: entry.question, answer: entry.answer.trim(), remember: entry.remember, factLabel: entry.factLabel.trim() || undefined }))
   const unanswered = ask.questions.length - given.length
   const owner = ask.ownerName || ask.ownerEmail
   const repliesGo = setup?.inbox ? 'to the Inbox, and here' : `to ${owner}`
@@ -367,7 +371,8 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
                   <QuestionBox
                     key={question.question}
                     question={question.question}
-                    value={answers[question.question] ?? { answer: '', remember: question.remember }}
+                    value={answers[question.question] ?? { answer: '', remember: question.remember, factLabel: '' }}
+                    factLabels={factLabels}
                     onChange={(value) => setAnswers((prev) => ({ ...prev, [question.question]: value }))}
                   />
                 ))}
@@ -434,11 +439,13 @@ function NotesBox({ notes, setNotes }: { notes: string; setNotes: (notes: string
 function QuestionBox({
   question,
   value,
+  factLabels,
   onChange,
 }: {
   question: string
-  value: { answer: string; remember: boolean }
-  onChange: (value: { answer: string; remember: boolean }) => void
+  value: RememberValue
+  factLabels: string[]
+  onChange: (value: RememberValue) => void
 }) {
   const id = useId()
   return (
@@ -447,10 +454,7 @@ function QuestionBox({
         {question}
       </label>
       <input id={id} className={ui.input} value={value.answer} maxLength={2000} onChange={(event) => onChange({ ...value, answer: event.target.value })} />
-      <label className={styles.remember}>
-        <input type="checkbox" checked={value.remember} onChange={(event) => onChange({ ...value, remember: event.target.checked })} />
-        Keep the answer as a Proto fact, so it’s never asked again
-      </label>
+      <RememberFact id={id} question={question} value={value} factLabels={factLabels} onChange={onChange} />
     </li>
   )
 }
@@ -617,15 +621,15 @@ function FormsPanel({ ask, busy, setBusy, onSaved }: FormsPanelProps) {
             </button>
           )}
         </div>
-        {ask.forms.length === 0 && !adding && <p className={ui.hint}>None. Add a web form (Google Forms, Engage) for Claude to answer.</p>}
+        {ask.forms.length === 0 && !adding && <p className={ui.hint}>None. Paste a web form’s questions (Engage, a Google Form) and Claude answers them.</p>}
 
         {adding && (
           <div className={styles.stack}>
-            <Field label="Its link" hint="A public Google Form’s questions are read from the link.">
-              {(props) => <input {...props} type="url" className={ui.input} placeholder="https://" value={web.url} onChange={(event) => setWeb({ ...web, url: event.target.value })} />}
+            <Field label="Its questions" hint="Copy them from the form’s page, one per line.">
+              {(props) => <textarea {...props} className={ui.input} rows={4} value={web.questions} onChange={(event) => setWeb({ ...web, questions: event.target.value })} />}
             </Field>
-            <Field label="Its questions" hint="For Engage, BU-only forms, anything behind a sign-in.">
-              {(props) => <textarea {...props} className={ui.input} rows={3} value={web.questions} onChange={(event) => setWeb({ ...web, questions: event.target.value })} />}
+            <Field label="Its link" hint="Optional: for whoever fills it in.">
+              {(props) => <input {...props} type="url" className={ui.input} placeholder="https://" value={web.url} onChange={(event) => setWeb({ ...web, url: event.target.value })} />}
             </Field>
             <div className={styles.row}>
               <button type="button" className={`${ui.button} ${ui.small}`} disabled={busy !== null} onClick={addWeb}>
@@ -665,12 +669,8 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
   const [editing, setEditing] = useState(false)
   const [values, setValues] = useState<Record<string, string>>({})
   const byField = new Map(form.answers.map((answer) => [answer.field, answer]))
-  // What a value answers, as the form puts it: a Google Form question's title, else the question as pasted.
-  const labelOf = (name: string) => form.fields.find((field) => field.name === name)?.label || name
-  const rows: { field: string; label: string; answer?: FormAnswer }[] = form.fields.length
-    ? form.fields.map((field) => ({ field: field.name, label: field.label || field.name, answer: byField.get(field.name) }))
-    : form.answers.map((answer) => ({ field: answer.field, label: answer.field, answer }))
-  const sheet = form.answers.map((answer) => `${labelOf(answer.field)}\n${answer.value}`).join('\n\n')
+  const rows: { field: string; label: string; answer?: FormAnswer }[] = form.answers.map((answer) => ({ field: answer.field, label: answer.field, answer }))
+  const sheet = form.answers.map((answer) => `${answer.field}\n${answer.value}`).join('\n\n')
   const forChrome = [
     `Fill out the form at ${form.url || '(the open tab)'} with these answers. Don't submit it: leave it for me to check and submit. Leave anything not listed here empty, and never fill a signature.`,
     '',
@@ -696,7 +696,7 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
       <div className={styles.spread}>
         <div>
           <h3 className={styles.formName}>{form.name}</h3>
-          <p className={ui.hint}>{form.fields.length ? `Google Form, ${form.fields.length} questions` : 'Web form'}</p>
+          <p className={ui.hint}>Web form: Claude answers the questions you pasted; you fill it in and submit it.</p>
         </div>
         <button
           type="button"
@@ -711,8 +711,8 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
 
       <div className={styles.row}>
         {form.url && (
-          <a href={form.prefillUrl ?? form.url} target="_blank" rel="noopener noreferrer" className={shared.link}>
-            {form.prefillUrl ? 'Open it filled in' : 'Open the form'} <ArrowOutIcon />
+          <a href={form.url} target="_blank" rel="noopener noreferrer" className={shared.link}>
+            Open the form <ArrowOutIcon />
           </a>
         )}
         {form.answers.length > 0 && (
@@ -720,20 +720,17 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
             <button type="button" className={`${ui.button} ${ui.small}`} onClick={() => void copy(sheet, toast, 'Answers')}>
               Copy answers
             </button>
-            {!form.prefillUrl && (
-              <button
-                type="button"
-                className={`${ui.button} ${ui.small}`}
-                title="Paste it into Claude in Chrome with the form open: it fills the form and leaves Submit to you."
-                onClick={() => void copy(forChrome, toast, 'Instructions for Claude in Chrome')}
-              >
-                Copy for Claude in Chrome
-              </button>
-            )}
+            <button
+              type="button"
+              className={`${ui.button} ${ui.small}`}
+              title="Paste it into Claude in Chrome with the form open: it fills the form and leaves Submit to you."
+              onClick={() => void copy(forChrome, toast, 'Instructions for Claude in Chrome')}
+            >
+              Copy for Claude in Chrome
+            </button>
           </>
         )}
       </div>
-      {form.prefillUrl && <p className={ui.hint}>The link opens the form with Claude’s answers in. Check them, then press Submit yourself.</p>}
 
       {form.missing.length > 0 && (
         <ul className={styles.missing}>

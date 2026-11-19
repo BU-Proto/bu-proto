@@ -155,6 +155,8 @@ app.post('/api/admin/inbox/:id/send', async (c) => {
     threadId: thread.id,
     kind: 'reply',
     from: { email: admin.email, name: admin.name ?? '' },
+    sentBy: admin.email,
+    scope: `thread-${thread.id}`,
     to,
     cc,
     subject: input.subject,

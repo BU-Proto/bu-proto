@@ -331,3 +331,16 @@
   -webkit-line-clamp: 2;
   line-clamp: 2;
 }
+
+/* The name a remembered answer is saved under, with the existing facts to pick from. */
+.factName {
+  display: grid;
+  grid-template-columns: auto minmax(0, 260px);
+  align-items: center;
+  gap: 4px 10px;
+  padding-left: 24px;
+}
+
+.factName > span {
+  grid-column: 2;
+}

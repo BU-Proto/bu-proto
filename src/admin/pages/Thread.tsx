@@ -1,11 +1,12 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useRevalidator } from 'react-router'
-import type { AskDetail, AskSetup, MailMessage, MailThreadDetail, ReplyDraftInput, ReplySendInput, ThreadPatch } from '../../../shared/api'
+import type { AskDetail, AskSetup, Fact, MailMessage, MailThreadDetail, ReplyDraftInput, ReplySendInput, ThreadPatch } from '../../../shared/api'
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
 import { Field } from '../components/Field'
 import { ArrowOutIcon, CheckIcon, SendIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { RememberFact, type RememberValue } from '../components/RememberFact'
 import { SEND_KEYS, useKeys } from '../lib/keys'
 import { readingChips, splitQuoted } from '../lib/mail'
 import { useToast } from '../lib/toast'
@@ -293,12 +294,20 @@ function ReplyBox({ thread, setup, busy, setBusy, onSaved, bodyRef }: ReplyBoxPr
   const [subject, setSubject] = useState(reSubject(thread.subject))
   const [body, setBody] = useState(thread.draftBody)
   const [notes, setNotes] = useState(thread.draftNotes)
-  const [answers, setAnswers] = useState<Record<string, { answer: string; remember: boolean }>>({})
+  const [answers, setAnswers] = useState<Record<string, RememberValue>>({})
+  // The facts a remembered answer can update, offered by name.
+  const facts = useApi<{ items: Fact[] }>(thread.draftQuestions.length ? '/admin/facts' : null)
+  const factLabels = facts.data?.items.map((fact) => fact.label) ?? []
   const [error, setError] = useState('')
   const [confirming, setConfirming] = useState(false)
 
   const given = thread.draftQuestions
-    .map((question) => ({ question, answer: answers[question]?.answer?.trim() ?? '', remember: answers[question]?.remember ?? false }))
+    .map((question) => ({
+      question,
+      answer: answers[question]?.answer?.trim() ?? '',
+      remember: answers[question]?.remember ?? false,
+      factLabel: answers[question]?.factLabel?.trim() || undefined,
+    }))
     .filter((entry) => entry.answer)
 
   const draft = async () => {
@@ -407,16 +416,17 @@ function ReplyBox({ thread, setup, busy, setBusy, onSaved, bodyRef }: ReplyBoxPr
                   id={`${id}-${question}`}
                   className={ui.input}
                   value={answers[question]?.answer ?? ''}
-                  onChange={(event) => setAnswers((prev) => ({ ...prev, [question]: { answer: event.target.value, remember: prev[question]?.remember ?? false } }))}
+                  onChange={(event) =>
+                    setAnswers((prev) => ({ ...prev, [question]: { ...(prev[question] ?? { remember: false, factLabel: '' }), answer: event.target.value } }))
+                  }
                 />
-                <label className={asks.remember}>
-                  <input
-                    type="checkbox"
-                    checked={answers[question]?.remember ?? false}
-                    onChange={(event) => setAnswers((prev) => ({ ...prev, [question]: { answer: prev[question]?.answer ?? '', remember: event.target.checked } }))}
-                  />
-                  It’s about Proto itself: keep it as a Proto fact
-                </label>
+                <RememberFact
+                  id={`${id}-${question}`}
+                  question={question}
+                  value={answers[question] ?? { answer: '', remember: false, factLabel: '' }}
+                  factLabels={factLabels}
+                  onChange={(value) => setAnswers((prev) => ({ ...prev, [question]: value }))}
+                />
               </li>
             ))}
           </ul>

@@ -43,6 +43,19 @@ export const RESUME_TYPE = 'application/pdf'
 export const ASK_STATUSES = ['draft', 'waiting', 'answered', 'closed'] as const
 export type AskStatus = (typeof ASK_STATUSES)[number]
 
+/**
+ * The name a remembered answer is saved under, from Claude's question: "Who is Proto's faculty
+ * advisor?" → "Proto's faculty advisor". Only a suggestion: the teammate sees it, and can pick an
+ * existing fact's name instead, so the answer updates that fact rather than sitting beside it.
+ */
+export function factLabelFor(question: string): string {
+  const bare = question
+    .replace(/\?\s*$/, '')
+    .replace(/^(what|who|which|where|when)(['’]s|\s+(is|are|was|were))\s+(the\s+)?/i, '')
+    .trim()
+  return (bare.charAt(0).toUpperCase() + bare.slice(1) || question).slice(0, 80)
+}
+
 /** The source of a form answer a teammate typed themselves. A redraft keeps these over Claude's. */
 export const TYPED_SOURCE = 'typed in the portal'
 

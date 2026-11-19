@@ -63,6 +63,8 @@ CREATE TABLE asks (
   closed_at TEXT,
   -- Its conversation, once the first email has gone.
   thread_id INTEGER REFERENCES mail_threads (id) ON DELETE SET NULL,
+  -- Set while a Send is under way, so a second press can't send it twice.
+  sending_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -86,6 +88,8 @@ CREATE TABLE mail_threads (
   -- JSON [string]: what Claude needs to know to write the reply.
   draft_questions TEXT NOT NULL DEFAULT '[]',
   drafted_at TEXT,
+  -- Set while a Send is under way, so a second press can't send it twice.
+  sending_at TEXT,
   last_message_at TEXT NOT NULL DEFAULT (datetime('now')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -130,19 +134,17 @@ CREATE TABLE mail_messages (
 CREATE INDEX mail_messages_thread ON mail_messages (thread_id, created_at);
 CREATE INDEX mail_messages_message_id ON mail_messages (message_id);
 
--- Web forms an ask carries (Google Forms, Engage, anything with a link): Claude answers them, a
--- public Google Form gets a prefilled link, anything else an answer sheet, for a teammate to check
--- and submit.
+-- Web forms an ask carries (Engage, a Google Form, anything with a link): a teammate pastes the
+-- questions, Claude answers them, and the answer sheet is there to copy into the form, which a
+-- teammate submits.
 CREATE TABLE ask_forms (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ask_id INTEGER NOT NULL REFERENCES asks (id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   -- The form's address.
   url TEXT NOT NULL DEFAULT '',
-  -- The questions, pasted by a teammate or read from a public Google Form.
+  -- The questions, as a teammate pasted them.
   questions TEXT NOT NULL DEFAULT '',
-  -- JSON: a Google Form's questions, as read when it was added.
-  fields TEXT NOT NULL DEFAULT '[]',
   -- JSON [{field, value, source}]: Claude's answers, each with where it came from.
   answers TEXT NOT NULL DEFAULT '[]',
   -- JSON [string]: what it left empty and why.

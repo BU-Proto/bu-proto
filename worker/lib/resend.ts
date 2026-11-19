@@ -180,6 +180,10 @@ async function resendGet<T>(env: Env, path: string): Promise<T> {
   const response = await fetch(`https://api.resend.com${path}`, { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } })
   if (!response.ok) {
     const detail = await response.text().catch(() => '')
+    // The site's key may be a sending-only one: it sends fine, but can't read what arrives.
+    if (response.status === 401 || response.status === 403) {
+      console.error(`[inbox] RESEND_API_KEY can't read received email (${response.status}). The Inbox needs a Full access key; sending works either way.`)
+    }
     throw new Error(`Resend GET ${path}: ${response.status} ${detail.slice(0, 300)}`)
   }
   return response.json<T>()

@@ -1,8 +1,9 @@
-import type { AskStatus, MailAttachment, MailMessage, MailReading, MailThread, MailThreadDetail, SentMail } from '../../shared/api'
+import { factLabelFor, type AskStatus, type MailAttachment, type MailMessage, type MailReading, type MailThread, type MailThreadDetail, type SentMail } from '../../shared/api'
 import { protoContext, rememberStatement, type Author } from './asks'
 import { readEmail, standInReply, writeReply, type ReplyContext } from './claude'
 import { bostonToday } from './dates'
 import { escapeHtml } from './emailTemplate'
+import { sha256 } from './crypto'
 import { ApiError } from './http'
 import { messageIds, normalizeSubject, parseAddress, parseReplyAddress } from './mailAddress'
 import { fromAddress, sendPersonalEmail } from './resend'
@@ -233,8 +234,12 @@ function personalEmail(body: string, signature: string[]) {
 export interface OutgoingMail {
   threadId: number
   kind: 'ask' | 'follow-up' | 'reply'
-  /** The teammate it's from: their name on the From line and in the signature. */
+  /** Whose email it is: their first name on the From line, their full name in the signature. */
   from: Author
+  /** Who pressed Send. */
+  sentBy: string
+  /** What this send is for ("ask-12", "thread-7"): the same email sent twice for the same thing goes once. */
+  scope: string
   to: string[]
   cc: string[]
   subject: string
@@ -245,81 +250,107 @@ export interface OutgoingMail {
   origin: string
 }
 
+/** How long a Send holds its thread before someone else may try: longer than any send takes. */
+const SENDING_HOLD = "datetime('now', '-2 minutes')"
+
 /**
- * Sends one email in a thread and records it. From "<name> from Proto" at EMAIL_FROM's address;
- * replies come back to the thread's own address once the inbox is set up, and to a teammate until
- * then. It answers the thread's latest email (In-Reply-To / References), so mail apps keep the
- * conversation together. The row goes in first as 'failed', so a crash still leaves a record.
+ * Sends one email in a thread and records it. From "<first name> from Proto" at EMAIL_FROM's
+ * address, signed with the full name; replies come back to the thread's own address once the
+ * inbox is set up, and to a teammate until then. It answers the thread's latest email
+ * (In-Reply-To / References), so mail apps keep the conversation together.
+ *
+ * It never sends the same email twice. The thread is held while it sends, so a second press (or a
+ * second teammate) gets a 409 instead of a second email. And the Message-ID, the stored row and
+ * Resend's Idempotency-Key all come from the email's own content, so pressing Send again after an
+ * error the database caused (Resend had already accepted it) reuses the same key, and Resend
+ * answers without sending again.
  */
 export async function sendInThread(env: Env, mail: OutgoingMail): Promise<'sent' | 'failed' | 'logged'> {
   const db = env.DB
   const thread = await db.prepare('SELECT id, token FROM mail_threads WHERE id = ?').bind(mail.threadId).first<{ id: number; token: string }>()
   if (!thread) throw new ApiError(404, 'That conversation no longer exists.')
-  const earlier = await db
-    .prepare(`SELECT message_id, refs FROM mail_messages WHERE thread_id = ? AND message_id IS NOT NULL AND status != 'failed' ORDER BY created_at DESC, id DESC LIMIT 1`)
+  const held = await db
+    .prepare(`UPDATE mail_threads SET sending_at = datetime('now') WHERE id = ? AND (sending_at IS NULL OR sending_at < ${SENDING_HOLD})`)
     .bind(thread.id)
-    .first<{ message_id: string; refs: string }>()
-  const references = earlier ? [...messageIds(earlier.refs), earlier.message_id].slice(-20) : []
-  const messageId = `<proto.${thread.id}.${randomToken()}@${mailDomain(env)}>`
-  const name = mail.from.name || mail.from.email.split('@')[0]
-  const fromEmail = fromAddress(String(env.EMAIL_FROM))
+    .run()
+  if (!held.meta.changes) throw new ApiError(409, 'This email is being sent right now. Give it a moment, then look again.')
 
-  const row = await db
-    .prepare(
-      `INSERT INTO mail_messages (thread_id, direction, kind, message_id, in_reply_to, refs, from_name, from_email, to_addrs, cc_addrs, subject, text, attachments, status, sent_by)
-       VALUES (?, 'out', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'failed', ?) RETURNING id`,
-    )
-    .bind(
-      thread.id,
-      mail.kind,
-      messageId,
-      earlier?.message_id ?? null,
-      references.join(' '),
-      `${name} from Proto`,
-      fromEmail,
-      JSON.stringify(mail.to),
-      JSON.stringify(mail.cc),
-      mail.subject,
-      mail.body,
-      '[]',
-      mail.from.email,
-    )
-    .first<{ id: number }>()
-  if (!row) throw new ApiError(500, 'Could not save the email.')
+  try {
+    const earlier = await db
+      .prepare(`SELECT message_id, refs FROM mail_messages WHERE thread_id = ? AND message_id IS NOT NULL AND status != 'failed' ORDER BY created_at DESC, id DESC LIMIT 1`)
+      .bind(thread.id)
+      .first<{ message_id: string; refs: string }>()
+    const references = earlier ? [...messageIds(earlier.refs), earlier.message_id].slice(-20) : []
+    const fingerprint = (await sha256(JSON.stringify([mail.scope, mail.kind, mail.to, mail.cc, mail.subject, mail.body, earlier?.message_id ?? '']))).slice(0, 32)
+    const messageId = `<proto.${thread.id}.${fingerprint.slice(0, 20)}@${mailDomain(env)}>`
+    const fullName = mail.from.name.trim() || mail.from.email.split('@')[0]
+    const fromName = `${fullName.split(/\s+/)[0]} from Proto`
+    const fromEmail = fromAddress(String(env.EMAIL_FROM))
 
-  const { text, html } = personalEmail(mail.body, [name, 'Proto · Boston University', mail.origin.replace(/^https?:\/\//, '')])
-  const status = await sendPersonalEmail(
-    env,
-    {
-      fromName: `${name} from Proto`,
-      to: mail.to,
-      cc: mail.cc,
-      replyTo: inboxOn(env) ? replyAddress(env, thread) : mail.replyToFallback,
-      subject: mail.subject,
-      text,
-      html,
-      attachments: [],
-      headers: {
-        'Message-ID': messageId,
-        ...(earlier && { 'In-Reply-To': earlier.message_id, References: references.join(' ') }),
+    // An earlier try at this same email (its Send failed, or the database did after it) is reused.
+    const again = await db.prepare('SELECT id FROM mail_messages WHERE thread_id = ? AND message_id = ?').bind(thread.id, messageId).first<{ id: number }>()
+    const rowId =
+      again?.id ??
+      (
+        await db
+          .prepare(
+            `INSERT INTO mail_messages (thread_id, direction, kind, message_id, in_reply_to, refs, from_name, from_email, to_addrs, cc_addrs, subject, text, status, sent_by)
+             VALUES (?, 'out', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'failed', ?) RETURNING id`,
+          )
+          .bind(
+            thread.id,
+            mail.kind,
+            messageId,
+            earlier?.message_id ?? null,
+            references.join(' '),
+            fromName,
+            fromEmail,
+            JSON.stringify(mail.to),
+            JSON.stringify(mail.cc),
+            mail.subject,
+            mail.body,
+            mail.sentBy,
+          )
+          .first<{ id: number }>()
+      )?.id
+    if (!rowId) throw new ApiError(500, 'Could not save the email.')
+
+    const { text, html } = personalEmail(mail.body, [fullName, 'Proto · Boston University', mail.origin.replace(/^https?:\/\//, '')])
+    const status = await sendPersonalEmail(
+      env,
+      {
+        fromName,
+        to: mail.to,
+        cc: mail.cc,
+        replyTo: inboxOn(env) ? replyAddress(env, thread) : mail.replyToFallback,
+        subject: mail.subject,
+        text,
+        html,
+        attachments: [],
+        headers: {
+          'Message-ID': messageId,
+          ...(earlier && { 'In-Reply-To': earlier.message_id, References: references.join(' ') }),
+        },
       },
-    },
-    `mail-message-${row.id}`,
-  )
-  await db.batch([
-    db.prepare('UPDATE mail_messages SET status = ? WHERE id = ?').bind(status, row.id),
-    ...(status === 'failed'
-      ? []
-      : [
-          db
-            .prepare(
-              `UPDATE mail_threads SET status = 'waiting', unread = 0, draft_body = '', draft_notes = '', draft_questions = '[]',
-                 last_message_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`,
-            )
-            .bind(thread.id),
-        ]),
-  ])
-  return status
+      `mail-${fingerprint}`,
+    )
+    await db.batch([
+      db.prepare(`UPDATE mail_messages SET status = ?, sent_by = ?, created_at = datetime('now') WHERE id = ?`).bind(status, mail.sentBy, rowId),
+      ...(status === 'failed'
+        ? []
+        : [
+            db
+              .prepare(
+                `UPDATE mail_threads SET status = 'waiting', unread = 0, draft_body = '', draft_notes = '', draft_questions = '[]',
+                   last_message_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`,
+              )
+              .bind(thread.id),
+          ]),
+    ])
+    return status
+  } finally {
+    await db.prepare('UPDATE mail_threads SET sending_at = NULL WHERE id = ?').bind(thread.id).run()
+  }
 }
 
 // ---- Receiving ------------------------------------------------------------------------------------
@@ -511,7 +542,7 @@ async function tellAsker(env: Env, origin: string, stored: { threadId: number; a
 export async function draftReply(
   env: Env,
   threadId: number,
-  input: { notes: string; answers: { question: string; answer: string; remember: boolean }[] },
+  input: { notes: string; answers: { question: string; answer: string; remember: boolean; factLabel?: string }[] },
   by: Author,
 ): Promise<{ notice?: string }> {
   const db = env.DB
@@ -519,7 +550,7 @@ export async function draftReply(
   const today = bostonToday()
   const remembers = input.answers
     .filter((answer) => answer.remember)
-    .map((answer) => rememberStatement(db, answer.question, answer.answer, `${by.name || by.email}, ${today}, answering a reply`, by.email))
+    .map((answer) => rememberStatement(db, answer.factLabel?.trim() || factLabelFor(answer.question), answer.answer, `${by.name || by.email}, ${today}, answering a reply`, by.email))
   if (remembers.length) await db.batch(remembers)
 
   const [proto, contact, ask] = await Promise.all([

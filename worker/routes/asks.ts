@@ -13,8 +13,7 @@ import {
   type Fact,
 } from '../../shared/api'
 import { ASK_SELECT, draftAsk, fillForm, loadAsk, loadAskRow, toAsk, type AskRow, type Author } from '../lib/asks'
-import { bostonToday } from '../lib/dates'
-import { isGoogleFormUrl, readGoogleForm } from '../lib/googleForm'
+import { bostonDay, bostonToday } from '../lib/dates'
 import { ApiError, idParam, readBody } from '../lib/http'
 import { createThread, inboxOn, sendInThread } from '../lib/inbox'
 import type { AppEnv } from '../types'
@@ -214,7 +213,7 @@ app.patch('/api/admin/asks/:id', async (c) => {
       const last = row.thread_id
         ? (await c.env.DB.prepare(`SELECT MAX(created_at) AS at FROM mail_messages WHERE thread_id = ? AND direction = 'out'`).bind(row.thread_id).first<{ at: string | null }>())?.at
         : null
-      set('follow_up_due', input.followUpDays > 0 && last ? addDays(last.slice(0, 10), input.followUpDays) : null)
+      set('follow_up_due', input.followUpDays > 0 && last ? addDays(bostonDay(last), input.followUpDays) : null)
     }
   }
   if (input.status !== undefined && input.status !== ask.status) {
@@ -264,39 +263,52 @@ app.post('/api/admin/asks/:id/send', async (c) => {
   const ask = await loadAsk(db, id)
   if (ask.status === 'answered' || ask.status === 'closed') throw new ApiError(409, 'This ask is done. Open it again to write to them.')
 
-  const sender = c.var.admin
-  const cc = [...new Set([ask.ownerEmail, sender.email].map((email) => email.toLowerCase()))].filter((email) => email !== ask.toEmail.toLowerCase())
-  const kind = ask.status === 'draft' ? 'ask' : 'follow-up'
-  let threadId = ask.threadId
-  if (!threadId) {
-    threadId = await createThread(db, { subject: input.subject, contactId: ask.contactId, askId: ask.id })
-    await db.prepare('UPDATE asks SET thread_id = ? WHERE id = ?').bind(threadId, id).run()
-  }
-
-  const status = await sendInThread(c.env, {
-    threadId,
-    kind,
-    from: { email: ask.ownerEmail, name: ask.ownerName },
-    to: [ask.toEmail],
-    cc,
-    subject: input.subject,
-    body: input.body,
-    replyToFallback: ask.ownerEmail,
-    origin: new URL(c.req.url).origin,
-  })
-  if (status === 'failed') {
-    // The draft stays as it was, so it can go again.
-    await db.prepare(`UPDATE asks SET subject = ?, body = ?, updated_at = datetime('now') WHERE id = ?`).bind(input.subject, input.body, id).run()
-    throw new ApiError(502, "Resend didn't accept the email. Nothing was sent. Check the server logs, then try again.")
-  }
-  await db
-    .prepare(
-      `UPDATE asks SET status = 'waiting', subject = '', body = '', questions = '[]', notes = '',
-         sent_at = COALESCE(sent_at, datetime('now')), follow_up_due = ?, updated_at = datetime('now') WHERE id = ?`,
-    )
-    .bind(ask.followUpDays > 0 ? addDays(bostonToday(), ask.followUpDays) : null, id)
+  // Held while it sends: a second press, or a second teammate, gets a 409 instead of a second email.
+  const held = await db
+    .prepare(`UPDATE asks SET sending_at = datetime('now') WHERE id = ? AND status = ? AND (sending_at IS NULL OR sending_at < datetime('now', '-2 minutes'))`)
+    .bind(id, ask.status)
     .run()
-  return c.json({ item: await loadAsk(db, id), logged: status === 'logged' })
+  if (!held.meta.changes) throw new ApiError(409, 'This ask is being sent right now. Give it a moment, then look again.')
+
+  try {
+    const sender = c.var.admin
+    const cc = [...new Set([ask.ownerEmail, sender.email].map((email) => email.toLowerCase()))].filter((email) => email !== ask.toEmail.toLowerCase())
+    const kind = ask.status === 'draft' ? 'ask' : 'follow-up'
+    let threadId = ask.threadId
+    if (!threadId) {
+      threadId = await createThread(db, { subject: input.subject, contactId: ask.contactId, askId: ask.id })
+      await db.prepare('UPDATE asks SET thread_id = ? WHERE id = ?').bind(threadId, id).run()
+    }
+
+    const status = await sendInThread(c.env, {
+      threadId,
+      kind,
+      from: { email: ask.ownerEmail, name: ask.ownerName },
+      sentBy: sender.email,
+      scope: `ask-${ask.id}`,
+      to: [ask.toEmail],
+      cc,
+      subject: input.subject,
+      body: input.body,
+      replyToFallback: ask.ownerEmail,
+      origin: new URL(c.req.url).origin,
+    })
+    if (status === 'failed') {
+      // The draft stays as it was, so it can go again.
+      await db.prepare(`UPDATE asks SET subject = ?, body = ?, updated_at = datetime('now') WHERE id = ?`).bind(input.subject, input.body, id).run()
+      throw new ApiError(502, "Resend didn't accept the email. Nothing was sent. Check the server logs, then try again.")
+    }
+    await db
+      .prepare(
+        `UPDATE asks SET status = 'waiting', subject = '', body = '', questions = '[]', notes = '',
+           sent_at = COALESCE(sent_at, datetime('now')), follow_up_due = ?, updated_at = datetime('now') WHERE id = ?`,
+      )
+      .bind(ask.followUpDays > 0 ? addDays(bostonToday(), ask.followUpDays) : null, id)
+      .run()
+    return c.json({ item: await loadAsk(db, id), logged: status === 'logged' })
+  } finally {
+    await db.prepare('UPDATE asks SET sending_at = NULL WHERE id = ?').bind(id).run()
+  }
 })
 
 // ---- An ask's forms -----------------------------------------------------------------------------
@@ -305,23 +317,9 @@ app.post('/api/admin/asks/:id/web-forms', async (c) => {
   const id = idParam(c)
   await loadAskRow(c.env.DB, id)
   const input = await readBody(c, webFormInput)
-  let name = input.name
-  let url = input.url
-  let fields: unknown[] = []
-  if (url && isGoogleFormUrl(url) && !input.questions) {
-    const form = await readGoogleForm(url)
-    if (!form) {
-      const message = 'That Google Form needs a sign-in to open, so its questions can’t be read. Paste them below.'
-      throw new ApiError(422, message, { questions: message })
-    }
-    if (form.fields.length === 0) throw new ApiError(422, 'That Google Form has no questions to answer.', { url: 'No questions found' })
-    fields = form.fields
-    url = form.url
-    name ||= form.title
-  }
-  name ||= url ? new URL(url).hostname.replace(/^www\./, '') : 'Web form'
-  await c.env.DB.prepare(`INSERT INTO ask_forms (ask_id, name, url, questions, fields) VALUES (?, ?, ?, ?, ?)`)
-    .bind(id, name.slice(0, 120), url, input.questions, JSON.stringify(fields))
+  const name = input.name || (input.url ? new URL(input.url).hostname.replace(/^www\./, '') : 'Web form')
+  await c.env.DB.prepare('INSERT INTO ask_forms (ask_id, name, url, questions) VALUES (?, ?, ?, ?)')
+    .bind(id, name.slice(0, 120), input.url, input.questions)
     .run()
   return c.json({ item: await loadAsk(c.env.DB, id) }, 201)
 })

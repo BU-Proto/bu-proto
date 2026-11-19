@@ -38,8 +38,8 @@ export function Component() {
   const isNew = contactId === NEW || (contacts !== undefined && list.length === 0)
 
   const addWebForm = () => {
-    if (!web.url.trim() && !web.questions.trim()) {
-      setIssues((prev) => ({ ...prev, web: 'Add the form’s link or paste its questions.' }))
+    if (!web.questions.trim()) {
+      setIssues((prev) => ({ ...prev, web: 'Paste the form’s questions.' }))
       return
     }
     if (web.url.trim() && !/^https?:\/\//i.test(web.url.trim())) {
@@ -160,13 +160,13 @@ export function Component() {
           <div className={styles.stack}>
             <div className={styles.spread}>
               <span className={ui.label}>Forms</span>
-              <span className={ui.hint}>A web form (Google Forms, Engage) for Claude to answer</span>
+              <span className={ui.hint}>A web form (Engage, a Google Form): paste its questions and Claude answers them</span>
             </div>
             {webForms.length > 0 && (
               <ul className={styles.pending}>
                 {webForms.map((form, index) => (
                   <li key={`web-${index}`}>
-                    <span className={styles.clip}>{form.url || form.questions}</span>
+                    <span className={styles.clip}>{form.questions}</span>
                     <button type="button" className={ui.dangerGhost} aria-label="Remove this web form" onClick={() => setWebForms((prev) => prev.filter((_, at) => at !== index))}>
                       <TrashIcon />
                     </button>
@@ -175,11 +175,11 @@ export function Component() {
               </ul>
             )}
             <div className={styles.formGrid}>
-              <Field label="Add a web form: its link" hint="A public Google Form’s questions are read from the link.">
-                {(props) => <input {...props} type="url" className={ui.input} placeholder="https://" value={web.url} onChange={(event) => setWeb({ ...web, url: event.target.value })} />}
+              <Field label="Add a web form: its questions" hint="Copy them from the form’s page, one per line.">
+                {(props) => <textarea {...props} className={ui.input} rows={3} value={web.questions} onChange={(event) => setWeb({ ...web, questions: event.target.value })} />}
               </Field>
-              <Field label="…or its questions" hint="For Engage, BU-only Google Forms, anything behind a sign-in: paste the questions.">
-                {(props) => <textarea {...props} className={ui.input} rows={2} value={web.questions} onChange={(event) => setWeb({ ...web, questions: event.target.value })} />}
+              <Field label="…and its link" hint="Optional: for whoever fills it in.">
+                {(props) => <input {...props} type="url" className={ui.input} placeholder="https://" value={web.url} onChange={(event) => setWeb({ ...web, url: event.target.value })} />}
               </Field>
               <div className={styles.wide}>
                 {issues.web && <p className={ui.error}>{issues.web}</p>}

@@ -897,20 +897,20 @@ export const newAskInput = z.object({
 export type NewAskInput = z.input<typeof newAskInput>
 
 /**
- * POST /api/admin/asks/:id/web-forms → 201 { item: AskDetail }: a form on the web. A public Google
- * Form's questions are read from its link; anything else (Engage, a form behind BU sign-in) needs
- * its questions pasted.
+ * POST /api/admin/asks/:id/web-forms → 201 { item: AskDetail }: a form on the web. Its questions are
+ * pasted in (copied from the form's page); the link is kept for whoever fills it in.
  */
-export const webFormInput = z
-  .object({
-    url: z.union([z.literal(''), z.url('Must be a full URL')]),
-    name: optionalText(120),
-    questions: optionalText(10000),
-  })
-  .refine((value) => value.url || value.questions, { message: 'Add the form’s link or paste its questions', path: ['url'] })
+export const webFormInput = z.object({
+  url: z.union([z.literal(''), z.url('Must be a full URL')]),
+  name: optionalText(120),
+  questions: text(10000),
+})
 export type WebFormInput = z.input<typeof webFormInput>
 
-/** A question Claude needs answered. `remember`: the answer is a lasting fact about Proto, kept for next time. */
+/**
+ * A question Claude needs answered. `remember`: the answer is a lasting fact about Proto, kept for
+ * next time under `factLabel` (an existing fact's name updates that fact; empty uses factLabelFor).
+ */
 export interface AskQuestion {
   question: string
   remember: boolean
@@ -931,7 +931,7 @@ export interface AskAnswer {
 export const draftAskInput = z.object({
   notes: optionalText(4000),
   answers: z
-    .array(z.object({ question: text(500), answer: text(2000), remember: z.boolean() }))
+    .array(z.object({ question: text(500), answer: text(2000), remember: z.boolean(), factLabel: optionalText(80).optional() }))
     .max(30)
     .default([]),
 })
@@ -952,7 +952,7 @@ export type AskPatch = z.input<typeof askPatch>
 export const sendAskInput = z.object({ subject: text(200), body: text(20000) })
 export type SendAskInput = z.input<typeof sendAskInput>
 
-/** One answer on a form, with where it came from. `field` is the Google Form's entry name or the question as pasted. */
+/** One answer on a form, with where it came from. `field` is the question as pasted. */
 export interface FormAnswer {
   field: string
   value: string
@@ -964,29 +964,15 @@ const formAnswer = z.object({ field: text(300), value: optionalText(4000), sourc
 export const formPatch = z.object({ answers: z.array(formAnswer).max(300) })
 export type FormPatch = z.input<typeof formPatch>
 
-/** A question on a Google Form, read from its page. */
-export interface FormField {
-  /** The form's own name for it: `entry.<id>`. */
-  name: string
-  /** The question as the form asks it. */
-  label: string
-  type: 'text' | 'paragraph' | 'choice' | 'date' | 'time'
-  options?: string[]
-  /** Several options at once (checkboxes). */
-  multi?: boolean
-}
-
-/** A web form an ask carries: Google Forms, Engage, anything with a link. A teammate submits it. */
+/** A web form an ask carries (Engage, a Google Form, anything with a link). A teammate submits it. */
 export interface AskForm {
   id: number
   name: string
   url: string
+  /** The questions, as a teammate pasted them. */
   questions: string
-  fields: FormField[]
   answers: FormAnswer[]
   missing: string[]
-  /** A Google Form opened with Claude's answers already in, for a teammate to check and submit. */
-  prefillUrl: string | null
 }
 
 /** GET /api/admin/asks → { items: Ask[], setup: AskSetup } (newest first) */
@@ -1126,7 +1112,7 @@ export const replyDraftInput = z.object({
   notes: optionalText(4000),
   /** Answers to the questions Claude asked last time. */
   answers: z
-    .array(z.object({ question: text(500), answer: text(2000), remember: z.boolean() }))
+    .array(z.object({ question: text(500), answer: text(2000), remember: z.boolean(), factLabel: optionalText(80).optional() }))
     .max(20)
     .default([]),
 })

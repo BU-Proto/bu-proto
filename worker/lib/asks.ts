@@ -1,9 +1,10 @@
-import { TYPED_SOURCE, type Ask, type AskAnswer, type AskDetail, type AskForm, type AskQuestion, type FormAnswer, type FormField, type MailReading } from '../../shared/api'
+import { factLabelFor, TYPED_SOURCE, type Ask, type AskAnswer, type AskDetail, type AskForm, type AskQuestion, type FormAnswer, type MailReading } from '../../shared/api'
 import { standInDraft, writeDraft, type DraftContext } from './claude'
-import { bostonToday } from './dates'
-import { prefillUrl } from './googleForm'
+import { bostonDay, bostonToday } from './dates'
+import { escapeHtml } from './emailTemplate'
 import { ApiError } from './http'
-import { threadMessages } from './inbox'
+import { mailDomain, threadMessages } from './inbox'
+import { sendPersonalEmail } from './resend'
 
 // Asks: reading and writing them, their web forms' answers, and Claude's drafts. The routes in
 // routes/asks.ts and the daily follow-up check (the Cron Trigger) both come through here.
@@ -49,7 +50,6 @@ interface FormRow {
   name: string
   url: string
   questions: string
-  fields: string
   answers: string
   missing: string
 }
@@ -93,17 +93,13 @@ export function toAsk(row: AskRow): Ask {
 }
 
 function toForm(row: FormRow): AskForm {
-  const fields = json<FormField[]>(row.fields, [])
-  const answers = json<FormAnswer[]>(row.answers, [])
   return {
     id: row.id,
     name: row.name,
     url: row.url,
     questions: row.questions,
-    fields,
-    answers,
+    answers: json<FormAnswer[]>(row.answers, []),
     missing: json<string[]>(row.missing, []),
-    prefillUrl: fields.length ? prefillUrl(row.url, fields, answers) : null,
   }
 }
 
@@ -164,20 +160,14 @@ export async function protoContext(
 }
 
 /** Keep an answer about Proto itself as a fact, so the next form doesn't ask again. */
-export function rememberStatement(db: D1Database, question: string, answer: string, source: string, by: string): D1PreparedStatement {
-  // "Who is Proto's faculty advisor?" → "Proto's faculty advisor"
-  const bare = question
-    .replace(/\?\s*$/, '')
-    .replace(/^(what|who|which|where|when)(['’]s|\s+(is|are|was|were))\s+(the\s+)?/i, '')
-    .trim()
-  const label = (bare.charAt(0).toUpperCase() + bare.slice(1) || question).slice(0, 80)
+export function rememberStatement(db: D1Database, label: string, answer: string, source: string, by: string): D1PreparedStatement {
   return db
     .prepare(
       `INSERT INTO facts (label, value, source, updated_by) VALUES (?, ?, ?, ?)
        ON CONFLICT (label) DO UPDATE SET value = excluded.value, source = excluded.source,
          updated_by = excluded.updated_by, updated_at = datetime('now')`,
     )
-    .bind(label, answer, source, by)
+    .bind(label.trim().slice(0, 80), answer, source, by)
 }
 
 /**
@@ -188,7 +178,7 @@ export function rememberStatement(db: D1Database, question: string, answer: stri
 export async function draftAsk(
   env: Env,
   id: number,
-  input: { notes: string; answers: { question: string; answer: string; remember: boolean }[] },
+  input: { notes: string; answers: { question: string; answer: string; remember: boolean; factLabel?: string }[] },
   by: Author,
 ): Promise<{ notice?: string }> {
   const db = env.DB
@@ -207,7 +197,7 @@ export async function draftAsk(
     if (index >= 0) answers[index] = entry
     else answers.push(entry)
     if (given.remember) {
-      remembers.push(rememberStatement(db, given.question, given.answer, `${entry.by}, ${today}, answering ask #${id}`, by.email))
+      remembers.push(rememberStatement(db, given.factLabel?.trim() || factLabelFor(given.question), given.answer, `${entry.by}, ${today}, answering ask #${id}`, by.email))
     }
   }
   await db.batch([
@@ -225,7 +215,6 @@ export async function draftAsk(
     name: form.name,
     url: form.url,
     questions: form.questions,
-    fields: form.fields,
   }))
 
   const waiting = ask.body.trim() !== '' && ask.draftKind === kind
@@ -304,6 +293,40 @@ export async function draftFollowUps(env: Env): Promise<void> {
       await draftAsk(env, id, { notes: '', answers: [] }, { email: 'claude', name: 'Claude' })
     } catch (error) {
       console.error(`[asks] follow-up for ask ${id} failed:`, error)
+      continue
     }
+    // Only once the draft is there: the owner hears about it, and is never sent the follow-up itself.
+    await tellOwnerOfFollowUp(env, id).catch((error) => console.error(`[asks] follow-up notice for ask ${id} failed:`, error))
   }
+}
+
+/** The ask's owner gets a short note that a follow-up is waiting for them to check and send. */
+async function tellOwnerOfFollowUp(env: Env, id: number): Promise<void> {
+  const ask = await env.DB.prepare('SELECT to_name, to_organization, request, owner_email, sent_at FROM asks WHERE id = ?')
+    .bind(id)
+    .first<{ to_name: string; to_organization: string; request: string; owner_email: string; sent_at: string | null }>()
+  if (!ask) return
+  const who = ask.to_organization ? `${ask.to_name} (${ask.to_organization})` : ask.to_name
+  const since = ask.sent_at ? ` since ${bostonDay(ask.sent_at)}` : ''
+  const body = [
+    `${who} hasn't replied to your ask${since}:`,
+    `"${ask.request.split('\n')[0].slice(0, 160)}"`,
+    '',
+    'Claude drafted a follow-up. It goes nowhere until you check it and press Send:',
+    `https://${mailDomain(env)}/admin/email/asks/${id}`,
+  ].join('\n')
+  await sendPersonalEmail(
+    env,
+    {
+      fromName: 'Proto asks',
+      to: [ask.owner_email],
+      cc: [],
+      replyTo: ask.owner_email,
+      subject: `Follow-up ready for ${ask.to_name}`,
+      text: body,
+      html: `<p style="font-family:sans-serif;white-space:pre-wrap">${escapeHtml(body)}</p>`,
+      attachments: [],
+    },
+    `follow-up-notice-${id}-${bostonToday()}`,
+  )
 }
