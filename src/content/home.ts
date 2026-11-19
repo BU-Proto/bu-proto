@@ -38,7 +38,7 @@ export const TRACKS: readonly Track[] = [
     name: 'Start',
     glyph: '○',
     hue: 'sky',
-    who: 'Any CS student, no projects yet.',
+    who: 'Any student, any major, no projects yet.',
     offers: [
       'Beginner workshops',
       '"First hackathon" squads paired with a veteran',
@@ -135,7 +135,7 @@ export const JOIN_CTA: {
   cta: Link
 } = {
   title: 'Come build with us',
-  tag: 'BU Proto',
+  tag: 'Proto',
   lede: 'No application and no experience needed. Tell us your track and we’ll see you at hack night.',
   hint: 'No application needed',
   aside: ['Nobody arrives ready.', 'We said come anyway.', 'They built something.'],

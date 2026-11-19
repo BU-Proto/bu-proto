@@ -2,7 +2,6 @@
 // fact here is one the rest of the site already states (the landing, join, board, fund and
 // playbook copy); say nothing new about Proto here that isn't true there first.
 
-import { BOARD_FORM } from './board'
 import type { Hue, Link } from './types'
 
 export const ABOUT_INTRO = {
@@ -88,5 +87,5 @@ export const WHO = {
   /** Before the seats still open, which come from the board page's own list. */
   openLead: 'Seats still open',
   board: { label: 'Meet the board', href: '/board' } satisfies Link,
-  apply: { label: 'Throw your hat in the ring', href: `/board#${BOARD_FORM.id}` } satisfies Link,
+  apply: { label: 'Apply for a seat', href: '/roles' } satisfies Link,
 } as const

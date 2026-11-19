@@ -1,8 +1,8 @@
 // Formatting for the portal. API timestamps are UTC without a zone ("2026-11-03 21:14:05"),
 // so they're parsed as UTC and shown in the admin's own time zone.
 
-/** "Events · Admin · BU Proto" */
-export const pageTitle = (page?: string) => (page ? `${page} · Admin · BU Proto` : 'Admin · BU Proto')
+/** "Events · Admin · Proto" */
+export const pageTitle = (page?: string) => (page ? `${page} · Admin · Proto` : 'Admin · Proto')
 
 export function parseTimestamp(value: string): Date {
   return new Date(value.includes('T') ? value : `${value.replace(' ', 'T')}Z`)

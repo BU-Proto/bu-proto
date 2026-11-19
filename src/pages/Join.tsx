@@ -1,5 +1,5 @@
 import { Field, Form } from '../components/Form'
-import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
+import { inputClass } from '../components/formFields'
 import { PageIntro } from '../components/PageIntro'
 import { PrivacyNote } from '../components/PrivacyNote'
 import { Select } from '../components/Select'
@@ -47,15 +47,13 @@ export function Join() {
               <Field label="Name" wide>
                 <input className={inputClass} name="name" autoComplete="name" required />
               </Field>
-              <Field label="BU email" wide>
+              <Field label="Email" wide>
                 <input
                   className={inputClass}
                   name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="you@bu.edu"
-                  pattern={BU_EMAIL_PATTERN}
-                  title="Use your @bu.edu address"
+                  placeholder="you@school.edu"
                   required
                 />
               </Field>

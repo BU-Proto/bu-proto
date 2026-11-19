@@ -13,7 +13,7 @@ export function PageLoading() {
   const section = sectionName(pathname)
   return (
     <div className={`${ui.page} ${styles.pending}`} data-route-loading>
-      <title>{section ? `${section} · ${BRAND.full}` : BRAND.full}</title>
+      <title>{section ? `${section} · ${BRAND.name}` : BRAND.name}</title>
       <p className={styles.loading} role="status">
         <span className={styles.glyphs} aria-hidden="true">
           <span>○</span>
@@ -34,7 +34,7 @@ export function LoadError() {
 
   return (
     <div className={ui.page}>
-      <title>{`${ROUTE_STATES.error.title} · ${BRAND.full}`}</title>
+      <title>{`${ROUTE_STATES.error.title} · ${BRAND.name}`}</title>
       <section className={`${ui.panel} ${styles.error}`} role="alert">
         <h1 className={styles.title} data-fog-clear>
           {ROUTE_STATES.error.title}

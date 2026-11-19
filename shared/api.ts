@@ -157,6 +157,8 @@ export const roleInput = z.object({
   description: optionalText(8000),
   /** Questions of its own the application asks, on top of the usual ones. */
   questions: z.array(text(200)).max(MAX_ROLE_QUESTIONS, `Up to ${MAX_ROLE_QUESTIONS} questions`),
+  /** Someone has taken it: it leaves the list, and its page stays up without the form. */
+  filled: z.boolean(),
   position: z.number().int(),
   ...flags,
 })
@@ -288,7 +290,7 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
         column: 'photo',
         label: 'Cover photo',
         type: 'image',
-        hint: 'A full URL or a path under public/. A portrait or square flyer stands whole beside the title; a wide photo runs across the page as a banner. Leave it empty for a campus photo.',
+        hint: 'Upload one, or paste a full URL or a path under public/. A portrait or square flyer stands whole beside the title; a wide photo runs across the page as a banner. Leave it empty for a campus photo.',
       },
       {
         key: 'description',
@@ -321,7 +323,7 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       { key: 'buGoing', column: 'bu_going', label: 'BU people going', type: 'number' },
       { key: 'href', column: 'href', label: 'Website', type: 'url', hint: 'Its card on the site links here.' },
       { key: 'mode', column: 'mode', label: 'Format', type: 'select', options: HACKATHON_MODES },
-      { key: 'photo', column: 'photo', label: 'Card background', type: 'image', hint: 'A full URL or a path under public/. Imports use the MLH banner.' },
+      { key: 'photo', column: 'photo', label: 'Card background', type: 'image', hint: 'Upload one, or paste a full URL or a path under public/. Imports use the MLH banner.' },
       { key: 'logo', column: 'logo', label: 'Logo', type: 'image', hint: 'Centred over the background. A PNG with a transparent background works best.' },
       { key: 'description', column: 'description', label: 'About the hackathon', type: 'textarea', hint: 'What it is and why it’s worth going. Blank lines make paragraphs.' },
       { key: 'trip', column: 'trip', label: 'How we’re going', type: 'textarea', hint: 'The group trip: getting there, where we stay, who to ask.' },
@@ -347,7 +349,7 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       { key: 'placement', column: 'placement', label: 'Placement', type: 'text', hint: 'e.g. 1st overall, 2nd place, Best hardware hack' },
       { key: 'track', column: 'track', label: 'Track or prize category', type: 'text', hint: 'Optional, e.g. Healthcare track, Best use of AI' },
       { key: 'team', column: 'team', label: 'Team', type: 'people', hint: 'Each name can link to a LinkedIn, personal site or GitHub.' },
-      { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'A full URL or a path under public/, e.g. /photos/pantry-pal.jpg' },
+      { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'Upload one, or paste a full URL or a path under public/, e.g. /photos/pantry-pal.jpg' },
       { key: 'gallery', column: 'gallery', label: 'Photo gallery', type: 'images', hint: 'More photos for the project page.' },
       { key: 'description', column: 'description', label: 'What they built', type: 'textarea', hint: 'The problem, what it does and how it works. Blank lines make paragraphs.' },
       { key: 'stack', column: 'stack', label: 'Built with', type: 'list', hint: 'One technology per line, e.g. React, Python, Arduino.' },
@@ -370,7 +372,13 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
     fields: [
       { key: 'name', column: 'name', label: 'Name', type: 'text' },
       { key: 'role', column: 'role', label: 'Role', type: 'text' },
-      { key: 'photo', column: 'photo', label: 'Photo', type: 'image', hint: 'A full URL or a path under public/.' },
+      {
+        key: 'photo',
+        column: 'photo',
+        label: 'Photo',
+        type: 'image',
+        hint: 'Upload a portrait, or paste a full URL. It shows cropped to a 4:5 portrait, so keep the face near the middle.',
+      },
       { key: 'links', column: 'links', label: 'Links', type: 'links', hint: 'GitHub, LinkedIn, a personal site…' },
       { key: 'position', column: 'position', label: 'Order', type: 'number', hint: 'Lower shows first.' },
       ...FLAG_FIELDS,
@@ -386,7 +394,13 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
     orderBy: 'position ASC, id ASC',
     fields: [
       { key: 'title', column: 'title', label: 'Title', type: 'text', hint: 'What the person would be, e.g. Head of Partnerships.' },
-      { key: 'team', column: 'team', label: 'Team', type: 'text', hint: 'Optional: the part of Proto it belongs to, e.g. Board, Events.' },
+      {
+        key: 'team',
+        column: 'team',
+        label: 'Team',
+        type: 'text',
+        hint: 'Optional: the part of Proto it belongs to, e.g. Events. A Board role is also an open seat on the board page until it’s filled.',
+      },
       { key: 'summary', column: 'summary', label: 'One or two lines', type: 'textarea', hint: 'Shown on the list of roles and under the title on the role’s page.' },
       { key: 'commitment', column: 'commitment', label: 'Time it takes', type: 'text', hint: 'In words, e.g. About 3 hours a week, or One trip a semester.' },
       {
@@ -394,7 +408,7 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
         column: 'apply_by',
         label: 'Apply by',
         type: 'date',
-        hint: 'Optional. The day after, the role leaves the list and its form closes. Leave it empty to keep it open until you unpublish it.',
+        hint: 'Optional. The day after, the role leaves the list and its form closes. Leave it empty to keep it open until it’s filled.',
       },
       {
         key: 'description',
@@ -410,6 +424,13 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
         type: 'list',
         hint: `Optional. One per line, up to ${MAX_ROLE_QUESTIONS}. Every application already asks for a name, BU email, year, a link and a résumé; these come after, and each needs an answer.`,
       },
+      {
+        key: 'filled',
+        column: 'filled',
+        label: 'Filled',
+        type: 'boolean',
+        hint: 'Someone’s taken it. It leaves the list of roles (and the board page, for a Board role), and its page stays up saying it’s filled, without the form. Accepting an application offers to tick this for you.',
+      },
       { key: 'position', column: 'position', label: 'Order', type: 'number', hint: 'Lower shows first.' },
       ...FLAG_FIELDS,
     ],
@@ -424,13 +445,16 @@ const buEmail = z
   .toLowerCase()
   .regex(/^[^@\s]+@bu\.edu$/, 'Use your @bu.edu address')
 
+/** Any student can join, from BU or not, so joining takes any email. */
+const anyEmail = z.string().trim().toLowerCase().pipe(z.email('Enter an email').max(254))
+
 /** Bots fill every field; people never see this one. Must be empty. */
 const honeypot = { website: z.literal('').optional() }
 
 /** POST /api/join → 201 { ok: true }. Joining again with the same email updates the row (200). */
 export const joinInput = z.object({
   name: text(80),
-  email: buEmail,
+  email: anyEmail,
   year: z.enum(YEARS),
   track: z.enum(TRACKS),
   ...honeypot,
@@ -519,6 +543,8 @@ export interface RoleApplication {
   /** Null once the role itself has been deleted; `roleTitle` still says what it was for. */
   roleId: number | null
   roleTitle: string
+  /** Whether the role has been filled; null once it's been deleted. */
+  roleFilled: boolean | null
   name: string
   email: string
   year: string
@@ -533,6 +559,9 @@ export interface RoleApplication {
 }
 
 export const applicationPatch = z.object({ status: z.enum(APPLICATION_STATUSES), notes: optionalText(2000) }).partial()
+
+/** PATCH /api/admin/roles/:id/filled → { filled }: mark a role filled, or open again, from an application. */
+export const roleFilledPatch = z.object({ filled: z.boolean() })
 
 /** POST /api/events/:id/rsvp → 201 { ok: true, count } (200 if already RSVP'd). Any email, not just BU. */
 export const rsvpInput = z.object({

@@ -1,10 +1,10 @@
-# BU Proto concept
+# Proto concept
 
-BU Proto (working name). a BU-sponsored home base for anyone who makes things: first-time CS students, hackathon regulars, student founders. not framed as a club, don't use the word "club" anywhere on the site.
+Proto (working name). a BU-sponsored home base for anyone who makes things, in any major: first-time builders, hackathon regulars, student founders. not framed as a club, don't use the word "club" anywhere on the site.
 
 ## three tracks
 
-- Start: any CS student, no projects yet. beginner workshops, "first hackathon" squads paired with a veteran, project and resume help
+- Start: any student, any major, no projects yet. beginner workshops, "first hackathon" squads paired with a veteran, project and resume help
 - Build: hackathon regulars and side-project people. weekly hack nights, team matching, group trips (HackMIT, PennApps, etc)
 - Launch: student founders. demo nights, founder talks, a path into BU's startup programs
 

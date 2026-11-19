@@ -3,9 +3,8 @@
 import type { Sampleable } from './types'
 
 export const BRAND = {
-  /** Short name for the top bar and inside sentences that already say BU. */
-  short: 'Proto',
-  full: 'BU Proto',
+  /** The name, everywhere: the top bar, the footer, tab titles. */
+  name: 'Proto',
   seal: '/proto-seal.svg',
 } as const
 
@@ -36,7 +35,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     children: [
       { label: 'What we offer', to: '/about#offer', line: 'Hack nights, trips and the playbook' },
       { label: 'The board', to: '/board', line: 'Who runs Proto, and the open seats' },
-      { label: 'Open roles', to: '/roles', line: 'The parts of Proto that need someone' },
+      { label: 'Roles', to: '/roles', line: 'The seats we’re filling, and how to apply' },
     ],
   },
   { label: 'Hackathons', to: '/hackathons', inPill: true },
@@ -91,7 +90,7 @@ export const SCHEDULE: { location: string; slots: readonly ScheduleSlot[] } & Sa
 }
 
 /**
- * BU Proto's LinkedIn page. Paste the full URL here (e.g. 'https://www.linkedin.com/company/…')
+ * Proto's LinkedIn page. Paste the full URL here (e.g. 'https://www.linkedin.com/company/…')
  * once the page exists; while it's null, the board page and the footer leave the link out.
  */
 export const PROTO_LINKEDIN: string | null = null
@@ -103,7 +102,7 @@ export interface FooterGroup {
 
 export const FOOTER = {
   line: 'Hack nights, hackathon trips and demo nights for BU students who make things.',
-  note: 'BU Proto is a working name. Nothing here is official with Spark! or Innovate@BU yet.',
+  note: 'Proto is a working name. Nothing here is official with Spark! or Innovate@BU yet.',
   /** The site, sorted into columns. Legal links come from LEGAL_LINKS, the email from CONTACT_EMAIL. */
   groups: [
     {
@@ -125,7 +124,7 @@ export const FOOTER = {
       title: 'Get involved',
       links: [
         { label: 'Join Proto', to: '/join' },
-        { label: 'Open roles', to: '/roles' },
+        { label: 'Roles', to: '/roles' },
         { label: 'Grants', to: '/grants' },
       ],
     },

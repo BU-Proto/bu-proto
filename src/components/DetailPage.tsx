@@ -299,7 +299,7 @@ export function DetailLoadError({ copy, to }: { copy: NotFoundCopy; to: string }
 
   return (
     <div className={ui.page}>
-      <title>{`${copy.title} · ${BRAND.full}`}</title>
+      <title>{`${copy.title} · ${BRAND.name}`}</title>
       <section className={styles.missing}>
         <h1 className={ui.introTitle} data-fog-clear>
           {copy.title}

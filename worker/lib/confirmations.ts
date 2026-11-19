@@ -42,7 +42,7 @@ export function welcomeDraft(
   event: EventDetails | null,
 ): Draft {
   const body = [
-    'Welcome to BU Proto, {{name}}',
+    'Welcome to Proto, {{name}}',
     'You’re on the list. We’re BU students who build things and take them to hackathons, and from now on you’ll hear about our hack nights, trips and demo nights here.',
     TRACK_LINES[member.track] ?? TRACK_LINES['Not sure yet'],
     ...(event
@@ -54,7 +54,7 @@ export function welcomeDraft(
       : [`Nothing’s on the calendar yet; we’ll email you when it is. Until then, the playbook is the best place to start: ${origin}/resources/playbook`]),
     'Questions? Just reply to this email.',
   ].join('\n\n')
-  return { recipient: member, subject: 'Welcome to BU Proto', body, reason: { kind: 'member' } }
+  return { recipient: member, subject: 'Welcome to Proto', body, reason: { kind: 'member' } }
 }
 
 export function rsvpDraft(rsvp: { name: string; email: string }, event: EventDetails): Draft {
@@ -69,10 +69,10 @@ export function rsvpDraft(rsvp: { name: string; email: string }, event: EventDet
 export function fundDraft(person: { name: string; email: string }): Draft {
   const body = [
     'You’re on the grants list, {{name}}',
-    'Thanks for telling us about your project. BU Proto microgrants are coming soon, and nobody can apply yet. You’re on the list, so you’ll hear first when they open.',
+    'Thanks for telling us about your project. Proto microgrants are coming soon, and nobody can apply yet. You’re on the list, so you’ll hear first when they open.',
     'If you want to tell us more in the meantime, reply to this email.',
   ].join('\n\n')
-  return { recipient: person, subject: 'You’re on the BU Proto grants list', body, reason: { kind: 'fund' } }
+  return { recipient: person, subject: 'You’re on the Proto grants list', body, reason: { kind: 'fund' } }
 }
 
 export function renderDraft(draft: Draft, origin: string): RenderedEmail {

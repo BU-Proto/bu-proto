@@ -12,6 +12,7 @@ import imports from './routes/imports'
 import pages from './routes/pages'
 import people from './routes/people'
 import publicForms from './routes/public'
+import uploads from './routes/uploads'
 import type { AppEnv } from './types'
 
 // The API behind the site. Static assets and the client router are served by Workers Assets;
@@ -35,6 +36,7 @@ app.route('/', email) //        /api/admin/email/*, /api/unsubscribe
 app.route('/', imports) //      /api/admin/hackathon-imports/*
 app.route('/', devpost) //      /api/admin/devpost/* (projects → win drafts)
 app.route('/', eventImport) //  /api/admin/event-import/* (Luma, Eventbrite pages → event drafts)
+app.route('/', uploads) //      /api/admin/uploads (portal), /api/uploads/:name (the pictures)
 app.route('/', pages) //        /privacy, /terms rendered for crawlers
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404))

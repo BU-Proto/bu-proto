@@ -1,25 +1,15 @@
 import { Link, useLoaderData } from 'react-router'
-import type { BoardMember } from '../../shared/api'
+import type { Role } from '../../shared/api'
 import { RevealWords } from '../components/motion/RevealWords'
 import motion from '../components/motion/motion.module.css'
 import { useReveal } from '../components/motion/useReveal'
 import ui from '../components/ui.module.css'
 import { ABOUT_INTRO, OFFER, WHAT, WHO, WHY } from '../content/about'
-import { OPEN_SEATS } from '../content/board'
 import { JOIN_CTA, TRACKS } from '../content/home'
 import { BRAND } from '../content/site'
+import { rolePath } from '../lib/paths'
+import { openSeats } from '../lib/roles'
 import styles from './About.module.css'
-
-/**
- * The seats nobody has taken, by the board page's rule: a member whose role names a seat fills
- * it. Without the board (it couldn't load) there's no telling, so none are listed.
- */
-function openSeats(board: BoardMember[] | null) {
-  if (!board) return []
-  return OPEN_SEATS.filter(
-    (seat) => !board.some((member) => member.role.toLowerCase().includes(seat.role.toLowerCase().replace(/^the /, ''))),
-  )
-}
 
 /**
  * What Proto is, as one page: the statement on the field, then on harbor what it is and why, the
@@ -27,13 +17,14 @@ function openSeats(board: BoardMember[] | null) {
  * runs it, and the ask. The directory is the page's one big moment; the rest stays quiet.
  */
 export function About() {
-  const board = useLoaderData<BoardMember[] | null>()
-  const open = openSeats(board)
+  // Without the roles (they couldn't load) there's no telling which seats are open, so none are listed.
+  const roles = useLoaderData<Role[] | null>()
+  const open = roles ? openSeats(roles) : []
   const revealRef = useReveal<HTMLDivElement>()
 
   return (
     <div className={`${ui.page} ${styles.page}`}>
-      <title>{`${ABOUT_INTRO.tab} · ${BRAND.full}`}</title>
+      <title>{`${ABOUT_INTRO.tab} · ${BRAND.name}`}</title>
 
       <header className={styles.intro} data-ground-after="">
         <h1 className={styles.title} data-fog-clear>
@@ -120,7 +111,11 @@ export function About() {
               <h3 className={styles.seatsLead}>{WHO.openLead}</h3>
               <ul className={styles.seatList}>
                 {open.map((seat) => (
-                  <li key={seat.role}>{seat.role}</li>
+                  <li key={seat.id}>
+                    <Link className={ui.textLink} to={rolePath(seat)}>
+                      {seat.title}
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </div>

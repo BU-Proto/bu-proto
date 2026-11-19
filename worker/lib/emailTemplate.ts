@@ -51,28 +51,29 @@ export interface RenderedEmail {
   headers?: Record<string, string>
 }
 
-// The site's palette (src/index.css), as the solid colours email needs. Where the site lays frost
-// over a ground at some strength, the mix is worked out here.
-const HARBOR = '#061a2e'
-const NAVY = '#0b2a46'
-const FROST = '#f6fbff'
+// The site's palette (src/index.css), as the solid colours email needs: black ground, near-black
+// panels, white ink. Where the site lays white over a ground at some strength, the mix is worked
+// out here.
+const HARBOR = '#000000'
+const NAVY = '#131313'
+const FROST = '#ffffff'
 const MINT = '#9df0a8'
 const IRIS = '#ab9dff'
-/** Body copy: the palette's paper, a touch softer than frost over a long read. */
-const INK = '#e3eaf0'
-/** Frost at the site's "soft" and "dim" strengths, on the harbor. */
-const INK_SOFT = '#c1cad1'
-const MUTED = '#919ca7'
+/** Body copy: a touch softer than white over a long read. */
+const INK = '#e6e6e6'
+/** White at the site's "soft" and "dim" strengths, on black. */
+const INK_SOFT = '#c7c7c7'
+const MUTED = '#949494'
 const LINK = MINT
 /** The slab's lit edge on the harbor: a card's border, and the rule above the footer. */
-const EDGE = '#253749'
+const EDGE = '#212121'
 /** The same edge where it sits on navy. */
-const EDGE_ON_NAVY = '#2a455e'
+const EDGE_ON_NAVY = '#323232'
 /** The field's blue-violet under the banner's corner, shown in its place where pictures are blocked. */
 const FIELD = '#786c9f'
 const FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
 /** What the site puts under copy that sits on the field, so it holds against the light behind it. */
-const ON_FIELD = 'text-shadow:0 1px 2px rgba(6,26,46,0.5),0 0 18px rgba(6,26,46,0.35)'
+const ON_FIELD = 'text-shadow:0 1px 2px rgba(0,0,0,0.5),0 0 18px rgba(0,0,0,0.35)'
 
 /** The email's pictures, served by the site itself from public/email. */
 const heroImage = (origin: string) => `${origin}/email/hero.jpg`
@@ -213,7 +214,7 @@ function isHeadline(paragraph: string): boolean {
 }
 
 /**
- * The message in two parts. A short first line ("Welcome to BU Proto, Ada") is the email's
+ * The message in two parts. A short first line ("Welcome to Proto, Ada") is the email's
  * headline, which goes up on the field the way the site's page titles do; the rest is the copy.
  */
 function splitBody(body: string): { headline: string | null; rest: string[] } {
@@ -280,7 +281,7 @@ function headlineHtml(headline: string): string {
 /** The plain-text header: a narrow strip of the field with the name set into its middle row. */
 function textHeader(kind: EmailReason['kind']): string[] {
   const rows = artTextRows({ cols: 56, rows: 3, seed: ART_SEED[kind] }).map((row) => row.padEnd(56))
-  rows[1] = `${rows[1].slice(0, 3)}  BU Proto  ${rows[1].slice(15)}`
+  rows[1] = `${rows[1].slice(0, 3)}  Proto  ${rows[1].slice(12)}`
   return rows.map((row) => row.trimEnd())
 }
 
@@ -334,20 +335,20 @@ function eventText(event: EventDetails, origin: string): string[] {
 function reasonText(reason: EmailReason): string {
   switch (reason.kind) {
     case 'member':
-      return "You're getting this because you're a BU Proto member."
+      return "You're getting this because you're a Proto member."
     case 'event':
       // A title that ends in its own punctuation ("Why hackathons?") doesn't get a second stop.
       return `You're getting this because you RSVP'd to ${reason.event.title.trim()}${/[.!?]$/.test(reason.event.title.trim()) ? '' : '.'}`
     case 'fund':
-      return "You're getting this because you joined the BU Proto fund interest list."
+      return "You're getting this because you joined the Proto fund interest list."
     case 'test':
-      return 'This is a test copy sent from the BU Proto portal.'
+      return 'This is a test copy sent from the Proto portal.'
     case 'admin':
-      return "You're getting this because you were added as an admin of the BU Proto portal."
+      return "You're getting this because you were added as an admin of the Proto portal."
     case 'board':
-      return "You're getting this because of a board seat form sent on buproto.com."
+      return "You're getting this because of a board seat form sent on proto.boston."
     case 'role':
-      return "You're getting this because of an application for a role sent on buproto.com."
+      return "You're getting this because of an application for a role sent on proto.boston."
   }
 }
 
@@ -407,7 +408,7 @@ export function renderEmail(input: {
     ...(event ? ['', rampRule(56), '', ...eventText(event, origin)] : []),
     '',
     '--',
-    'BU Proto, for anyone at BU who makes things.',
+    'Proto, for anyone at BU who makes things.',
     origin,
     '',
     why,
@@ -454,7 +455,7 @@ ${contentHtml}
 ${event ? eventHtml(event, origin) : ''}
 <tr><td class="pe-px" style="padding:26px 40px 0 40px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid ${EDGE};font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>
 <tr><td class="pe-px" style="padding:22px 40px 0 40px">
-${brand(origin, 'BU Proto', 20, `font-size:15px;font-weight:500;line-height:20px;color:${FROST}`)}
+${brand(origin, 'Proto', 20, `font-size:15px;font-weight:500;line-height:20px;color:${FROST}`)}
 <div style="padding-top:10px;font-family:${FONT};font-size:14px;line-height:21px;color:${INK_SOFT}">Hack nights, hackathon trips and demo nights for BU students who make things.</div>
 <div style="padding-top:12px;font-family:${FONT};font-size:14px;line-height:21px"><a href="${escapeHtml(origin)}" target="_blank" style="color:${FROST};text-decoration:underline">${escapeHtml(site)}</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/events" target="_blank" style="color:${FROST};text-decoration:underline">Events</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="${escapeHtml(origin)}/hackathons" target="_blank" style="color:${FROST};text-decoration:underline">Hackathons</a></div>
 <div style="padding-top:22px;font-family:${FONT};font-size:12px;line-height:19px;color:${MUTED};word-break:break-word">${escapeHtml(why)}${footerLink}</div>

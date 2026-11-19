@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useId, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
 import type { FieldSpec } from '../../../shared/api'
 import admin from '../admin.module.css'
 import {
@@ -11,9 +11,11 @@ import {
   type LinkValue,
   type PersonValue,
 } from '../lib/content'
+import { UPLOAD_ACCEPT, uploadPicture } from '../lib/upload'
+import { toApiError } from '../pages/people/useApi'
 import styles from './ContentField.module.css'
 import { Field } from './Field'
-import { ChevronDownIcon, ChevronUpIcon, PlusIcon } from './icons'
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon, UploadIcon } from './icons'
 
 const MAX_LINKS = 6
 
@@ -131,33 +133,95 @@ function SwitchField({ field, checked, error, onChange }: { field: FieldSpec; ch
   )
 }
 
+/**
+ * One picture: upload it from the computer (or drop it on the preview), or paste an address. An
+ * upload is shrunk in the browser, kept by the Worker, and its address fills the field; saving
+ * the form is what puts it on the site.
+ */
 function ImageField({ field, value, error, onChange }: { field: FieldSpec; value: string; error?: string; onChange: (value: string) => void }) {
   // Remembers which value failed to load, so typing a new one retries.
   const [broken, setBroken] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [dragging, setDragging] = useState(false)
+  const picker = useRef<HTMLInputElement>(null)
   const trimmed = value.trim()
   const preview = looksLikeImage(trimmed) ? trimmed : null
 
+  const upload = async (file: File | undefined) => {
+    if (!file || uploading) return
+    setUploading(true)
+    setUploadError('')
+    try {
+      onChange(await uploadPicture(file))
+    } catch (failure) {
+      setUploadError(failure instanceof Error && !('status' in failure) ? failure.message : toApiError(failure).message)
+    } finally {
+      setUploading(false)
+      if (picker.current) picker.current.value = ''
+    }
+  }
+
+  const drop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setDragging(false)
+    void upload(event.dataTransfer.files[0])
+  }
+
   return (
     <div className={styles.image}>
-      <Field label={field.label} hint={field.hint ?? 'A full URL or a /path under public/.'} error={error}>
-        {(control) => (
+      <div className={styles.imageMain}>
+        <Field label={field.label} hint={field.hint ?? 'Upload a picture, or paste a full URL or a /path under public/.'} error={error ?? (uploadError || undefined)}>
+          {(control) => (
+            <input
+              {...control}
+              className={admin.input}
+              type="text"
+              inputMode="url"
+              placeholder="https://… or /photos/…"
+              autoComplete="off"
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+            />
+          )}
+        </Field>
+        <div className={styles.uploadRow}>
+          <button type="button" className={`${admin.button} ${admin.small}`} disabled={uploading} onClick={() => picker.current?.click()}>
+            <UploadIcon /> {uploading ? 'Uploading…' : preview ? 'Upload a new one' : 'Upload a picture'}
+          </button>
+          {preview && !uploading && (
+            <button type="button" className={`${admin.ghost} ${admin.small}`} onClick={() => onChange('')}>
+              Remove
+            </button>
+          )}
           <input
-            {...control}
-            className={admin.input}
-            type="text"
-            inputMode="url"
-            placeholder="https://… or /photos/…"
-            autoComplete="off"
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
+            ref={picker}
+            type="file"
+            accept={UPLOAD_ACCEPT}
+            hidden
+            tabIndex={-1}
+            aria-hidden="true"
+            onChange={(event) => void upload(event.target.files?.[0])}
           />
-        )}
-      </Field>
-      <div className={styles.preview} aria-live="polite">
-        {preview && broken !== preview ? (
+        </div>
+      </div>
+      <div
+        className={styles.preview}
+        data-dragging={dragging || undefined}
+        aria-live="polite"
+        onDragOver={(event) => {
+          event.preventDefault()
+          setDragging(true)
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={drop}
+      >
+        {uploading ? (
+          <span className={admin.hint}>Uploading…</span>
+        ) : preview && broken !== preview ? (
           <img src={preview} alt={`Preview of ${field.label.toLowerCase()}`} onError={() => setBroken(preview)} />
         ) : (
-          <span className={admin.hint}>{preview ? 'Couldn’t load that image.' : 'No image'}</span>
+          <span className={admin.hint}>{preview ? 'Couldn’t load that image.' : 'Drop a picture here'}</span>
         )}
       </div>
     </div>

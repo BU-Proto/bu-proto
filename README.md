@@ -1,6 +1,6 @@
 # bu-proto
 
-The site for **BU Proto** (working name), a BU-sponsored home base for students who make things, built with React, TypeScript, React Router and Vite. The concept behind every page is in [`docs/concept.md`](docs/concept.md).
+The site for **Proto** (working name), a BU-sponsored home base for students who make things, built with React, TypeScript, React Router and Vite. The concept behind every page is in [`docs/concept.md`](docs/concept.md).
 
 The background is an ASCII field: the gradient from the reference design rendered as monospace characters that drift and shimmer on their own. The cursor's wind slides the characters around and rewrites the ones along its path into a Stable-Fluids trail of `○ > _` glyphs that dissolves within about a second. The gradient's colors never move with the cursor.
 
@@ -57,7 +57,7 @@ The portal lives at `/admin`; see [Admin portal](#admin-portal).
 
 **Local sign-in.** Under `npm run dev`, on localhost, the Google button skips Google and signs you straight in as the first email in `ADMIN_EMAILS` (or `you@localhost` when that's empty). It's behind `import.meta.env.DEV`, which Vite compiles to `false` for production, so none of it ships.
 
-**Roles.** A role is posted under Roles: a title, one or two lines, the time it takes, an optional apply-by day, the write-up, and optionally up to five questions of its own for applicants. Every application asks for a name, BU email, year, an optional link and a résumé (PDF). Published roles show on `/roles`; one past its apply-by day leaves the list and its form closes. Applications land under Roles → Applications, each with the résumé to open, a status (new, reviewing, accepted, declined) and private notes, and can be downloaded as a CSV. The applicant gets a confirmation email and the owners a note; nothing tells an applicant their status, so someone has to write to them. Applying again for the same role with the same email replaces the earlier answers.
+**Roles.** A role is posted under Roles: a title, one or two lines, the time it takes, an optional apply-by day, the write-up, and optionally up to five questions of its own for applicants. Every application asks for a name, BU email, year, an optional link and a résumé (PDF). Published roles show on `/roles`; one past its apply-by day leaves the list and its form closes. Once someone takes a role, tick **Filled**: it leaves `/roles`, and its page stays up saying it's filled, without the form. A role whose team is **Board** is also an open seat on `/board` (and listed on `/about`) until it's filled, so posting, renaming or filling a seat is all done on the role. Applications land under Roles → Applications, each with the résumé to open, a status (new, reviewing, accepted, declined) and private notes, and can be downloaded as a CSV. Marking one accepted while its role is still open offers to mark the role filled. The applicant gets a confirmation email and the owners a note; nothing tells an applicant their status, so someone has to write to them. Applying again for the same role with the same email replaces the earlier answers.
 
 **Email.** The Email page sends through [Resend](https://resend.com) to all members, one track, an event's RSVPs, or the fund list by status. Subject and body take variables (`{{name}}`, `{{fullName}}`, `{{email}}`, `{{track}}`, and `{{event}}`, `{{eventDate}}`, `{{eventTime}}`, `{{eventPlace}}` for event emails), and the live preview renders exactly what each real recipient will get. Member emails carry a one-click unsubscribe link. Every send is logged with its counts. Without `RESEND_API_KEY` nothing leaves: emails are printed to the dev server console and the campaign is marked *logged*.
 
@@ -65,15 +65,15 @@ The portal lives at `/admin`; see [Admin portal](#admin-portal).
 
 In the [Google Cloud Console](https://console.cloud.google.com/):
 
-1. **Project:** create one (e.g. "BU Proto"), or pick an existing one.
+1. **Project:** create one (e.g. "Proto"), or pick an existing one.
 2. **OAuth consent screen** (Google Auth Platform → Branding / Audience / Data access):
    - User type **External**.
-   - App name **BU Proto**, a user support email, and a developer contact email.
-   - Authorized domain `buproto.com`; homepage `https://buproto.com`; privacy policy `https://buproto.com/privacy`; terms of service `https://buproto.com/terms`.
+   - App name **Proto**, a user support email, and a developer contact email.
+   - Authorized domain `proto.boston`; homepage `https://proto.boston`; privacy policy `https://proto.boston/privacy`; terms of service `https://proto.boston/terms`.
    - Scopes: `openid`, `.../auth/userinfo.email` and `.../auth/userinfo.profile` (`openid email profile`). These are non-sensitive, so no Google review is needed.
    - While the app is in **Testing**, only the test users you list can sign in. Either add every admin as a test user, or **Publish app** (Audience → In production) so any Google account can reach the sign-in; the admin list still decides who gets in.
 3. **Credentials** (Clients → Create client): type **Web application**, with authorized redirect URIs
-   - `https://buproto.com/api/auth/callback`
+   - `https://proto.boston/api/auth/callback`
    - `http://localhost:5173/api/auth/callback`
 4. **Secrets:** copy the client id and secret, then
    ```sh
@@ -88,7 +88,7 @@ The flow is OpenID Connect's authorization code flow with PKCE, `state` and `non
 ### Setting up Resend
 
 1. In Resend, add the sending domain and the DNS records it shows (SPF and DKIM, usually on a `send.` subdomain), and wait for *Verified*. Add a DMARC record (`_dmarc` TXT, e.g. `v=DMARC1; p=none;`) too; Gmail and Yahoo expect it from bulk senders.
-2. `EMAIL_FROM` in `wrangler.jsonc` is `BU Proto <hello@buproto.com>`, so the domain to verify is `buproto.com`. `EMAIL_REPLY_TO` is optional.
+2. `EMAIL_FROM` in `wrangler.jsonc` is `Proto <hello@proto.boston>`, so the domain to verify is `proto.boston`. `EMAIL_REPLY_TO` is optional.
 3. Create an API key with sending access and `npx wrangler secret put RESEND_API_KEY`. Leave it empty in `.dev.vars`.
 
 Sends go out in batches of 100 inside the request, which is fine for a few thousand recipients; a much bigger list would want a Queue.
@@ -99,7 +99,7 @@ Events, hackathons, wins, the board and roles live in D1 and are edited in the p
 
 All other copy lives in `src/content/`, one typed file per page plus `site.ts` for the brand, the nav and hack night's time and place. Copy that's made up there carries `placeholder: true` and gets the same tag. `trackRecord.ts` takes real, verified logos only and has no samples on purpose.
 
-The forms post to the Worker: `/join` to `POST /api/join`, the `/grants` interest list to `POST /api/fund-interest`, the board's open seats to `POST /api/board-interest`, a role's application to `POST /api/roles/:id/apply` (a multipart form, since it carries a résumé: a PDF of up to 5 MB, kept in D1 in 1 MB parts because D1 holds at most 2 MB in one value), and RSVPs on `/events` to `POST /api/events/:id/rsvp` (remembered in the browser, so the button stays "going"). The browser validates first; the server's per-field messages show under the matching field. Each form carries a hidden `website` honeypot.
+The forms post to the Worker: `/join` to `POST /api/join`, the `/grants` interest list to `POST /api/fund-interest`, a role's application (the board's open seats included: each seat's button on `/board` goes to its role page) to `POST /api/roles/:id/apply` (a multipart form, since it carries a résumé: a PDF of up to 5 MB, kept in D1 in 1 MB parts because D1 holds at most 2 MB in one value), and RSVPs on `/events` to `POST /api/events/:id/rsvp` (remembered in the browser, so the button stays "going"). The browser validates first; the server's per-field messages show under the matching field. Each form carries a hidden `website` honeypot.
 
 ## Using the field
 
@@ -207,9 +207,9 @@ It's one Cloudflare Worker: Workers Static Assets serve the built site, and only
    | --- | --- | --- | --- |
    | Account | Workers Scripts | Edit | Upload the Worker and its static assets, bindings, cron trigger, version status |
    | Account | D1 | Edit | Apply migrations to the `bu-proto` database |
-   | Zone | Workers Routes | Edit | The `buproto.com` custom domain |
+   | Zone | Workers Routes | Edit | The `proto.boston` custom domain |
 
-   Under **Account Resources** pick this account only (`0bda3a2560ca48711ef7336cc421abed`); under **Zone Resources** pick **Specific zone → buproto.com**. Nothing else is needed: the rate limit binding, the cron trigger and the assets all come with Workers Scripts.
+   Under **Account Resources** pick this account only (`0bda3a2560ca48711ef7336cc421abed`); under **Zone Resources** pick **Specific zone → proto.boston**. Nothing else is needed: the rate limit binding, the cron trigger and the assets all come with Workers Scripts.
 2. In GitHub, go to **Settings → Secrets and variables → Actions → New repository secret** and add `CLOUDFLARE_API_TOKEN` with the token. Optionally add `CLOUDFLARE_ACCOUNT_ID` (as a secret or a variable); without it the workflow uses the account id above.
 
 **Rerun a deploy:** **Actions → Deploy → Run workflow** (branch `main`), or **Re-run jobs** on a past run.
@@ -224,14 +224,14 @@ It's one Cloudflare Worker: Workers Static Assets serve the built site, and only
 
 ## Form protection (Turnstile)
 
-The public forms (join, fund interest, board seat, role application, RSVP) carry Cloudflare Turnstile, the "Verify you are human" check. It runs with `appearance: 'interaction-only'` on a **Managed** widget: most people never see it, and the checkbox only appears when Cloudflare wants a click. The Worker checks every token with Siteverify (`worker/lib/turnstile.ts`) after the rate limit and before anything is written, and also requires the token's action to match the form and its hostname to be `buproto.com`. The honeypot stays as a second line.
+The public forms (join, fund interest, role application, RSVP) carry Cloudflare Turnstile, the "Verify you are human" check. It runs with `appearance: 'interaction-only'` on a **Managed** widget: most people never see it, and the checkbox only appears when Cloudflare wants a click. The Worker checks every token with Siteverify (`worker/lib/turnstile.ts`) after the rate limit and before anything is written, and also requires the token's action to match the form and its hostname to be `proto.boston`. The honeypot stays as a second line.
 
 | Value | Where it lives | Notes |
 | --- | --- | --- |
 | Site key `VITE_TURNSTILE_SITE_KEY` | [`.env.production`](.env.production), committed | Public, it ships in the page. `vite build` reads it; `vite dev` doesn't, and uses Cloudflare's always-pass test key `1x00000000000000000000AA` |
 | Secret `TURNSTILE_SECRET_KEY` | Worker secret | `CLOUDFLARE_ACCOUNT_ID=0bda3a2560ca48711ef7336cc421abed npx wrangler secret put TURNSTILE_SECRET_KEY` (paste it at the prompt). Locally leave it empty in `.dev.vars`: `vite dev` then uses the always-pass test secret |
 
-**Without the secret the deployed site refuses every form submission** ("Form protection isn't set up yet", 503) rather than letting them through unchecked. The test secret only exists in dev builds. The widget (**Turnstile → BU Proto forms** in Cloudflare) lists `buproto.com` and `localhost` as hostnames. To see a refusal locally, set `TURNSTILE_SECRET_KEY=2x0000000000000000000000000000000AA` (always fails) in `.dev.vars` and restart `vite dev`.
+**Without the secret the deployed site refuses every form submission** ("Form protection isn't set up yet", 503) rather than letting them through unchecked. The test secret only exists in dev builds. The widget (**Turnstile → BU Proto forms** in Cloudflare) lists `proto.boston` and `localhost` as hostnames. To see a refusal locally, set `TURNSTILE_SECRET_KEY=2x0000000000000000000000000000000AA` (always fails) in `.dev.vars` and restart `vite dev`.
 
 ## Notes
 

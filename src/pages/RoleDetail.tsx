@@ -1,4 +1,4 @@
-import { useRef, type MouseEvent } from 'react'
+import { useRef, type MouseEvent, type ReactNode } from 'react'
 import { Link, useLoaderData } from 'react-router'
 import { MAX_ROLE_QUESTIONS, RESUME_MAX_BYTES, RESUME_TYPE, YEARS } from '../../shared/constants'
 import { DetailLoadError, Prose } from '../components/DetailPage'
@@ -11,10 +11,12 @@ import { SampleTag } from '../components/SampleTag'
 import { Select } from '../components/Select'
 import ui from '../components/ui.module.css'
 import { ROLE_FORM, ROLE_NOT_FOUND, ROLE_PAGE, ROLE_THANKS, ROLES_LIST } from '../content/roles'
+import { SEAT_SECTIONS, seatFor, type Seat } from '../content/seats'
 import { BRAND } from '../content/site'
 import { api } from '../lib/api'
 import type { RolePageData } from '../lib/content'
 import { formatDay } from '../lib/dates'
+import { parseRolePitch, type PitchSection } from '../lib/rolePitch'
 import { deadlineOf, roleIsOpen } from '../lib/roles'
 import { reducedMotion } from '../lib/useInView'
 import styles from './RoleDetail.module.css'
@@ -33,14 +35,109 @@ function toApplication(values: FormValues, resume: File | null) {
   return body
 }
 
+/** One line of a seat's pitch: its heading (and a note under it) on the left, the answer on the right. */
+function PitchRow({ id, title, note, children }: { id: string; title: string; note?: string; children: ReactNode }) {
+  return (
+    <section className={styles.row} aria-labelledby={id}>
+      <div className={styles.rowLead}>
+        <h2 id={id} className={styles.rowTitle}>
+          {title}
+        </h2>
+        {note && <p className={styles.rowNote}>{note}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/** Steps, numbered in the margin the way a seat's first month is. */
+function Steps({ items }: { items: readonly string[] }) {
+  return (
+    <ol className={styles.points}>
+      {items.map((item, index) => (
+        <li key={item} className={styles.step}>
+          <span className={styles.stepNumber} aria-hidden="true">
+            {index + 1}
+          </span>
+          {item}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
 /**
- * One role: what it is and what it takes, the write-up, then the application on a sheet of its
- * own. Once the apply-by day has passed the page stays up, without the form.
+ * The headed sections of a role's write-up ("What you'd do", "Who it suits"), set as the same
+ * ruled rows a board seat's pitch is: a line on its own as a sentence, more as a list.
+ */
+function WriteUpPitch({ sections }: { sections: readonly PitchSection[] }) {
+  return (
+    <div className={styles.pitch}>
+      {sections.map((section, index) => (
+        <PitchRow key={section.heading} id={`role-part-${index}`} title={section.heading}>
+          {section.items.length === 1 ? (
+            <p className={styles.fit}>{section.items[0]}</p>
+          ) : section.ordered ? (
+            <Steps items={section.items} />
+          ) : (
+            <ul className={styles.points}>
+              {section.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
+        </PitchRow>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * What a board seat is, between the role's head and its form, as one ruled sheet on the same
+ * columns as the form under it: what you'd own and get, the first month as the bar for taking it,
+ * and who it suits.
+ */
+function SeatPitch({ seat }: { seat: Seat }) {
+  return (
+    <div className={styles.pitch}>
+      <PitchRow id="seat-own" title={SEAT_SECTIONS.own}>
+        <ul className={styles.points}>
+          {seat.own.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </PitchRow>
+      <PitchRow id="seat-get" title={SEAT_SECTIONS.get}>
+        <ul className={styles.points}>
+          {seat.get.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </PitchRow>
+      <PitchRow id="seat-month" title={SEAT_SECTIONS.firstMonth.title} note={SEAT_SECTIONS.firstMonth.text}>
+        <Steps items={seat.firstMonth} />
+      </PitchRow>
+      <PitchRow id="seat-fit" title={SEAT_SECTIONS.fit}>
+        {/* The data finishes the heading's sentence; set on its own line, it starts one. */}
+        <p className={styles.fit}>{seat.fit.charAt(0).toUpperCase() + seat.fit.slice(1)}</p>
+      </PitchRow>
+    </div>
+  )
+}
+
+/**
+ * One role: what it is and what it takes, the write-up (its headed sections as ruled rows), what
+ * the seat is (for the board seats), then the application on a sheet of its own. Once it's filled or its apply-by day has passed, the
+ * page stays up without the form.
  */
 export function RoleDetail() {
   const { role, roles } = useLoaderData<RolePageData>()
   const open = roleIsOpen(role)
   const deadline = deadlineOf(role, ROLES_LIST.untilFilled)
+  const seat = seatFor(role.title)
+  // A write-up typed with headed sections reads as rows, like a seat's pitch; plain text stays prose.
+  const writeUp = parseRolePitch(role.description)
+  const lede = seat?.headline ?? role.summary
   const questions = role.questions.slice(0, MAX_ROLE_QUESTIONS)
   const others = roles.filter((other) => other.id !== role.id && roleIsOpen(other)).slice(0, 3)
   const formRef = useRef<HTMLElement>(null)
@@ -57,7 +154,7 @@ export function RoleDetail() {
 
   return (
     <article className={`${ui.page} ${styles.page}`}>
-      <title>{`${role.title} · ${BRAND.full}`}</title>
+      <title>{`${role.title} · ${BRAND.name}`}</title>
 
       <header className={styles.head} data-ground-after="">
         <Link className={styles.back} to="/roles" data-fog-clear>
@@ -67,9 +164,9 @@ export function RoleDetail() {
           {role.title}
           <SampleTag show={role.placeholder} />
         </h1>
-        {role.summary && (
+        {lede && (
           <p className={styles.lede} data-fog-clear>
-            {role.summary}
+            {lede}
           </p>
         )}
 
@@ -87,11 +184,15 @@ export function RoleDetail() {
             </div>
           )}
           <div data-fog-clear>
-            <dt>{ROLE_PAGE.facts.applyBy}</dt>
-            <dd className={deadline.soon ? styles.soon : undefined}>
-              {role.applyBy ? formatDay(role.applyBy) : ROLES_LIST.untilFilled}
-              {deadline.soon && <span className={styles.soonNote}>{deadline.text}</span>}
-            </dd>
+            <dt>{role.applyBy && !role.filled ? ROLE_PAGE.facts.applyBy : ROLE_PAGE.facts.timeline}</dt>
+            {role.filled ? (
+              <dd>{ROLE_PAGE.filled.fact}</dd>
+            ) : (
+              <dd className={deadline.soon ? styles.soon : undefined}>
+                {role.applyBy ? formatDay(role.applyBy) : ROLES_LIST.untilFilled}
+                {deadline.soon && <span className={styles.soonNote}>{deadline.text}</span>}
+              </dd>
+            )}
           </div>
         </dl>
 
@@ -103,11 +204,15 @@ export function RoleDetail() {
         )}
       </header>
 
-      {role.description.trim() && (
+      {writeUp.intro && (
         <div className={styles.about}>
-          <Prose text={role.description} />
+          <Prose text={writeUp.intro} />
         </div>
       )}
+
+      {writeUp.sections.length > 0 && <WriteUpPitch sections={writeUp.sections} />}
+
+      {seat && <SeatPitch seat={seat} />}
 
       {open ? (
         <section ref={formRef} id={ROLE_FORM.id} className={`${ui.panelDeep} ${styles.apply}`} aria-labelledby="apply-title">
@@ -173,11 +278,11 @@ export function RoleDetail() {
       ) : (
         <section className={styles.closed} aria-labelledby="closed-title">
           <h2 id="closed-title" className={ui.sectionTitle}>
-            {ROLE_PAGE.closed.title}
+            {role.filled ? ROLE_PAGE.filled.title : ROLE_PAGE.closed.title}
           </h2>
-          <p className={styles.applyText}>{ROLE_PAGE.closed.text(formatDay(role.applyBy))}</p>
+          <p className={styles.applyText}>{role.filled ? ROLE_PAGE.filled.text : ROLE_PAGE.closed.text(formatDay(role.applyBy))}</p>
           <Link className={ui.primary} to="/roles">
-            {ROLE_PAGE.closed.back}
+            {role.filled ? ROLE_PAGE.filled.back : ROLE_PAGE.closed.back}
           </Link>
         </section>
       )}

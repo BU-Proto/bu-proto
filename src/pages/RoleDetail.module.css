@@ -102,6 +102,75 @@
   max-width: 760px;
 }
 
+/* A board seat's pitch, or the headed sections of a role's write-up: one ruled sheet of rows on
+   the form's own columns, the heading on the left and the answer on the right, every answer at
+   the same size. */
+.pitch {
+  display: grid;
+  border-bottom: 1px solid var(--rule);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 14px clamp(24px, 4vw, 56px);
+  align-items: start;
+  padding: clamp(24px, 4vh, 36px) 0;
+  border-top: 1px solid var(--rule);
+}
+
+.row:first-child {
+  border-top-color: var(--rule-strong);
+}
+
+.rowLead {
+  display: grid;
+  gap: 10px;
+}
+
+.rowTitle {
+  margin: 0;
+  font-size: clamp(20px, 1.9vw, 24px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.rowNote {
+  max-width: 38ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.points {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.points li,
+.fit {
+  margin: 0;
+  font-size: clamp(18px, 1.6vw, 21px);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6ch minmax(0, 1fr);
+  gap: 14px;
+}
+
+.stepNumber {
+  color: var(--mint);
+}
+
 /* The application: who's asking and why on the left, the fields on the right. */
 .apply {
   display: grid;
@@ -152,7 +221,9 @@
 }
 
 @media (max-width: 960px) {
-  .apply {
+  .apply,
+  .row {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+

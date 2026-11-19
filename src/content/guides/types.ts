@@ -17,6 +17,8 @@ export type Rich = string | readonly Inline[]
 export interface WinRef {
   id: number
   project: string
+  /** The win's name in the portal, when the guides call it something shorter. Its page is named by it. */
+  listedAs?: string
   prize: string
   event: string
   /** The win's cover on Devpost's CDN, full size. `winThumb` gives the small one. */

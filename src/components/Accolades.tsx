@@ -5,6 +5,7 @@ import { accoladeOf, teamParts } from './accolade'
 import { BuMark } from './BuMark'
 import { SampleTag } from './SampleTag'
 import styles from './Accolades.module.css'
+import { winPath } from '../lib/paths'
 
 type Level = 2 | 3
 
@@ -55,7 +56,7 @@ function Team({ win, max }: { win: Win; max?: number }) {
 function ProjectLink({ win, className }: { win: Win; className: string }) {
   return (
     <p className={className} data-fog-clear>
-      <Link className={styles.name} to={`/wins/${win.id}`}>
+      <Link className={styles.name} to={winPath(win)}>
         {win.project}
       </Link>
       <SampleTag show={win.placeholder} />
@@ -115,7 +116,7 @@ export function AccoladeFeature({
  * element, not a stretched ::after, because the scroll reveal's translate would trap one.
  */
 function Overlay({ win }: { win: Win }) {
-  return <Link className={styles.overlay} to={`/wins/${win.id}`} tabIndex={-1} aria-hidden="true" />
+  return <Link className={styles.overlay} to={winPath(win)} tabIndex={-1} aria-hidden="true" />
 }
 
 /** A prize set smaller: the prize and where, then the cover, then the project. */

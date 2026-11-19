@@ -5,7 +5,7 @@ interface __BaseEnv_Env {
 	DB: D1Database;
 	FORM_LIMITER: RateLimit;
 	ASSETS: Fetcher;
-	EMAIL_FROM: "BU Proto <hello@buproto.com>";
+	EMAIL_FROM: "Proto <hello@proto.boston>";
 	EMAIL_REPLY_TO: "";
 	RESEND_API_KEY: string;
 	GOOGLE_CLIENT_ID: string;

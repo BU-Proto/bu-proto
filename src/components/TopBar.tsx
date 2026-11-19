@@ -18,7 +18,7 @@ export function TopBar() {
     <header className={styles.top}>
       <Link className={styles.logo} to="/" data-fog-clear>
         <span className={styles.seal} style={{ '--seal': `url(${BRAND.seal})` } as CSSProperties} aria-hidden="true" />
-        {BRAND.short}
+        {BRAND.name}
       </Link>
 
       <nav className={styles.nav} aria-label="Primary">

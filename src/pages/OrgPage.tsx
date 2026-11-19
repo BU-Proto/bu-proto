@@ -34,7 +34,7 @@ function Missing() {
   const copy = ORG_PAGE.missing
   return (
     <div className={ui.page}>
-      <title>{`${copy.title} · ${BRAND.full}`}</title>
+      <title>{`${copy.title} · ${BRAND.name}`}</title>
       <h1 className={ui.introTitle} data-fog-clear>
         {copy.title}
       </h1>
@@ -62,7 +62,7 @@ export function OrgPage() {
 
   return (
     <div className={`${ui.page} ${styles.page}`} data-org={org.id} data-hue={TRACK_HUE[org.track]}>
-      <title>{`${org.name} · ${BRAND.full}`}</title>
+      <title>{`${org.name} · ${BRAND.name}`}</title>
 
       {org.id === 'spark' ? <TowerOpening org={org} /> : <BannerOpening org={org} />}
 

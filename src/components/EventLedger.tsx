@@ -8,6 +8,7 @@ import { onFrame } from '../lib/smoothScroll'
 import { reducedMotion } from '../lib/useInView'
 import { RevealWords } from './motion/RevealWords'
 import styles from './EventLedger.module.css'
+import { eventPath } from '../lib/paths'
 
 /** Each size of night, by its glyph from the trail: small ○, medium >, big _. */
 const HUE_GLYPH = { sky: '○', iris: '>', rose: '_' } as const
@@ -191,7 +192,7 @@ export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
                       <Link
                         className={styles.night}
                         data-past={daysUntil(night.date) < 0 || undefined}
-                        to={`/events/${night.id}`}
+                        to={eventPath(night)}
                         onPointerEnter={(event) => {
                           if (event.pointerType !== 'touch') raise(night.id, event.currentTarget)
                         }}
@@ -235,7 +236,7 @@ export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
                 decoding="async"
                 onLoad={(event) => {
                   // The frame takes the photo's shape, so a row raised before it loaded needs placing again.
-                  const row = section.current?.querySelector<HTMLElement>(`a[href="/events/${night.id}"]`)
+                  const row = section.current?.querySelector<HTMLElement>(`a[href="${eventPath(night)}"]`)
                   if (row && event.currentTarget.parentElement?.dataset.raised !== undefined) raise(night.id, row)
                 }}
                 onError={() => setBroken((failed) => new Set(failed).add(night.id))}

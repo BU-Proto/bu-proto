@@ -1,11 +1,13 @@
-import { Link, useLocation } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
 import { CONTACT_EMAIL, LEGAL_LINKS } from '../content/legal'
 import { BRAND, FOOTER, PROTO_LINKEDIN } from '../content/site'
 import styles from './Footer.module.css'
 
 /**
- * One block: who we are on the left, the site sorted into columns beside it. On the landing it
- * takes the landing's margins, like the top bar, so it ends where everything above it does.
+ * One block: who we are on the left, the site sorted into columns beside it. Each link to a page
+ * of the site marks itself current on that page (exactly that page, not the pages under it). On
+ * the landing it takes the landing's margins, like the top bar, so it ends where everything above
+ * it does.
  */
 export function Footer() {
   const wide = useLocation().pathname === '/'
@@ -14,7 +16,7 @@ export function Footer() {
       <div className={styles.about}>
         <p className={styles.brand} data-fog-clear>
           <img src={BRAND.seal} alt="" width={20} height={20} />
-          {BRAND.full}
+          {BRAND.name}
         </p>
         <p className={styles.line} data-fog-clear>
           {FOOTER.line}
@@ -33,9 +35,9 @@ export function Footer() {
             <ul className={styles.links}>
               {group.links.map((item) => (
                 <li key={item.to}>
-                  <Link to={item.to} data-fog-clear>
+                  <NavLink to={item.to} end data-fog-clear>
                     {item.label}
-                  </Link>
+                  </NavLink>
                 </li>
               ))}
             </ul>
@@ -60,9 +62,9 @@ export function Footer() {
             )}
             {LEGAL_LINKS.map((item) => (
               <li key={item.href}>
-                <Link to={item.href} data-fog-clear>
+                <NavLink to={item.href} end data-fog-clear>
                   {item.label}
-                </Link>
+                </NavLink>
               </li>
             ))}
           </ul>

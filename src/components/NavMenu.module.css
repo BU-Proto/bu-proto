@@ -14,7 +14,7 @@
   color: var(--ink-soft, rgb(246 251 255 / 0.78));
   font-size: 13px;
   white-space: nowrap;
-  text-shadow: 0 1px 2px rgb(var(--harbor-rgb, 6 26 46) / 0.3);
+  text-shadow: 0 1px 2px rgb(var(--harbor-rgb, 0 0 0) / 0.3);
 }
 
 .trigger:hover,
@@ -72,8 +72,8 @@
   padding: 6px;
   border: 1px solid rgb(var(--frost-rgb, 246 251 255) / 0.14);
   border-radius: 16px;
-  background: var(--navy, #0b2a46);
-  box-shadow: 0 28px 56px -28px rgb(var(--harbor-rgb, 6 26 46) / 0.95);
+  background: var(--navy, #131313);
+  box-shadow: 0 28px 56px -28px rgb(var(--harbor-rgb, 0 0 0) / 0.95);
   text-shadow: none;
 }
 

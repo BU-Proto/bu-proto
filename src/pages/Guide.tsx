@@ -443,7 +443,7 @@ function GuideMissing() {
   const copy = GUIDE_PAGE.missing
   return (
     <div className={ui.page}>
-      <title>{`${copy.title} · ${BRAND.full}`}</title>
+      <title>{`${copy.title} · ${BRAND.name}`}</title>
       <section className={styles.missing}>
         <h1 className={ui.introTitle} data-fog-clear>
           {copy.title}
@@ -486,7 +486,7 @@ export function Guide() {
 
   return (
     <DetailPage>
-      <title>{`${entry.title} · ${BRAND.full}`}</title>
+      <title>{`${entry.title} · ${BRAND.name}`}</title>
       <DetailOpener photo={image.src} alt={image.alt}>
         <p className={styles.kicker} data-fog-clear>
           <Link to={PLAYBOOK_HREF}>{PLAYBOOK_INTRO.title}</Link>

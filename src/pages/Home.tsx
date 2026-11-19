@@ -118,7 +118,7 @@ export function Home() {
 
   return (
     <div ref={revealRef} className={motion.reveal}>
-      <title>{`${BRAND.full} · The home base for building things at BU`}</title>
+      <title>{`${BRAND.name} · The home base for building things at BU`}</title>
       <Hero />
       <div className={styles.ground} style={{ '--drain': `${DRAIN.rows * DRAIN.cell}px` } as CSSProperties}>
         <JourneyReel />

@@ -122,15 +122,16 @@ app.post('/api/board-interest', limitForms, requireHuman('board-interest'), asyn
 })
 
 // An application for one role, sent as a multipart form because it carries the résumé. The role
-// has to be on the site and still taking applications, the résumé has to be a PDF, and each of the
+// has to be on the site, not filled and still taking applications, the résumé has to be a PDF, and each of the
 // role's own questions needs an answer. One application per email per role: sending it again
 // replaces what they sent and leaves our status and notes alone.
 app.post('/api/roles/:id/apply', limitForms, withinUploadSize, requireHuman('role-application'), async (c) => {
   const id = idParam(c)
-  const role = await c.env.DB.prepare(`SELECT title, apply_by, questions FROM roles WHERE id = ? AND ${PUBLIC_ROWS}`)
+  const role = await c.env.DB.prepare(`SELECT title, apply_by, questions, filled FROM roles WHERE id = ? AND ${PUBLIC_ROWS}`)
     .bind(id)
-    .first<{ title: string; apply_by: string; questions: string }>()
+    .first<{ title: string; apply_by: string; questions: string; filled: number }>()
   if (!role) throw new ApiError(404, 'That role isn’t open.')
+  if (role.filled) throw new ApiError(400, 'This role has been filled.')
   if (role.apply_by && role.apply_by < bostonToday()) throw new ApiError(400, 'Applications for this role have closed.')
   if (await isBot(c)) return c.json({ ok: true }, 201)
 

@@ -6,7 +6,7 @@
 
 import type { PageIntro } from './types'
 
-export const CONTACT_EMAIL = 'hello@buproto.com'
+export const CONTACT_EMAIL = 'hello@proto.boston'
 export const EFFECTIVE_DATE = 'November 4, 2026'
 
 /** A link inside legal copy. `/…` routes inside the site; anything else opens as a plain link. */
@@ -47,7 +47,7 @@ export const PRIVACY: LegalDoc = {
   intro: {
     path: '~/proto/privacy',
     title: 'Privacy',
-    lede: 'What BU Proto collects, why, who else touches it and how to get it changed or deleted. Short version: only what you type into our forms, no tracking, never sold.',
+    lede: 'What Proto collects, why, who else touches it and how to get it changed or deleted. Short version: only what you type into our forms, no tracking, never sold.',
   },
   contentsLabel: 'On this page',
   other: { label: 'Read the Terms', href: '/terms' },
@@ -56,8 +56,8 @@ export const PRIVACY: LegalDoc = {
       id: 'who',
       title: 'Who we are',
       body: [
-        'BU Proto (a working name) is a student-run home base at Boston University for people who make things: weekly hack nights, group hackathon trips and demo nights. It’s run by students and isn’t an official part of BU, Spark! or Innovate@BU.',
-        ['This policy covers buproto.com. When we say “we” or “us”, we mean the students who run it. Questions go to ', email, '.'],
+        'Proto (a working name) is a student-run home base at Boston University for people who make things: weekly hack nights, group hackathon trips and demo nights. It’s run by students and isn’t an official part of BU, Spark! or Innovate@BU.',
+        ['This policy covers proto.boston. When we say “we” or “us”, we mean the students who run it. Questions go to ', email, '.'],
       ],
     },
     {
@@ -67,7 +67,7 @@ export const PRIVACY: LegalDoc = {
         'Only what you type into a form, plus what any website sees when you visit:',
         {
           list: [
-            [{ strong: 'Joining.' }, ' Your name, BU email, year and track. If you join again with the same email, we update what we have instead of making a second entry.'],
+            [{ strong: 'Joining.' }, ' Your name, email, year and track. If you join again with the same email, we update what we have instead of making a second entry.'],
             [
               { strong: 'The fund interest list.' },
               ' Your name, BU email, year, the hackathon or project you have in mind, what you’d spend the money on and a rough amount.',
@@ -107,7 +107,7 @@ export const PRIVACY: LegalDoc = {
             'Request details keep the site running and safe: rate limiting, spotting abuse and fixing errors.',
           ],
         },
-        'The people who run BU Proto can see what you sent us in the admin portal. They can add private notes, export the member list as a spreadsheet and send emails from it. We use it only for BU Proto.',
+        'The people who run Proto can see what you sent us in the admin portal. They can add private notes, export the member list as a spreadsheet and send emails from it. We use it only for Proto.',
       ],
     },
     {
@@ -130,14 +130,14 @@ export const PRIVACY: LegalDoc = {
             ],
           ],
         },
-        'Beyond that, we’d only share information if the law requires it, or with your OK. If a BU office takes BU Proto on officially one day, the records would move with it, and we’d update this page first.',
+        'Beyond that, we’d only share information if the law requires it, or with your OK. If a BU office takes Proto on officially one day, the records would move with it, and we’d update this page first.',
       ],
     },
     {
       id: 'google',
       title: 'Google user data',
       body: [
-        'Only the people who run BU Proto sign in with Google, and only to reach the private admin portal. Visitors and members never sign in with Google.',
+        'Only the people who run Proto sign in with Google, and only to reach the private admin portal. Visitors and members never sign in with Google.',
         {
           list: [
             [
@@ -160,14 +160,14 @@ export const PRIVACY: LegalDoc = {
               { strong: 'Deleting it.' },
               ' Ask any admin to remove you, or email ',
               email,
-              ', and we’ll delete your admin record and sessions. You can also revoke BU Proto’s access at any time from ',
+              ', and we’ll delete your admin record and sessions. You can also revoke Proto’s access at any time from ',
               { label: 'your Google Account permissions', href: 'https://myaccount.google.com/permissions' },
               '.',
             ],
           ],
         },
         [
-          'BU Proto’s use of information received from Google APIs adheres to the ',
+          'Proto’s use of information received from Google APIs adheres to the ',
           { label: 'Google API Services User Data Policy', href: 'https://developers.google.com/terms/api-services-user-data-policy' },
           ', including the Limited Use requirements.',
         ],
@@ -222,7 +222,7 @@ export const PRIVACY: LegalDoc = {
       id: 'age',
       title: 'Students and age',
       body: [
-        'BU Proto is for Boston University students, and RSVPs are open to anyone coming to an event. The site isn’t meant for children under 13, and we don’t knowingly collect their information. If you think a child has sent us something, email us and we’ll delete it.',
+        'Proto is for Boston University students, and RSVPs are open to anyone coming to an event. The site isn’t meant for children under 13, and we don’t knowingly collect their information. If you think a child has sent us something, email us and we’ll delete it.',
         'We’re not the university, so what you send us isn’t part of your BU education record.',
       ],
     },
@@ -252,7 +252,7 @@ export const TERMS: LegalDoc = {
   intro: {
     path: '~/proto/terms',
     title: 'Terms',
-    lede: 'The ground rules for using buproto.com and coming along to what we run. Plain words, not a contract-shaped wall of text.',
+    lede: 'The ground rules for using proto.boston and coming along to what we run. Plain words, not a contract-shaped wall of text.',
   },
   contentsLabel: 'On this page',
   other: { label: 'Read the Privacy Policy', href: '/privacy' },
@@ -261,7 +261,7 @@ export const TERMS: LegalDoc = {
       id: 'what',
       title: 'What this site is',
       body: [
-        'BU Proto (a working name) is a student-run home base at Boston University for people who make things. This site lists our hack nights, events and hackathon trips, shows what members have built, and has forms to join, RSVP and say you’d use the planned fund.',
+        'Proto (a working name) is a student-run home base at Boston University for people who make things. This site lists our hack nights, events and hackathon trips, shows what members have built, and has forms to join, RSVP and say you’d use the planned fund.',
         'It’s run by students. It isn’t an official BU site, and nothing here is official with Spark! or Innovate@BU yet. By using the site you agree to these terms. If you don’t, please don’t use it.',
       ],
     },
@@ -285,7 +285,7 @@ export const TERMS: LegalDoc = {
       body: [
         'Going to a hack night, event or hackathon trip is your own choice, and you’re responsible for yourself while you’re there.',
         'Every hackathon has its own rules, code of conduct and terms, and so do venues and transport. Follow them: they decide what’s allowed, not us. An RSVP or a seat on a trip doesn’t guarantee you a place at an event that runs its own admissions.',
-        'At anything BU Proto runs, treat people with respect. No harassment, discrimination or making anyone feel unwelcome. We may ask someone to leave, or stop inviting them, if they don’t.',
+        'At anything Proto runs, treat people with respect. No harassment, discrimination or making anyone feel unwelcome. We may ask someone to leave, or stop inviting them, if they don’t.',
         'Plans change: times, rooms and trips can move or be cancelled. We’ll tell people who RSVP’d when we can.',
       ],
     },
@@ -315,9 +315,9 @@ export const TERMS: LegalDoc = {
       id: 'admin',
       title: 'The admin portal',
       body: [
-        'The admin portal is only for the people who run BU Proto and have been given access. Don’t try to get in otherwise.',
+        'The admin portal is only for the people who run Proto and have been given access. Don’t try to get in otherwise.',
         [
-          'Admins may use what people send in only for running BU Proto, as the ',
+          'Admins may use what people send in only for running Proto, as the ',
           privacyLink,
           ' describes, and must keep it private.',
         ],
@@ -334,7 +334,7 @@ export const TERMS: LegalDoc = {
       id: 'liability',
       title: 'Limits on liability',
       body: [
-        'As far as the law allows, BU Proto and the students who run it aren’t responsible for losses that come from using the site, relying on what it says, or going to events and hackathons, including ones run by others. This doesn’t take away any rights the law says can’t be taken away.',
+        'As far as the law allows, Proto and the students who run it aren’t responsible for losses that come from using the site, relying on what it says, or going to events and hackathons, including ones run by others. This doesn’t take away any rights the law says can’t be taken away.',
       ],
     },
     {

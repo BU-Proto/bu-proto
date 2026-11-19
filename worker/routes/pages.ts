@@ -34,8 +34,8 @@ function render(doc: LegalDoc): string {
     (section) =>
       `<section id="${section.id}"><h2>${escapeHtml(section.title)}</h2>${section.body.map(block).join('')}</section>`,
   )
-  return `<main class="static-page" style="max-width:72ch;margin:0 auto;padding:48px 20px;font-family:Inter,system-ui,sans-serif;line-height:1.7;color:#f6fbff;background:#061a2e">
-<p><a href="/" style="color:#9df0a8">BU Proto</a></p>
+  return `<main class="static-page" style="max-width:72ch;margin:0 auto;padding:48px 20px;font-family:Inter,system-ui,sans-serif;line-height:1.7;color:#fff;background:#000">
+<p><a href="/" style="color:#9df0a8">Proto</a></p>
 <h1>${escapeHtml(doc.intro.title)}</h1>
 <p>${escapeHtml(doc.intro.lede)}</p>
 <p>Effective ${escapeHtml(EFFECTIVE_DATE)}. Contact: <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>
@@ -51,7 +51,7 @@ for (const [path, doc] of Object.entries(DOCS)) {
   app.get(path, async (c) => {
     // The app's own shell, so its scripts and styles load and take over as usual.
     const shell = await c.env.ASSETS.fetch(new URL('/', c.req.url))
-    const title = `${doc.intro.title} · BU Proto`
+    const title = `${doc.intro.title} · Proto`
     return new HTMLRewriter()
       .on('title', { element: (el) => void el.setInnerContent(title) })
       .on('meta[name="description"]', { element: (el) => void el.setAttribute('content', doc.intro.lede) })
