@@ -30,6 +30,10 @@
     }
   ],
 
+  // Uploaded files: portal pictures and role applications' résumés (worker/lib/uploads.ts). The
+  // bucket has to exist before a deploy: `npx wrangler r2 bucket create bu-proto-uploads`.
+  "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "bu-proto-uploads" }],
+
   // Public forms (join, fund interest, RSVP): 10 submissions per minute per IP.
   "ratelimits": [
     {
@@ -60,6 +64,8 @@
         "migrations_dir": "./migrations"
       }
     ],
+    // Their own bucket too, so a preview never touches production's files.
+    "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "bu-proto-uploads-preview" }],
     "ratelimits": [
       {
         "name": "FORM_LIMITER",
