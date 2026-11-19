@@ -20,17 +20,24 @@
   overflow: clip;
 }
 
-/* Under the bar, at the page's left edge: the bar's own row is the name, the nav and Join. */
+/*
+ * Under the bar, on the page's centre line: the nav above it, the scroll cue below the frame and
+ * the line all share one axis, so the band reads as one column with the name and Join at its
+ * sides.
+ */
 .tagline {
   /* Above the frame's spread of harbor, which would otherwise paint over it. */
   position: relative;
   z-index: 1;
-  max-width: 21em;
+  justify-self: center;
+  /* One line wherever the nav pill shows; it wraps only once the nav has folded into a menu. */
+  max-width: 100%;
   margin: 0;
-  font-size: clamp(34px, 2.5vw, 60px);
-  font-weight: 300;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
+  font-size: clamp(34px, 2.6vw, 64px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  text-align: center;
   text-wrap: balance;
 }
 
@@ -106,18 +113,34 @@
   color: var(--ink-soft);
   font-size: 14px;
   font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
 @media (max-width: 1160px) {
   .tagline {
-    font-size: clamp(21px, 3.4vw, 34px);
+    font-size: clamp(24px, 3.4vw, 36px);
+  }
+}
+
+/* The nav folds into a menu here, so the line lines up with the name at the left edge. */
+@media (min-width: 901px) {
+  .tagline {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .tagline {
+    justify-self: start;
+    text-align: left;
   }
 }
 
 @media (max-width: 760px) {
   .tagline {
-    font-size: clamp(21px, 5.6vw, 30px);
+    font-size: clamp(24px, 6.4vw, 32px);
   }
 
   .frame {

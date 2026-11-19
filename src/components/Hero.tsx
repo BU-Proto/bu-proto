@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HERO_COPY } from '../content/home'
 import { RevealWords } from './motion/RevealWords'
 import styles from './Hero.module.css'
@@ -7,31 +7,33 @@ import styles from './Hero.module.css'
 const MARKS = [0, 1 / 3, 2 / 3, 1] as const
 
 /**
- * The hero film, 4K on every screen: a phone's tall frame crops the film to its middle and needs
- * about 2000 device pixels of height, more than 1080p has.
+ * The hero film: the launch cut, 1080p, silent, kept under Cloudflare's 25 MiB asset limit. A
+ * phone's tall frame crops it to its middle.
  */
-const FILM = { src: '/media/hero-4k.mp4', poster: '/media/hero-poster.jpg' }
+const FILM = { src: '/media/hero.mp4', poster: '/media/hero-poster-launch.jpg' }
 
 /**
  * The home hero, one screen: what Proto is, set small above a wide rounded frame, and a line of
  * marks under it. The frame holds the hero film, cropped to fill it edge to edge; everything round
- * it is harbor. The film is silent and loops; under reduced motion it holds on its first frame.
+ * it is harbor. The film plays muted and loops; under reduced motion it holds on its first frame.
  */
 export function Hero() {
   const film = useRef<HTMLVideoElement>(null)
+  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+
+  useEffect(() => {
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const follow = () => setPaused(still.matches)
+    still.addEventListener('change', follow)
+    return () => still.removeEventListener('change', follow)
+  }, [])
 
   useEffect(() => {
     const video = film.current
     if (!video) return
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const apply = () => {
-      if (still.matches) video.pause()
-      else void video.play().catch(() => {})
-    }
-    apply()
-    still.addEventListener('change', apply)
-    return () => still.removeEventListener('change', apply)
-  }, [])
+    if (paused) video.pause()
+    else void video.play().catch(() => setPaused(true))
+  }, [paused])
 
   return (
     <section className={styles.hero}>

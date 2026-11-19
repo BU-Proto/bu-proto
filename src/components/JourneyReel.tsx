@@ -5,8 +5,9 @@ import { JOURNEY_PALETTE, journeyFrame, journeyGlyph } from '../lib/pixelGrid'
 import { onFrame } from '../lib/smoothScroll'
 import { useMediaQuery } from '../lib/useMediaQuery'
 import { reducedMotion } from '../lib/useInView'
-import { GlyphRibbon } from './GlyphRibbon'
+import { createReelMorph, paintPicture, paintStill } from '../lib/reelMorph'
 import { RevealWords } from './motion/RevealWords'
+import { TubeRibbon } from './TubeRibbon'
 import { usePixelCanvas } from './usePixelCanvas'
 import lui from './landing.module.css'
 import styles from './JourneyReel.module.css'
@@ -17,79 +18,104 @@ const pitchFor = (width: number) => (width < 600 ? 8 : Math.max(11, Math.round(w
 /** Marks along the top and foot of the grown frame, as shares of its width. */
 const MARKS = [0, 0.25, 0.5, 0.75, 1] as const
 
-/** Where the frame starts to grow: its runway's top at this share of the screen's height. */
-const GROW_FROM = 0.74
 /** The grow only runs where the picture sits beside the words; below this the page is one column. */
 const WIDE = '(min-width: 861px)'
 
 /**
- * The ribbon's two courses. Beside the picture it's laid out on the section, 1000 wide: in from
- * the left edge above the title, steeply down through it, across the small picture, round its
- * near corner and out under the words. In one column, where the words run the full width, it's
- * laid out on the title alone, 1000 to the title's row: down through both lines, round under
- * them and back up, so it crosses the letters and never reaches the copy below.
+ * The ribbon's two courses, as on lusion.co. Beside the picture it's laid out on the section, 1000
+ * wide: in from the left edge at the title's top, down through the title and straight down behind
+ * the small card, then one clean loop: under the card's foot, up its left side and back over its
+ * top edge, crossing itself just above the card, then behind the button and on down and to the
+ * right, where it waves out past the edge over the grown frame. The parts behind the card show
+ * while it grows away, so the loop has to read as a loop on its own, as Lusion's does. In one column,
+ * where the words run the full width, it's laid out on the title alone, 1000 to the title's row:
+ * down through both lines, round under them and back up.
  */
-const RIBBON = { box: [1000, 1000], thickness: 24 } as const
+const RIBBON = { box: [1000, 1000], thickness: 26 } as const
 const RIBBON_PATH = {
-  beside: 'M -40 56 C 130 50, 292 120, 332 300 C 368 450, 300 610, 150 650 C 20 685, -10 560, 60 500 C 150 420, 330 520, 470 620 C 560 680, 700 650, 760 560',
+  beside:
+    'M -40 122 C 100 128, 250 200, 296 320 C 312 380, 317 430, 317 520 C 317 600, 300 690, 220 712 C 150 730, 60 712, 34 660 C 10 610, 18 530, 70 490 C 120 452, 240 444, 340 446 C 420 448, 470 458, 510 476 C 545 492, 565 515, 590 540 C 630 580, 670 620, 709 640 C 740 660, 770 700, 810 696 C 850 692, 870 668, 910 668 C 960 668, 1000 700, 1010 760 C 1018 810, 1012 860, 1012 920',
   column: 'M 120 -90 C 150 60, 250 262, 470 252 C 700 242, 800 60, 840 -90',
 } as const
 /** One column: a narrow screen, or the still layout, which stacks the same way. */
 const COLUMN = '(max-width: 860px), (prefers-reduced-motion: reduce)'
 
-/** How far into the move the frame starts to widen: by then it's below the words. */
-const WIDEN_FROM = 0.32
-
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
-const smooth = (value: number) => value * value * (3 - 2 * value)
 
 /**
- * Moves the frame between its two places as the page scrolls. It's laid out full width in its
- * runway, where it ends up; until then it's drawn small in the slot beside the words, and it
- * comes down first and widens after, so it never crosses them.
+ * Grows the frame out of its small place by the words as the page scrolls, the way Lusion's home
+ * reel does (see reelMorph): the frame itself waits, hidden, in its runway, and a WebGL grid draws
+ * it on its way, small at first and printed in one blue, then running out to the frame's place a
+ * point at a time. The move is laid on the scroll, from the
+ * moment the small card reaches the middle of the screen (it holds there from then on) to the
+ * moment the frame settles under the top bar. Once it lands, the real frame shows again.
  */
 function useGrow() {
   const slot = useRef<HTMLDivElement>(null)
   const runway = useRef<HTMLDivElement>(null)
   const pin = useRef<HTMLDivElement>(null)
   const frame = useRef<HTMLDivElement>(null)
+  const surface = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const parts = { slot: slot.current, runway: runway.current, pin: pin.current, frame: frame.current }
-    if (!parts.slot || !parts.runway || !parts.pin || !parts.frame || reducedMotion()) return
-    const { slot: slotEl, runway: runwayEl, pin: pinEl, frame: frameEl } = parts
+    const parts = { slot: slot.current, runway: runway.current, pin: pin.current, frame: frame.current, surface: surface.current }
+    if (!parts.slot || !parts.runway || !parts.pin || !parts.frame || !parts.surface || reducedMotion()) return
+    const { slot: slotEl, runway: runwayEl, pin: pinEl, frame: frameEl, surface: surfaceEl } = parts
+    const morph = createReelMorph(surfaceEl)
+    if (!morph) return
+    const art = frameEl.querySelector('canvas')
+    const still = document.createElement('canvas')
+    const picture = document.createElement('canvas')
     const wide = window.matchMedia(WIDE)
-    const state = { stop: null as (() => void) | null, shape: 0, near: false }
+    const state = {
+      stop: null as (() => void) | null,
+      shape: 0,
+      near: false,
+      painted: null as { box: DOMRect; art: DOMRect | null } | null,
+    }
 
+    const land = (landed: boolean) => {
+      if (landed) delete pinEl.dataset.morphing
+      else pinEl.dataset.morphing = ''
+    }
     const rest = () => {
-      frameEl.style.transform = ''
-      pinEl.style.removeProperty('--grow')
+      land(true)
+      morph.clear()
       slotEl.style.height = ''
+    }
+    const paint = () => {
+      state.painted = paintStill(frameEl, still, art) ?? null
     }
 
     const update = () => {
       const home = pinEl.getBoundingClientRect()
       if (home.width === 0) return
-      // The slot takes the frame's shape, so the small picture is the large one, scaled.
+      // The slot takes the frame's shape, so the small card is the frame in miniature.
       const shape = home.height / home.width
       if (Math.abs(shape - state.shape) > 0.001) {
         state.shape = shape
         slotEl.style.height = `${slotEl.clientWidth * shape}px`
+        paint()
       }
+      if (!state.painted) paint()
       const small = slotEl.getBoundingClientRect()
-      const from = window.innerHeight * GROW_FROM
-      // Where the frame holds: the pin's own sticky offset, under the top bar.
-      const to = parseFloat(getComputedStyle(pinEl).top) || 0
-      const raw = clamp01((from - runwayEl.getBoundingClientRect().top) / Math.max(1, from - to))
-      // Down at a pace the page's own scroll always outruns, so the frame never sinks on screen;
-      // wider only once it has cleared the words beside it.
-      const down = 0.5 * raw + 0.5 * smooth(raw)
-      const wider = smooth(clamp01((raw - WIDEN_FROM) / (1 - WIDEN_FROM)))
-      const scale = small.width / home.width
-      const x = (small.left - home.left) * (1 - wider)
-      const y = (small.top - home.top) * (1 - down)
-      frameEl.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${(scale + (1 - scale) * wider).toFixed(4)})`
-      pinEl.style.setProperty('--grow', wider.toFixed(3))
+      const middle = (window.innerHeight - small.height) / 2
+      // Scroll left until the card reaches the middle of the screen, and until the frame settles.
+      const toMiddle = small.top - middle
+      const toSettle = runwayEl.getBoundingClientRect().top - (parseFloat(getComputedStyle(pinEl).top) || 0)
+      const ratio = toSettle - toMiddle > 1 ? clamp01(-toMiddle / (toSettle - toMiddle)) : toSettle <= 0 ? 1 : 0
+      if (ratio >= 1) {
+        land(true)
+        morph.clear()
+        return
+      }
+      land(false)
+      const from = { x: small.left, y: Math.max(small.top, middle), w: small.width, h: small.height }
+      const to = { x: home.left, y: home.top, w: home.width, h: home.height }
+      const painted = state.painted
+      if (!painted) return
+      paintPicture(picture, still, art, painted.box, painted.art)
+      morph.draw(from, to, ratio, picture, parseFloat(getComputedStyle(frameEl).borderTopLeftRadius) || 0)
     }
 
     // Only while the section is near the screen, and only where the two places exist.
@@ -113,34 +139,45 @@ function useGrow() {
     watch.observe(runwayEl.parentElement ?? runwayEl)
     const onWidth = () => sync(state.near)
     wide.addEventListener('change', onWidth)
+    // The words are painted into the grid's picture, so paint again when the frame or its fonts change.
+    const sizes = new ResizeObserver(() => {
+      state.painted = null
+    })
+    sizes.observe(frameEl)
+    void document.fonts.ready.then(() => {
+      state.painted = null
+    })
 
     return () => {
       watch.disconnect()
+      sizes.disconnect()
       wide.removeEventListener('change', onWidth)
       state.stop?.()
       rest()
     }
   }, [])
 
-  return { slot, runway, pin, frame }
+  return { slot, runway, pin, frame, surface }
 }
 
 /**
- * How a person's time at Proto goes. The title set very large, the words beside a small picture
- * of the journey, and then the picture itself: it grows out of its place by the words to the full
- * width of the page and holds there, the four steps written along its foot.
+ * How a person's time at Proto goes, laid out as Lusion's home is. The title set very large, the
+ * words beside a small picture of the journey, and a blue ribbon drawn through it all as the page
+ * scrolls. Then the picture itself: it grows out of its place by the words to the full width of
+ * the page and holds there, the four steps written along its foot.
  */
 export function JourneyReel() {
   const canvas = useRef<HTMLCanvasElement>(null)
   usePixelCanvas(canvas, { palette: JOURNEY_PALETTE, pitch: pitchFor, fps: 24, still: 6, fontScale: 1, glyph: journeyGlyph, frame: journeyFrame })
-  const { slot, runway, pin, frame } = useGrow()
+  const { slot, runway, pin, frame, surface } = useGrow()
   const column = useMediaQuery(COLUMN)
 
   return (
     <section className={styles.section} aria-labelledby="journey">
-      {!column && <GlyphRibbon className={styles.ribbon} hue="iris" path={RIBBON_PATH.beside} {...RIBBON} />}
+      {!column && <TubeRibbon className={styles.ribbon} path={RIBBON_PATH.beside} {...RIBBON} />}
+      {!column && <canvas ref={surface} className={styles.morph} aria-hidden="true" />}
       <div className={styles.head}>
-        {column && <GlyphRibbon className={styles.ribbon} hue="iris" path={RIBBON_PATH.column} {...RIBBON} />}
+        {column && <TubeRibbon className={styles.ribbon} path={RIBBON_PATH.column} {...RIBBON} />}
         <h2 id="journey" className={styles.title}>
           {JOURNEY.title.split('\n').map((line, index) => (
             <span key={line} className={styles.line} data-reveal="words" style={{ '--d': `${index * 160}ms` } as CSSProperties}>
@@ -157,7 +194,7 @@ export function JourneyReel() {
             {JOURNEY.lede}
           </p>
           <p className={styles.action} data-reveal="rise" style={{ '--d': '120ms' } as CSSProperties}>
-            <Link className={lui.cta} to={JOURNEY.cta.href}>
+            <Link className={`${lui.cta} ${styles.cta}`} to={JOURNEY.cta.href}>
               {JOURNEY.cta.label}
             </Link>
           </p>

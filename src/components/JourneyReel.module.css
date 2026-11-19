@@ -1,6 +1,7 @@
 /*
- * The journey on the landing: a title at the scale of the page, the words in the right half with
- * a small picture in the left, and the picture grown to the full width under them. On harbor.
+ * The journey on the landing, laid out as Lusion's home is: a title at the scale of the page, the
+ * words in the right half with a small card of the film in the left, and the film grown to the
+ * full width under them. On harbor.
  */
 .section {
   /*
@@ -22,20 +23,20 @@
 /* The title's row, which the one-column ribbon is laid out on. */
 .head {
   position: relative;
-  margin: clamp(72px, 10vw, 190px) 0 clamp(40px, 5vw, 96px);
+  margin: clamp(72px, 10vw, 190px) 0 clamp(44px, 7.4vw, 150px);
 }
 
-/* Two lines that end together, so the shorter one stands in from the left. */
+/* Two lines that end together, so the shorter one stands in from the left. Lusion's measures:
+   10vw, regular weight, set solid. */
 .title {
   display: grid;
   justify-items: end;
   width: fit-content;
   margin: 0;
   font-size: clamp(44px, 10vw, 250px);
-  font-weight: 300;
-  letter-spacing: -0.045em;
-  /* Open enough that the first line's descenders clear the second's ascenders. */
-  line-height: 1.08;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1;
 }
 
 .line {
@@ -53,11 +54,11 @@
 }
 
 /* Empty: the frame is drawn here until it grows. Its height is set to the frame's shape. It
-   stops short of its column, so the small picture stands clear of the words. */
+   stops a little short of its column, so the small card stands clear of the words. */
 .slot {
   aspect-ratio: 2 / 1;
-  margin-top: clamp(40px, 4.8vw, 84px);
-  margin-right: calc(var(--col-gap) * 2);
+  margin-top: clamp(40px, 6.7vw, 140px);
+  margin-right: calc(var(--col-gap) * 0.75);
 }
 
 .words {
@@ -66,15 +67,32 @@
 
 .lede {
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--ink);
   font-size: clamp(18px, 1.5vw, 34px);
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.4;
-  text-wrap: balance;
+  text-wrap: pretty;
 }
 
 .action {
-  margin: clamp(28px, 3vw, 52px) 0 0;
+  margin: clamp(28px, 3.3vw, 60px) 0 0;
+}
+
+/* Lusion's button: a white pill, a black dot and the label in capitals, lifted off the page. */
+.cta {
+  border-color: transparent;
+  background: #fff;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  color: #000;
+  font-size: clamp(13px, 0.95vw, 16px);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.cta:hover {
+  border-color: transparent;
+  background: var(--frost);
+  color: #000;
 }
 
 /* ---- The frame and where it holds ---- */
@@ -111,8 +129,24 @@
     radial-gradient(52% 78% at 100% 100%, rgb(var(--rose-deep-rgb) / 0.3), transparent 72%),
     var(--navy);
   box-shadow: var(--slab-shadow);
-  transform-origin: 0 0;
-  will-change: transform;
+}
+
+/*
+ * While the frame is on its way it is drawn by the grid on this canvas, over the whole screen and
+ * behind the words; the frame itself and its marks wait, hidden, till it lands.
+ */
+.morph {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.pin[data-morphing] .frame,
+.pin[data-morphing] .marks {
+  visibility: hidden;
 }
 
 /* The art has the frame's upper part to itself, edge to edge: its last row of marks is the
