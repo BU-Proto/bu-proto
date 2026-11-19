@@ -18,6 +18,7 @@ import {
 import { bostonToday } from '../lib/dates'
 import { ApiError, idParam, readBody } from '../lib/http'
 import { owners } from '../lib/session'
+import { blobBytes, deleteResumes, resumeKey } from '../lib/uploads'
 import type { AppEnv } from '../types'
 
 // Members, fund interest, board interest, role applications and the dashboard numbers. Everything here sits under /api/admin, so
@@ -175,12 +176,15 @@ app.delete('/api/admin/members/:id', async (c) => {
   const id = idParam(c)
   const member = await c.env.DB.prepare('SELECT email FROM members WHERE id = ?').bind(id).first<{ email: string }>()
   if (!member) throw new ApiError(404, 'No such member.')
+  const applications = await c.env.DB.prepare('SELECT id FROM role_applications WHERE email = ?').bind(member.email).all<{ id: number }>()
   await c.env.DB.batch([
     c.env.DB.prepare('DELETE FROM rsvps WHERE email = ?').bind(member.email),
     c.env.DB.prepare('DELETE FROM fund_interest WHERE email = ?').bind(member.email),
     c.env.DB.prepare('DELETE FROM role_applications WHERE email = ?').bind(member.email),
     c.env.DB.prepare('DELETE FROM members WHERE id = ?').bind(id),
   ])
+  // Their résumés live in R2, outside the batch.
+  await deleteResumes(c.env, applications.results.map((row) => row.id))
   return c.body(null, 204)
 })
 
@@ -319,24 +323,25 @@ app.patch('/api/admin/roles/:id/filled', async (c) => {
   return c.json({ filled: row.filled === 1 })
 })
 
-// The résumé itself, put back together from its parts. Only ever a PDF (checked on the way in),
-// and served as nothing else, so the browser opens it in its PDF viewer.
+// The résumé itself, from R2 (see lib/uploads), or put back together from its parts in D1 if it
+// came in before R2 and hasn't been moved yet. Only ever a PDF (checked on the way in), and served
+// as nothing else, so the browser opens it in its PDF viewer.
 app.get('/api/admin/applications/:id/resume', async (c) => {
   const id = idParam(c)
-  const [application, parts] = await c.env.DB.batch<{ resume_name: string } | { data: ArrayBuffer | number[] }>([
-    c.env.DB.prepare('SELECT resume_name FROM role_applications WHERE id = ?').bind(id),
-    c.env.DB.prepare('SELECT data FROM role_application_resume_parts WHERE application_id = ? ORDER BY part').bind(id),
-  ])
-  const row = application.results[0] as { resume_name: string } | undefined
-  if (!row || parts.results.length === 0) throw new ApiError(404, 'No résumé on this application.')
-  // D1 hands a BLOB back as an array of bytes; the local one as a buffer. Either becomes bytes.
-  const chunks = (parts.results as { data: ArrayBuffer | number[] }[]).map(({ data }) =>
-    data instanceof ArrayBuffer ? new Uint8Array(data) : Uint8Array.from(data),
-  )
+  const row = await c.env.DB.prepare('SELECT resume_name FROM role_applications WHERE id = ?').bind(id).first<{ resume_name: string }>()
+  if (!row) throw new ApiError(404, 'No résumé on this application.')
+  let file: ReadableStream | Blob | null = (await c.env.UPLOADS.get(resumeKey(id)))?.body ?? null
+  if (!file) {
+    const parts = await c.env.DB.prepare('SELECT data FROM role_application_resume_parts WHERE application_id = ? ORDER BY part')
+      .bind(id)
+      .all<{ data: ArrayBuffer | number[] }>()
+    if (parts.results.length > 0) file = new Blob(parts.results.map(({ data }) => blobBytes(data)), { type: 'application/pdf' })
+  }
+  if (!file) throw new ApiError(404, 'No résumé on this application.')
   // A header can only carry Latin-1, and names come in every script: a plain fallback, then the
   // real name encoded the way browsers read it (RFC 5987).
   const plainName = row.resume_name.replace(/[^\x20-\x7e]|["\\]/g, '_')
-  return new Response(new Blob(chunks, { type: 'application/pdf' }), {
+  return new Response(file, {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `inline; filename="${plainName}"; filename*=UTF-8''${encodeURIComponent(row.resume_name)}`,
@@ -347,8 +352,10 @@ app.get('/api/admin/applications/:id/resume', async (c) => {
 })
 
 app.delete('/api/admin/applications/:id', async (c) => {
-  const { meta } = await c.env.DB.prepare('DELETE FROM role_applications WHERE id = ?').bind(idParam(c)).run()
+  const id = idParam(c)
+  const { meta } = await c.env.DB.prepare('DELETE FROM role_applications WHERE id = ?').bind(id).run()
   if (meta.changes === 0) throw new ApiError(404, 'No such application.')
+  await deleteResumes(c.env, [id])
   return c.body(null, 204)
 })
 

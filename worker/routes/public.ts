@@ -16,6 +16,7 @@ import { bostonToday } from '../lib/dates'
 import { limitForms } from '../lib/forms'
 import { ApiError, bodyFields, idParam, parseInput, readBody } from '../lib/http'
 import { requireHuman } from '../lib/turnstile'
+import { resumeKey } from '../lib/uploads'
 import type { AppEnv } from '../types'
 
 // The five forms the public site posts. None needs a session; all are rate limited per IP, then
@@ -40,9 +41,6 @@ async function isBot(c: Context<AppEnv>): Promise<boolean> {
 // ---- The résumé on a role application ---------------------------------------------------------
 
 const RESUME_TOO_BIG = `That file is over ${RESUME_MAX_BYTES / 1024 / 1024} MB.`
-
-/** D1 holds at most 2 MB in one value, so a résumé is stored a megabyte at a time. */
-const RESUME_PART_BYTES = 1024 * 1024
 
 /** Turns away an upload that's plainly too big before any of it is read. Leaves room for the other fields. */
 const withinUploadSize: MiddlewareHandler<AppEnv> = async (c, next) => {
@@ -171,18 +169,16 @@ app.post('/api/roles/:id/apply', limitForms, withinUploadSize, requireHuman('rol
     .bind(id, role.title, input.name, input.email, input.year, input.link, JSON.stringify(answers), resume.name, resume.bytes.byteLength)
     .first<{ id: number }>()
   if (!saved) throw new ApiError(500, 'Could not save that.')
-  // The file, in parts (see the migration): the old one out and the new one in, together.
-  const parts: D1PreparedStatement[] = []
-  for (let offset = 0, part = 0; offset < resume.bytes.byteLength; offset += RESUME_PART_BYTES, part += 1) {
-    parts.push(
-      c.env.DB.prepare('INSERT INTO role_application_resume_parts (application_id, part, data) VALUES (?, ?, ?)').bind(
-        saved.id,
-        part,
-        resume.bytes.slice(offset, offset + RESUME_PART_BYTES),
-      ),
-    )
+  // The file goes to R2 (see lib/uploads), over any earlier one. If it can't be kept, a new
+  // application goes too, so there's never one whose résumé is missing.
+  try {
+    await c.env.UPLOADS.put(resumeKey(saved.id), resume.bytes, { httpMetadata: { contentType: RESUME_TYPE } })
+  } catch (error) {
+    if (!existing) await c.env.DB.prepare('DELETE FROM role_applications WHERE id = ?').bind(saved.id).run()
+    throw error
   }
-  await c.env.DB.batch([c.env.DB.prepare('DELETE FROM role_application_resume_parts WHERE application_id = ?').bind(saved.id), ...parts])
+  // An earlier résumé of this application from before R2, if it's still in D1.
+  await c.env.DB.prepare('DELETE FROM role_application_resume_parts WHERE application_id = ?').bind(saved.id).run()
 
   // Someone correcting their application has had the confirmation, and the owners their note.
   if (!existing) {

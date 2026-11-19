@@ -99,7 +99,7 @@ Events, hackathons, wins, the board and roles live in D1 and are edited in the p
 
 All other copy lives in `src/content/`, one typed file per page plus `site.ts` for the brand, the nav and hack night's time and place. Copy that's made up there carries `placeholder: true` and gets the same tag. `trackRecord.ts` takes real, verified logos only and has no samples on purpose.
 
-The forms post to the Worker: `/join` to `POST /api/join`, the `/grants` interest list to `POST /api/fund-interest`, a role's application (the board's open seats included: each seat's button on `/board` goes to its role page) to `POST /api/roles/:id/apply` (a multipart form, since it carries a résumé: a PDF of up to 5 MB, kept in D1 in 1 MB parts because D1 holds at most 2 MB in one value), and RSVPs on `/events` to `POST /api/events/:id/rsvp` (remembered in the browser, so the button stays "going"). The browser validates first; the server's per-field messages show under the matching field. Each form carries a hidden `website` honeypot.
+The forms post to the Worker: `/join` to `POST /api/join`, the `/grants` interest list to `POST /api/fund-interest`, a role's application (the board's open seats included: each seat's button on `/board` goes to its role page) to `POST /api/roles/:id/apply` (a multipart form, since it carries a résumé: a PDF of up to 5 MB, kept in the `bu-proto-uploads` R2 bucket), and RSVPs on `/events` to `POST /api/events/:id/rsvp` (remembered in the browser, so the button stays "going"). The browser validates first; the server's per-field messages show under the matching field. Each form carries a hidden `website` honeypot.
 
 ## Using the field
 
@@ -210,7 +210,8 @@ It's one Cloudflare Worker: Workers Static Assets serve the built site, and only
    | Zone | Workers Routes | Edit | The `proto.boston` custom domain |
 
    Under **Account Resources** pick this account only (`0bda3a2560ca48711ef7336cc421abed`); under **Zone Resources** pick **Specific zone → proto.boston**. Nothing else is needed: the rate limit binding, the cron trigger and the assets all come with Workers Scripts.
-2. In GitHub, go to **Settings → Secrets and variables → Actions → New repository secret** and add `CLOUDFLARE_API_TOKEN` with the token. Optionally add `CLOUDFLARE_ACCOUNT_ID` (as a secret or a variable); without it the workflow uses the account id above.
+2. Create the two R2 buckets uploaded files live in (portal pictures and résumés, see `worker/lib/uploads.ts`): `npx wrangler r2 bucket create bu-proto-uploads` for production and `npx wrangler r2 bucket create bu-proto-uploads-preview` for branch previews, or **R2 Object Storage → Create bucket** in Cloudflare. A deploy fails while they're missing. R2 has to be turned on for the account first (**R2 Object Storage** in the sidebar); Cloudflare asks for a payment method then, but Proto's use stays inside the free tier (10 GB stored, 1 million writes and 10 million reads a month).
+3. In GitHub, go to **Settings → Secrets and variables → Actions → New repository secret** and add `CLOUDFLARE_API_TOKEN` with the token. Optionally add `CLOUDFLARE_ACCOUNT_ID` (as a secret or a variable); without it the workflow uses the account id above.
 
 **Rerun a deploy:** **Actions → Deploy → Run workflow** (branch `main`), or **Re-run jobs** on a past run.
 

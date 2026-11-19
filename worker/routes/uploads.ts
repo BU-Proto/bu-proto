@@ -1,26 +1,28 @@
 import { Hono } from 'hono'
 import { UPLOAD_MAX_BYTES } from '../../shared/constants'
 import { ApiError, bodyFields } from '../lib/http'
+import { blobBytes, movePicture, PICTURE_TYPES, pictureKey, type PictureExtension } from '../lib/uploads'
 import type { AppEnv } from '../types'
 
 // Pictures uploaded from the portal: board portraits, event covers, win photos. The portal
-// shrinks them first; here each one is checked to be a real JPEG, PNG or WebP, kept in D1, and
-// served back at /api/uploads/<key>.<ext> for good (its address never changes, so it caches forever).
+// shrinks them first; here each one is checked to be a real JPEG, PNG or WebP, kept in R2 (see
+// lib/uploads), and served back at /api/uploads/<key>.<ext> for good (its address never changes,
+// so it caches forever). D1 keeps a row for each as a record: who uploaded what, and when.
 
 const app = new Hono<AppEnv>()
-
-const TYPES = {
-  jpg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-} as const
-type Extension = keyof typeof TYPES
 
 const TOO_BIG = `That picture is over ${UPLOAD_MAX_BYTES / 1024 / 1024} MB, even after shrinking. Try a smaller one.`
 const NOT_A_PICTURE = 'That isn’t a JPEG, PNG or WebP picture.'
 
+/** Served with every picture: cached for good, and never run as anything but a picture. */
+const PICTURE_HEADERS = {
+  'Cache-Control': 'public, max-age=31536000, immutable',
+  'X-Content-Type-Options': 'nosniff',
+  'Content-Security-Policy': "default-src 'none'; sandbox",
+}
+
 /** What the file is by its first bytes, never by its name or the type it claims. */
-function sniff(bytes: Uint8Array): Extension | null {
+function sniff(bytes: Uint8Array): PictureExtension | null {
   const at = (offset: number, ...values: number[]) => values.every((value, index) => bytes[offset + index] === value)
   if (at(0, 0xff, 0xd8, 0xff)) return 'jpg'
   if (at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return 'png'
@@ -50,8 +52,10 @@ app.post('/api/admin/uploads', async (c) => {
   if (!extension) throw new ApiError(415, NOT_A_PICTURE, { file: NOT_A_PICTURE })
 
   const key = newKey()
-  await c.env.DB.prepare('INSERT INTO uploads (key, content_type, bytes, size, name, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind(key, TYPES[extension], buffer, buffer.byteLength, file.name.slice(0, 200), c.var.admin.email)
+  await c.env.UPLOADS.put(pictureKey(key, extension), buffer, { httpMetadata: { contentType: PICTURE_TYPES[extension] } })
+  // The record only: the bytes are in R2.
+  await c.env.DB.prepare("INSERT INTO uploads (key, content_type, bytes, size, name, uploaded_by) VALUES (?, ?, X'', ?, ?, ?)")
+    .bind(key, PICTURE_TYPES[extension], buffer.byteLength, file.name.slice(0, 200), c.var.admin.email)
     .run()
   return c.json({ url: `/api/uploads/${key}.${extension}` }, 201)
 })
@@ -60,18 +64,22 @@ app.post('/api/admin/uploads', async (c) => {
 app.get('/api/uploads/:name', async (c) => {
   const match = /^([0-9a-f]{32})\.(jpg|png|webp)$/.exec(c.req.param('name'))
   if (!match) throw new ApiError(404, 'Not found.')
-  const row = await c.env.DB.prepare('SELECT content_type, bytes FROM uploads WHERE key = ?')
-    .bind(match[1])
-    .first<{ content_type: string; bytes: ArrayBuffer | number[] }>()
-  if (!row || row.content_type !== TYPES[match[2] as Extension]) throw new ApiError(404, 'Not found.')
-  // D1 hands a BLOB back as an array of bytes; the local one as a buffer. Either becomes bytes.
-  const body = row.bytes instanceof ArrayBuffer ? new Uint8Array(row.bytes) : Uint8Array.from(row.bytes)
-  return c.body(body, 200, {
-    'Content-Type': row.content_type,
-    'Cache-Control': 'public, max-age=31536000, immutable',
-    'X-Content-Type-Options': 'nosniff',
-    'Content-Security-Policy': "default-src 'none'; sandbox",
-  })
+  const key = match[1]!
+  const extension = match[2] as PictureExtension
+  const contentType = PICTURE_TYPES[extension]
+
+  const object = await c.env.UPLOADS.get(pictureKey(key, extension))
+  if (object) {
+    return new Response(object.body, { headers: { 'Content-Type': contentType, ETag: object.httpEtag, ...PICTURE_HEADERS } })
+  }
+
+  // Uploaded before R2 and not moved yet: serve it from D1, and move it while we're here.
+  const row = await c.env.DB.prepare('SELECT key, content_type, bytes FROM uploads WHERE key = ? AND length(bytes) > 0')
+    .bind(key)
+    .first<{ key: string; content_type: string; bytes: ArrayBuffer | number[] }>()
+  if (!row || row.content_type !== contentType) throw new ApiError(404, 'Not found.')
+  c.executionCtx.waitUntil(movePicture(c.env, row))
+  return c.body(blobBytes(row.bytes), 200, { 'Content-Type': contentType, ...PICTURE_HEADERS })
 })
 
 export default app

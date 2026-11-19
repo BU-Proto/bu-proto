@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { errorBody } from './lib/http'
 import { runImports } from './lib/importers'
 import { requireAdmin, sameOrigin } from './lib/session'
+import { moveUploadsToR2 } from './lib/uploads'
 import admins from './routes/admins'
 import auth from './routes/auth'
 import content from './routes/content'
@@ -50,5 +51,7 @@ export default {
   fetch: app.fetch,
   scheduled(_controller, env, ctx) {
     ctx.waitUntil(runImports(env))
+    // Anything uploaded before R2 that's still in D1 moves across, a batch a day (see lib/uploads).
+    ctx.waitUntil(moveUploadsToR2(env))
   },
 } satisfies ExportedHandler<Env>
