@@ -40,7 +40,7 @@
   ],
 
   // Daily at 09:17 UTC (4–5 AM in Boston): import upcoming hackathons from MLH and Devpost into
-  // the portal's review queue.
+  // the portal's review queue, and draft follow-ups for asks nobody has answered.
   "triggers": { "crons": ["17 9 * * *"] },
 
   // Branch previews (`wrangler preview`, run by Workers Builds on every non-main push). They get
@@ -83,4 +83,5 @@
   //                                            emails stay out of this public repo
   //   RESEND_API_KEY                           leave unset locally to log emails instead of sending
   //   TURNSTILE_SECRET_KEY                     the proto.boston widget's secret; empty locally uses the test key
+  //   ANTHROPIC_API_KEY                        Claude, for Asks' drafts and forms; without it the portal can't draft
 }

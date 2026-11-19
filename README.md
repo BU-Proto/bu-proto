@@ -51,7 +51,7 @@ The portal lives at `/admin`; see [Admin portal](#admin-portal).
 
 ## Admin portal
 
-`/admin` is where the team edits events, hackathons, wins, the board and roles; looks after members, the fund interest list and role applications; reads an event's RSVPs; emails people; and decides who else gets in. It's a separate, lazy-loaded part of the app with its own layout (no ASCII field), so none of it ships to public visitors.
+`/admin` is where the team edits events, hackathons, wins, the board and roles; looks after members, the fund interest list and role applications; reads an event's RSVPs; emails people; asks people for things (Claude drafts the email and fills the forms); and decides who else gets in. It's a separate, lazy-loaded part of the app with its own layout (no ASCII field), so none of it ships to public visitors.
 
 **Who gets in.** Sign-in is Google only (any Google account: Gmail, or BU's Google Workspace). Emails in the `ADMIN_EMAILS` secret (comma-separated) are owners: always allowed, never removable in the portal. Owners and admins add everyone else on the Admins page, by email; the new admin gets an email with the sign-in link (a *Resend email* button sends it again, at most every 10 minutes). They must sign in with a Google account whose verified address is exactly that email. Removing someone ends their sessions right away. Sessions are an HttpOnly cookie holding a random token (only its SHA-256 is stored) and last 14 days. Every state-changing API request must come from the site's own origin.
 
@@ -60,6 +60,10 @@ The portal lives at `/admin`; see [Admin portal](#admin-portal).
 **Roles.** A role is posted under Roles: a title, one or two lines, the time it takes, an optional apply-by day, the write-up, and optionally up to five questions of its own for applicants. Every application asks for a name, BU email, year, an optional link and a résumé (PDF). Published roles show on `/roles`; one past its apply-by day leaves the list and its form closes. Once someone takes a role, tick **Filled**: it leaves `/roles`, and its page stays up saying it's filled, without the form. A role whose team is **Board** is also an open seat on `/board` (and listed on `/about`) until it's filled, so posting, renaming or filling a seat is all done on the role. Applications land under Roles → Applications, each with the résumé to open, a status (new, reviewing, accepted, declined) and private notes, and can be downloaded as a CSV. Marking one accepted while its role is still open offers to mark the role filled. The applicant gets a confirmation email and the owners a note; nothing tells an applicant their status, so someone has to write to them. Applying again for the same role with the same email replaces the earlier answers.
 
 **Email.** The Email page sends through [Resend](https://resend.com) to all members, one track, an event's RSVPs, or the fund list by status. Subject and body take variables (`{{name}}`, `{{fullName}}`, `{{email}}`, `{{track}}`, and `{{event}}`, `{{eventDate}}`, `{{eventTime}}`, `{{eventPlace}}` for event emails), and the live preview renders exactly what each real recipient will get. Member emails carry a one-click unsubscribe link. Every send is logged with its counts. Without `RESEND_API_KEY` nothing leaves: emails are printed to the dev server console and the campaign is marked *logged*.
+
+**Asks.** Asks (Email → Asks, `/admin/email/asks`) are emails to one person or office we need something from: a room from Spark!, a form back from a sponsor, an answer from a BU office. Say who it's to and what's needed in a sentence or two, and add any forms: a PDF, or a web form's link (a public Google Form's questions are read from the link; for Engage or anything behind a sign-in, paste the questions). Claude ([`worker/lib/claude.ts`](worker/lib/claude.ts)) writes the email in Proto's voice and fills the forms from **Proto facts** (Email → Proto facts), the contact's notes, the events and board in D1, and what the teammate said. It never makes a fact up: what it doesn't know it asks under the draft, and an answer about Proto itself (its advisor, its address) is kept as a fact so no form asks again. Each form answer says where it came from; a signature box is never filled. Anyone can edit the draft, answer the questions, write *Notes for Claude* and press **Redraft**. **Nothing is sent until someone presses Send**: it goes from "<name> from Proto" at `EMAIL_FROM`'s address, with the teammate who made the ask as Reply-To and Cc, so the reply lands in their inbox and they mark the ask answered. A filled PDF rides along as an attachment (untick *Attach* to keep it off). A Google Form gets a link that opens it with the answers already in; any other web form gets an answer sheet to copy, or *Copy for Claude in Chrome*, which fills the open form and leaves Submit to you. If nobody replies within the ask's follow-up days (5 by default), the daily cron drafts a follow-up for someone to check; it never sends one. Contacts (Email → Contacts) are saved as asks are made; what you write about each one, Claude reads. Without `ANTHROPIC_API_KEY` the live site can't draft, and `npm run dev` gives a stand-in draft (the request as typed) so the pages can be tried. Every email an ask sends is in the Email page's History beside the list sends.
+
+**Writing with Claude.** Compose has a *Write it with Claude* box too: say what the email is about and Claude writes it for the list you picked, with that list's `{{variables}}`, from Proto's facts and events; what's already in the composer is what it rewrites, and the toast can undo it. Whatever it can't fill in (a room, a time) is listed under the box instead of guessed. Every email Claude writes, asks and list emails alike, follows the human-writing rules in [`worker/lib/humanWriting.ts`](worker/lib/humanWriting.ts) (from Wikipedia's *Signs of AI writing*): no em dashes, no words like "crucial" or "vibrant", no "not just X, but Y", no "I hope this email finds you well", straight quotes. Claude is told the rules, and each draft is checked in code for the ones a program can see; a draft that breaks one goes back to Claude once with what it broke (`npm test` covers the check).
 
 ### Setting up Google sign-in
 
@@ -92,6 +96,11 @@ The flow is OpenID Connect's authorization code flow with PKCE, `state` and `non
 3. Create an API key with sending access and `npx wrangler secret put RESEND_API_KEY`. Leave it empty in `.dev.vars`.
 
 Sends go out in batches of 100 inside the request, which is fine for a few thousand recipients; a much bigger list would want a Queue.
+
+### Setting up Claude (for Asks)
+
+1. In the [Claude Console](https://platform.claude.com), make an API key for Proto (Settings → API keys). Every draft and follow-up is billed to that key's account; a draft is one request to `claude-opus-5-5` ($4 per million tokens in, $20 out), which should come to a few cents, more with long PDF forms. A spend limit on the workspace keeps it in check.
+2. `npx wrangler secret put ANTHROPIC_API_KEY`. Leave it empty in `.dev.vars` unless you want real drafts locally (they bill the same way).
 
 ## Content
 
@@ -140,8 +149,8 @@ shared/
   constants.ts           plain values (tracks, years, statuses) the public site can import without zod
 worker/
   index.ts               the Hono app: same-origin check on /api, admin session check on /api/admin
-  routes/                auth, admins, content, public forms, people (members, fund, role applications, stats), email
-  lib/                   sessions, validation, content mapping, Resend, the email template
+  routes/                auth, admins, content, public forms, people (members, fund, role applications, stats), email, asks
+  lib/                   sessions, validation, content mapping, Resend, the email template; asks: Claude, PDF and Google Form helpers
 migrations/              D1 schema and the sample content seed
 wrangler.jsonc           the Worker, its assets, D1, the form rate limiter, vars
 ```
@@ -216,7 +225,7 @@ It's one Cloudflare Worker: Workers Static Assets serve the built site, and only
 
 **Logs:** **Actions → Deploy →** the run. The migration step lists what's already applied and what it applies; the last step prints the deployed version (also in the run summary). Live Worker logs: `npx wrangler tail`, or **Workers & Pages → bu-proto → Logs** in Cloudflare.
 
-**Runtime secrets stay in Cloudflare.** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAILS`, `RESEND_API_KEY` and `TURNSTILE_SECRET_KEY` are set once with `npx wrangler secret put <NAME>` (see [Setting up Google sign-in](#setting-up-google-sign-in)); deploys keep them and CI never sees them. `EMAIL_FROM` is in `wrangler.jsonc`.
+**Runtime secrets stay in Cloudflare.** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ADMIN_EMAILS`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY` and `ANTHROPIC_API_KEY` are set once with `npx wrangler secret put <NAME>` (see [Setting up Google sign-in](#setting-up-google-sign-in)); deploys keep them and CI never sees them. `EMAIL_FROM` is in `wrangler.jsonc`.
 
 `0002_seed.sql` loads the sample content, all tagged *sample*; replace or delete it in the portal.
 

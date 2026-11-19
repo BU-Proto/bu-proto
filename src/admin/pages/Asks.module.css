@@ -1,0 +1,333 @@
+/* Asks: the list, a new ask, one ask (its draft, questions, forms and sent emails), contacts and facts. */
+
+/* A note above the page when a key is missing: quiet, not an error. */
+.setup {
+  display: grid;
+  gap: 4px;
+  padding: 14px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-sunk);
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.setup strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.setup p {
+  margin: 0;
+}
+
+.what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.whatLine {
+  overflow: hidden;
+  max-width: 46ch;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- One ask ------------------------------------------------------------------------------ */
+
+/* The draft on the left; its forms and history on the right. One column on narrower screens. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+@media (max-width: 1040px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+.stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* What the teammate asked for, in their words. */
+.request {
+  margin: 0;
+  padding: 12px 16px;
+  border-left: 2px solid var(--mint);
+  background: var(--surface-sunk);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+/* To / Cc / Reply-To above the draft, as an email client shows them. */
+.envelope {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.envelope > div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.envelope dt {
+  color: var(--ink-dim);
+}
+
+.envelope dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.body {
+  min-height: 340px !important;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.signature {
+  margin: -6px 0 0;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.spread {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+/* Claude's questions: each over its answer box. */
+.questions {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.questions li {
+  display: grid;
+  gap: 6px;
+}
+
+.question {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.remember input {
+  margin: 0;
+  accent-color: var(--mint);
+}
+
+/* ---- Forms -------------------------------------------------------------------------------- */
+
+.forms {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.forms > .form:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.formName {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* A form's answers: the question, then the value and where it came from. */
+.sheet {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.sheet > div {
+  display: grid;
+  gap: 2px;
+}
+
+.sheet dt {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+}
+
+.sheet dd {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+}
+
+.value {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.source {
+  color: var(--ink-dim);
+  font-size: 12px;
+}
+
+.missing {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 14px 10px 30px;
+  border-radius: var(--radius-control);
+  background: rgb(var(--amber-rgb) / 0.08);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.copy {
+  flex: none;
+}
+
+/* ---- Sent emails -------------------------------------------------------------------------- */
+
+.history {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history details {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.history summary {
+  display: grid;
+  gap: 2px;
+  cursor: pointer;
+  font-size: 13.5px;
+}
+
+.history pre {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+/* ---- New ask, contacts and facts ---------------------------------------------------------- */
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.formGrid > .wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pending {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pending li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  font-size: 13.5px;
+}
+
+.clip {
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 52ch;
+  color: var(--ink-soft);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}

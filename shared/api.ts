@@ -13,6 +13,7 @@
 import { z } from 'zod'
 import {
   APPLICATION_STATUSES,
+  ASK_STATUSES,
   BOARD_SEATS,
   EVENT_KINDS,
   FUND_AMOUNTS,
@@ -21,6 +22,7 @@ import {
   TRACKS,
   YEARS,
   type ApplicationStatus,
+  type AskStatus,
   type ContentResource,
   type FundStatus,
 } from './constants'
@@ -741,6 +743,30 @@ export type SendEmailInput = z.input<typeof sendEmailInput>
 export type TestEmailInput = z.input<typeof testEmailInput>
 
 /**
+ * POST /api/admin/email/draft → ListDraftResult: Claude writes (or rewrites) the composer's email
+ * for this audience, with its {{variables}}, in plain human writing. Nothing is sent or saved.
+ */
+export const listDraftInput = z.object({
+  audience: emailAudience,
+  /** What the email is about, in the teammate's words. */
+  brief: text(4000),
+  notes: optionalText(4000),
+  /** What's in the composer now, to rewrite. */
+  subject: optionalText(150),
+  body: optionalText(20000),
+})
+export type ListDraftInput = z.input<typeof listDraftInput>
+
+export interface ListDraftResult {
+  subject: string
+  body: string
+  /** What the teammate should fill in or double-check before sending. */
+  check: string[]
+  /** Set when the draft is the local stand-in, or still breaks a writing rule. */
+  notice?: string
+}
+
+/**
  * Placeholders the composer can insert into the subject or body; the Worker fills them in for
  * each recipient. A variable whose audience doesn't supply it (e.g. {{event}} in a members email)
  * renders empty, and the preview flags it. Anything else in braces is left as typed.
@@ -805,6 +831,226 @@ export interface EmailCampaign {
   status: 'sent' | 'partial' | 'failed' | 'logged'
   sentBy: string
   createdAt: string
+}
+
+// ---- Portal: asks -----------------------------------------------------------------------------
+// Emails to people we need something from. A teammate says what they need, Claude drafts the email
+// and fills the forms it carries, a teammate checks it and presses Send. Replies go to whoever
+// made the ask (Reply-To and Cc), so they mark it answered here.
+
+/** POST /api/admin/contacts, PATCH /api/admin/contacts/:id → { item: Contact } */
+export const contactInput = z.object({
+  name: text(120),
+  email: z.email('Enter an email'),
+  organization: optionalText(120),
+  /** What we know about them: what they handle, how they like to be asked. Claude reads it. */
+  notes: optionalText(2000),
+})
+export type ContactInput = z.input<typeof contactInput>
+
+/** GET /api/admin/contacts → { items: Contact[] } (by name) */
+export interface Contact {
+  id: number
+  name: string
+  email: string
+  organization: string
+  notes: string
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  /** How many asks went (or are going) to them. */
+  askCount: number
+}
+
+/** POST /api/admin/facts, PATCH /api/admin/facts/:id → { item: Fact } */
+export const factInput = z.object({
+  label: text(80),
+  value: text(2000),
+  /** Where it came from, so anyone can check it. */
+  source: optionalText(200),
+})
+export type FactInput = z.input<typeof factInput>
+
+/** GET /api/admin/facts → { items: Fact[] }: what Proto is, for Claude to write and fill forms from. */
+export interface Fact {
+  id: number
+  label: string
+  value: string
+  source: string
+  updatedBy: string
+  updatedAt: string
+}
+
+/** Who an ask goes to: a saved contact, or someone new (saved as a contact on the way). */
+export const askRecipient = z.union([z.object({ contactId: z.number().int().positive() }), contactInput])
+
+/** POST /api/admin/asks → 201 { item: AskDetail }. Forms are added next, then the draft is asked for. */
+export const newAskInput = z.object({
+  to: askRecipient,
+  /** What's needed, in the teammate's own words. */
+  request: text(4000),
+  /** Draft a follow-up when this many days pass with no reply (0 = never). */
+  followUpDays: z.number().int().min(0).max(60).default(5),
+})
+export type NewAskInput = z.input<typeof newAskInput>
+
+/**
+ * POST /api/admin/asks/:id/web-forms → 201 { item: AskDetail }: a form on the web. A public Google
+ * Form's questions are read from its link; anything else (Engage, a form behind BU sign-in) needs
+ * its questions pasted.
+ */
+export const webFormInput = z
+  .object({
+    url: z.union([z.literal(''), z.url('Must be a full URL')]),
+    name: optionalText(120),
+    questions: optionalText(10000),
+  })
+  .refine((value) => value.url || value.questions, { message: 'Add the form’s link or paste its questions', path: ['url'] })
+export type WebFormInput = z.input<typeof webFormInput>
+
+/** A question Claude needs answered. `remember`: the answer is a lasting fact about Proto, kept for next time. */
+export interface AskQuestion {
+  question: string
+  remember: boolean
+}
+
+/** What a teammate told Claude for an ask. */
+export interface AskAnswer {
+  question: string
+  answer: string
+  by: string
+  at: string
+}
+
+/**
+ * POST /api/admin/asks/:id/draft → { item: AskDetail, notice?: string }: Claude writes (or rewrites)
+ * the waiting email and fills the forms. Answers marked `remember` are kept as Proto facts.
+ */
+export const draftAskInput = z.object({
+  notes: optionalText(4000),
+  answers: z
+    .array(z.object({ question: text(500), answer: text(2000), remember: z.boolean() }))
+    .max(30)
+    .default([]),
+})
+export type DraftAskInput = z.input<typeof draftAskInput>
+
+/** PATCH /api/admin/asks/:id → { item: AskDetail }: a teammate's own changes. */
+export const askPatch = z
+  .object({
+    subject: optionalText(200),
+    body: optionalText(20000),
+    status: z.enum(ASK_STATUSES),
+    followUpDays: z.number().int().min(0).max(60),
+  })
+  .partial()
+export type AskPatch = z.input<typeof askPatch>
+
+/** POST /api/admin/asks/:id/send → { item: AskDetail, logged: boolean }: sends exactly this. */
+export const sendAskInput = z.object({ subject: text(200), body: text(20000) })
+export type SendAskInput = z.input<typeof sendAskInput>
+
+/** One answer on a form, with where it came from. `field` is the PDF box's name or the web form's question. */
+export interface FormAnswer {
+  field: string
+  value: string
+  source: string
+}
+const formAnswer = z.object({ field: text(300), value: optionalText(4000), source: optionalText(200) })
+
+/** PATCH /api/admin/asks/:id/forms/:formId → { item: AskDetail }. New answers re-fill a PDF. */
+export const formPatch = z.object({ attach: z.boolean(), answers: z.array(formAnswer).max(300) }).partial()
+export type FormPatch = z.input<typeof formPatch>
+
+/** A box on a PDF form, or a question on a Google Form. */
+export interface FormField {
+  /** The PDF box's own name, or a Google Form's `entry.<id>`. */
+  name: string
+  /** What the form calls it (a PDF box's tooltip, a question's title), when that says more than the name. */
+  label: string
+  type: 'text' | 'paragraph' | 'checkbox' | 'choice' | 'date' | 'time' | 'signature'
+  options?: string[]
+  /** Several options at once (checkboxes on a Google Form, a PDF list). */
+  multi?: boolean
+  /** PDF: the page (1-based) and where on it, in points from the bottom left. */
+  page?: number
+  rect?: [number, number, number, number]
+}
+
+export interface AskForm {
+  id: number
+  kind: 'pdf' | 'web'
+  name: string
+  url: string
+  questions: string
+  fields: FormField[]
+  answers: FormAnswer[]
+  missing: string[]
+  /** PDF: the filled copy goes out with the email. */
+  attach: boolean
+  blankSize: number
+  /** 0 until it's been filled. */
+  filledSize: number
+  /** A Google Form opened with Claude's answers already in, for a teammate to check and submit. */
+  prefillUrl: string | null
+}
+
+export interface AskMessage {
+  id: number
+  kind: 'ask' | 'follow-up'
+  subject: string
+  body: string
+  attachments: string[]
+  status: 'sent' | 'failed' | 'logged'
+  sentBy: string
+  createdAt: string
+}
+
+/** GET /api/admin/ask-messages → { items: AskMessageEntry[] } (newest first): every email an ask sent, for the Email page's history. */
+export interface AskMessageEntry extends AskMessage {
+  askId: number
+  toName: string
+  toEmail: string
+}
+
+/** GET /api/admin/asks → { items: Ask[], setup: AskSetup } (newest first) */
+export interface Ask {
+  id: number
+  contactId: number | null
+  toName: string
+  toEmail: string
+  toOrganization: string
+  request: string
+  notes: string
+  /** The email waiting to go; empty when nothing is waiting. */
+  subject: string
+  body: string
+  draftKind: 'ask' | 'follow-up'
+  questions: AskQuestion[]
+  answers: AskAnswer[]
+  status: AskStatus
+  followUpDays: number
+  /** yyyy-mm-dd, while waiting for a reply. */
+  followUpDue: string | null
+  ownerEmail: string
+  ownerName: string
+  draftedAt: string | null
+  sentAt: string | null
+  closedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** GET /api/admin/asks/:id → { item: AskDetail } */
+export interface AskDetail extends Ask {
+  forms: AskForm[]
+  messages: AskMessage[]
+}
+
+/** Whether the keys are in: without Claude's there are no drafts, without Resend's nothing leaves. */
+export interface AskSetup {
+  claude: boolean
+  resend: boolean
 }
 
 // ---- Errors -----------------------------------------------------------------------------------

@@ -36,5 +36,18 @@ export const UPLOAD_MAX_BYTES = 1.5 * 1024 * 1024
 export const UPLOAD_MAX_SIDE = 1600
 export const RESUME_TYPE = 'application/pdf'
 
+/**
+ * Where an ask stands: drafted and not sent yet, sent and waiting for a reply, answered, or
+ * closed (done, or dropped). Answered and closed are a teammate's call: replies go to their inbox.
+ */
+export const ASK_STATUSES = ['draft', 'waiting', 'answered', 'closed'] as const
+export type AskStatus = (typeof ASK_STATUSES)[number]
+
+/** The source of a form answer a teammate typed themselves. A redraft keeps these over Claude's. */
+export const TYPED_SOURCE = 'typed in the portal'
+
+/** A PDF form an ask carries: at most this many bytes (5 MB), the same as a résumé. */
+export const FORM_MAX_BYTES = 5 * 1024 * 1024
+
 /** The BroadcastChannel the admin sign-in pop-up reports its result on. */
 export const AUTH_CHANNEL = 'proto-auth'

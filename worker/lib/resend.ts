@@ -53,6 +53,75 @@ export async function sendEmails(env: Env, emails: OutgoingEmail[], key: string)
   return { sent, failed, logged: false }
 }
 
+export interface PersonalEmail {
+  /** A display name for the From line ("Andres from Proto"); the address stays EMAIL_FROM's. */
+  fromName?: string
+  to: string
+  cc: string[]
+  replyTo: string
+  subject: string
+  html: string
+  text: string
+  attachments: { filename: string; content: Uint8Array }[]
+}
+
+/** The address inside EMAIL_FROM ("Proto <hello@proto.boston>" → hello@proto.boston). */
+function fromAddress(from: string): string {
+  return /<([^>]+)>/.exec(from)?.[1] ?? from.trim()
+}
+
+/**
+ * One email to one person, as an ask sends it: Cc and Reply-To the teammate, files attached.
+ * Resend's batch endpoint takes no attachments, so this is its own request. The same
+ * Idempotency-Key guards its one retry. 'logged' without RESEND_API_KEY.
+ */
+export async function sendPersonalEmail(env: Env, email: PersonalEmail, key: string): Promise<'sent' | 'failed' | 'logged'> {
+  if (!env.RESEND_API_KEY) {
+    console.log(`[email] (not sent, no RESEND_API_KEY) to=${email.to} cc=${email.cc.join(',')} subject=${email.subject} files=${email.attachments.length}`)
+    return 'logged'
+  }
+  const address = fromAddress(String(env.EMAIL_FROM))
+  const name = email.fromName?.replace(/["<>\r\n]/g, '').trim()
+  const payload = {
+    from: name ? `"${name}" <${address}>` : String(env.EMAIL_FROM),
+    to: [email.to],
+    ...(email.cc.length && { cc: email.cc }),
+    reply_to: email.replyTo,
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+    ...(email.attachments.length && {
+      attachments: email.attachments.map((file) => ({ filename: file.filename, content: toBase64(file.content) })),
+    }),
+  }
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': key },
+        body: JSON.stringify(payload),
+      })
+      if (response.ok) return 'sent'
+      const detail = await response.text().catch(() => '')
+      console.error(`[email] Resend ${key} failed: ${response.status} ${detail.slice(0, 500)}`)
+      if (response.status !== 429 && response.status < 500) return 'failed'
+    } catch (error) {
+      console.error(`[email] Resend ${key} failed:`, error)
+    }
+    if (attempt === 1) await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
+  return 'failed'
+}
+
+/** Bytes as base64, a chunk at a time (spreading megabytes into one call overflows the stack). */
+export function toBase64(bytes: Uint8Array): string {
+  let binary = ''
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000))
+  }
+  return btoa(binary)
+}
+
 /** How many emails of one batch Resend accepted (0 when the request failed). */
 async function postBatch(apiKey: string, payload: unknown[], idempotencyKey: string): Promise<number> {
   for (let attempt = 1; attempt <= 2; attempt++) {

@@ -1,10 +1,22 @@
 import { useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useSearchParams } from 'react-router'
-import { EMAIL_VARIABLES, type AdminEvent, type AudienceCount, type EmailAudience, type EmailCampaign, type FundStatus, type Track } from '../../../shared/api'
+import { Link, useSearchParams } from 'react-router'
+import {
+  EMAIL_VARIABLES,
+  type AdminEvent,
+  type AskMessageEntry,
+  type AudienceCount,
+  type EmailAudience,
+  type EmailCampaign,
+  type FundStatus,
+  type ListDraftInput,
+  type ListDraftResult,
+  type Track,
+} from '../../../shared/api'
 import { FUND_STATUSES, TRACKS } from '../../../shared/constants'
 import ui from '../admin.module.css'
 import { SendIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../lib/toast'
 import { api } from '../../lib/api'
 import { daysUntil, formatDay } from '../../lib/dates'
 import { ConfirmDialog } from './people/ConfirmDialog'
@@ -223,7 +235,7 @@ export function Component() {
     <div className={`${shared.page} ${styles.root}`}>
       <PageHeader
         title="Email"
-        lede="Write once, send to a list. Every send is logged below."
+        lede="Write once and send to a list, or ask one person for something under Asks. Claude can write either one. Every email sent from here is logged below."
         actions={
           <>
             <span className={styles.sendHint}>
@@ -319,6 +331,17 @@ export function Component() {
             </p>
             {issues.audience && <p className={shared.fieldError}>{issues.audience}</p>}
           </fieldset>
+
+          <WriteWithClaude
+            audience={audience}
+            subject={subject}
+            body={body}
+            onDraft={(nextSubject, nextBody) => {
+              setSubject(nextSubject)
+              setBody(nextBody)
+              setIssues({})
+            }}
+          />
 
           <div className={`${shared.panel} ${styles.message}`}>
             <h2 className={shared.panelTitle}>Message</h2>
@@ -607,12 +630,131 @@ function SentResult({ campaign, audienceText }: { campaign: EmailCampaign; audie
   )
 }
 
+/**
+ * Say what the email is about and Claude writes it for this audience, with its {{variables}}, in
+ * plain human writing. It fills the composer and nothing else: the preview, the test and Send are
+ * as always. What's already in the composer is what it rewrites, and the toast can undo it.
+ */
+function WriteWithClaude({
+  audience,
+  subject,
+  body,
+  onDraft,
+}: {
+  audience: EmailAudience | null
+  subject: string
+  body: string
+  onDraft: (subject: string, body: string) => void
+}) {
+  const toast = useToast()
+  const [brief, setBrief] = useState('')
+  const [notes, setNotes] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [check, setCheck] = useState<string[]>([])
+  const [drafted, setDrafted] = useState(false)
+
+  const write = async () => {
+    if (busy) return
+    if (!audience) return setError('Choose who it goes to first: Claude writes for the list.')
+    if (!brief.trim()) return setError('Say what the email is about.')
+    setBusy(true)
+    setError('')
+    const before = { subject, body }
+    try {
+      const result = await api<ListDraftResult>('/admin/email/draft', {
+        body: { audience, brief, notes: drafted ? notes : '', subject, body } satisfies ListDraftInput,
+      })
+      onDraft(result.subject, result.body)
+      setCheck(result.check)
+      setDrafted(true)
+      setNotes('')
+      toast({
+        text: before.body.trim() ? 'Rewritten by Claude' : 'Draft ready',
+        detail: result.notice,
+        action: before.body.trim() || before.subject.trim() ? { label: 'Undo', onAction: () => onDraft(before.subject, before.body) } : undefined,
+      })
+    } catch (failure) {
+      setError(toApiError(failure).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className={`${shared.panel} ${styles.message}`}>
+      <h2 className={shared.panelTitle}>Write it with Claude</h2>
+      <label className={shared.field}>
+        <span className={shared.label}>What’s it about?</span>
+        <textarea
+          className={shared.input}
+          rows={3}
+          maxLength={4000}
+          value={brief}
+          placeholder="Hack night is back this Thursday at 7 in CDS 1750. Bring a laptop; first-timers welcome."
+          onChange={(event) => setBrief(event.target.value)}
+        />
+      </label>
+      {drafted && (
+        <label className={shared.field}>
+          <span className={shared.label}>Notes for Claude</span>
+          <input
+            className={shared.input}
+            maxLength={4000}
+            value={notes}
+            placeholder="Shorter. Mention the pizza."
+            onChange={(event) => setNotes(event.target.value)}
+          />
+        </label>
+      )}
+      <p className={shared.hint}>
+        It writes for the list you picked, with {'{{name}}'} and the other variables, from Proto’s facts and events. It never makes up a date or a
+        place: anything it can’t fill is listed below for you. Nothing is sent until you press Send.
+      </p>
+      <div>
+        <button type="button" className={ui.secondary} disabled={busy} onClick={write}>
+          {busy ? 'Claude is writing…' : drafted || body.trim() ? 'Rewrite it with Claude' : 'Write it with Claude'}
+        </button>
+      </div>
+      {error && (
+        <p className={shared.error} role="alert">
+          {error}
+        </p>
+      )}
+      {check.length > 0 && (
+        <div className={shared.hint}>
+          <p>Check before you send:</p>
+          <ul>
+            {check.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** One line of the history: a list send, or an email an ask sent to one person. */
+type HistoryEntry = { kind: 'campaign'; at: string; campaign: EmailCampaign } | { kind: 'ask'; at: string; message: AskMessageEntry }
+
+const ASK_STATUS: Record<AskMessageEntry['status'], { label: string; tone: EmailCampaign['status'] }> = {
+  sent: { label: 'Sent', tone: 'sent' },
+  failed: { label: 'Failed', tone: 'failed' },
+  logged: { label: 'Logged only', tone: 'logged' },
+}
+
 function History({ campaigns, titles }: { campaigns: ReturnType<typeof useApi<{ items: EmailCampaign[] }>>; titles: ReadonlyMap<number, string> }) {
-  const items = campaigns.data?.items ?? []
+  // Asks send one email at a time; they're listed here too, so every email from the portal is in one place.
+  const asks = useApi<{ items: AskMessageEntry[] }>('/admin/ask-messages')
+  const entries: HistoryEntry[] = [
+    ...(campaigns.data?.items ?? []).map((campaign) => ({ kind: 'campaign' as const, at: campaign.createdAt, campaign })),
+    ...(asks.data?.items ?? []).map((message) => ({ kind: 'ask' as const, at: message.createdAt, message })),
+  ].sort((a, b) => b.at.localeCompare(a.at))
   return (
     <section className={styles.history} aria-labelledby="history-title">
       <h2 id="history-title" className={shared.panelTitle}>
-        History {campaigns.data && <span className={shared.count}>{items.length}</span>}
+        History {campaigns.data && <span className={shared.count}>{entries.length}</span>}
       </h2>
       {campaigns.error && (
         <p className={shared.error} role="alert">
@@ -621,46 +763,87 @@ function History({ campaigns, titles }: { campaigns: ReturnType<typeof useApi<{ 
       )}
       {!campaigns.data && campaigns.loading ? (
         <p className={shared.dim}>Loading…</p>
-      ) : campaigns.data && items.length === 0 ? (
+      ) : campaigns.data && entries.length === 0 ? (
         <div className={`${shared.panel} ${shared.empty}`}>
           <h3>Nothing sent yet</h3>
-          <p>Each send shows here with who it went to and how it did.</p>
+          <p>Each send shows here with who it went to and how it did, list emails and asks alike.</p>
         </div>
       ) : (
         <ul className={styles.campaigns}>
-          {items.map((campaign) => (
-            <li key={campaign.id}>
-              <details className={styles.campaign}>
-                <summary className={styles.summary}>
-                  <span className={styles.summaryWhat}>
-                    <span className={styles.summarySubject}>{campaign.subject}</span>
-                    <span className={styles.summaryAudience}>{describeAudience(campaign.audience, titles)}</span>
-                  </span>
-                  <span className={styles.summaryResult}>
-                    <span className={shared.state} data-tone={campaign.status}>
-                      {CAMPAIGN_STATUS_LABELS[campaign.status]}
+          {entries.map((entry) =>
+            entry.kind === 'campaign' ? (
+              <li key={`campaign-${entry.campaign.id}`}>
+                <details className={styles.campaign}>
+                  <summary className={styles.summary}>
+                    <span className={styles.summaryWhat}>
+                      <span className={styles.summarySubject}>{entry.campaign.subject}</span>
+                      <span className={styles.summaryAudience}>{describeAudience(entry.campaign.audience, titles)}</span>
                     </span>
-                    <span className={`${shared.figure} ${shared.dim}`}>
-                      {campaign.sentCount} of {campaign.recipientCount} sent
-                      {campaign.failedCount > 0 && <span className={styles.failed}>, {campaign.failedCount} failed</span>}
+                    <span className={styles.summaryResult}>
+                      <span className={shared.state} data-tone={entry.campaign.status}>
+                        {CAMPAIGN_STATUS_LABELS[entry.campaign.status]}
+                      </span>
+                      <span className={`${shared.figure} ${shared.dim}`}>
+                        {entry.campaign.sentCount} of {entry.campaign.recipientCount} sent
+                        {entry.campaign.failedCount > 0 && <span className={styles.failed}>, {entry.campaign.failedCount} failed</span>}
+                      </span>
                     </span>
-                  </span>
-                  <span className={styles.summaryWho}>
-                    <time className={shared.figure} dateTime={stampToIso(campaign.createdAt)}>
-                      {formatStamp(campaign.createdAt)}
-                    </time>
-                    <span className={shared.dim}>by {campaign.sentBy}</span>
-                  </span>
-                </summary>
-                <div className={styles.campaignBody}>
-                  {campaign.status === 'logged' && (
-                    <p className={shared.hint}>Logged only: RESEND_API_KEY wasn’t set, so this never left.</p>
-                  )}
-                  <pre className={styles.bodyText}>{campaign.body}</pre>
-                </div>
-              </details>
-            </li>
-          ))}
+                    <span className={styles.summaryWho}>
+                      <time className={shared.figure} dateTime={stampToIso(entry.campaign.createdAt)}>
+                        {formatStamp(entry.campaign.createdAt)}
+                      </time>
+                      <span className={shared.dim}>by {entry.campaign.sentBy}</span>
+                    </span>
+                  </summary>
+                  <div className={styles.campaignBody}>
+                    {entry.campaign.status === 'logged' && (
+                      <p className={shared.hint}>Logged only: RESEND_API_KEY wasn’t set, so this never left.</p>
+                    )}
+                    <pre className={styles.bodyText}>{entry.campaign.body}</pre>
+                  </div>
+                </details>
+              </li>
+            ) : (
+              <li key={`ask-${entry.message.id}`}>
+                <details className={styles.campaign}>
+                  <summary className={styles.summary}>
+                    <span className={styles.summaryWhat}>
+                      <span className={styles.summarySubject}>{entry.message.subject}</span>
+                      <span className={styles.summaryAudience}>
+                        {entry.message.kind === 'follow-up' ? 'Follow-up to ' : 'Ask to '}
+                        {entry.message.toName}
+                      </span>
+                    </span>
+                    <span className={styles.summaryResult}>
+                      <span className={shared.state} data-tone={ASK_STATUS[entry.message.status].tone}>
+                        {ASK_STATUS[entry.message.status].label}
+                      </span>
+                      <span className={`${shared.figure} ${shared.dim}`}>1 person</span>
+                    </span>
+                    <span className={styles.summaryWho}>
+                      <time className={shared.figure} dateTime={stampToIso(entry.message.createdAt)}>
+                        {formatStamp(entry.message.createdAt)}
+                      </time>
+                      <span className={shared.dim}>by {entry.message.sentBy}</span>
+                    </span>
+                  </summary>
+                  <div className={styles.campaignBody}>
+                    {entry.message.status === 'logged' && (
+                      <p className={shared.hint}>Logged only: RESEND_API_KEY wasn’t set, so this never left.</p>
+                    )}
+                    <p className={shared.hint}>
+                      To {entry.message.toName} &lt;{entry.message.toEmail}&gt;
+                      {entry.message.attachments.length > 0 && `, with ${entry.message.attachments.join(', ')}`}.{' '}
+                      <Link to={`/admin/email/asks/${entry.message.askId}`} className={shared.link}>
+                        Open the ask
+                      </Link>
+                    </p>
+                    <pre className={styles.bodyText}>{entry.message.body}</pre>
+                  </div>
+                </details>
+              </li>
+            ),
+          )}
         </ul>
       )}
     </section>

@@ -99,8 +99,12 @@ export const NAV: readonly NavGroup[] = [
         icon: MailIcon,
         tabs: [
           { to: '/admin/email', label: 'Compose' },
+          { to: '/admin/email/asks', label: 'Asks', command: 'Asks' },
+          { to: '/admin/email/contacts', label: 'Contacts', command: 'Email contacts' },
+          { to: '/admin/email/facts', label: 'Proto facts', command: 'Proto facts' },
           { to: '/admin/email/automatic', label: 'Automatic', command: 'Automatic emails' },
         ],
+        create: { to: '/admin/email/asks/new', label: 'New ask' },
       },
     ],
   },

@@ -42,6 +42,12 @@ export const adminRoutes: RouteObject[] = [
           { path: 'fund', lazy: () => import('./pages/Fund') },
           { path: 'email', lazy: () => import('./pages/Email') },
           { path: 'email/automatic', lazy: () => import('./pages/AutomaticEmails') },
+          // Asks: emails to one person we need something from, which Claude drafts. Part of Email.
+          { path: 'email/asks', lazy: () => import('./pages/Asks') },
+          { path: 'email/asks/new', lazy: () => import('./pages/AskNew') },
+          { path: 'email/asks/:id', lazy: () => import('./pages/AskDetail') },
+          { path: 'email/contacts', lazy: () => import('./pages/Contacts') },
+          { path: 'email/facts', lazy: () => import('./pages/Facts') },
           // Before ':resource/:id', or "import", "interest" and "applications" would be read as a row's id.
           { path: 'hackathons/import', lazy: () => import('./pages/HackathonImport') },
           { path: 'wins/import', lazy: () => import('./pages/WinImport') },
