@@ -697,6 +697,8 @@ export interface Stats {
   /** Applications for a role nobody has looked at yet, and all of them. */
   applicationsNew: number
   applicationsTotal: number
+  /** Conversations with an email nobody has opened yet. */
+  inboxUnread: number
   admins: number
   /** Published wins that aren't samples: the number the site's record shows. */
   wins: number
@@ -950,7 +952,7 @@ export type AskPatch = z.input<typeof askPatch>
 export const sendAskInput = z.object({ subject: text(200), body: text(20000) })
 export type SendAskInput = z.input<typeof sendAskInput>
 
-/** One answer on a form, with where it came from. `field` is the PDF box's name or the web form's question. */
+/** One answer on a form, with where it came from. `field` is the Google Form's entry name or the question as pasted. */
 export interface FormAnswer {
   field: string
   value: string
@@ -958,59 +960,33 @@ export interface FormAnswer {
 }
 const formAnswer = z.object({ field: text(300), value: optionalText(4000), source: optionalText(200) })
 
-/** PATCH /api/admin/asks/:id/forms/:formId → { item: AskDetail }. New answers re-fill a PDF. */
-export const formPatch = z.object({ attach: z.boolean(), answers: z.array(formAnswer).max(300) }).partial()
+/** PATCH /api/admin/asks/:id/forms/:formId → { item: AskDetail }: a teammate's own answers. */
+export const formPatch = z.object({ answers: z.array(formAnswer).max(300) })
 export type FormPatch = z.input<typeof formPatch>
 
-/** A box on a PDF form, or a question on a Google Form. */
+/** A question on a Google Form, read from its page. */
 export interface FormField {
-  /** The PDF box's own name, or a Google Form's `entry.<id>`. */
+  /** The form's own name for it: `entry.<id>`. */
   name: string
-  /** What the form calls it (a PDF box's tooltip, a question's title), when that says more than the name. */
+  /** The question as the form asks it. */
   label: string
-  type: 'text' | 'paragraph' | 'checkbox' | 'choice' | 'date' | 'time' | 'signature'
+  type: 'text' | 'paragraph' | 'choice' | 'date' | 'time'
   options?: string[]
-  /** Several options at once (checkboxes on a Google Form, a PDF list). */
+  /** Several options at once (checkboxes). */
   multi?: boolean
-  /** PDF: the page (1-based) and where on it, in points from the bottom left. */
-  page?: number
-  rect?: [number, number, number, number]
 }
 
+/** A web form an ask carries: Google Forms, Engage, anything with a link. A teammate submits it. */
 export interface AskForm {
   id: number
-  kind: 'pdf' | 'web'
   name: string
   url: string
   questions: string
   fields: FormField[]
   answers: FormAnswer[]
   missing: string[]
-  /** PDF: the filled copy goes out with the email. */
-  attach: boolean
-  blankSize: number
-  /** 0 until it's been filled. */
-  filledSize: number
   /** A Google Form opened with Claude's answers already in, for a teammate to check and submit. */
   prefillUrl: string | null
-}
-
-export interface AskMessage {
-  id: number
-  kind: 'ask' | 'follow-up'
-  subject: string
-  body: string
-  attachments: string[]
-  status: 'sent' | 'failed' | 'logged'
-  sentBy: string
-  createdAt: string
-}
-
-/** GET /api/admin/ask-messages → { items: AskMessageEntry[] } (newest first): every email an ask sent, for the Email page's history. */
-export interface AskMessageEntry extends AskMessage {
-  askId: number
-  toName: string
-  toEmail: string
 }
 
 /** GET /api/admin/asks → { items: Ask[], setup: AskSetup } (newest first) */
@@ -1032,6 +1008,8 @@ export interface Ask {
   followUpDays: number
   /** yyyy-mm-dd, while waiting for a reply. */
   followUpDue: string | null
+  /** The latest reply, once one has come in, with Claude's reading of it (null until it has read it). */
+  lastReply: { at: string; threadId: number; reading: MailReading | null } | null
   ownerEmail: string
   ownerName: string
   draftedAt: string | null
@@ -1044,14 +1022,142 @@ export interface Ask {
 /** GET /api/admin/asks/:id → { item: AskDetail } */
 export interface AskDetail extends Ask {
   forms: AskForm[]
-  messages: AskMessage[]
+  /** Its conversation once the first email has gone, replies included. */
+  threadId: number | null
+  messages: MailMessage[]
 }
 
 /** Whether the keys are in: without Claude's there are no drafts, without Resend's nothing leaves. */
 export interface AskSetup {
   claude: boolean
   resend: boolean
+  /** RESEND_WEBHOOK_SECRET is set: mail to proto.boston arrives in the inbox, so replies come back here. */
+  inbox: boolean
 }
+
+// ---- Portal: inbox ----------------------------------------------------------------------------
+// Every conversation by email. Mail to any address at proto.boston arrives through Resend's webhook;
+// each thread has its own reply address, so answers to what we sent come back onto it. Claude reads
+// every email that arrives and drafts replies on request; a teammate always presses Send.
+
+export const MAIL_STATUSES = ['open', 'waiting', 'done'] as const
+export type MailStatus = (typeof MAIL_STATUSES)[number]
+
+/** Claude's reading of an email that arrived. */
+export interface MailReading {
+  /** What it says and asks, in a sentence or two. */
+  summary: string
+  /** A person writing to us, an automatic email (receipts, notices), or spam. */
+  category: 'person' | 'automated' | 'spam'
+  needsReply: boolean
+  /** For a reply to an ask: does it give us what we asked for? null when it isn't one. */
+  answersAsk: 'yes' | 'partly' | 'no' | null
+  /** What they still need from us, or what's still missing for the ask, one line each. */
+  stillNeeded: string[]
+}
+
+export interface MailAttachment {
+  /** A received file's id at Resend (download through the portal); empty for a sent one. */
+  id: string
+  filename: string
+  contentType: string
+}
+
+export interface MailMessage {
+  id: number
+  threadId: number
+  direction: 'in' | 'out'
+  kind: 'message' | 'ask' | 'follow-up' | 'reply'
+  fromName: string
+  fromEmail: string
+  to: string[]
+  cc: string[]
+  subject: string
+  text: string
+  /** A received email's HTML (render it only in a sandboxed iframe), or empty. */
+  html: string
+  attachments: MailAttachment[]
+  status: 'received' | 'sent' | 'failed' | 'logged'
+  sentBy: string
+  reading: MailReading | null
+  createdAt: string
+}
+
+/** GET /api/admin/inbox?status=… → { items: MailThread[], setup: AskSetup } (latest first) */
+export interface MailThread {
+  id: number
+  subject: string
+  status: MailStatus
+  unread: number
+  contactId: number | null
+  askId: number | null
+  /** Who it's with: the other side's name and address, from the latest email. */
+  withName: string
+  withEmail: string
+  messageCount: number
+  /** The latest email, for the list. */
+  latest: { direction: 'in' | 'out'; snippet: string; at: string; reading: MailReading | null } | null
+  /** A reply is being written. */
+  hasDraft: boolean
+  lastMessageAt: string
+}
+
+/** GET /api/admin/inbox/:id → { item: MailThreadDetail, setup: AskSetup } */
+export interface MailThreadDetail extends MailThread {
+  messages: MailMessage[]
+  draftBody: string
+  draftNotes: string
+  draftQuestions: string[]
+  draftedAt: string | null
+  /** Who a reply goes to by default: the latest sender, and the others on that email. */
+  replyTo: string[]
+  replyCc: string[]
+  ask: { id: number; request: string; status: AskStatus } | null
+}
+
+/** PATCH /api/admin/inbox/:id → { item }: status, or the draft as a teammate edited it. */
+export const threadPatch = z
+  .object({ status: z.enum(MAIL_STATUSES), draftBody: optionalText(20000), read: z.literal(true) })
+  .partial()
+export type ThreadPatch = z.input<typeof threadPatch>
+
+/** POST /api/admin/inbox/:id/draft → { item, notice? }: Claude writes the reply to the latest email. */
+export const replyDraftInput = z.object({
+  notes: optionalText(4000),
+  /** Answers to the questions Claude asked last time. */
+  answers: z
+    .array(z.object({ question: text(500), answer: text(2000), remember: z.boolean() }))
+    .max(20)
+    .default([]),
+})
+export type ReplyDraftInput = z.input<typeof replyDraftInput>
+
+const addressList = z.array(z.email('Not an email address')).max(20)
+
+/** POST /api/admin/inbox/:id/send → { item, logged }: sends the reply in the same conversation. */
+export const replySendInput = z.object({
+  to: addressList.min(1, 'Add who it goes to'),
+  cc: addressList.default([]),
+  subject: text(200),
+  body: text(20000),
+})
+export type ReplySendInput = z.input<typeof replySendInput>
+
+/** GET /api/admin/inbox/sent → { items: SentMail[] } (newest first): every one-to-one email sent, for the Email page's history. */
+export interface SentMail extends MailMessage {
+  askId: number | null
+  withName: string
+}
+
+/** POST /api/admin/inbox/dev-receive (local dev only): an email as if it had arrived, to try the inbox without Resend. */
+export const devReceiveInput = z.object({
+  fromName: optionalText(120),
+  fromEmail: z.email(),
+  to: z.email().optional(),
+  subject: text(200),
+  text: text(20000),
+})
+export type DevReceiveInput = z.input<typeof devReceiveInput>
 
 // ---- Errors -----------------------------------------------------------------------------------
 

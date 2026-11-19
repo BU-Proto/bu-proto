@@ -120,7 +120,8 @@ export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
  */
 export const sameOrigin: MiddlewareHandler<AppEnv> = async (c, next) => {
   // Mail clients' one-click unsubscribe (RFC 8058) POSTs here with no Origin; it only needs the token.
-  const exempt = c.req.path === '/api/unsubscribe'
+  // Resend's webhook comes from Resend's servers; its signature is checked instead (routes/inbox.ts).
+  const exempt = c.req.path === '/api/unsubscribe' || c.req.path === '/api/inbound/resend'
   if (!exempt && !['GET', 'HEAD', 'OPTIONS'].includes(c.req.method)) {
     const origin = c.req.header('Origin')
     if (origin !== new URL(c.req.url).origin) throw new ApiError(403, 'Cross-site request blocked.')

@@ -19,6 +19,10 @@ const isStatus = (value: string | null): value is AskStatus => (ASK_STATUSES as 
 function askState(ask: Ask): string {
   if (ask.status === 'draft') return ask.body ? 'Draft ready' : 'Not drafted'
   if (ask.status === 'waiting') {
+    if (ask.lastReply) {
+      const verdict = ask.lastReply.reading?.answersAsk
+      return verdict === 'yes' ? 'Replied: answers it' : verdict === 'partly' ? 'Replied: partly' : verdict === 'no' ? 'Replied: not yet' : 'Replied'
+    }
     if (ask.body) return 'Follow-up ready'
     return ask.followUpDue ? `Waiting · follow up ${formatIsoDay(ask.followUpDue)}` : 'Waiting'
   }
@@ -27,7 +31,7 @@ function askState(ask: Ask): string {
 
 export function AskState({ ask }: { ask: Ask }) {
   return (
-    <span className={ui.state} data-tone={TONES[ask.status]}>
+    <span className={ui.state} data-tone={ask.status === 'waiting' && ask.lastReply ? 'live' : TONES[ask.status]}>
       {askState(ask)}
     </span>
   )
@@ -35,7 +39,7 @@ export function AskState({ ask }: { ask: Ask }) {
 
 /** Shown when a key is missing: without Claude's there are no drafts, without Resend's nothing leaves. */
 export function SetupNote({ setup }: { setup: AskSetup | undefined }) {
-  if (!setup || (setup.claude && setup.resend)) return null
+  if (!setup || (setup.claude && setup.resend && setup.inbox)) return null
   return (
     <div className={styles.setup}>
       {!setup.claude && (
@@ -47,6 +51,12 @@ export function SetupNote({ setup }: { setup: AskSetup | undefined }) {
       {!setup.resend && (
         <p>
           <strong>Email isn’t set up here.</strong> Without <code>RESEND_API_KEY</code>, Send only logs the email; nothing leaves.
+        </p>
+      )}
+      {!setup.inbox && (
+        <p>
+          <strong>Receiving isn’t set up here.</strong> Until an owner connects Resend’s webhook (<code>RESEND_WEBHOOK_SECRET</code>, see the README),
+          replies go to the inbox of whoever sent the email, not here.
         </p>
       )}
     </div>
@@ -62,7 +72,7 @@ export function Component() {
   const all = data?.items ?? []
   const shown = status ? all.filter((ask) => ask.status === status) : all.filter((ask) => ask.status !== 'closed')
   // Something for a teammate to do: a draft to check, or a follow-up Claude wrote.
-  const ready = all.filter((ask) => ask.body && (ask.status === 'draft' || ask.status === 'waiting')).length
+  const ready = all.filter((ask) => (ask.body && ask.status === 'draft') || (ask.status === 'waiting' && (ask.body || ask.lastReply))).length
 
   return (
     <div className={shared.page}>
@@ -70,7 +80,7 @@ export function Component() {
         title="Email"
         tabTitle="Asks"
         count={ready ? `${ready} to check` : undefined}
-        lede="Emails to people we need something from: a room, a form, an answer. Say what you need; Claude writes the email and fills in any forms; you check it and press Send. Replies go to whoever made the ask."
+        lede="Emails to people we need something from: a room, a form, an answer. Say what you need; Claude writes the email and answers any web forms; you check it and press Send. Replies show up here and in the Inbox, with Claude’s take on whether they give us what we asked for."
         actions={
           <Link to="/admin/email/asks/new" className={ui.primary}>
             <PlusIcon /> New ask

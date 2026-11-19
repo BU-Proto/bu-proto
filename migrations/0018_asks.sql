@@ -55,68 +55,102 @@ CREATE TABLE asks (
   follow_up_days INTEGER NOT NULL DEFAULT 5,
   -- The day (yyyy-mm-dd) the next follow-up is due, while waiting.
   follow_up_due TEXT,
-  -- The teammate who asked: the email's Reply-To and Cc, so replies reach them.
+  -- The teammate who asked: on Cc, and told when a reply comes in.
   owner_email TEXT NOT NULL COLLATE NOCASE,
   owner_name TEXT NOT NULL DEFAULT '',
   drafted_at TEXT,
   sent_at TEXT,
   closed_at TEXT,
+  -- Its conversation, once the first email has gone.
+  thread_id INTEGER REFERENCES mail_threads (id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX asks_status ON asks (status, follow_up_due);
 
--- Every email that went out for an ask: the first, then each follow-up.
-CREATE TABLE ask_messages (
+-- A conversation: every email to or from one person (or a group) about one thing.
+CREATE TABLE mail_threads (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ask_id INTEGER NOT NULL REFERENCES asks (id) ON DELETE CASCADE,
-  kind TEXT NOT NULL CHECK (kind IN ('ask', 'follow-up')),
   subject TEXT NOT NULL,
-  body TEXT NOT NULL,
-  -- JSON [string]: the names of the files it carried.
+  -- Replies come back to reply-<id>-<token>@proto.boston; the random token keeps the address unguessable.
+  token TEXT NOT NULL,
+  contact_id INTEGER REFERENCES contacts (id) ON DELETE SET NULL,
+  ask_id INTEGER REFERENCES asks (id) ON DELETE SET NULL,
+  -- open: it's on us (new mail, or a reply to write) · waiting: on them · done.
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'waiting', 'done')),
+  -- Emails in it nobody has opened yet.
+  unread INTEGER NOT NULL DEFAULT 0,
+  -- The reply being written, so it survives a reload and any teammate can pick it up.
+  draft_body TEXT NOT NULL DEFAULT '',
+  draft_notes TEXT NOT NULL DEFAULT '',
+  -- JSON [string]: what Claude needs to know to write the reply.
+  draft_questions TEXT NOT NULL DEFAULT '[]',
+  drafted_at TEXT,
+  last_message_at TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX mail_threads_recent ON mail_threads (status, last_message_at);
+
+-- Every email in a conversation: received (in) or sent from the portal (out).
+CREATE TABLE mail_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  thread_id INTEGER NOT NULL REFERENCES mail_threads (id) ON DELETE CASCADE,
+  direction TEXT NOT NULL CHECK (direction IN ('in', 'out')),
+  -- out: ask, follow-up or reply · in: message.
+  kind TEXT NOT NULL CHECK (kind IN ('message', 'ask', 'follow-up', 'reply')),
+  -- Resend's id for it: a received email's, so a webhook sent twice is stored once.
+  resend_id TEXT UNIQUE,
+  -- The email's own Message-ID, In-Reply-To and References, for threading.
+  message_id TEXT,
+  in_reply_to TEXT,
+  refs TEXT NOT NULL DEFAULT '',
+  from_name TEXT NOT NULL DEFAULT '',
+  from_email TEXT NOT NULL COLLATE NOCASE,
+  -- JSON [string]
+  to_addrs TEXT NOT NULL DEFAULT '[]',
+  cc_addrs TEXT NOT NULL DEFAULT '[]',
+  subject TEXT NOT NULL DEFAULT '',
+  text TEXT NOT NULL DEFAULT '',
+  -- A received email's HTML, shown only in a sandboxed frame.
+  html TEXT NOT NULL DEFAULT '',
+  -- JSON [{id, filename, contentType}]: a received email's files (fetched from Resend when opened),
+  -- or the names of the files a sent one carried.
   attachments TEXT NOT NULL DEFAULT '[]',
-  -- 'logged' = no RESEND_API_KEY, so nothing actually left (local dev).
-  status TEXT NOT NULL CHECK (status IN ('sent', 'failed', 'logged')),
-  sent_by TEXT NOT NULL,
+  -- in: received · out: sent, failed, or logged (no RESEND_API_KEY, so nothing left).
+  status TEXT NOT NULL CHECK (status IN ('received', 'sent', 'failed', 'logged')),
+  -- out: the teammate who pressed Send.
+  sent_by TEXT NOT NULL DEFAULT '',
+  -- in: SPF / DKIM / DMARC as Resend saw them, JSON or null.
+  authentication TEXT,
+  -- in: Claude's reading of it. JSON {summary, category, needsReply, answersAsk, stillNeeded}, or null.
+  reading TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX ask_messages_ask ON ask_messages (ask_id);
+CREATE INDEX mail_messages_thread ON mail_messages (thread_id, created_at);
+CREATE INDEX mail_messages_message_id ON mail_messages (message_id);
 
--- Forms an ask carries. A PDF is filled in its own boxes and can ride on the email; a web form
--- (Google Forms, Engage, anything with a link) gets an answer sheet, and a Google Form a
--- prefilled link, for a teammate to check and submit.
+-- Web forms an ask carries (Google Forms, Engage, anything with a link): Claude answers them, a
+-- public Google Form gets a prefilled link, anything else an answer sheet, for a teammate to check
+-- and submit.
 CREATE TABLE ask_forms (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ask_id INTEGER NOT NULL REFERENCES asks (id) ON DELETE CASCADE,
-  kind TEXT NOT NULL CHECK (kind IN ('pdf', 'web')),
   name TEXT NOT NULL,
-  -- web: the form's address.
+  -- The form's address.
   url TEXT NOT NULL DEFAULT '',
-  -- web: the questions, pasted by a teammate or read from a public Google Form.
+  -- The questions, pasted by a teammate or read from a public Google Form.
   questions TEXT NOT NULL DEFAULT '',
-  -- JSON: a PDF's own boxes, or a Google Form's questions, as read when it was added.
+  -- JSON: a Google Form's questions, as read when it was added.
   fields TEXT NOT NULL DEFAULT '[]',
   -- JSON [{field, value, source}]: Claude's answers, each with where it came from.
   answers TEXT NOT NULL DEFAULT '[]',
   -- JSON [string]: what it left empty and why.
   missing TEXT NOT NULL DEFAULT '[]',
-  -- pdf: send the filled copy with the email.
-  attach INTEGER NOT NULL DEFAULT 1,
-  blank_size INTEGER NOT NULL DEFAULT 0,
-  filled_size INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX ask_forms_ask ON ask_forms (ask_id);
-
--- A PDF form's bytes, blank and filled, cut into parts: D1 holds at most 2 MB in one value.
-CREATE TABLE ask_form_parts (
-  form_id INTEGER NOT NULL REFERENCES ask_forms (id) ON DELETE CASCADE,
-  copy TEXT NOT NULL CHECK (copy IN ('blank', 'filled')),
-  part INTEGER NOT NULL,
-  data BLOB NOT NULL,
-  PRIMARY KEY (form_id, copy, part)
-);
 
 -- What the site already says about Proto. Real (from the site's copy), so Claude can use them.
 INSERT INTO facts (label, value, source, updated_by) VALUES

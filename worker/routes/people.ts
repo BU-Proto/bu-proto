@@ -370,6 +370,7 @@ app.get('/api/admin/stats', async (c) => {
            (SELECT COUNT(*) FROM fund_interest) AS fundTotal,
            (SELECT COUNT(*) FROM role_applications WHERE status = 'new') AS applicationsNew,
            (SELECT COUNT(*) FROM role_applications) AS applicationsTotal,
+           (SELECT COUNT(*) FROM mail_threads WHERE unread > 0 AND status != 'done') AS inboxUnread,
            (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 0) AS wins,
            (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 1) AS sampleWins`,
       )
@@ -389,6 +390,7 @@ app.get('/api/admin/stats', async (c) => {
     fundTotal: row.fundTotal,
     applicationsNew: row.applicationsNew,
     applicationsTotal: row.applicationsTotal,
+    inboxUnread: row.inboxUnread ?? 0,
     admins: emails.size,
     wins: row.wins,
     sampleWins: row.sampleWins,

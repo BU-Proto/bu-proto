@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import type { AskDetail, AskSetup, Contact, NewAskInput, WebFormInput } from '../../../shared/api'
-import { FORM_MAX_BYTES } from '../../../shared/constants'
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
 import { Field } from '../components/Field'
@@ -28,7 +27,6 @@ export function Component() {
   const [person, setPerson] = useState({ name: '', email: '', organization: '', notes: '' })
   const [request, setRequest] = useState('')
   const [followUpDays, setFollowUpDays] = useState(5)
-  const [pdfs, setPdfs] = useState<File[]>([])
   const [webForms, setWebForms] = useState<WebFormInput[]>([])
   const [web, setWeb] = useState<{ url: string; questions: string }>({ url: '', questions: '' })
   const [issues, setIssues] = useState<Record<string, string>>({})
@@ -38,17 +36,6 @@ export function Component() {
   const list = contacts?.items ?? []
   const chosen = contactId && contactId !== NEW ? list.find((contact) => String(contact.id) === contactId) : undefined
   const isNew = contactId === NEW || (contacts !== undefined && list.length === 0)
-
-  const addPdfs = (files: FileList | null) => {
-    const picked = [...(files ?? [])]
-    const tooBig = picked.find((file) => file.size > FORM_MAX_BYTES)
-    if (tooBig) {
-      setIssues((prev) => ({ ...prev, file: `${tooBig.name} is over ${FORM_MAX_BYTES / 1024 / 1024} MB.` }))
-      return
-    }
-    setIssues((prev) => ({ ...prev, file: '' }))
-    setPdfs((prev) => [...prev, ...picked.filter((file) => file.type === 'application/pdf' || /\.pdf$/i.test(file.name))])
-  }
 
   const addWebForm = () => {
     if (!web.url.trim() && !web.questions.trim()) {
@@ -88,12 +75,6 @@ export function Component() {
     }
     // From here the ask exists: whatever fails next is said on its own page, where it can be fixed.
     const problems: string[] = []
-    for (const file of pdfs) {
-      setProgress(`Reading ${file.name}…`)
-      const body = new FormData()
-      body.append('file', file)
-      await api(`/admin/asks/${ask.id}/forms`, { body }).catch((failure: unknown) => problems.push(`${file.name}: ${toApiError(failure).message}`))
-    }
     for (const form of webForms) {
       setProgress('Reading the web form…')
       await api(`/admin/asks/${ask.id}/web-forms`, { body: form }).catch((failure: unknown) =>
@@ -114,7 +95,7 @@ export function Component() {
 
   return (
     <div className={`${shared.page} ${ui.narrow}`}>
-      <PageHeader title="New ask" back={{ to: '/admin/email/asks', label: 'Asks' }} lede="Say who it’s to and what we need. Claude writes the email and fills in any forms; nothing is sent until you press Send." />
+      <PageHeader title="New ask" back={{ to: '/admin/email/asks', label: 'Asks' }} lede="Say who it’s to and what we need. Claude writes the email and answers any web forms; nothing is sent until you press Send." />
       <SetupNote setup={asks?.setup} />
 
       <form className={shared.panel} onSubmit={submit} noValidate>
@@ -179,18 +160,10 @@ export function Component() {
           <div className={styles.stack}>
             <div className={styles.spread}>
               <span className={ui.label}>Forms</span>
-              <span className={ui.hint}>A PDF to fill and attach, or a web form (Google Forms, Engage) to answer</span>
+              <span className={ui.hint}>A web form (Google Forms, Engage) for Claude to answer</span>
             </div>
-            {(pdfs.length > 0 || webForms.length > 0) && (
+            {webForms.length > 0 && (
               <ul className={styles.pending}>
-                {pdfs.map((file, index) => (
-                  <li key={`pdf-${file.name}-${index}`}>
-                    <span>{file.name}</span>
-                    <button type="button" className={ui.dangerGhost} aria-label={`Remove ${file.name}`} onClick={() => setPdfs((prev) => prev.filter((_, at) => at !== index))}>
-                      <TrashIcon />
-                    </button>
-                  </li>
-                ))}
                 {webForms.map((form, index) => (
                   <li key={`web-${index}`}>
                     <span className={styles.clip}>{form.url || form.questions}</span>
@@ -201,21 +174,6 @@ export function Component() {
                 ))}
               </ul>
             )}
-            <Field label="Add a PDF form" error={issues.file}>
-              {(props) => (
-                <input
-                  {...props}
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  multiple
-                  className={ui.input}
-                  onChange={(event) => {
-                    addPdfs(event.target.files)
-                    event.target.value = ''
-                  }}
-                />
-              )}
-            </Field>
             <div className={styles.formGrid}>
               <Field label="Add a web form: its link" hint="A public Google Form’s questions are read from the link.">
                 {(props) => <input {...props} type="url" className={ui.input} placeholder="https://" value={web.url} onChange={(event) => setWeb({ ...web, url: event.target.value })} />}

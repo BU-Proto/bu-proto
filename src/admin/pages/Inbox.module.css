@@ -1,0 +1,313 @@
+/* The inbox: a list of conversations, and one conversation with its reply box. */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+}
+
+.search {
+  flex: 0 1 280px;
+}
+
+/* ---- The list ------------------------------------------------------------------------------ */
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 10px minmax(120px, 200px) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
+}
+
+.list > li:last-child .row {
+  border-bottom: 0;
+}
+
+.row:hover,
+.row[data-selected='true'] {
+  background: var(--hover);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+}
+
+.row[data-unread='true'] .dot {
+  background: var(--mint);
+}
+
+.who {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row[data-unread='true'] .who,
+.row[data-unread='true'] .subject {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.what {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.subject {
+  overflow: hidden;
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.snippet {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
+.chip {
+  padding: 1px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.chip[data-tone='good'] {
+  border-color: rgb(var(--mint-rgb) / 0.45);
+  color: var(--mint);
+}
+
+.chip[data-tone='warn'] {
+  border-color: rgb(var(--amber-rgb) / 0.5);
+  color: var(--amber);
+}
+
+.chip[data-tone='quiet'] {
+  color: var(--ink-dim);
+}
+
+.when {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+  }
+
+  .what {
+    grid-column: 2 / -1;
+  }
+}
+
+.keys {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 12px;
+}
+
+/* ---- One conversation ---------------------------------------------------------------------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  max-width: 860px;
+}
+
+.message {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.message[data-direction='out'] {
+  border-color: var(--line);
+  background: var(--surface-sunk);
+}
+
+.messageHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+}
+
+.from {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.fromEmail {
+  margin-left: 6px;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+
+.addressees {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.text {
+  margin: 0;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.quoted {
+  color: var(--ink-dim);
+}
+
+.original {
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: #fff;
+}
+
+/* Claude's reading of an email that arrived. */
+.reading {
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px;
+  border-left: 2px solid var(--sky);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  background: rgb(var(--sky-rgb) / 0.07);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reading p {
+  margin: 0;
+}
+
+.reading ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink-soft);
+}
+
+.files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+/* The ask a conversation started from. */
+.ask {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface-sunk);
+  font-size: 13.5px;
+}
+
+.ask p {
+  margin: 0;
+}
+
+/* The reply box. */
+.reply {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.replyHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.addressRow {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.addressRow label {
+  color: var(--ink-dim);
+}
+
+.replyBody {
+  min-height: 220px !important;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.row2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}

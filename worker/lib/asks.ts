@@ -1,11 +1,11 @@
-import { TYPED_SOURCE, type Ask, type AskAnswer, type AskDetail, type AskForm, type AskMessage, type AskQuestion, type FormAnswer, type FormField } from '../../shared/api'
+import { TYPED_SOURCE, type Ask, type AskAnswer, type AskDetail, type AskForm, type AskQuestion, type FormAnswer, type FormField, type MailReading } from '../../shared/api'
 import { standInDraft, writeDraft, type DraftContext } from './claude'
 import { bostonToday } from './dates'
 import { prefillUrl } from './googleForm'
 import { ApiError } from './http'
-import { fillPdf } from './pdfForm'
+import { threadMessages } from './inbox'
 
-// Asks: reading and writing them, their forms' PDFs, and Claude's drafts. The routes in
+// Asks: reading and writing them, their web forms' answers, and Claude's drafts. The routes in
 // routes/asks.ts and the daily follow-up check (the Cron Trigger) both come through here.
 
 export interface AskRow {
@@ -29,38 +29,34 @@ export interface AskRow {
   drafted_at: string | null
   sent_at: string | null
   closed_at: string | null
+  thread_id: number | null
   created_at: string
   updated_at: string
+  /** From ASK_SELECT: the latest reply's time and Claude's reading of it. */
+  reply_at?: string | null
+  reply_reading?: string | null
 }
+
+/** Every ask column, plus its latest reply (when, and Claude's reading) for the list and the page. */
+export const ASK_SELECT = `SELECT a.*,
+  (SELECT m.created_at FROM mail_messages m WHERE m.thread_id = a.thread_id AND m.direction = 'in' ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS reply_at,
+  (SELECT m.reading FROM mail_messages m WHERE m.thread_id = a.thread_id AND m.direction = 'in' ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS reply_reading
+  FROM asks a`
 
 interface FormRow {
   id: number
   ask_id: number
-  kind: AskForm['kind']
   name: string
   url: string
   questions: string
   fields: string
   answers: string
   missing: string
-  attach: number
-  blank_size: number
-  filled_size: number
-}
-
-interface MessageRow {
-  id: number
-  kind: AskMessage['kind']
-  subject: string
-  body: string
-  attachments: string
-  status: AskMessage['status']
-  sent_by: string
-  created_at: string
 }
 
 /** A JSON column, or `fallback` when it's somehow not JSON (never worth a 500). */
-function json<T>(value: string, fallback: T): T {
+function json<T>(value: string | null, fallback: T): T {
+  if (value === null) return fallback
   try {
     return JSON.parse(value) as T
   } catch {
@@ -90,6 +86,7 @@ export function toAsk(row: AskRow): Ask {
     draftedAt: row.drafted_at,
     sentAt: row.sent_at,
     closedAt: row.closed_at,
+    lastReply: row.reply_at && row.thread_id ? { at: row.reply_at, threadId: row.thread_id, reading: json<MailReading | null>(row.reply_reading ?? null, null) } : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -100,17 +97,13 @@ function toForm(row: FormRow): AskForm {
   const answers = json<FormAnswer[]>(row.answers, [])
   return {
     id: row.id,
-    kind: row.kind,
     name: row.name,
     url: row.url,
     questions: row.questions,
     fields,
     answers,
     missing: json<string[]>(row.missing, []),
-    attach: row.attach === 1,
-    blankSize: row.blank_size,
-    filledSize: row.filled_size,
-    prefillUrl: row.kind === 'web' && fields.length ? prefillUrl(row.url, fields, answers) : null,
+    prefillUrl: fields.length ? prefillUrl(row.url, fields, answers) : null,
   }
 }
 
@@ -121,95 +114,28 @@ export async function loadAskRow(db: D1Database, id: number): Promise<AskRow> {
 }
 
 export async function loadAsk(db: D1Database, id: number): Promise<AskDetail> {
-  const [ask, forms, messages] = await db.batch([
-    db.prepare('SELECT * FROM asks WHERE id = ?').bind(id),
+  const [ask, forms] = await db.batch([
+    db.prepare(`${ASK_SELECT} WHERE a.id = ?`).bind(id),
     db.prepare('SELECT * FROM ask_forms WHERE ask_id = ? ORDER BY id').bind(id),
-    db.prepare('SELECT * FROM ask_messages WHERE ask_id = ? ORDER BY id').bind(id),
   ])
   const row = ask.results[0] as AskRow | undefined
   if (!row) throw new ApiError(404, 'That ask no longer exists.')
   return {
     ...toAsk(row),
     forms: (forms.results as FormRow[]).map(toForm),
-    messages: (messages.results as MessageRow[]).map((message) => ({
-      id: message.id,
-      kind: message.kind,
-      subject: message.subject,
-      body: message.body,
-      attachments: json<string[]>(message.attachments, []),
-      status: message.status,
-      sentBy: message.sent_by,
-      createdAt: message.created_at,
-    })),
+    threadId: row.thread_id,
+    messages: row.thread_id ? await threadMessages(db, row.thread_id) : [],
   }
 }
 
-// ---- A form's PDF, in parts -----------------------------------------------------------------
+// ---- A form's answers ------------------------------------------------------------------------
 
-/** D1 holds at most 2 MB in one value; a form may run to 5 MB. */
-const PART_BYTES = 1024 * 1024
-
-export async function savePdf(db: D1Database, formId: number, copy: 'blank' | 'filled', bytes: Uint8Array): Promise<void> {
-  const parts: D1PreparedStatement[] = []
-  for (let offset = 0, part = 0; offset < bytes.byteLength; offset += PART_BYTES, part += 1) {
-    parts.push(
-      db.prepare('INSERT INTO ask_form_parts (form_id, copy, part, data) VALUES (?, ?, ?, ?)').bind(formId, copy, part, bytes.slice(offset, offset + PART_BYTES)),
-    )
-  }
-  const size = copy === 'blank' ? 'blank_size' : 'filled_size'
-  await db.batch([
-    db.prepare('DELETE FROM ask_form_parts WHERE form_id = ? AND copy = ?').bind(formId, copy),
-    ...parts,
-    db.prepare(`UPDATE ask_forms SET ${size} = ?, updated_at = datetime('now') WHERE id = ?`).bind(bytes.byteLength, formId),
-  ])
-}
-
-export async function readPdf(db: D1Database, formId: number, copy: 'blank' | 'filled'): Promise<Uint8Array<ArrayBuffer> | null> {
-  const { results } = await db
-    .prepare('SELECT data FROM ask_form_parts WHERE form_id = ? AND copy = ? ORDER BY part')
-    .bind(formId, copy)
-    .all<{ data: ArrayBuffer | number[] }>()
-  if (results.length === 0) return null
-  // D1 hands a BLOB back as an array of bytes; the local one as a buffer.
-  const chunks = results.map(({ data }) => (data instanceof ArrayBuffer ? new Uint8Array(data) : Uint8Array.from(data)))
-  const bytes = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.byteLength, 0))
-  let offset = 0
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset)
-    offset += chunk.byteLength
-  }
-  return bytes
-}
-
-/** Starts each `missing` line the PDF itself refused, so the next fill can replace them. */
-const REFUSED = 'Couldn’t fill: '
-
-/**
- * Store a PDF form's answers and fill its boxes. Returns the answers kept and what's missing,
- * with anything the PDF refused added to `missing`, so nothing is dropped silently.
- */
+/** Store a web form's answers (the ones with a value) and what's still missing. */
 export async function fillForm(db: D1Database, form: AskForm, answers: FormAnswer[], missing: string[]): Promise<void> {
-  let kept = answers.filter((answer) => answer.value.trim() !== '')
-  // What the last fill refused is said again (or not) by this one.
-  let gaps = [...new Set(missing.filter((line) => !line.startsWith(REFUSED)))]
-  if (form.kind === 'pdf' && form.fields.length > 0) {
-    // A signature is never kept, let alone filled; it's said in `missing` instead.
-    const signatures = form.fields.filter((field) => field.type === 'signature')
-    for (const field of signatures) {
-      if (kept.some((answer) => answer.field === field.name)) gaps.push(`${field.label || field.name}: a signature is left for a person`)
-    }
-    const known = new Set(form.fields.filter((field) => field.type !== 'signature').map((field) => field.name))
-    kept = kept.filter((answer) => known.has(answer.field))
-    const blank = await readPdf(db, form.id, 'blank')
-    if (blank) {
-      const filled = await fillPdf(blank, kept)
-      gaps = [...gaps, ...filled.problems.map((problem) => `${REFUSED}${problem}`)]
-      await savePdf(db, form.id, 'filled', filled.bytes)
-    }
-  }
+  const kept = answers.filter((answer) => answer.value.trim() !== '')
   await db
     .prepare(`UPDATE ask_forms SET answers = ?, missing = ?, updated_at = datetime('now') WHERE id = ?`)
-    .bind(JSON.stringify(kept), JSON.stringify([...new Set(gaps)]), form.id)
+    .bind(JSON.stringify(kept), JSON.stringify([...new Set(missing)]), form.id)
     .run()
 }
 
@@ -238,7 +164,7 @@ export async function protoContext(
 }
 
 /** Keep an answer about Proto itself as a fact, so the next form doesn't ask again. */
-function rememberStatement(db: D1Database, question: string, answer: string, source: string, by: string): D1PreparedStatement {
+export function rememberStatement(db: D1Database, question: string, answer: string, source: string, by: string): D1PreparedStatement {
   // "Who is Proto's faculty advisor?" → "Proto's faculty advisor"
   const bare = question
     .replace(/\?\s*$/, '')
@@ -294,20 +220,13 @@ export async function draftAsk(
     db.prepare('SELECT notes FROM contacts WHERE id = ?').bind(ask.contactId ?? 0).first<{ notes: string }>(),
   ])
 
-  const forms: DraftContext['forms'] = []
-  for (const form of ask.forms) {
-    forms.push({
-      id: form.id,
-      kind: form.kind,
-      name: form.name,
-      url: form.url,
-      questions: form.questions,
-      fields: form.fields,
-      attach: form.attach,
-      // A follow-up only names the forms: they were filled for the first email and stay as they are.
-      pdf: form.kind === 'pdf' && kind === 'ask' ? await readPdf(db, form.id, 'blank') : null,
-    })
-  }
+  const forms: DraftContext['forms'] = ask.forms.map((form) => ({
+    id: form.id,
+    name: form.name,
+    url: form.url,
+    questions: form.questions,
+    fields: form.fields,
+  }))
 
   const waiting = ask.body.trim() !== '' && ask.draftKind === kind
   const context: DraftContext = {
@@ -321,7 +240,14 @@ export async function draftAsk(
     previous: waiting ? { subject: ask.subject, body: ask.body } : null,
     sent: ask.messages
       .filter((message) => message.status !== 'failed')
-      .map((message) => ({ kind: message.kind, subject: message.subject, body: message.body, date: message.createdAt.slice(0, 10) })),
+      .map((message) => ({
+        direction: message.direction,
+        kind: message.kind,
+        from: message.fromName || message.fromEmail,
+        subject: message.subject,
+        body: message.text.slice(0, 6000),
+        date: message.createdAt.slice(0, 10),
+      })),
     facts,
     events,
     board,

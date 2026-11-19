@@ -8,6 +8,9 @@ GOOGLE_CLIENT_SECRET=
 ADMIN_EMAILS=
 # Leave empty to log emails to the dev server console instead of sending them.
 RESEND_API_KEY=
+# The signing secret of Resend's email.received webhook (whsec_...). Set, the inbox takes mail sent to
+# proto.boston and replies come back to it; empty, replies go to the teammate's own inbox.
+RESEND_WEBHOOK_SECRET=
 # Claude API key for Asks (drafting emails, filling forms). Leave empty locally to get a stand-in
 # draft (your request as typed); every draft with a key here is billed to that key's account.
 ANTHROPIC_API_KEY=

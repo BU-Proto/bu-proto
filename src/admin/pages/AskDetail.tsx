@@ -19,9 +19,6 @@ import styles from './Asks.module.css'
 type Busy = 'draft' | 'save' | 'send' | 'status' | 'delete' | 'form' | null
 type Run = <T extends { item: AskDetail }>(kind: Busy, request: () => Promise<T>, done?: (result: T) => void) => Promise<void>
 
-/** "184 KB", "1.2 MB". */
-const fileSize = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`)
-
 async function copy(text: string, toast: ReturnType<typeof useToast>, what: string) {
   try {
     await navigator.clipboard.writeText(text)
@@ -177,31 +174,7 @@ export function Component() {
             </section>
           )}
 
-          {ask.messages.length > 0 && (
-            <section className={shared.panel} aria-labelledby="sent-title">
-              <h2 id="sent-title" className={ui.panelTitle} style={{ marginBottom: 12 }}>
-                Sent
-              </h2>
-              <ul className={styles.history}>
-                {ask.messages.map((message) => (
-                  <li key={message.id}>
-                    <details>
-                      <summary>
-                        <span>{message.subject}</span>
-                        <span className={ui.hint}>
-                          {message.kind === 'follow-up' ? 'Follow-up, ' : ''}
-                          {formatStamp(message.createdAt)} by {message.sentBy}
-                          {message.status === 'logged' ? ' · logged, not sent' : message.status === 'failed' ? ' · failed' : ''}
-                          {message.attachments.length ? ` · ${message.attachments.join(', ')}` : ''}
-                        </span>
-                      </summary>
-                      <pre>{message.body}</pre>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          {ask.messages.length > 0 && <Conversation ask={ask} />}
 
           {open && (
             <section className={shared.panel}>
@@ -271,8 +244,9 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
     .filter((entry) => entry.answer?.trim())
     .map((entry) => ({ question: entry.question, answer: entry.answer.trim(), remember: entry.remember }))
   const unanswered = ask.questions.length - given.length
-  const attachments = ask.forms.filter((form) => form.kind === 'pdf' && form.attach)
   const owner = ask.ownerName || ask.ownerEmail
+  const repliesGo = setup?.inbox ? 'to the Inbox, and here' : `to ${owner}`
+  const replied = ask.status === 'waiting' && ask.lastReply !== null
 
   const draft = () =>
     run(
@@ -297,14 +271,16 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
         toast(
           result.logged
             ? { text: 'Logged, not sent', detail: 'RESEND_API_KEY isn’t set here, so the email went to the server log.' }
-            : { text: `Sent to ${ask.toName}`, detail: `Replies go to ${owner}.` },
+            : { text: `Sent to ${ask.toName}`, detail: `Replies come back ${repliesGo}.` },
         )
       },
     )
 
   return (
     <div className={styles.column}>
-      {open && !hasDraft && (
+      {ask.lastReply && <ReplyCard ask={ask} busy={busy} run={run} />}
+
+      {open && !hasDraft && !replied && (
         <section className={shared.panel}>
           <div className={styles.stack}>
             {ask.status === 'draft' ? (
@@ -316,7 +292,7 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
               <>
                 <h2 className={ui.panelTitle}>Waiting for a reply</h2>
                 <p className={ui.hint}>
-                  Sent {ask.sentAt ? formatStampDate(ask.sentAt) : ''}. Replies go to {owner}; mark it answered when one comes.{' '}
+                  Sent {ask.sentAt ? formatStampDate(ask.sentAt) : ''}. Replies come back {repliesGo}.{' '}
                   {ask.followUpDue
                     ? `If nothing comes, Claude drafts a follow-up on ${formatIsoDay(ask.followUpDue)} for someone to check.`
                     : 'No follow-up is planned.'}
@@ -355,14 +331,8 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
               </div>
               <div>
                 <dt>Replies</dt>
-                <dd>{ask.ownerEmail}</dd>
+                <dd>{setup?.inbox ? 'Come back to the Inbox' : ask.ownerEmail}</dd>
               </div>
-              {attachments.length > 0 && (
-                <div>
-                  <dt>Attached</dt>
-                  <dd>{attachments.map((form) => `${form.name} - Proto.pdf${form.filledSize ? '' : ' (not filled yet)'}`).join(', ')}</dd>
-                </div>
-              )}
             </dl>
             <Field label="Subject">
               {(props) => <input {...props} className={ui.input} value={subject} maxLength={200} onChange={(event) => setSubject(event.target.value)} />}
@@ -434,8 +404,7 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
         onCancel={() => setConfirmSend(false)}
       >
         <p>
-          “{subject}” goes to {ask.toEmail} from {owner} at Proto, with {ask.ownerEmail} on Cc. Replies go to {owner}.
-          {attachments.length > 0 && ` It carries ${attachments.map((form) => form.name).join(', ')}.`}
+          “{subject}” goes to {ask.toEmail} from {owner} at Proto, with {ask.ownerEmail} on Cc. Replies come back {repliesGo}.
         </p>
         {unanswered > 0 && <p>Claude still has {unanswered === 1 ? 'a question' : `${unanswered} questions`} you haven’t answered. Send anyway?</p>}
         {setup && !setup.resend && <p>Email isn’t set up here, so it will only be logged.</p>}
@@ -486,6 +455,115 @@ function QuestionBox({
   )
 }
 
+// ---- Replies and the conversation ---------------------------------------------------------------
+
+const VERDICT: Record<'yes' | 'partly' | 'no', { text: string; tone: string }> = {
+  yes: { text: 'Gives us what we asked for', tone: 'live' },
+  partly: { text: 'Answers part of it', tone: 'sample' },
+  no: { text: 'Doesn’t give us what we asked for yet', tone: 'draft' },
+}
+
+/** The latest reply to the ask, with Claude's take on whether it answers it. */
+function ReplyCard({ ask, busy, run }: { ask: AskDetail; busy: Busy; run: Run }) {
+  const toast = useToast()
+  const reply = ask.lastReply
+  if (!reply) return null
+  const reading = reply.reading
+  const verdict = reading?.answersAsk ? VERDICT[reading.answersAsk] : null
+  return (
+    <section className={shared.panel} aria-labelledby="reply-title">
+      <div className={styles.stack}>
+        <div className={styles.spread}>
+          <h2 id="reply-title" className={ui.panelTitle}>
+            {ask.toName} replied
+          </h2>
+          <span className={ui.hint}>{formatStamp(reply.at)}</span>
+        </div>
+        {reading ? (
+          <>
+            {verdict && (
+              <span className={ui.state} data-tone={verdict.tone}>
+                {verdict.text}
+              </span>
+            )}
+            <p className={styles.request}>{reading.summary}</p>
+            {reading.stillNeeded.length > 0 && (
+              <div className={ui.hint}>
+                <p>Still open:</p>
+                <ul>
+                  {reading.stillNeeded.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className={ui.hint}>Claude hasn’t read it yet. Open the conversation to read it yourself.</p>
+        )}
+        <div className={styles.row}>
+          <Link to={`/admin/email/inbox/${reply.threadId}`} className={ui.primary}>
+            Read and reply
+          </Link>
+          {ask.status === 'waiting' && (
+            <button
+              type="button"
+              className={ui.button}
+              disabled={busy !== null}
+              onClick={() =>
+                void run(
+                  'status',
+                  () => api<{ item: AskDetail }>(`/admin/asks/${ask.id}`, { method: 'PATCH', body: { status: 'answered' } }),
+                  () => toast('Marked answered'),
+                )
+              }
+            >
+              Mark answered
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/** Every email in the ask's conversation, ours and theirs. The latest reply starts open. */
+function Conversation({ ask }: { ask: AskDetail }) {
+  const lastIn = [...ask.messages].reverse().find((message) => message.direction === 'in')
+  return (
+    <section className={shared.panel} aria-labelledby="conversation-title">
+      <div className={styles.spread} style={{ marginBottom: 12 }}>
+        <h2 id="conversation-title" className={ui.panelTitle}>
+          Conversation
+        </h2>
+        {ask.threadId && (
+          <Link to={`/admin/email/inbox/${ask.threadId}`} className={shared.link}>
+            Open in Inbox
+          </Link>
+        )}
+      </div>
+      <ul className={styles.history}>
+        {ask.messages.map((message) => (
+          <li key={message.id}>
+            <details open={message.id === lastIn?.id}>
+              <summary>
+                <span>{message.direction === 'in' ? `${message.fromName || message.fromEmail} replied` : message.subject}</span>
+                <span className={ui.hint}>
+                  {message.direction === 'out' ? `${message.kind === 'follow-up' ? 'Follow-up' : message.kind === 'reply' ? 'Reply' : 'Ask'} by ${message.sentBy}, ` : ''}
+                  {formatStamp(message.createdAt)}
+                  {message.status === 'logged' ? ' · logged, not sent' : message.status === 'failed' ? ' · failed' : ''}
+                </span>
+              </summary>
+              {message.reading && <p className={ui.hint}>Claude: {message.reading.summary}</p>}
+              <pre>{message.text}</pre>
+            </details>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 // ---- Forms ----------------------------------------------------------------------------------
 
 interface FormsPanelProps {
@@ -495,9 +573,10 @@ interface FormsPanelProps {
   onSaved: (item: AskDetail) => void
 }
 
+/** The web forms an ask carries: Claude's answers to each, to copy or open prefilled. */
 function FormsPanel({ ask, busy, setBusy, onSaved }: FormsPanelProps) {
   const toast = useToast()
-  const [adding, setAdding] = useState<'pdf' | 'web' | null>(null)
+  const [adding, setAdding] = useState(false)
   const [web, setWeb] = useState({ url: '', questions: '' })
   const [error, setError] = useState('')
   const open = ask.status === 'draft' || ask.status === 'waiting'
@@ -518,16 +597,9 @@ function FormsPanel({ ask, busy, setBusy, onSaved }: FormsPanelProps) {
     }
   }
 
-  const upload = async (file: File | undefined) => {
-    if (!file) return
-    const body = new FormData()
-    body.append('file', file)
-    if (await call(() => api(`/admin/asks/${ask.id}/forms`, { body }), `${file.name} added. Redraft to fill it.`)) setAdding(null)
-  }
-
   const addWeb = async () => {
     if (await call(() => api(`/admin/asks/${ask.id}/web-forms`, { body: { url: web.url.trim(), questions: web.questions.trim(), name: '' } }), 'Web form added. Redraft to answer it.')) {
-      setAdding(null)
+      setAdding(false)
       setWeb({ url: '', questions: '' })
     }
   }
@@ -540,24 +612,14 @@ function FormsPanel({ ask, busy, setBusy, onSaved }: FormsPanelProps) {
             Forms
           </h2>
           {open && !adding && (
-            <div className={styles.row}>
-              <button type="button" className={`${ui.button} ${ui.small}`} onClick={() => setAdding('pdf')}>
-                Add a PDF
-              </button>
-              <button type="button" className={`${ui.button} ${ui.small}`} onClick={() => setAdding('web')}>
-                Add a web form
-              </button>
-            </div>
+            <button type="button" className={`${ui.button} ${ui.small}`} onClick={() => setAdding(true)}>
+              Add a web form
+            </button>
           )}
         </div>
-        {ask.forms.length === 0 && !adding && <p className={ui.hint}>None. Add a PDF to fill and attach, or a web form to answer.</p>}
+        {ask.forms.length === 0 && !adding && <p className={ui.hint}>None. Add a web form (Google Forms, Engage) for Claude to answer.</p>}
 
-        {adding === 'pdf' && (
-          <Field label="PDF form" hint="Claude fills its boxes from Proto’s facts and what you’ve told it. A signature is always left for a person.">
-            {(props) => <input {...props} type="file" accept="application/pdf,.pdf" className={ui.input} disabled={busy !== null} onChange={(event) => void upload(event.target.files?.[0])} />}
-          </Field>
-        )}
-        {adding === 'web' && (
+        {adding && (
           <div className={styles.stack}>
             <Field label="Its link" hint="A public Google Form’s questions are read from the link.">
               {(props) => <input {...props} type="url" className={ui.input} placeholder="https://" value={web.url} onChange={(event) => setWeb({ ...web, url: event.target.value })} />}
@@ -569,14 +631,10 @@ function FormsPanel({ ask, busy, setBusy, onSaved }: FormsPanelProps) {
               <button type="button" className={`${ui.button} ${ui.small}`} disabled={busy !== null} onClick={addWeb}>
                 Add web form
               </button>
+              <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setAdding(false)}>
+                Cancel
+              </button>
             </div>
-          </div>
-        )}
-        {adding && (
-          <div className={styles.row}>
-            <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setAdding(null)}>
-              Cancel
-            </button>
           </div>
         )}
         <p className={shared.error} role="alert" hidden={!error}>
@@ -606,15 +664,11 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
   const toast = useToast()
   const [editing, setEditing] = useState(false)
   const [values, setValues] = useState<Record<string, string>>({})
-  const base = `/api/admin/asks/${ask.id}/forms/${form.id}`
   const byField = new Map(form.answers.map((answer) => [answer.field, answer]))
-  // What a value answers, as the form puts it: a box's tooltip or a question's title, else its name.
-  const labelOf = (name: string) => {
-    const field = form.fields.find((candidate) => candidate.name === name)
-    return field?.label || name
-  }
-  const rows: { field: string; label: string; answer?: FormAnswer; signature?: boolean }[] = form.fields.length
-    ? form.fields.map((field) => ({ field: field.name, label: field.label || field.name, answer: byField.get(field.name), signature: field.type === 'signature' }))
+  // What a value answers, as the form puts it: a Google Form question's title, else the question as pasted.
+  const labelOf = (name: string) => form.fields.find((field) => field.name === name)?.label || name
+  const rows: { field: string; label: string; answer?: FormAnswer }[] = form.fields.length
+    ? form.fields.map((field) => ({ field: field.name, label: field.label || field.name, answer: byField.get(field.name) }))
     : form.answers.map((answer) => ({ field: answer.field, label: answer.field, answer }))
   const sheet = form.answers.map((answer) => `${labelOf(answer.field)}\n${answer.value}`).join('\n\n')
   const forChrome = [
@@ -624,7 +678,7 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
   ].join('\n')
 
   const startEditing = () => {
-    setValues(Object.fromEntries(rows.filter((row) => !row.signature).map((row) => [row.field, row.answer?.value ?? ''])))
+    setValues(Object.fromEntries(rows.map((row) => [row.field, row.answer?.value ?? ''])))
     setEditing(true)
   }
 
@@ -634,9 +688,7 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
       value,
       source: value === (byField.get(field)?.value ?? '') ? (byField.get(field)?.source ?? '') : TYPED_SOURCE,
     }))
-    if (await call(() => api(`/admin/asks/${ask.id}/forms/${form.id}`, { method: 'PATCH', body: { answers } }), form.kind === 'pdf' ? 'Form filled again' : 'Answers saved')) {
-      setEditing(false)
-    }
+    if (await call(() => api(`/admin/asks/${ask.id}/forms/${form.id}`, { method: 'PATCH', body: { answers } }), 'Answers saved')) setEditing(false)
   }
 
   return (
@@ -644,13 +696,7 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
       <div className={styles.spread}>
         <div>
           <h3 className={styles.formName}>{form.name}</h3>
-          <p className={ui.hint}>
-            {form.kind === 'pdf'
-              ? `PDF, ${fileSize(form.blankSize)}${form.fields.length ? `, ${form.fields.length} boxes` : ', no fillable boxes: answers are listed to copy'}`
-              : form.fields.length
-                ? `Google Form, ${form.fields.length} questions`
-                : 'Web form'}
-          </p>
+          <p className={ui.hint}>{form.fields.length ? `Google Form, ${form.fields.length} questions` : 'Web form'}</p>
         </div>
         <button
           type="button"
@@ -664,45 +710,17 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
       </div>
 
       <div className={styles.row}>
-        {form.kind === 'pdf' && (
-          <>
-            <a href={`${base}/blank`} target="_blank" rel="noopener" className={shared.link}>
-              Blank <ArrowOutIcon />
-            </a>
-            {form.filledSize > 0 && (
-              <a href={`${base}/filled`} target="_blank" rel="noopener" className={shared.link}>
-                Filled <ArrowOutIcon />
-              </a>
-            )}
-            {form.fields.length > 0 && (
-              <label className={styles.remember}>
-                <input
-                  type="checkbox"
-                  checked={form.attach}
-                  disabled={busy !== null}
-                  onChange={(event) =>
-                    void call(
-                      () => api(`/admin/asks/${ask.id}/forms/${form.id}`, { method: 'PATCH', body: { attach: event.target.checked } }),
-                      event.target.checked ? 'It goes with the email' : 'It stays off the email',
-                    )
-                  }
-                />
-                Attach the filled copy to the email
-              </label>
-            )}
-          </>
-        )}
-        {form.kind === 'web' && form.url && (
+        {form.url && (
           <a href={form.prefillUrl ?? form.url} target="_blank" rel="noopener noreferrer" className={shared.link}>
             {form.prefillUrl ? 'Open it filled in' : 'Open the form'} <ArrowOutIcon />
           </a>
         )}
-        {form.answers.length > 0 && (form.kind === 'web' || form.fields.length === 0) && (
+        {form.answers.length > 0 && (
           <>
             <button type="button" className={`${ui.button} ${ui.small}`} onClick={() => void copy(sheet, toast, 'Answers')}>
               Copy answers
             </button>
-            {form.kind === 'web' && !form.prefillUrl && (
+            {!form.prefillUrl && (
               <button
                 type="button"
                 className={`${ui.button} ${ui.small}`}
@@ -715,9 +733,7 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
           </>
         )}
       </div>
-      {form.kind === 'web' && form.prefillUrl && (
-        <p className={ui.hint}>The link opens the form with Claude’s answers in. Check them, then press Submit yourself.</p>
-      )}
+      {form.prefillUrl && <p className={ui.hint}>The link opens the form with Claude’s answers in. Check them, then press Submit yourself.</p>}
 
       {form.missing.length > 0 && (
         <ul className={styles.missing}>
@@ -729,19 +745,15 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
 
       {editing ? (
         <div className={styles.stack}>
-          {Object.keys(values).length === 0 && <p className={ui.hint}>Nothing to answer yet. Redraft and Claude fills it in first.</p>}
-          {rows
-            .filter((row) => !row.signature)
-            .map((row) => (
-              <Field key={row.field} label={row.label}>
-                {(props) => (
-                  <input {...props} className={ui.input} value={values[row.field] ?? ''} onChange={(event) => setValues((prev) => ({ ...prev, [row.field]: event.target.value }))} />
-                )}
-              </Field>
-            ))}
+          {rows.length === 0 && <p className={ui.hint}>Nothing to answer yet. Redraft and Claude answers it first.</p>}
+          {rows.map((row) => (
+            <Field key={row.field} label={row.label}>
+              {(props) => <input {...props} className={ui.input} value={values[row.field] ?? ''} onChange={(event) => setValues((prev) => ({ ...prev, [row.field]: event.target.value }))} />}
+            </Field>
+          ))}
           <div className={styles.row}>
             <button type="button" className={`${ui.button} ${ui.small}`} disabled={busy !== null} onClick={saveAnswers}>
-              {form.kind === 'pdf' && form.fields.length ? 'Save and fill again' : 'Save answers'}
+              Save answers
             </button>
             <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setEditing(false)}>
               Cancel
@@ -759,18 +771,16 @@ function FormItem({ ask, form, busy, call }: FormItemProps) {
                     <dt>{row.label}</dt>
                     <dd>
                       <span className={styles.value}>{row.answer?.value}</span>
-                      {form.kind === 'web' || form.fields.length === 0 ? (
-                        <button type="button" className={`${ui.ghost} ${ui.small} ${styles.copy}`} onClick={() => void copy(row.answer?.value ?? '', toast, 'Answer')}>
-                          Copy
-                        </button>
-                      ) : null}
+                      <button type="button" className={`${ui.ghost} ${ui.small} ${styles.copy}`} onClick={() => void copy(row.answer?.value ?? '', toast, 'Answer')}>
+                        Copy
+                      </button>
                     </dd>
                     {row.answer?.source && <span className={styles.source}>From {row.answer.source}</span>}
                   </div>
                 ))}
             </dl>
           )}
-          {(form.answers.length > 0 || form.fields.length > 0) && (
+          {rows.length > 0 && (
             <div className={styles.row}>
               <button type="button" className={`${ui.ghost} ${ui.small}`} disabled={busy !== null} onClick={startEditing}>
                 Change answers

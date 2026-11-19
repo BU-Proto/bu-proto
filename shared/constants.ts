@@ -46,8 +46,5 @@ export type AskStatus = (typeof ASK_STATUSES)[number]
 /** The source of a form answer a teammate typed themselves. A redraft keeps these over Claude's. */
 export const TYPED_SOURCE = 'typed in the portal'
 
-/** A PDF form an ask carries: at most this many bytes (5 MB), the same as a résumé. */
-export const FORM_MAX_BYTES = 5 * 1024 * 1024
-
 /** The BroadcastChannel the admin sign-in pop-up reports its result on. */
 export const AUTH_CHANNEL = 'proto-auth'

@@ -43,6 +43,9 @@ export const adminRoutes: RouteObject[] = [
           { path: 'email', lazy: () => import('./pages/Email') },
           { path: 'email/automatic', lazy: () => import('./pages/AutomaticEmails') },
           // Asks: emails to one person we need something from, which Claude drafts. Part of Email.
+          // The inbox: one-to-one email, beside Compose (list emails).
+          { path: 'email/inbox', lazy: () => import('./pages/Inbox') },
+          { path: 'email/inbox/:id', lazy: () => import('./pages/Thread') },
           { path: 'email/asks', lazy: () => import('./pages/Asks') },
           { path: 'email/asks/new', lazy: () => import('./pages/AskNew') },
           { path: 'email/asks/:id', lazy: () => import('./pages/AskDetail') },

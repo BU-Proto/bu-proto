@@ -56,17 +56,20 @@ export async function sendEmails(env: Env, emails: OutgoingEmail[], key: string)
 export interface PersonalEmail {
   /** A display name for the From line ("Andres from Proto"); the address stays EMAIL_FROM's. */
   fromName?: string
-  to: string
+  /** Everyone it's addressed to (usually one person). */
+  to: string[]
   cc: string[]
   replyTo: string
   subject: string
   html: string
   text: string
   attachments: { filename: string; content: Uint8Array }[]
+  /** Threading headers: Message-ID, In-Reply-To, References. */
+  headers?: Record<string, string>
 }
 
 /** The address inside EMAIL_FROM ("Proto <hello@proto.boston>" → hello@proto.boston). */
-function fromAddress(from: string): string {
+export function fromAddress(from: string): string {
   return /<([^>]+)>/.exec(from)?.[1] ?? from.trim()
 }
 
@@ -77,19 +80,20 @@ function fromAddress(from: string): string {
  */
 export async function sendPersonalEmail(env: Env, email: PersonalEmail, key: string): Promise<'sent' | 'failed' | 'logged'> {
   if (!env.RESEND_API_KEY) {
-    console.log(`[email] (not sent, no RESEND_API_KEY) to=${email.to} cc=${email.cc.join(',')} subject=${email.subject} files=${email.attachments.length}`)
+    console.log(`[email] (not sent, no RESEND_API_KEY) to=${email.to.join(',')} cc=${email.cc.join(',')} reply_to=${email.replyTo} subject=${email.subject} files=${email.attachments.length}`)
     return 'logged'
   }
   const address = fromAddress(String(env.EMAIL_FROM))
   const name = email.fromName?.replace(/["<>\r\n]/g, '').trim()
   const payload = {
     from: name ? `"${name}" <${address}>` : String(env.EMAIL_FROM),
-    to: [email.to],
+    to: email.to,
     ...(email.cc.length && { cc: email.cc }),
     reply_to: email.replyTo,
     subject: email.subject,
     html: email.html,
     text: email.text,
+    ...(email.headers && { headers: email.headers }),
     ...(email.attachments.length && {
       attachments: email.attachments.map((file) => ({ filename: file.filename, content: toBase64(file.content) })),
     }),
@@ -149,4 +153,44 @@ async function postBatch(apiKey: string, payload: unknown[], idempotencyKey: str
     if (attempt === 1) await new Promise((resolve) => setTimeout(resolve, 1000))
   }
   return 0
+}
+
+// ---- Received email (Resend's inbound) ---------------------------------------------------------
+// The webhook only says an email arrived; its text, HTML, headers and files come from the API.
+// Reading them needs a key that can read emails (Full access), not a sending-only one.
+
+/** A received email as GET /emails/receiving/{id} gives it (the fields the inbox uses). */
+export interface ReceivedEmail {
+  id: string
+  from: string
+  to: string[]
+  cc: string[] | null
+  reply_to: string[] | null
+  subject: string | null
+  text: string | null
+  html: string | null
+  headers: Record<string, string | string[]> | null
+  message_id: string | null
+  authentication: { spf?: string; dkim?: string; dmarc?: string } | null
+  attachments: { id: string; filename: string; content_type: string; content_disposition?: string }[] | null
+  created_at: string
+}
+
+async function resendGet<T>(env: Env, path: string): Promise<T> {
+  const response = await fetch(`https://api.resend.com${path}`, { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } })
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '')
+    throw new Error(`Resend GET ${path}: ${response.status} ${detail.slice(0, 300)}`)
+  }
+  return response.json<T>()
+}
+
+/** The whole of an email that arrived, HTML with inline images kept as cid: (they're not shown). */
+export function getReceivedEmail(env: Env, id: string): Promise<ReceivedEmail> {
+  return resendGet<ReceivedEmail>(env, `/emails/receiving/${encodeURIComponent(id)}?html_format=cid`)
+}
+
+/** One of a received email's files, with a download link that lasts an hour. */
+export function getReceivedAttachment(env: Env, emailId: string, attachmentId: string): Promise<{ filename: string; content_type: string; size: number; download_url: string }> {
+  return resendGet(env, `/emails/receiving/${encodeURIComponent(emailId)}/attachments/${encodeURIComponent(attachmentId)}`)
 }
