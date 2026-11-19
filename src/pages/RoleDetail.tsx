@@ -16,6 +16,7 @@ import { BRAND } from '../content/site'
 import { api } from '../lib/api'
 import type { RolePageData } from '../lib/content'
 import { formatDay } from '../lib/dates'
+import { parseRolePitch, type PitchSection } from '../lib/rolePitch'
 import { deadlineOf, roleIsOpen } from '../lib/roles'
 import { reducedMotion } from '../lib/useInView'
 import styles from './RoleDetail.module.css'
@@ -49,6 +50,48 @@ function PitchRow({ id, title, note, children }: { id: string; title: string; no
   )
 }
 
+/** Steps, numbered in the margin the way a seat's first month is. */
+function Steps({ items }: { items: readonly string[] }) {
+  return (
+    <ol className={styles.points}>
+      {items.map((item, index) => (
+        <li key={item} className={styles.step}>
+          <span className={styles.stepNumber} aria-hidden="true">
+            {index + 1}
+          </span>
+          {item}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+/**
+ * The headed sections of a role's write-up ("What you'd do", "Who it suits"), set as the same
+ * ruled rows a board seat's pitch is: a line on its own as a sentence, more as a list.
+ */
+function WriteUpPitch({ sections }: { sections: readonly PitchSection[] }) {
+  return (
+    <div className={styles.pitch}>
+      {sections.map((section, index) => (
+        <PitchRow key={section.heading} id={`role-part-${index}`} title={section.heading}>
+          {section.items.length === 1 ? (
+            <p className={styles.fit}>{section.items[0]}</p>
+          ) : section.ordered ? (
+            <Steps items={section.items} />
+          ) : (
+            <ul className={styles.points}>
+              {section.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
+        </PitchRow>
+      ))}
+    </div>
+  )
+}
+
 /**
  * What a board seat is, between the role's head and its form, as one ruled sheet on the same
  * columns as the form under it: what you'd own and get, the first month as the bar for taking it,
@@ -72,16 +115,7 @@ function SeatPitch({ seat }: { seat: Seat }) {
         </ul>
       </PitchRow>
       <PitchRow id="seat-month" title={SEAT_SECTIONS.firstMonth.title} note={SEAT_SECTIONS.firstMonth.text}>
-        <ol className={styles.points}>
-          {seat.firstMonth.map((item, index) => (
-            <li key={item} className={styles.step}>
-              <span className={styles.stepNumber} aria-hidden="true">
-                {index + 1}
-              </span>
-              {item}
-            </li>
-          ))}
-        </ol>
+        <Steps items={seat.firstMonth} />
       </PitchRow>
       <PitchRow id="seat-fit" title={SEAT_SECTIONS.fit}>
         {/* The data finishes the heading's sentence; set on its own line, it starts one. */}
@@ -92,8 +126,8 @@ function SeatPitch({ seat }: { seat: Seat }) {
 }
 
 /**
- * One role: what it is and what it takes, the write-up, what the seat is (for the board seats),
- * then the application on a sheet of its own. Once it's filled or its apply-by day has passed, the
+ * One role: what it is and what it takes, the write-up (its headed sections as ruled rows), what
+ * the seat is (for the board seats), then the application on a sheet of its own. Once it's filled or its apply-by day has passed, the
  * page stays up without the form.
  */
 export function RoleDetail() {
@@ -101,6 +135,8 @@ export function RoleDetail() {
   const open = roleIsOpen(role)
   const deadline = deadlineOf(role, ROLES_LIST.untilFilled)
   const seat = seatFor(role.title)
+  // A write-up typed with headed sections reads as rows, like a seat's pitch; plain text stays prose.
+  const writeUp = parseRolePitch(role.description)
   const lede = seat?.headline ?? role.summary
   const questions = role.questions.slice(0, MAX_ROLE_QUESTIONS)
   const others = roles.filter((other) => other.id !== role.id && roleIsOpen(other)).slice(0, 3)
@@ -168,11 +204,13 @@ export function RoleDetail() {
         )}
       </header>
 
-      {role.description.trim() && (
+      {writeUp.intro && (
         <div className={styles.about}>
-          <Prose text={role.description} />
+          <Prose text={writeUp.intro} />
         </div>
       )}
+
+      {writeUp.sections.length > 0 && <WriteUpPitch sections={writeUp.sections} />}
 
       {seat && <SeatPitch seat={seat} />}
 

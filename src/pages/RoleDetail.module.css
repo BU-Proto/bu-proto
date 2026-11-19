@@ -102,8 +102,9 @@
   max-width: 760px;
 }
 
-/* A board seat's pitch: one ruled sheet of rows on the form's own columns, the heading on the
-   left and the answer on the right, every answer at the same size. */
+/* A board seat's pitch, or the headed sections of a role's write-up: one ruled sheet of rows on
+   the form's own columns, the heading on the left and the answer on the right, every answer at
+   the same size. */
 .pitch {
   display: grid;
   border-bottom: 1px solid var(--rule);
