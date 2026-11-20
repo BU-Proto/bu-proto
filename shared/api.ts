@@ -836,8 +836,8 @@ export interface EmailCampaign {
 }
 
 // ---- Portal: asks -----------------------------------------------------------------------------
-// Emails to people we need something from. A teammate says what they need, Claude drafts the email
-// and fills the forms it carries, a teammate checks it and presses Send. Replies go to whoever
+// Emails to people we need something from. A teammate says what they need, Claude drafts the
+// email, a teammate checks it and presses Send. Replies go to whoever
 // made the ask (Reply-To and Cc), so they mark it answered here.
 
 /** POST /api/admin/contacts, PATCH /api/admin/contacts/:id → { item: Contact } */
@@ -873,7 +873,7 @@ export const factInput = z.object({
 })
 export type FactInput = z.input<typeof factInput>
 
-/** GET /api/admin/facts → { items: Fact[] }: what Proto is, for Claude to write and fill forms from. */
+/** GET /api/admin/facts → { items: Fact[] }: what Proto is, for Claude to write from. */
 export interface Fact {
   id: number
   label: string
@@ -886,7 +886,7 @@ export interface Fact {
 /** Who an ask goes to: a saved contact, or someone new (saved as a contact on the way). */
 export const askRecipient = z.union([z.object({ contactId: z.number().int().positive() }), contactInput])
 
-/** POST /api/admin/asks → 201 { item: AskDetail }. Forms are added next, then the draft is asked for. */
+/** POST /api/admin/asks → 201 { item: AskDetail }. The draft is asked for next. */
 export const newAskInput = z.object({
   to: askRecipient,
   /** What's needed, in the teammate's own words. */
@@ -895,17 +895,6 @@ export const newAskInput = z.object({
   followUpDays: z.number().int().min(0).max(60).default(5),
 })
 export type NewAskInput = z.input<typeof newAskInput>
-
-/**
- * POST /api/admin/asks/:id/web-forms → 201 { item: AskDetail }: a form on the web. Its questions are
- * pasted in (copied from the form's page); the link is kept for whoever fills it in.
- */
-export const webFormInput = z.object({
-  url: z.union([z.literal(''), z.url('Must be a full URL')]),
-  name: optionalText(120),
-  questions: text(10000),
-})
-export type WebFormInput = z.input<typeof webFormInput>
 
 /**
  * A question Claude needs answered. `remember`: the answer is a lasting fact about Proto, kept for
@@ -926,7 +915,7 @@ export interface AskAnswer {
 
 /**
  * POST /api/admin/asks/:id/draft → { item: AskDetail, notice?: string }: Claude writes (or rewrites)
- * the waiting email and fills the forms. Answers marked `remember` are kept as Proto facts.
+ * the waiting email. Answers marked `remember` are kept as Proto facts.
  */
 export const draftAskInput = z.object({
   notes: optionalText(4000),
@@ -951,29 +940,6 @@ export type AskPatch = z.input<typeof askPatch>
 /** POST /api/admin/asks/:id/send → { item: AskDetail, logged: boolean }: sends exactly this. */
 export const sendAskInput = z.object({ subject: text(200), body: text(20000) })
 export type SendAskInput = z.input<typeof sendAskInput>
-
-/** One answer on a form, with where it came from. `field` is the question as pasted. */
-export interface FormAnswer {
-  field: string
-  value: string
-  source: string
-}
-const formAnswer = z.object({ field: text(300), value: optionalText(4000), source: optionalText(200) })
-
-/** PATCH /api/admin/asks/:id/forms/:formId → { item: AskDetail }: a teammate's own answers. */
-export const formPatch = z.object({ answers: z.array(formAnswer).max(300) })
-export type FormPatch = z.input<typeof formPatch>
-
-/** A web form an ask carries (Engage, a Google Form, anything with a link). A teammate submits it. */
-export interface AskForm {
-  id: number
-  name: string
-  url: string
-  /** The questions, as a teammate pasted them. */
-  questions: string
-  answers: FormAnswer[]
-  missing: string[]
-}
 
 /** GET /api/admin/asks → { items: Ask[], setup: AskSetup } (newest first) */
 export interface Ask {
@@ -1007,7 +973,6 @@ export interface Ask {
 
 /** GET /api/admin/asks/:id → { item: AskDetail } */
 export interface AskDetail extends Ask {
-  forms: AskForm[]
   /** Its conversation once the first email has gone, replies included. */
   threadId: number | null
   messages: MailMessage[]

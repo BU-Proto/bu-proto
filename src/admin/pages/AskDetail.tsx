@@ -1,11 +1,10 @@
 import { useId, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import type { AskDetail, AskForm, AskSetup, AskStatus, Fact, FormAnswer } from '../../../shared/api'
-import { TYPED_SOURCE } from '../../../shared/constants'
+import type { AskDetail, AskSetup, AskStatus, Fact } from '../../../shared/api'
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
 import { Field } from '../components/Field'
-import { ArrowOutIcon, SendIcon, TrashIcon } from '../components/icons'
+import { SendIcon, TrashIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { RememberFact, type RememberValue } from '../components/RememberFact'
 import { FOLLOW_UP_CHOICES } from '../lib/asks'
@@ -17,19 +16,10 @@ import { toApiError, useApi } from './people/useApi'
 import { AskState, SetupNote } from './Asks'
 import styles from './Asks.module.css'
 
-type Busy = 'draft' | 'save' | 'send' | 'status' | 'delete' | 'form' | null
+type Busy = 'draft' | 'save' | 'send' | 'status' | 'delete' | null
 type Run = <T extends { item: AskDetail }>(kind: Busy, request: () => Promise<T>, done?: (result: T) => void) => Promise<void>
 
-async function copy(text: string, toast: ReturnType<typeof useToast>, what: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast(`${what} copied`)
-  } catch {
-    toast({ text: 'Your browser blocked the clipboard', detail: 'Select the text and copy it yourself.', tone: 'error' })
-  }
-}
-
-/** One ask: the email waiting to go (with Claude's questions and the notes box), its forms, and what's been sent. */
+/** One ask: the email waiting to go (with Claude's questions and the notes box), and what's been sent. */
 export function Component() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -154,8 +144,6 @@ export function Component() {
         <DraftColumn key={`${ask.id} ${ask.draftedAt} ${ask.status}`} ask={ask} setup={setup} busy={busy} problem={problem} run={run} />
 
         <div className={styles.column}>
-          <FormsPanel ask={ask} busy={busy} setBusy={setBusy} onSaved={apply} />
-
           {ask.answers.length > 0 && (
             <section className={shared.panel} aria-labelledby="answers-title">
               <h2 id="answers-title" className={ui.panelTitle} style={{ marginBottom: 12 }}>
@@ -212,7 +200,7 @@ export function Component() {
         onConfirm={remove}
         onCancel={() => setConfirmDelete(false)}
       >
-        <p>Its draft, its forms and the record of what was sent go with it. Emails already sent stay sent. It can’t be undone.</p>
+        <p>Its draft and the record of what was sent go with it. Emails already sent stay sent. It can’t be undone.</p>
       </ConfirmDialog>
     </div>
   )
@@ -290,7 +278,7 @@ function DraftColumn({ ask, setup, busy, problem, run }: DraftColumnProps) {
             {ask.status === 'draft' ? (
               <>
                 <h2 className={ui.panelTitle}>No draft yet</h2>
-                <p className={ui.hint}>Claude writes it from what you asked, Proto’s facts and the forms beside it.</p>
+                <p className={ui.hint}>Claude writes it from what you asked and Proto’s facts.</p>
               </>
             ) : (
               <>
@@ -565,227 +553,5 @@ function Conversation({ ask }: { ask: AskDetail }) {
         ))}
       </ul>
     </section>
-  )
-}
-
-// ---- Forms ----------------------------------------------------------------------------------
-
-interface FormsPanelProps {
-  ask: AskDetail
-  busy: Busy
-  setBusy: (busy: Busy) => void
-  onSaved: (item: AskDetail) => void
-}
-
-/** The web forms an ask carries: Claude's answers to each, to copy or open prefilled. */
-function FormsPanel({ ask, busy, setBusy, onSaved }: FormsPanelProps) {
-  const toast = useToast()
-  const [adding, setAdding] = useState(false)
-  const [web, setWeb] = useState({ url: '', questions: '' })
-  const [error, setError] = useState('')
-  const open = ask.status === 'draft' || ask.status === 'waiting'
-
-  const call = async (request: () => Promise<{ item: AskDetail }>, done: string) => {
-    if (busy) return
-    setBusy('form')
-    setError('')
-    try {
-      onSaved((await request()).item)
-      toast(done)
-      return true
-    } catch (failure) {
-      setError(toApiError(failure).message)
-      return false
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  const addWeb = async () => {
-    if (await call(() => api(`/admin/asks/${ask.id}/web-forms`, { body: { url: web.url.trim(), questions: web.questions.trim(), name: '' } }), 'Web form added. Redraft to answer it.')) {
-      setAdding(false)
-      setWeb({ url: '', questions: '' })
-    }
-  }
-
-  return (
-    <section className={shared.panel} aria-labelledby="forms-title">
-      <div className={styles.stack}>
-        <div className={styles.spread}>
-          <h2 id="forms-title" className={ui.panelTitle}>
-            Forms
-          </h2>
-          {open && !adding && (
-            <button type="button" className={`${ui.button} ${ui.small}`} onClick={() => setAdding(true)}>
-              Add a web form
-            </button>
-          )}
-        </div>
-        {ask.forms.length === 0 && !adding && <p className={ui.hint}>None. Paste a web form’s questions (Engage, a Google Form) and Claude answers them.</p>}
-
-        {adding && (
-          <div className={styles.stack}>
-            <Field label="Its questions" hint="Copy them from the form’s page, one per line.">
-              {(props) => <textarea {...props} className={ui.input} rows={4} value={web.questions} onChange={(event) => setWeb({ ...web, questions: event.target.value })} />}
-            </Field>
-            <Field label="Its link" hint="Optional: for whoever fills it in.">
-              {(props) => <input {...props} type="url" className={ui.input} placeholder="https://" value={web.url} onChange={(event) => setWeb({ ...web, url: event.target.value })} />}
-            </Field>
-            <div className={styles.row}>
-              <button type="button" className={`${ui.button} ${ui.small}`} disabled={busy !== null} onClick={addWeb}>
-                Add web form
-              </button>
-              <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setAdding(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-        <p className={shared.error} role="alert" hidden={!error}>
-          {error}
-        </p>
-
-        {ask.forms.length > 0 && (
-          <ul className={styles.forms}>
-            {ask.forms.map((form) => (
-              <FormItem key={form.id} ask={ask} form={form} busy={busy} call={call} />
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
-  )
-}
-
-interface FormItemProps {
-  ask: AskDetail
-  form: AskForm
-  busy: Busy
-  call: (request: () => Promise<{ item: AskDetail }>, done: string) => Promise<boolean | undefined>
-}
-
-function FormItem({ ask, form, busy, call }: FormItemProps) {
-  const toast = useToast()
-  const [editing, setEditing] = useState(false)
-  const [values, setValues] = useState<Record<string, string>>({})
-  const byField = new Map(form.answers.map((answer) => [answer.field, answer]))
-  const rows: { field: string; label: string; answer?: FormAnswer }[] = form.answers.map((answer) => ({ field: answer.field, label: answer.field, answer }))
-  const sheet = form.answers.map((answer) => `${answer.field}\n${answer.value}`).join('\n\n')
-  const forChrome = [
-    `Fill out the form at ${form.url || '(the open tab)'} with these answers. Don't submit it: leave it for me to check and submit. Leave anything not listed here empty, and never fill a signature.`,
-    '',
-    sheet,
-  ].join('\n')
-
-  const startEditing = () => {
-    setValues(Object.fromEntries(rows.map((row) => [row.field, row.answer?.value ?? ''])))
-    setEditing(true)
-  }
-
-  const saveAnswers = async () => {
-    const answers = Object.entries(values).map(([field, value]) => ({
-      field,
-      value,
-      source: value === (byField.get(field)?.value ?? '') ? (byField.get(field)?.source ?? '') : TYPED_SOURCE,
-    }))
-    if (await call(() => api(`/admin/asks/${ask.id}/forms/${form.id}`, { method: 'PATCH', body: { answers } }), 'Answers saved')) setEditing(false)
-  }
-
-  return (
-    <li className={styles.form}>
-      <div className={styles.spread}>
-        <div>
-          <h3 className={styles.formName}>{form.name}</h3>
-          <p className={ui.hint}>Web form: Claude answers the questions you pasted; you fill it in and submit it.</p>
-        </div>
-        <button
-          type="button"
-          className={ui.dangerGhost}
-          aria-label={`Remove ${form.name}`}
-          disabled={busy !== null}
-          onClick={() => void call(() => api(`/admin/asks/${ask.id}/forms/${form.id}`, { method: 'DELETE' }), `${form.name} removed`)}
-        >
-          <TrashIcon />
-        </button>
-      </div>
-
-      <div className={styles.row}>
-        {form.url && (
-          <a href={form.url} target="_blank" rel="noopener noreferrer" className={shared.link}>
-            Open the form <ArrowOutIcon />
-          </a>
-        )}
-        {form.answers.length > 0 && (
-          <>
-            <button type="button" className={`${ui.button} ${ui.small}`} onClick={() => void copy(sheet, toast, 'Answers')}>
-              Copy answers
-            </button>
-            <button
-              type="button"
-              className={`${ui.button} ${ui.small}`}
-              title="Paste it into Claude in Chrome with the form open: it fills the form and leaves Submit to you."
-              onClick={() => void copy(forChrome, toast, 'Instructions for Claude in Chrome')}
-            >
-              Copy for Claude in Chrome
-            </button>
-          </>
-        )}
-      </div>
-
-      {form.missing.length > 0 && (
-        <ul className={styles.missing}>
-          {form.missing.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      )}
-
-      {editing ? (
-        <div className={styles.stack}>
-          {rows.length === 0 && <p className={ui.hint}>Nothing to answer yet. Redraft and Claude answers it first.</p>}
-          {rows.map((row) => (
-            <Field key={row.field} label={row.label}>
-              {(props) => <input {...props} className={ui.input} value={values[row.field] ?? ''} onChange={(event) => setValues((prev) => ({ ...prev, [row.field]: event.target.value }))} />}
-            </Field>
-          ))}
-          <div className={styles.row}>
-            <button type="button" className={`${ui.button} ${ui.small}`} disabled={busy !== null} onClick={saveAnswers}>
-              Save answers
-            </button>
-            <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setEditing(false)}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {form.answers.length > 0 && (
-            <dl className={styles.sheet}>
-              {rows
-                .filter((row) => row.answer)
-                .map((row) => (
-                  <div key={row.field}>
-                    <dt>{row.label}</dt>
-                    <dd>
-                      <span className={styles.value}>{row.answer?.value}</span>
-                      <button type="button" className={`${ui.ghost} ${ui.small} ${styles.copy}`} onClick={() => void copy(row.answer?.value ?? '', toast, 'Answer')}>
-                        Copy
-                      </button>
-                    </dd>
-                    {row.answer?.source && <span className={styles.source}>From {row.answer.source}</span>}
-                  </div>
-                ))}
-            </dl>
-          )}
-          {rows.length > 0 && (
-            <div className={styles.row}>
-              <button type="button" className={`${ui.ghost} ${ui.small}`} disabled={busy !== null} onClick={startEditing}>
-                Change answers
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </li>
   )
 }

@@ -1,4 +1,4 @@
-/* Asks: the list, a new ask, one ask (its draft, questions, forms and sent emails), contacts and facts. */
+/* Asks: the list, a new ask, one ask (its draft, questions and sent emails), contacts and facts. */
 
 /* A line above the page when a key is missing: quiet, not an error. The secrets fold out under it. */
 .setup {
@@ -47,7 +47,7 @@
 
 /* ---- One ask ------------------------------------------------------------------------------ */
 
-/* The draft on the left; its forms and history on the right. One column on narrower screens. */
+/* The draft on the left; its history on the right. One column on narrower screens. */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
@@ -181,36 +181,9 @@
   accent-color: var(--mint);
 }
 
-/* ---- Forms -------------------------------------------------------------------------------- */
+/* ---- What we told Claude -------------------------------------------------------------------- */
 
-.forms {
-  display: grid;
-  gap: 14px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.form {
-  display: grid;
-  gap: 12px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-}
-
-.forms > .form:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.formName {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-/* A form's answers: the question, then the value and where it came from. */
+/* The answers teammates gave: the question, then the value and who said it. */
 .sheet {
   display: grid;
   gap: 10px;
@@ -244,21 +217,6 @@
 .source {
   color: var(--ink-dim);
   font-size: 12px;
-}
-
-.missing {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding: 10px 14px 10px 30px;
-  border-radius: var(--radius-control);
-  background: rgb(var(--amber-rgb) / 0.08);
-  color: var(--ink-soft);
-  font-size: 13px;
-}
-
-.copy {
-  flex: none;
 }
 
 /* ---- Sent emails -------------------------------------------------------------------------- */
@@ -309,25 +267,6 @@
   .formGrid {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-.pending {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pending li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  font-size: 13.5px;
 }
 
 .clip {

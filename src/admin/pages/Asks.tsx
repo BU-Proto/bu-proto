@@ -91,7 +91,7 @@ export function Component() {
         title="Asks"
         back={{ to: '/admin/email', label: 'Email' }}
         count={ready ? `${ready} to check` : undefined}
-        lede="Emails to people we need something from: a room, a form, an answer. Say what you need; Claude writes the email and answers any web forms; you check it and press Send. Replies show up here and in the Inbox, with Claude’s take on whether they give us what we asked for."
+        lede="Emails to people we need something from: a room, a form, an answer. Say what you need; Claude writes the email; you check it and press Send. Replies show up here and in the Inbox, with Claude’s take on whether they give us what we asked for."
         actions={
           <Link to="/admin/email/asks/new" className={ui.primary}>
             <PlusIcon /> New ask

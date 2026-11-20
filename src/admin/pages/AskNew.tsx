@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import type { AskDetail, AskSetup, Contact, NewAskInput, WebFormInput } from '../../../shared/api'
+import type { AskDetail, AskSetup, Contact, NewAskInput } from '../../../shared/api'
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
 import { Field } from '../components/Field'
 import { PageHeader } from '../components/PageHeader'
-import { TrashIcon } from '../components/icons'
 import { FOLLOW_UP_CHOICES } from '../lib/asks'
 import { useToast } from '../lib/toast'
 import shared from './people/people.module.css'
@@ -15,7 +14,7 @@ import styles from './Asks.module.css'
 
 const NEW = 'new'
 
-/** Say who it's to and what's needed, add any forms, and Claude writes the first draft. */
+/** Say who it's to and what's needed, and Claude writes the first draft. */
 export function Component() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -27,8 +26,6 @@ export function Component() {
   const [person, setPerson] = useState({ name: '', email: '', organization: '', notes: '' })
   const [request, setRequest] = useState('')
   const [followUpDays, setFollowUpDays] = useState(5)
-  const [webForms, setWebForms] = useState<WebFormInput[]>([])
-  const [web, setWeb] = useState<{ url: string; questions: string }>({ url: '', questions: '' })
   const [issues, setIssues] = useState<Record<string, string>>({})
   const [progress, setProgress] = useState('')
   const [error, setError] = useState('')
@@ -36,20 +33,6 @@ export function Component() {
   const list = contacts?.items ?? []
   const chosen = contactId && contactId !== NEW ? list.find((contact) => String(contact.id) === contactId) : undefined
   const isNew = contactId === NEW || (contacts !== undefined && list.length === 0)
-
-  const addWebForm = () => {
-    if (!web.questions.trim()) {
-      setIssues((prev) => ({ ...prev, web: 'Paste the form’s questions.' }))
-      return
-    }
-    if (web.url.trim() && !/^https?:\/\//i.test(web.url.trim())) {
-      setIssues((prev) => ({ ...prev, web: 'The link starts with https://' }))
-      return
-    }
-    setWebForms((prev) => [...prev, { url: web.url.trim(), questions: web.questions.trim(), name: '' }])
-    setWeb({ url: '', questions: '' })
-    setIssues((prev) => ({ ...prev, web: '' }))
-  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -75,12 +58,6 @@ export function Component() {
     }
     // From here the ask exists: whatever fails next is said on its own page, where it can be fixed.
     const problems: string[] = []
-    for (const form of webForms) {
-      setProgress('Reading the web form…')
-      await api(`/admin/asks/${ask.id}/web-forms`, { body: form }).catch((failure: unknown) =>
-        problems.push(`${form.url || 'Web form'}: ${toApiError(failure).message}`),
-      )
-    }
     setProgress('Claude is writing it…')
     let notice: string | undefined
     try {
@@ -95,7 +72,7 @@ export function Component() {
 
   return (
     <div className={`${shared.page} ${ui.narrow}`}>
-      <PageHeader title="New ask" back={{ to: '/admin/email/asks', label: 'Asks' }} lede="Say who it’s to and what we need. Claude writes the email and answers any web forms; nothing is sent until you press Send." />
+      <PageHeader title="New ask" back={{ to: '/admin/email/asks', label: 'Asks' }} lede="Say who it’s to and what we need. Claude writes the email; nothing is sent until you press Send." />
       <SetupNote setup={asks?.setup} />
 
       <form className={shared.panel} onSubmit={submit} noValidate>
@@ -156,39 +133,6 @@ export function Component() {
               />
             )}
           </Field>
-
-          <div className={styles.stack}>
-            <div className={styles.spread}>
-              <span className={ui.label}>Forms</span>
-              <span className={ui.hint}>A web form (Engage, a Google Form): paste its questions and Claude answers them</span>
-            </div>
-            {webForms.length > 0 && (
-              <ul className={styles.pending}>
-                {webForms.map((form, index) => (
-                  <li key={`web-${index}`}>
-                    <span className={styles.clip}>{form.questions}</span>
-                    <button type="button" className={ui.dangerGhost} aria-label="Remove this web form" onClick={() => setWebForms((prev) => prev.filter((_, at) => at !== index))}>
-                      <TrashIcon />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className={styles.formGrid}>
-              <Field label="Add a web form: its questions" hint="Copy them from the form’s page, one per line.">
-                {(props) => <textarea {...props} className={ui.input} rows={3} value={web.questions} onChange={(event) => setWeb({ ...web, questions: event.target.value })} />}
-              </Field>
-              <Field label="…and its link" hint="Optional: for whoever fills it in.">
-                {(props) => <input {...props} type="url" className={ui.input} placeholder="https://" value={web.url} onChange={(event) => setWeb({ ...web, url: event.target.value })} />}
-              </Field>
-              <div className={styles.wide}>
-                {issues.web && <p className={ui.error}>{issues.web}</p>}
-                <button type="button" className={`${ui.button} ${ui.small}`} onClick={addWebForm}>
-                  Add web form
-                </button>
-              </div>
-            </div>
-          </div>
 
           <Field label="Follow up" hint="If nobody replies, Claude drafts a polite follow-up for you to check. It never sends it.">
             {(props) => (

@@ -14,7 +14,7 @@ import styles from './Asks.module.css'
 
 const EMPTY: FactInput = { label: '', value: '', source: '' }
 
-/** What Proto is, for Claude to write and fill forms from. It never makes one up: what's missing, it asks. */
+/** What Proto is, for Claude to write from. It never makes one up: what's missing, it asks. */
 export function Component() {
   const toast = useToast()
   const { data, error, loading, setData } = useApi<{ items: Fact[] }>('/admin/facts')
@@ -80,7 +80,7 @@ export function Component() {
       <PageHeader
         title="Proto facts"
         back={{ to: '/admin/email', label: 'Email' }}
-        lede="What Claude knows about Proto when it writes and fills forms: our name, what we do, our advisor, our address. It never makes a fact up. What isn’t here, it asks, and an answer about Proto itself lands here so it’s never asked twice."
+        lede="What Claude knows about Proto when it writes: our name, what we do, our advisor, our address. It never makes a fact up. What isn’t here, it asks, and an answer about Proto itself lands here so it’s never asked twice."
         actions={
           <button type="button" className={ui.primary} onClick={() => edit(null)}>
             <PlusIcon /> New fact

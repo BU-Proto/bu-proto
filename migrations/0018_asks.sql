@@ -1,6 +1,6 @@
 -- Asks: emails to people we need something from (a room from Spark!, a form from a sponsor, an
--- answer from a BU office). A teammate says what they need; Claude drafts the email and fills
--- in any forms it carries; a teammate checks it and presses Send. Nothing goes out on its own.
+-- answer from a BU office). A teammate says what they need; Claude drafts the email; a teammate
+-- checks it and presses Send. Nothing goes out on its own.
 
 -- People and offices we ask things of. `notes` is what we know about them (what they handle, how
 -- they like to be asked); Claude reads it when it writes to them.
@@ -16,9 +16,9 @@ CREATE TABLE contacts (
 );
 CREATE INDEX contacts_email ON contacts (email);
 
--- What Proto is, one fact a row, each with where it came from. Claude writes and fills forms from
--- these and never makes one up; what it can't find it asks, and an answer about Proto itself is
--- kept here so the next form doesn't ask again.
+-- What Proto is, one fact a row, each with where it came from. Claude writes from these and never
+-- makes one up; what it can't find it asks, and an answer about Proto itself is kept here so the
+-- next email doesn't ask again.
 CREATE TABLE facts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   label TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -133,26 +133,6 @@ CREATE TABLE mail_messages (
 );
 CREATE INDEX mail_messages_thread ON mail_messages (thread_id, created_at);
 CREATE INDEX mail_messages_message_id ON mail_messages (message_id);
-
--- Web forms an ask carries (Engage, a Google Form, anything with a link): a teammate pastes the
--- questions, Claude answers them, and the answer sheet is there to copy into the form, which a
--- teammate submits.
-CREATE TABLE ask_forms (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ask_id INTEGER NOT NULL REFERENCES asks (id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  -- The form's address.
-  url TEXT NOT NULL DEFAULT '',
-  -- The questions, as a teammate pasted them.
-  questions TEXT NOT NULL DEFAULT '',
-  -- JSON [{field, value, source}]: Claude's answers, each with where it came from.
-  answers TEXT NOT NULL DEFAULT '[]',
-  -- JSON [string]: what it left empty and why.
-  missing TEXT NOT NULL DEFAULT '[]',
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX ask_forms_ask ON ask_forms (ask_id);
 
 -- What the site already says about Proto. Real (from the site's copy), so Claude can use them.
 INSERT INTO facts (label, value, source, updated_by) VALUES

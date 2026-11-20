@@ -56,8 +56,5 @@ export function factLabelFor(question: string): string {
   return (bare.charAt(0).toUpperCase() + bare.slice(1) || question).slice(0, 80)
 }
 
-/** The source of a form answer a teammate typed themselves. A redraft keeps these over Claude's. */
-export const TYPED_SOURCE = 'typed in the portal'
-
 /** The BroadcastChannel the admin sign-in pop-up reports its result on. */
 export const AUTH_CHANNEL = 'proto-auth'

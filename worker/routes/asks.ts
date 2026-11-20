@@ -4,15 +4,13 @@ import {
   contactInput,
   draftAskInput,
   factInput,
-  formPatch,
   newAskInput,
   sendAskInput,
-  webFormInput,
   type AskSetup,
   type Contact,
   type Fact,
 } from '../../shared/api'
-import { ASK_SELECT, draftAsk, fillForm, loadAsk, loadAskRow, toAsk, type AskRow, type Author } from '../lib/asks'
+import { ASK_SELECT, draftAsk, loadAsk, loadAskRow, toAsk, type AskRow, type Author } from '../lib/asks'
 import { bostonDay, bostonToday } from '../lib/dates'
 import { ApiError, idParam, readBody } from '../lib/http'
 import { createThread, inboxOn, sendInThread } from '../lib/inbox'
@@ -238,7 +236,7 @@ app.delete('/api/admin/asks/:id', async (c) => {
   return c.body(null, 204)
 })
 
-// Claude writes (or rewrites) the waiting email and fills the forms.
+// Claude writes (or rewrites) the waiting email.
 app.post('/api/admin/asks/:id/draft', async (c) => {
   const id = idParam(c)
   const input = await readBody(c, draftAskInput)
@@ -309,42 +307,6 @@ app.post('/api/admin/asks/:id/send', async (c) => {
   } finally {
     await db.prepare('UPDATE asks SET sending_at = NULL WHERE id = ?').bind(id).run()
   }
-})
-
-// ---- An ask's forms -----------------------------------------------------------------------------
-
-app.post('/api/admin/asks/:id/web-forms', async (c) => {
-  const id = idParam(c)
-  await loadAskRow(c.env.DB, id)
-  const input = await readBody(c, webFormInput)
-  const name = input.name || (input.url ? new URL(input.url).hostname.replace(/^www\./, '') : 'Web form')
-  await c.env.DB.prepare('INSERT INTO ask_forms (ask_id, name, url, questions) VALUES (?, ?, ?, ?)')
-    .bind(id, name.slice(0, 120), input.url, input.questions)
-    .run()
-  return c.json({ item: await loadAsk(c.env.DB, id) }, 201)
-})
-
-async function loadForm(c: Context<AppEnv>) {
-  const id = idParam(c)
-  const formId = idParam(c, 'formId')
-  const ask = await loadAsk(c.env.DB, id)
-  const form = ask.forms.find((candidate) => candidate.id === formId)
-  if (!form) throw new ApiError(404, 'That form no longer exists.')
-  return { id, form }
-}
-
-// A teammate's own answers.
-app.patch('/api/admin/asks/:id/forms/:formId', async (c) => {
-  const { id, form } = await loadForm(c)
-  const input = await readBody(c, formPatch)
-  await fillForm(c.env.DB, form, input.answers, form.missing)
-  return c.json({ item: await loadAsk(c.env.DB, id) })
-})
-
-app.delete('/api/admin/asks/:id/forms/:formId', async (c) => {
-  const { id, form } = await loadForm(c)
-  await c.env.DB.prepare('DELETE FROM ask_forms WHERE id = ?').bind(form.id).run()
-  return c.json({ item: await loadAsk(c.env.DB, id) })
 })
 
 export default app

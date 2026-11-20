@@ -1,4 +1,4 @@
-import { factLabelFor, TYPED_SOURCE, type Ask, type AskAnswer, type AskDetail, type AskForm, type AskQuestion, type FormAnswer, type MailReading } from '../../shared/api'
+import { factLabelFor, type Ask, type AskAnswer, type AskDetail, type AskQuestion, type MailReading } from '../../shared/api'
 import { standInDraft, writeDraft, type DraftContext } from './claude'
 import { bostonDay, bostonToday } from './dates'
 import { escapeHtml } from './emailTemplate'
@@ -6,7 +6,7 @@ import { ApiError } from './http'
 import { mailDomain, threadMessages } from './inbox'
 import { sendPersonalEmail } from './resend'
 
-// Asks: reading and writing them, their web forms' answers, and Claude's drafts. The routes in
+// Asks: reading and writing them, and Claude's drafts. The routes in
 // routes/asks.ts and the daily follow-up check (the Cron Trigger) both come through here.
 
 export interface AskRow {
@@ -43,16 +43,6 @@ export const ASK_SELECT = `SELECT a.*,
   (SELECT m.created_at FROM mail_messages m WHERE m.thread_id = a.thread_id AND m.direction = 'in' ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS reply_at,
   (SELECT m.reading FROM mail_messages m WHERE m.thread_id = a.thread_id AND m.direction = 'in' ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS reply_reading
   FROM asks a`
-
-interface FormRow {
-  id: number
-  ask_id: number
-  name: string
-  url: string
-  questions: string
-  answers: string
-  missing: string
-}
 
 /** A JSON column, or `fallback` when it's somehow not JSON (never worth a 500). */
 function json<T>(value: string | null, fallback: T): T {
@@ -92,17 +82,6 @@ export function toAsk(row: AskRow): Ask {
   }
 }
 
-function toForm(row: FormRow): AskForm {
-  return {
-    id: row.id,
-    name: row.name,
-    url: row.url,
-    questions: row.questions,
-    answers: json<FormAnswer[]>(row.answers, []),
-    missing: json<string[]>(row.missing, []),
-  }
-}
-
 export async function loadAskRow(db: D1Database, id: number): Promise<AskRow> {
   const row = await db.prepare('SELECT * FROM asks WHERE id = ?').bind(id).first<AskRow>()
   if (!row) throw new ApiError(404, 'That ask no longer exists.')
@@ -110,29 +89,13 @@ export async function loadAskRow(db: D1Database, id: number): Promise<AskRow> {
 }
 
 export async function loadAsk(db: D1Database, id: number): Promise<AskDetail> {
-  const [ask, forms] = await db.batch([
-    db.prepare(`${ASK_SELECT} WHERE a.id = ?`).bind(id),
-    db.prepare('SELECT * FROM ask_forms WHERE ask_id = ? ORDER BY id').bind(id),
-  ])
-  const row = ask.results[0] as AskRow | undefined
+  const row = await db.prepare(`${ASK_SELECT} WHERE a.id = ?`).bind(id).first<AskRow>()
   if (!row) throw new ApiError(404, 'That ask no longer exists.')
   return {
     ...toAsk(row),
-    forms: (forms.results as FormRow[]).map(toForm),
     threadId: row.thread_id,
     messages: row.thread_id ? await threadMessages(db, row.thread_id) : [],
   }
-}
-
-// ---- A form's answers ------------------------------------------------------------------------
-
-/** Store a web form's answers (the ones with a value) and what's still missing. */
-export async function fillForm(db: D1Database, form: AskForm, answers: FormAnswer[], missing: string[]): Promise<void> {
-  const kept = answers.filter((answer) => answer.value.trim() !== '')
-  await db
-    .prepare(`UPDATE ask_forms SET answers = ?, missing = ?, updated_at = datetime('now') WHERE id = ?`)
-    .bind(JSON.stringify(kept), JSON.stringify([...new Set(missing)]), form.id)
-    .run()
 }
 
 // ---- Drafting -------------------------------------------------------------------------------
@@ -159,7 +122,7 @@ export async function protoContext(
   }
 }
 
-/** Keep an answer about Proto itself as a fact, so the next form doesn't ask again. */
+/** Keep an answer about Proto itself as a fact, so the next email doesn't ask again. */
 export function rememberStatement(db: D1Database, label: string, answer: string, source: string, by: string): D1PreparedStatement {
   return db
     .prepare(
@@ -171,9 +134,9 @@ export function rememberStatement(db: D1Database, label: string, answer: string,
 }
 
 /**
- * Claude writes the waiting email (the first, or a follow-up once the ask is out) and answers
- * its forms. New answers are saved first; those about Proto itself become facts. Returns a
- * notice when the draft is the local stand-in.
+ * Claude writes the waiting email (the first, or a follow-up once the ask is out). New answers
+ * are saved first; those about Proto itself become facts. Returns a notice when the draft is the
+ * local stand-in.
  */
 export async function draftAsk(
   env: Env,
@@ -210,13 +173,6 @@ export async function draftAsk(
     db.prepare('SELECT notes FROM contacts WHERE id = ?').bind(ask.contactId ?? 0).first<{ notes: string }>(),
   ])
 
-  const forms: DraftContext['forms'] = ask.forms.map((form) => ({
-    id: form.id,
-    name: form.name,
-    url: form.url,
-    questions: form.questions,
-  }))
-
   const waiting = ask.body.trim() !== '' && ask.draftKind === kind
   const context: DraftContext = {
     kind,
@@ -240,7 +196,6 @@ export async function draftAsk(
     facts,
     events,
     board,
-    forms,
   }
 
   let notice: string | undefined
@@ -263,16 +218,6 @@ export async function draftAsk(
     )
     .bind(draft.subject.trim().slice(0, 200), draft.body.trim(), kind, JSON.stringify(draft.questions.slice(0, 20)), id)
     .run()
-  if (kind === 'ask') {
-    for (const result of draft.forms) {
-      const form = ask.forms.find((candidate) => candidate.id === result.formId)
-      if (!form) continue
-      // What a teammate typed into a form themselves stays over Claude's answer for that field.
-      const typed = form.answers.filter((answer) => answer.source === TYPED_SOURCE)
-      const mine = new Set(typed.map((answer) => answer.field))
-      await fillForm(db, form, [...result.answers.filter((answer) => !mine.has(answer.field)), ...typed], result.missing)
-    }
-  }
   return { notice }
 }
 
