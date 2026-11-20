@@ -10,7 +10,12 @@ import { HUMAN_WRITING_RULES, straighten, writingProblems } from './humanWriting
 // draft follows the human-writing rules (./humanWriting); one that breaks a rule a program can see
 // goes back once with what it broke. A teammate reads all of it before anything is sent.
 
-const MODEL = 'claude-opus-5-5'
+// Two models, by what the job needs. Writing an email someone will send takes judgment and a good
+// ear, so drafts go to Sonnet. Reading an email that arrived (a line on what it says, a few
+// yes-or-no fields) happens on every email and is simple, so it goes to Haiku, at a small
+// fraction of the price.
+const WRITE_MODEL = 'claude-sonnet-5-5'
+const READ_MODEL = 'claude-haiku-5-5'
 
 const SYSTEM = `You write emails for Proto, a group at Boston University for students who make things. A teammate tells you what they need from someone (a room, a form back, an answer, a sponsor's help) and you write the email they'll send. A teammate reads and edits everything you write; nothing is sent until they press Send.
 
@@ -125,7 +130,7 @@ async function draftWithRules<T extends Drafted>(
   for (let round = 1; round <= 2; round++) {
     const response = await call(() =>
       client.beta.messages.parse({
-        model: MODEL,
+        model: WRITE_MODEL,
         max_tokens: 16000,
         // A declined request is re-run on the fallback model the API picks, inside the same call.
         betas: ['server-side-fallback-2026-07-01'],
@@ -321,10 +326,11 @@ export async function readEmail(env: Env, context: ReadContext): Promise<MailRea
   ]
   const response = await call(() =>
     client.beta.messages.parse({
-      model: MODEL,
+      model: READ_MODEL,
+      // Room for a little thinking before the answer; at low effort it mostly skips it.
       max_tokens: 4000,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
+      // No `fallbacks` here: Haiku has no server-side fallback. A declined email throws below and
+      // is left unread, which the inbox shows as an email without a summary.
       output_config: { effort: 'low', format: betaZodOutputFormat(readingSchema) },
       system: READ_SYSTEM,
       messages: [{ role: 'user', content: sections.join('\n\n') }],

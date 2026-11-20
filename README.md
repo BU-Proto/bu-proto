@@ -103,7 +103,7 @@ Sends go out in batches of 100 inside the request, which is fine for a few thous
 
 ### Setting up Claude
 
-1. In the [Claude Console](https://platform.claude.com), make an API key for Proto (Settings → API keys). Every draft, and the reading of every email the Inbox receives, is billed to that key's account; each is one request to `claude-opus-5-5` ($4 per million tokens in, $20 out), which should come to a few cents for a draft and less for a reading. A spend limit on the workspace keeps it in check.
+1. In the [Claude Console](https://platform.claude.com), make an API key for Proto (Settings → API keys). Every draft, and the reading of every email the Inbox receives, is billed to that key's account; a draft is a request to `claude-sonnet-5-5` ($2 per million tokens in, $10 out), about a cent or two, and a reading is a request to `claude-haiku-5-5` ($0.10 in, $0.50 out), a small fraction of a cent. Both are set at the top of [`worker/lib/claude.ts`](worker/lib/claude.ts). A spend limit on the workspace keeps it in check.
 2. `npx wrangler secret put ANTHROPIC_API_KEY`, unless the site already has it under that name (`npx wrangler secret list` shows the names). Leave it empty in `.dev.vars` unless you want real drafts locally (they bill the same way).
 
 ## Content
