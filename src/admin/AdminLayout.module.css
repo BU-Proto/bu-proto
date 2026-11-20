@@ -30,6 +30,10 @@
   --fill: rgb(var(--frost-rgb) / 0.08);
   --fill-hover: rgb(var(--frost-rgb) / 0.13);
   --placeholder: rgb(var(--frost-rgb) / 0.46);
+  /* The sidebar is the darkest ground, so its fills are stronger than a panel's to show as much:
+     pointing at a link is plain to see, and the current section is a clear step above that. */
+  --side-hover: rgb(var(--frost-rgb) / 0.1);
+  --side-selected: rgb(var(--frost-rgb) / 0.16);
   /* The lit top edge a panel carries, as the site's slabs do. */
   --rim: inset 0 1px 0 rgb(var(--frost-rgb) / 0.06);
 
@@ -291,8 +295,8 @@
   right: 4px;
   left: 4px;
   border-radius: var(--radius-control);
-  background: var(--selected);
-  box-shadow: inset 0 0 0 1px var(--line);
+  background: var(--side-selected);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
   pointer-events: none;
 }
 
@@ -347,7 +351,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .navLink:not([aria-current='page']):hover {
-    background: var(--hover);
+    background: var(--side-hover);
     color: var(--ink);
   }
 }
@@ -378,7 +382,7 @@
 
 .accountButton:hover,
 .accountButton[aria-expanded='true'] {
-  background: var(--fill);
+  background: var(--side-hover);
 }
 
 .avatar {
