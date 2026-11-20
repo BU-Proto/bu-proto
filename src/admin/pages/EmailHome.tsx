@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 import type { Ask, AskSetup, EmailCampaign, MailThread } from '../../../shared/api'
 import ui from '../admin.module.css'
@@ -8,12 +9,14 @@ import { describeAudience, plural } from './people/format'
 import shared from './people/people.module.css'
 import { useApi } from './people/useApi'
 import { AskState, SetupNote } from './Asks'
-import dash from './Dashboard.module.css'
 import styles from './EmailHome.module.css'
 
-// Email's landing page: what's waiting on us first, then the inbox, the asks in flight and the
-// lists, each a short look with the way into its own page. Nothing here is a tab; every page of
-// Email starts from this one.
+// Email's landing page: one line on where things stand, then four boxes of the same size (what's
+// waiting on us, the inbox, the asks in flight, the list sends), each a short look with the way
+// into its own page. Nothing here is a tab; every page of Email starts from this one.
+
+/** How many rows a box holds. Every box is this tall, full or empty (see --slots in the CSS). */
+const SLOTS = 5
 
 interface Todo {
   key: string
@@ -31,9 +34,17 @@ const fromAPerson = (thread: MailThread) => {
   return category !== 'automated' && category !== 'spam'
 }
 const VERDICTS = { yes: 'Answers what we asked', partly: 'Partly answers it', no: 'Doesn’t answer it yet' } as const
+/** "a", "a and b", "a, b and c". */
+const listOf = (parts: string[]) => (parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`)
 
 // Links from elsewhere used to open the composer here with its list picked; they still do.
 const COMPOSE_PARAMS = ['audience', 'track', 'status', 'event']
+
+const MORE = [
+  { to: '/admin/email/contacts', title: 'Contacts', detail: 'Who we ask things of, and your notes on each' },
+  { to: '/admin/email/facts', title: 'Proto facts', detail: 'What Claude knows about Proto when it writes' },
+  { to: '/admin/email/automatic', title: 'Automatic emails', detail: 'What the site sends on its own' },
+]
 
 export function Component() {
   const { search } = useLocation()
@@ -96,30 +107,31 @@ export function Component() {
     })),
   ]
 
-  // ---- The inbox, people first ------------------------------------------------------------
+  // ---- The inbox, people first; receipts and newsletters fold into the last slot -----------
   const live = threads.filter((thread) => thread.status !== 'done')
-  const people = live.filter(fromAPerson).slice(0, 5)
   const automatic = live.filter((thread) => !fromAPerson(thread)).length
+  const people = live.filter(fromAPerson).slice(0, automatic > 0 ? SLOTS - 1 : SLOTS)
   const unread = threads.filter((thread) => thread.unread > 0 && thread.status !== 'done').length
 
-  // ---- Asks still open --------------------------------------------------------------------
+  // ---- Asks still open, and the last list sends --------------------------------------------
   const inFlight = allAsks.filter((ask) => ask.status === 'draft' || ask.status === 'waiting')
   const waitingOn = allAsks.filter((ask) => ask.status === 'waiting' && !ask.lastReply).length
-
-  const sends = (campaigns.data?.items ?? []).slice(0, 3)
+  const sends = campaigns.data?.items ?? []
   const error = inbox.error ?? asks.error
 
-  // One line on where things stand, in place of a lede.
-  const summary = loaded
-    ? [
-        toAnswer.length > 0 && `${plural(toAnswer.length, 'email')} to answer`,
-        replied.length > 0 && `${plural(replied.length, 'reply', 'replies')} to your asks`,
-        waitingOn > 0 && `${waitingOn === 1 ? '1 ask is' : `${waitingOn} asks are`} waiting on someone else`,
-      ].filter(Boolean)
-    : []
+  // Where things stand, as the page's one large line.
+  const unwritten = drafts.filter((ask) => !ask.body).length
+  const toCheck = followUps.length + drafts.length - unwritten
+  const standing = [
+    toAnswer.length > 0 && `${plural(toAnswer.length, 'email')} to answer`,
+    replied.length > 0 && `${plural(replied.length, 'reply', 'replies')} to your asks`,
+    toCheck > 0 && `${plural(toCheck, 'draft')} to check`,
+    unwritten > 0 && `${plural(unwritten, 'ask')} to write`,
+    waitingOn > 0 && `${waitingOn === 1 ? '1 ask is' : `${waitingOn} asks are`} waiting on someone else`,
+  ].filter((part) => part !== false)
 
   return (
-    <div className={shared.page}>
+    <div className={`${shared.page} ${styles.home}`}>
       <PageHeader
         title="Email"
         count={unread ? `${unread} unread` : undefined}
@@ -135,212 +147,197 @@ export function Component() {
         }
       />
 
-      {loaded && (
-        <p className={styles.summary}>
-          {summary.length > 0 ? `${summary.join(', ').replace(/, ([^,]*)$/, ' and $1')}.` : 'All caught up. New mail and replies to asks show up here.'}
+      <div className={styles.top}>
+        <h2 className={styles.standing}>{!loaded ? ' ' : standing.length > 0 ? `${listOf(standing)}.` : 'All caught up.'}</h2>
+        <SetupNote setup={inbox.data?.setup ?? asks.data?.setup} />
+        <p className={shared.error} role="alert" hidden={!error}>
+          {error?.message}
         </p>
-      )}
-      <SetupNote setup={inbox.data?.setup ?? asks.data?.setup} />
-      <p className={shared.error} role="alert" hidden={!error}>
-        {error?.message}
-      </p>
+      </div>
 
-      <section className={dash.attention} aria-labelledby="todo-title">
-        <h2 id="todo-title" className={dash.heading}>
-          Waiting on you
-          {todo.length > 0 && <span className={ui.count}> {todo.length}</span>}
-        </h2>
-        {!loaded ? (
-          <Skeleton rows={2} />
-        ) : todo.length === 0 ? (
-          <p className={dash.clear}>Nothing right now. Emails that need an answer, replies to asks and drafts to check show up here.</p>
-        ) : (
-          <ul className={dash.rows}>
-            {todo.map((item) => (
+      <div className={styles.boxes}>
+        <Box id="todo" title="Waiting on you" count={todo.length} ready={loaded} scrolls>
+          {todo.length === 0 ? (
+            <Empty title="Nothing waiting on you">Emails that need an answer, replies to asks and drafts to check show up here.</Empty>
+          ) : (
+            todo.map((item) => (
               <li key={item.key}>
-                <Link className={dash.row} to={item.to}>
-                  <span className={dash.pip} aria-hidden="true" />
-                  <span className={dash.rowText}>
-                    <span className={dash.rowTitle}>{item.text}</span>
-                    {item.detail && <span className={dash.rowDetail}>{item.detail}</span>}
+                <Link className={styles.row} to={item.to}>
+                  <span className={styles.lead}>
+                    <span className={styles.dot} />
                   </span>
-                  {item.aside && <span className={`${dash.rowAside} ${dash.rowDetail}`}>{item.aside}</span>}
-                  <ChevronRightIcon className={dash.go} />
+                  <span className={styles.text}>
+                    <span className={styles.title}>{item.text}</span>
+                    {item.detail && <span className={styles.detail}>{item.detail}</span>}
+                  </span>
+                  {item.aside && <span className={styles.aside}>{item.aside}</span>}
                 </Link>
               </li>
-            ))}
-          </ul>
-        )}
-      </section>
+            ))
+          )}
+        </Box>
 
-      <div className={styles.pair}>
-        <section className={ui.panelFlush} aria-labelledby="inbox-title">
-          <div className={ui.flushHead}>
-            <h2 id="inbox-title" className={ui.panelTitle}>
-              Inbox
-            </h2>
-            <span className={ui.flushStatus} />
-            <Link className={`${ui.ghost} ${ui.small}`} to="/admin/email/inbox">
-              All mail
-            </Link>
-          </div>
-          {!inbox.data ? (
-            <Skeleton rows={3} flush />
-          ) : people.length === 0 && automatic === 0 ? (
-            <p className={styles.quiet}>No mail yet. Email to any address at proto.boston lands here.</p>
+        <Box id="inbox" title="Inbox" count={live.length} ready={Boolean(inbox.data)} more={{ to: '/admin/email/inbox', label: 'All mail' }}>
+          {people.length === 0 && automatic === 0 ? (
+            <Empty title="No mail yet">Email to any address at proto.boston lands here.</Empty>
           ) : (
-            <ul className={dash.rows}>
+            <>
               {people.map((thread) => (
                 <li key={thread.id}>
-                  <Link className={dash.row} to={`/admin/email/inbox/${thread.id}`} data-unread={thread.unread > 0 || undefined}>
-                    <span className={ui.avatar} aria-hidden="true">
-                      {who(thread).slice(0, 1).toUpperCase()}
-                    </span>
-                    <span className={dash.rowText}>
-                      <span className={`${dash.rowTitle} ${styles.title}`}>
+                  <Link className={styles.row} to={`/admin/email/inbox/${thread.id}`} data-unread={thread.unread > 0 || undefined}>
+                    <span className={styles.lead}>{thread.unread > 0 && <span className={styles.dot} aria-label="Unread" />}</span>
+                    <span className={styles.text}>
+                      <span className={styles.title}>
                         {who(thread)}
-                        <span className={styles.subject}>{thread.subject}</span>
+                        <span className={styles.second}>{thread.subject}</span>
                       </span>
-                      <span className={dash.rowDetail}>
+                      <span className={styles.detail}>
                         {thread.latest?.direction === 'out' ? `You: ${thread.latest.snippet}` : thread.latest?.reading?.summary || thread.latest?.snippet}
                       </span>
                     </span>
-                    <span className={`${dash.rowAside} ${dash.rowDetail}`}>
-                      {thread.unread > 0 && <span className={styles.unread}>Unread</span>}
-                      {formatRelative(thread.lastMessageAt)}
-                    </span>
+                    <span className={styles.aside}>{formatRelative(thread.lastMessageAt)}</span>
                   </Link>
                 </li>
               ))}
               {automatic > 0 && (
                 <li>
-                  <Link className={`${dash.row} ${styles.tucked}`} to="/admin/email/inbox">
-                    <span className={dash.rowText}>
-                      <span className={dash.rowDetail}>
-                        And {plural(automatic, 'automatic email')}: receipts, notices and newsletters
-                      </span>
+                  <Link className={styles.row} to="/admin/email/inbox">
+                    <span className={styles.lead} />
+                    <span className={styles.text}>
+                      <span className={styles.detail}>And {plural(automatic, 'automatic email')}: receipts, notices and newsletters</span>
                     </span>
-                    <ChevronRightIcon className={dash.go} />
                   </Link>
                 </li>
               )}
-            </ul>
+            </>
           )}
-        </section>
+        </Box>
 
-        <section className={ui.panelFlush} aria-labelledby="asks-title">
-          <div className={ui.flushHead}>
-            <h2 id="asks-title" className={ui.panelTitle}>
-              Asks in flight
-            </h2>
-            <span className={ui.flushStatus} />
-            <Link className={`${ui.ghost} ${ui.small}`} to="/admin/email/asks">
-              All asks
-            </Link>
-          </div>
-          {!asks.data ? (
-            <Skeleton rows={3} flush />
-          ) : inFlight.length === 0 ? (
-            <div className={ui.empty}>
-              <h3>Nothing asked right now</h3>
-              <p>Need a room, a form back or a sponsor’s answer? Say it in a sentence and Claude drafts the email.</p>
-              <Link className={ui.button} to="/admin/email/asks/new">
-                <PlusIcon /> Ask someone
-              </Link>
-            </div>
+        <Box id="asks" title="Asks in flight" count={inFlight.length} ready={Boolean(asks.data)} more={{ to: '/admin/email/asks', label: 'All asks' }}>
+          {inFlight.length === 0 ? (
+            <Empty title="Nothing asked right now" action={{ to: '/admin/email/asks/new', label: 'Ask someone' }}>
+              Need a room, a form back or a sponsor’s answer? Say it in a sentence and Claude drafts the email.
+            </Empty>
           ) : (
-            <ul className={dash.rows}>
-              {inFlight.slice(0, 5).map((ask) => (
-                <li key={ask.id}>
-                  <Link className={dash.row} to={`/admin/email/asks/${ask.id}`}>
-                    <span className={dash.rowText}>
-                      <span className={dash.rowTitle}>
-                        {ask.toName}
-                        {ask.toOrganization && <span className={styles.subject}>{ask.toOrganization}</span>}
-                      </span>
-                      <span className={dash.rowDetail}>{firstLine(ask.request)}</span>
+            inFlight.slice(0, SLOTS).map((ask) => (
+              <li key={ask.id}>
+                <Link className={styles.row} to={`/admin/email/asks/${ask.id}`}>
+                  <span className={styles.text}>
+                    <span className={styles.title}>
+                      {ask.toName}
+                      {ask.toOrganization && <span className={styles.second}>{ask.toOrganization}</span>}
                     </span>
-                    <span className={dash.rowAside}>
-                      <AskState ask={ask} />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-
-      <div className={styles.pair}>
-        <section className={ui.panelFlush} aria-labelledby="lists-title">
-          <div className={ui.flushHead}>
-            <h2 id="lists-title" className={ui.panelTitle}>
-              Sent to lists
-            </h2>
-            <span className={ui.flushStatus} />
-            <Link className={`${ui.ghost} ${ui.small}`} to="/admin/email/compose">
-              Write to a list
-            </Link>
-          </div>
-          {!campaigns.data ? (
-            <Skeleton rows={2} flush />
-          ) : sends.length === 0 ? (
-            <p className={styles.quiet}>Nothing sent to a list yet. Members, a track, an event’s RSVPs or the fund list.</p>
-          ) : (
-            <ul className={dash.rows}>
-              {sends.map((send) => (
-                <li key={send.id}>
-                  <Link className={dash.row} to="/admin/email/compose">
-                    <span className={dash.rowText}>
-                      <span className={dash.rowTitle}>{send.subject}</span>
-                      <span className={dash.rowDetail}>
-                        {describeAudience(send.audience)}, {plural(send.recipientCount, 'person', 'people')}
-                        {send.status === 'logged' ? ', logged only' : send.failedCount > 0 ? `, ${send.failedCount} failed` : ''}
-                      </span>
-                    </span>
-                    <span className={`${dash.rowAside} ${dash.rowDetail}`}>{formatRelative(send.createdAt)}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <nav className={ui.panelFlush} aria-labelledby="more-title">
-          <div className={ui.flushHead}>
-            <h2 id="more-title" className={ui.panelTitle}>
-              Also in Email
-            </h2>
-          </div>
-          <ul className={dash.rows}>
-            {[
-              { to: '/admin/email/contacts', title: 'Contacts', detail: 'Who we ask things of, and your notes on each' },
-              { to: '/admin/email/facts', title: 'Proto facts', detail: 'What Claude knows about Proto when it writes' },
-              { to: '/admin/email/automatic', title: 'Automatic emails', detail: 'What the site sends on its own' },
-            ].map((link) => (
-              <li key={link.to}>
-                <Link className={dash.row} to={link.to}>
-                  <span className={dash.rowText}>
-                    <span className={dash.rowTitle}>{link.title}</span>
-                    <span className={dash.rowDetail}>{link.detail}</span>
+                    <span className={styles.detail}>{firstLine(ask.request)}</span>
                   </span>
-                  <ChevronRightIcon className={dash.go} />
+                  <span className={styles.aside}>
+                    <AskState ask={ask} />
+                  </span>
                 </Link>
               </li>
-            ))}
-          </ul>
-        </nav>
+            ))
+          )}
+        </Box>
+
+        <Box id="lists" title="Sent to lists" count={sends.length} ready={Boolean(campaigns.data)} more={{ to: '/admin/email/compose', label: 'All sends' }}>
+          {sends.length === 0 ? (
+            <Empty title="Nothing sent to a list yet" action={{ to: '/admin/email/compose', label: 'Write to a list' }}>
+              One email to all members, a track, an event’s RSVPs or the fund list.
+            </Empty>
+          ) : (
+            sends.slice(0, SLOTS).map((send) => (
+              <li key={send.id}>
+                <Link className={styles.row} to="/admin/email/compose">
+                  <span className={styles.text}>
+                    <span className={styles.title}>{send.subject}</span>
+                    <span className={styles.detail}>
+                      {describeAudience(send.audience)}, {plural(send.recipientCount, 'person', 'people')}
+                      {send.status === 'logged' ? ', logged only' : send.failedCount > 0 ? `, ${send.failedCount} failed` : ''}
+                    </span>
+                  </span>
+                  <span className={styles.aside}>{formatRelative(send.createdAt)}</span>
+                </Link>
+              </li>
+            ))
+          )}
+        </Box>
       </div>
+
+      {/* The rest of Email: plain links on the ground, not a fifth box. */}
+      <nav aria-label="More in Email">
+        <ul className={styles.more}>
+          {MORE.map((link) => (
+            <li key={link.to}>
+              <Link className={styles.moreLink} to={link.to}>
+                <span className={styles.text}>
+                  <span className={styles.title}>{link.title}</span>
+                  <span className={styles.detail}>{link.detail}</span>
+                </span>
+                <ChevronRightIcon className={styles.go} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   )
 }
 
-function Skeleton({ rows, flush = false }: { rows: number; flush?: boolean }) {
+interface BoxProps {
+  id: string
+  title: string
+  count: number
+  /** Its data has arrived; until then the box holds stand-in lines at the same size. */
+  ready: boolean
+  /** The way into the full page, at the head's far end. */
+  more?: { to: string; label: string }
+  /** Holds everything and scrolls inside itself past its slots, rather than cutting the list off. */
+  scrolls?: boolean
+  children: ReactNode
+}
+
+/** One of the four boxes: a head, then a body that is the same height whatever it holds. */
+function Box({ id, title, count, ready, more, scrolls, children }: BoxProps) {
   return (
-    <div className={flush ? styles.skeletonFlush : shared.panel} aria-hidden="true">
-      {Array.from({ length: rows }, (_, index) => (
-        <span key={index} className={ui.skeleton} style={{ width: index % 2 ? 220 : 320 }} />
-      ))}
-    </div>
+    <section className={styles.box} aria-labelledby={`${id}-title`}>
+      <div className={styles.head}>
+        <h2 id={`${id}-title`} className={styles.boxTitle}>
+          {title}
+          {ready && count > 0 && <span className={styles.boxCount}>{count}</span>}
+        </h2>
+        {more && (
+          <Link className={`${ui.ghost} ${ui.small}`} to={more.to}>
+            {more.label}
+          </Link>
+        )}
+      </div>
+      {ready ? (
+        <ul className={styles.body} data-scrolls={scrolls || undefined}>
+          {children}
+        </ul>
+      ) : (
+        <div className={styles.body} aria-hidden="true">
+          {[280, 200, 240].map((width) => (
+            <span key={width} className={styles.waiting}>
+              <span className={ui.skeleton} style={{ width }} />
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+/** A box with nothing in it: the same body, with what would show here and the way to start. */
+function Empty({ title, action, children }: { title: string; action?: { to: string; label: string }; children: ReactNode }) {
+  return (
+    <li className={styles.empty}>
+      <h3>{title}</h3>
+      <p>{children}</p>
+      {action && (
+        <Link className={`${ui.button} ${ui.small}`} to={action.to}>
+          {action.label}
+        </Link>
+      )}
+    </li>
   )
 }
