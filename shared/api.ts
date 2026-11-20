@@ -11,6 +11,7 @@
 // - Lists come back as { items: T[] }, single records as { item: T }.
 
 import { z } from 'zod'
+import { ADMIN_LEVELS, AREAS, type AccessLevel, type Area } from './access'
 import {
   APPLICATION_STATUSES,
   ASK_STATUSES,
@@ -28,6 +29,8 @@ import {
 } from './constants'
 
 export * from './constants'
+export * from './access'
+export * from './crm'
 
 // ---- Content the portal edits ---------------------------------------------------------------
 
@@ -592,12 +595,27 @@ export interface Me {
   avatarUrl: string | null
   /** Listed in the ADMIN_EMAILS secret: can't be removed in the portal. */
   isOwner: boolean
+  /** What they can change (see shared/access.ts). Owners are 'owner'. */
+  level: AccessLevel
+  /** On the board, the areas their seat looks after. Empty for everyone else. */
+  areas: Area[]
+  /** What they're called in the portal ("Head of Community"), or ''. */
+  seat: string
 }
 
 /** GET /api/admin/admins → { items: Admin[] }  (owners first, then added admins) */
 export interface Admin {
   email: string
   isOwner: boolean
+  /** What they can change (see shared/access.ts). Owners are 'owner'. */
+  level: AccessLevel
+  /** On the board, the areas their seat looks after. Empty for everyone else. */
+  areas: Area[]
+  /** What they're called in the portal ("Head of Community"), or ''. Owners have none stored. */
+  seat: string
+  /** Name and picture from their latest Google sign-in; null until they've signed in. */
+  name: string | null
+  avatarUrl: string | null
   /** Email of the admin who added them; null for owners. */
   addedBy: string | null
   createdAt: string | null
@@ -610,15 +628,37 @@ export interface Admin {
  */
 export type InviteEmail = 'sent' | 'logged' | 'failed'
 
+const adminLevel = z.enum(ADMIN_LEVELS, 'Pick admin, board or team')
+const adminAreas = z.array(z.enum(AREAS, 'Unknown area')).max(AREAS.length)
+const adminSeat = z.string().trim().max(80, 'Keep it under 80 characters')
+
 /**
- * POST /api/admin/admins { email } → 201 { item: Admin, emailed: InviteEmail }, and emails them.
+ * POST /api/admin/admins { email, level?, areas?, seat? } → 201 { item: Admin, emailed: InviteEmail },
+ * and emails them. Level defaults to admin; areas only count for the board.
  * POST /api/admin/admins/:email/invite → 200 { emailed: InviteEmail }: sends that email again,
  * at most once every 10 minutes per admin (429 sooner). Not for owners.
  * DELETE /api/admin/admins/:email → 204.
+ * All three need full access (owners and admins).
  */
 export const addAdminInput = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email('Not an email address').max(254)),
+  level: adminLevel.optional(),
+  areas: adminAreas.optional(),
+  seat: adminSeat.optional(),
 })
+
+export type AddAdminInput = z.input<typeof addAdminInput>
+
+/**
+ * PATCH /api/admin/admins/:email { level?, areas?, seat? } → 200 { item: Admin }. Owners can't be
+ * changed, and nobody changes their own level or areas (so nobody locks themselves out). Areas are
+ * kept only while they're on the board.
+ */
+export const updateAdminInput = z
+  .object({ level: adminLevel.optional(), areas: adminAreas.optional(), seat: adminSeat.optional() })
+  .refine((input) => input.level !== undefined || input.areas !== undefined || input.seat !== undefined, 'Nothing to change')
+
+export type UpdateAdminInput = z.input<typeof updateAdminInput>
 
 // ---- Portal: members, RSVPs, fund interest --------------------------------------------------
 
@@ -703,6 +743,10 @@ export interface Stats {
   /** Published wins that aren't samples: the number the site's record shows. */
   wins: number
   sampleWins: number
+  /** Everything waiting in the Inbox, across its queues (see worker/lib/queue.ts). */
+  queueWaiting: number
+  /** The signed-in admin's open follow-ups due today or earlier. */
+  followUpsDueMine: number
 }
 
 // ---- Portal: email ----------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import { FUND_AMOUNTS, FUND_STATUSES } from '../../../shared/constants'
 import ui from '../admin.module.css'
 import { MailIcon, TrashIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { useGated } from '../lib/access'
 import { useToast } from '../lib/toast'
 import { api } from '../../lib/api'
 import { ConfirmDialog } from './people/ConfirmDialog'
@@ -206,6 +207,7 @@ interface EntryProps {
 function Entry({ entry, onSaved, onDelete }: EntryProps) {
   const id = useId()
   const toast = useToast()
+  const locked = useGated()('fund')
   const [notes, setNotes] = useState(entry.notes)
   const [saving, setSaving] = useState<'status' | 'notes' | null>(null)
   const [error, setError] = useState('')
@@ -263,7 +265,8 @@ function Entry({ entry, onSaved, onDelete }: EntryProps) {
               className={ui.tab}
               data-tone={value}
               aria-pressed={entry.status === value}
-              disabled={saving !== null}
+              disabled={saving !== null || locked.disabled}
+              title={locked.title}
               onClick={() => entry.status !== value && patch('status', { status: value })}
             >
               {STATUS_LABELS[value]}
@@ -301,11 +304,11 @@ function Entry({ entry, onSaved, onDelete }: EntryProps) {
           onChange={(event) => setNotes(event.target.value)}
         />
         {notes !== entry.notes && (
-          <button type="button" className={`${ui.button} ${styles.saveNotes}`} disabled={saving !== null} onClick={() => patch('notes', { notes })}>
+          <button type="button" className={`${ui.button} ${styles.saveNotes}`} disabled={saving !== null || locked.disabled} title={locked.title} onClick={() => patch('notes', { notes })}>
             {saving === 'notes' ? 'Saving…' : 'Save notes'}
           </button>
         )}
-        <button type="button" className={`${ui.dangerGhost} ${styles.delete}`} aria-label={`Delete ${entry.name}’s entry`} onClick={onDelete}>
+        <button type="button" className={`${ui.dangerGhost} ${styles.delete}`} aria-label={`Delete ${entry.name}’s entry`} {...locked} onClick={onDelete}>
           <TrashIcon />
         </button>
       </div>

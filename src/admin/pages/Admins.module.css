@@ -1,58 +1,211 @@
-/* The form on the left; on a laptop, the note about owners fills the right of the panel. */
-.addLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
-  align-items: start;
-  gap: 16px 40px;
+/* ---- The people table ---------------------------------------------------------------------- */
+
+/* Their Google picture, the size of the initial disc it stands in for. */
+.picture {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-.owners {
-  margin-top: 26px;
+.who {
+  display: grid;
+  min-width: 0;
 }
 
-.addForm {
+.nameLine {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+/* The name opens the edit dialog: a button that looks like the row's title and, like a row's
+   link, takes the whole row as its target. */
+.open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.open:focus-visible::after {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.email {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+/* The board's dot, in the sky blue a seat gets elsewhere in the portal. */
+.board {
+  --tone: var(--sky);
+}
+
+.changes {
+  font-size: 13px;
+}
+
+/* ---- Who can change what ------------------------------------------------------------------- */
+
+/* The row's name is a header cell, but reads as a row title, not a column label. */
+.matrix .work {
+  height: 46px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: normal;
+}
+
+.legend {
   display: grid;
-  /* max-content and justify-content: start keep the button its own size instead of filling the row. */
-  grid-template-columns: minmax(0, 360px) max-content;
-  justify-content: start;
-  align-items: start;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--line-strong);
+  list-style: none;
+  font-size: 13px;
+}
+
+.legend li {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: baseline;
   gap: 12px;
 }
 
-/* Line the button up with the input, not the label above it. */
-.addForm > button {
-  margin-top: 26px;
+/* ---- The edit dialog ----------------------------------------------------------------------- */
+
+.dialog {
+  width: min(500px, calc(100vw - 32px));
 }
 
-@media (max-width: 860px) {
-  .addLayout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .owners {
-    margin-top: 0;
-  }
-}
-
-@media (max-width: 560px) {
-  .addForm {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .addForm > button {
-    justify-self: start;
-    margin-top: 0;
-  }
-}
-
-/* Plain text, not rowTitle: an email has no profile page to link to, so no hover colour. */
-.email {
-  font-weight: 500;
+.dialogEmail {
+  margin: -4px 0 0;
   overflow-wrap: anywhere;
+}
+
+.dialogFields {
+  display: grid;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.fieldset legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.fieldset legend + * {
+  clear: both;
+}
+
+.fieldset:disabled [role='group'],
+.fieldset:disabled .areas {
+  opacity: 0.55;
+}
+
+.fieldset:disabled button {
+  cursor: not-allowed;
+}
+
+.areas {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  min-height: 32px;
+  padding-block: 6px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.area input {
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--mint);
+}
+
+/* What the area covers, quieter than the seat's name. */
+.area > span:last-child {
+  font-size: 12.5px;
+}
+
+/* The status line takes no room until it has something to say. */
+.dialogStatus > div {
+  min-height: 0;
+}
+
+/* Remove and resend on the left, away from Save, so neither is hit by a slip. */
+.dialogActions {
+  align-items: center;
 }
 
 .rowButtons {
   display: inline-flex;
-  gap: 8px;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-right: auto;
+  margin-left: -10px;
+}
+
+@media (max-width: 640px) {
+  /* Beats the table's own inset for a first cell, so the name lines up with the rows under it. */
+  .matrix th.work:first-child {
+    display: block;
+    height: auto;
+    padding: 0 0 6px;
+    border: 0;
+  }
+
+  .legend li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .rowButtons {
+    width: 100%;
+  }
 }

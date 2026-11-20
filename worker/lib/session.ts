@@ -1,5 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
+import { parseAreas, type AdminLevel } from '../../shared/access'
 import type { AppEnv } from '../types'
 import { randomToken, sha256 } from './crypto'
 import { ApiError } from './http'
@@ -101,12 +102,23 @@ export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
     throw new ApiError(401, 'You no longer have access.')
   }
 
+  const isOwner = owners(c.env).has(session.email.toLowerCase())
+  // Level and areas live on the admins row; owners have no row and change everything. Local
+  // sign-in's stand-in has no row either, and gets full access the same way.
+  const row = isOwner
+    ? null
+    : await c.env.DB.prepare('SELECT level, areas, seat FROM admins WHERE email = ?')
+        .bind(session.email.toLowerCase())
+        .first<{ level: AdminLevel; areas: string; seat: string }>()
   c.set('admin', {
     email: session.email,
     googleSub: session.google_sub,
     name: session.name,
     avatarUrl: session.avatar_url,
-    isOwner: owners(c.env).has(session.email.toLowerCase()),
+    isOwner,
+    level: isOwner ? 'owner' : (row?.level ?? 'admin'),
+    areas: row?.level === 'board' ? parseAreas(row.areas) : [],
+    seat: row?.seat ?? '',
   })
   c.executionCtx.waitUntil(
     c.env.DB.prepare("UPDATE admin_sessions SET last_seen_at = datetime('now') WHERE token_hash = ?").bind(hash).run(),

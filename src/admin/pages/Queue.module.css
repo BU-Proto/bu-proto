@@ -1,0 +1,346 @@
+/* The Inbox: the filter, the list in the email inbox's row style, and the selected item beside
+   it (under it on a phone). */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.waitingOnly {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.waitingOnly input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--mint);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+/* ---- The list ------------------------------------------------------------------------------ */
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A button that looks like the email inbox's row: picking one shows it beside the list. */
+.row {
+  display: grid;
+  grid-template-columns: 10px minmax(90px, 150px) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 14px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.list > li:last-child .row {
+  border-bottom: 0;
+}
+
+.row[aria-pressed='true'] {
+  background: var(--hover);
+  box-shadow: inset 2px 0 0 var(--mint);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover {
+    background: var(--hover);
+  }
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+}
+
+.row[data-waiting='true'] .dot {
+  background: var(--mint);
+}
+
+.who {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row[data-waiting='true'] .who,
+.row[data-waiting='true'] .subject {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.what {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.subject {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.snippet {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.when {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.keys {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 12px;
+}
+
+/* ---- The selected item ---------------------------------------------------------------------- */
+
+/* It stays in view while the list scrolls under the bar. */
+.detail {
+  position: sticky;
+  top: 76px;
+  overflow: visible;
+}
+
+.detailHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.bigAvatar {
+  width: 34px;
+  height: 34px;
+  font-size: 13px;
+}
+
+.detailWho {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.detailName {
+  margin: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailMeta {
+  overflow: hidden;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailBody {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.detailActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.subjectLine {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.loading {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+/* Label and value, a quiet label column. */
+.facts,
+.answers {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.facts > div {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.facts dt,
+.answers dt {
+  color: var(--ink-dim);
+}
+
+.facts dd,
+.answers dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A role's own questions read better stacked: the question, then the answer. */
+.answers {
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.answers > div {
+  display: grid;
+  gap: 3px;
+}
+
+.pre {
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.figure {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.out {
+  width: 12px;
+  height: 12px;
+  vertical-align: -1px;
+}
+
+.statusRow {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.statusLabel {
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+/* A fund request's status: the chosen one gets its colour's dot, as on the Fund page. */
+.status button[aria-pressed='true']::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tone, var(--ink-dim));
+}
+
+.status button[data-tone='new'] {
+  --tone: var(--info-ink);
+}
+
+.status button[data-tone='reviewing'] {
+  --tone: var(--warn-ink);
+}
+
+.status button[data-tone='approved'] {
+  --tone: var(--mint);
+}
+
+.status button[data-tone='declined'] {
+  --tone: var(--danger-ink);
+}
+
+.status button:disabled {
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detail {
+    position: static;
+    scroll-margin-top: 72px;
+  }
+}
+
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+  }
+
+  .what {
+    grid-column: 2 / -1;
+  }
+
+  /* When stays on the name's line, at its far end. */
+  .when {
+    grid-row: 1;
+    grid-column: 3;
+  }
+
+  .facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .row {
+    transition: background-color var(--quick) ease;
+  }
+}

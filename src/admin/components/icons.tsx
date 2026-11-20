@@ -272,3 +272,42 @@ export function ReturnIcon(props: IconProps) {
     </Svg>
   )
 }
+
+/** A tray with something in it: everything waiting on us. */
+export function InboxIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 13.5l2.1-6.6A2 2 0 0 1 8 5.5h8a2 2 0 0 1 1.9 1.4l2.1 6.6v4.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+      <path d="M4 13.5h4.5l1 2h5l1-2H20" />
+    </Svg>
+  )
+}
+
+/** A building: an org. */
+export function OrgIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 20V6.5A1.5 1.5 0 0 1 6.5 5h6A1.5 1.5 0 0 1 14 6.5V20M14 10h3.5a1.5 1.5 0 0 1 1.5 1.5V20M3.5 20h17M8 9h3M8 12.5h3M8 16h3" />
+    </Svg>
+  )
+}
+
+/** Three columns of falling height: deals moving through stages. */
+export function PipelineIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="4" y="4.5" width="4.5" height="15" rx="1.5" />
+      <rect x="9.75" y="4.5" width="4.5" height="10" rx="1.5" />
+      <rect x="15.5" y="4.5" width="4.5" height="6" rx="1.5" />
+    </Svg>
+  )
+}
+
+/** A pulse: what's been happening. */
+export function ActivityIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3.5 12h3.5l2.5-6 5 12 2.5-6h3.5" />
+    </Svg>
+  )
+}

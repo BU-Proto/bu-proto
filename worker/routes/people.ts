@@ -16,6 +16,7 @@ import {
   type Stats,
 } from '../../shared/api'
 import { bostonToday } from '../lib/dates'
+import { QUEUE_WAITING_TOTAL_SQL } from '../lib/queue'
 import { ApiError, idParam, readBody } from '../lib/http'
 import { owners } from '../lib/session'
 import type { AppEnv } from '../types'
@@ -372,9 +373,11 @@ app.get('/api/admin/stats', async (c) => {
            (SELECT COUNT(*) FROM role_applications) AS applicationsTotal,
            (SELECT COUNT(*) FROM mail_threads WHERE unread > 0 AND status != 'done') AS inboxUnread,
            (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 0) AS wins,
-           (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 1) AS sampleWins`,
+           (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 1) AS sampleWins,
+           (${QUEUE_WAITING_TOTAL_SQL}) AS queueWaiting,
+           (SELECT COUNT(*) FROM follow_ups WHERE done_at IS NULL AND due_on <= ?1 AND owner_email = ?2) AS followUpsDueMine`,
       )
-      .bind(today),
+      .bind(today, c.var.admin.email),
     db.prepare('SELECT email FROM admins'),
   ])
   // Owners may also have a row in admins; emails are case-insensitive.
@@ -394,6 +397,8 @@ app.get('/api/admin/stats', async (c) => {
     admins: emails.size,
     wins: row.wins,
     sampleWins: row.sampleWins,
+    queueWaiting: row.queueWaiting ?? 0,
+    followUpsDueMine: row.followUpsDueMine ?? 0,
   }
   return c.json(stats)
 })

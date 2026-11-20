@@ -1,8 +1,10 @@
 import { Hono } from 'hono'
+import { gateWrites } from './lib/access'
 import { draftFollowUps } from './lib/asks'
 import { errorBody } from './lib/http'
 import { runImports } from './lib/importers'
 import { requireAdmin, sameOrigin } from './lib/session'
+import activity from './routes/activity'
 import admins from './routes/admins'
 import asks from './routes/asks'
 import auth from './routes/auth'
@@ -14,7 +16,10 @@ import inbox from './routes/inbox'
 import imports from './routes/imports'
 import pages from './routes/pages'
 import people from './routes/people'
+import pipeline from './routes/pipeline'
 import publicForms from './routes/public'
+import relationships from './routes/relationships'
+import today from './routes/today'
 import uploads from './routes/uploads'
 import type { AppEnv } from './types'
 
@@ -30,6 +35,7 @@ const app = new Hono<AppEnv>()
 
 app.use('/api/*', sameOrigin)
 app.use('/api/admin/*', requireAdmin)
+app.use('/api/admin/*', gateWrites) // who can change what: lib/access.ts
 
 app.route('/', auth) //         /api/auth/*
 app.route('/', admins) //       /api/admin/me, /api/admin/admins
@@ -43,6 +49,10 @@ app.route('/', eventImport) //  /api/admin/event-import/* (Luma, Eventbrite page
 app.route('/', uploads) //      /api/admin/uploads (portal), /api/uploads/:name (the pictures)
 app.route('/', asks) //         /api/admin/asks/*, /api/admin/contacts, /api/admin/facts
 app.route('/', inbox) //        /api/inbound/resend (Resend's webhook), /api/admin/inbox/*
+app.route('/', relationships) // /api/admin/people*, /api/admin/orgs* (the CRM: shared/crm.ts)
+app.route('/', pipeline) //     /api/admin/deals*
+app.route('/', activity) //     /api/admin/interactions*, /follow-ups*, /intros*, /events/:id/guests*
+app.route('/', today) //        /api/admin/today, /api/admin/queue*
 app.route('/', pages) //        /privacy, /terms rendered for crawlers
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404))

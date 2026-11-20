@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { CONTENT_RESOURCES, RESOURCE_SPECS, type Member } from '../../../shared/api'
+import { CONTENT_RESOURCES, ORG_KIND_LABELS, PERSON_KIND_LABELS, RESOURCE_SPECS, type Org, type PersonSummary } from '../../../shared/api'
 import { api } from '../../lib/api'
 import type { ContentRow } from '../lib/content'
 import { COMMAND_KEYS } from '../lib/keys'
@@ -29,7 +29,8 @@ interface CommandMenuProps {
 
 interface Records {
   content: { resource: (typeof CONTENT_RESOURCES)[number]; rows: ContentRow[] }[]
-  members: Member[]
+  people: PersonSummary[]
+  orgs: Org[]
 }
 
 /** How well a command matches: lower is better, null is no match. Every typed word has to appear. */
@@ -47,7 +48,7 @@ const MAX_RECORDS = 8
 
 /**
  * The portal's command menu: every page, the things you can make, and (once you type) any event,
- * hackathon, win, board member or member by name. A modal <dialog>, so the browser traps focus
+ * hackathon, win, board member, person or org by name. A modal <dialog>, so the browser traps focus
  * and Escape closes it. It opens without animation, since it's almost always opened from the
  * keyboard, many times a session.
  */
@@ -87,11 +88,14 @@ export function CommandMenu({ open, onClose, onSignOut }: CommandMenuProps) {
             .catch(() => ({ resource, rows: [] as ContentRow[] })),
         ),
       ),
-      api<{ items: Member[] }>('/admin/members', { signal })
+      api<{ items: PersonSummary[] }>('/admin/people', { signal })
         .then((body) => body.items)
-        .catch(() => [] as Member[]),
-    ]).then(([content, members]) => {
-      if (!signal.aborted) setRecords({ content, members })
+        .catch(() => [] as PersonSummary[]),
+      api<{ items: Org[] }>('/admin/orgs', { signal })
+        .then((body) => body.items)
+        .catch(() => [] as Org[]),
+    ]).then(([content, people, orgs]) => {
+      if (!signal.aborted) setRecords({ content, people, orgs })
     })
     return () => controller.abort()
   }, [open])
@@ -126,14 +130,23 @@ export function CommandMenu({ open, onClose, onSignOut }: CommandMenuProps) {
               run: go(`/admin/${resource}/${row.id}`),
             }))
           }),
-          ...records.members.map((member) => ({
-            id: `members/${member.id}`,
+          ...records.people.map((person) => ({
+            id: `people/${person.key}`,
             group: 'Records' as const,
-            label: member.name,
-            hint: 'Member',
-            keywords: member.email,
-            icon: NAV_ITEMS.find((item) => item.to === '/admin/members')?.icon ?? SearchIcon,
-            run: go(`/admin/members/${member.id}`),
+            label: person.name,
+            hint: person.orgName ? `${PERSON_KIND_LABELS[person.kind]}, ${person.orgName}` : PERSON_KIND_LABELS[person.kind],
+            keywords: person.email,
+            icon: NAV_ITEMS.find((item) => item.to === '/admin/people')?.icon ?? SearchIcon,
+            run: go(`/admin/people/${person.key}`),
+          })),
+          ...records.orgs.map((org) => ({
+            id: `orgs/${org.id}`,
+            group: 'Records' as const,
+            label: org.name,
+            hint: ORG_KIND_LABELS[org.kind],
+            keywords: `${org.website} org`,
+            icon: NAV_ITEMS.find((item) => item.to === '/admin/orgs')?.icon ?? SearchIcon,
+            run: go(`/admin/orgs/${org.id}`),
           })),
         ]
       : []
@@ -225,7 +238,7 @@ export function CommandMenu({ open, onClose, onSignOut }: CommandMenuProps) {
               setQuery(event.target.value)
               setActive(0)
             }}
-            placeholder="Search pages, events, members…"
+            placeholder="Search pages, people, orgs, events…"
             role="combobox"
             aria-expanded="true"
             aria-controls={listId}
