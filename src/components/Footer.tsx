@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router'
 import { CONTACT_EMAIL, LEGAL_LINKS } from '../content/legal'
-import { BRAND, FOOTER, PROTO_LINKEDIN } from '../content/site'
+import { FOOTER, PROTO_LINKEDIN } from '../content/site'
+import { Logo } from './Logo'
 import styles from './Footer.module.css'
 
 /**
@@ -15,8 +16,7 @@ export function Footer() {
     <footer className={styles.footer} data-wide={wide || undefined}>
       <div className={styles.about}>
         <p className={styles.brand} data-fog-clear>
-          <img src={BRAND.seal} alt="" width={20} height={20} />
-          {BRAND.name}
+          <Logo />
         </p>
         <p className={styles.line} data-fog-clear>
           {FOOTER.line}

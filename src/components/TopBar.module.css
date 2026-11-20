@@ -31,22 +31,10 @@ header.top[class] {
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.45em;
   height: var(--bar-h);
   filter: drop-shadow(0 1px 8px rgb(var(--harbor-rgb) / 0.55));
-  /* The name and its seal are sized from the bar's height, so they grow and shrink with it. */
-  font-size: calc(var(--bar-h) * 0.42);
-  font-weight: 500;
-  letter-spacing: -0.015em;
-}
-
-/* The seal, cut out of the name's own colour. */
-.seal {
-  width: 1.45em;
-  height: 1.45em;
-  background: currentColor;
-  -webkit-mask: var(--seal) center / contain no-repeat;
-  mask: var(--seal) center / contain no-repeat;
+  /* The logo is sized from the bar's height, so it grows and shrinks with it. */
+  font-size: calc(var(--bar-h) * 0.62);
 }
 
 /* The pill, centred on the bar whatever stands at either end. */

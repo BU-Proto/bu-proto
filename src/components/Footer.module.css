@@ -36,11 +36,10 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
   margin: 0;
   color: var(--ink);
-  font-size: 15px;
-  font-weight: 500;
+  /* The logo's height. */
+  font-size: 24px;
 }
 
 .line {
