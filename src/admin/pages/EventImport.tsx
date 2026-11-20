@@ -5,6 +5,7 @@ import { ApiError, api } from '../../lib/api'
 import admin from '../admin.module.css'
 import { StatusLine, type StatusTone } from '../components/bits'
 import { PageHeader } from '../components/PageHeader'
+import { useGated } from '../lib/access'
 import styles from './EventImport.module.css'
 
 // One event page to an event draft. Look up shows what the draft would be; importing makes it
@@ -30,6 +31,7 @@ export function Component() {
   const [url, setUrl] = useState('')
   const [preview, setPreview] = useState<EventImportPreview | null>(null)
   const [busy, setBusy] = useState<'lookup' | 'import' | null>(null)
+  const locked = useGated()('community')
   const [notice, setNotice] = useState<{ tone: StatusTone; text: string } | null>(null)
   // Set once the site turned us away: then the page's source comes from the admin's browser.
   const [blocked, setBlocked] = useState(false)
@@ -191,7 +193,7 @@ export function Component() {
                   </Link>
                 </p>
               ) : (
-                <button type="button" className={admin.primary} onClick={importDraft} disabled={busy !== null}>
+                <button type="button" className={admin.primary} onClick={importDraft} disabled={busy !== null || locked.disabled} title={locked.title}>
                   {busy === 'import' ? 'Importing…' : 'Import as draft'}
                 </button>
               )}

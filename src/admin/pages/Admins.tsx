@@ -1,13 +1,30 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { useLoaderData, useRevalidator } from 'react-router'
+import {
+  ADMIN_LEVEL_LABELS,
+  ADMIN_LEVELS,
+  AREA_COVERS,
+  AREA_LABELS,
+  AREA_SEATS,
+  AREAS,
+  canChange,
+  type Access,
+  type AccessLevel,
+  type AdminLevel,
+  type Area,
+  type Gate,
+} from '../../../shared/access'
 import type { Admin, InviteEmail } from '../../../shared/api'
 import { api, ApiError } from '../../lib/api'
 import admin from '../admin.module.css'
 import { StatusLine, type StatusTone } from '../components/bits'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Field } from '../components/Field'
+import { ChevronRightIcon, PlusIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { useGated } from '../lib/access'
 import { formatRelative, formatTimestamp } from '../lib/format'
+import { useToast } from '../lib/toast'
 import { messageFor, useAuthGuard, useSession } from '../lib/session'
 import type { adminsLoader } from '../loaders'
 import styles from './Admins.module.css'
@@ -35,63 +52,74 @@ function inviteStatus(email: string, emailed: InviteEmail, added: boolean): { to
   }
 }
 
+/** One line on each level, under the picker and in the table's legend. */
+const LEVEL_NOTES: Record<AccessLevel, string> = {
+  owner: 'Changes everything. Set in the Worker’s ADMIN_EMAILS, so nobody can lock them out from here.',
+  admin: 'Changes everything, including who has access.',
+  board: 'Shared work, plus the areas their seat looks after.',
+  team: 'Shared work only. For scouts, event helpers and anyone helping without a seat.',
+}
+
+/** The level's dot: owners and admins in mint, the board in sky, the team plain. */
+function LevelState({ level }: { level: AccessLevel }) {
+  return (
+    <span
+      className={level === 'board' ? `${admin.state} ${styles.board}` : admin.state}
+      data-tone={level === 'owner' || level === 'admin' ? 'live' : undefined}
+    >
+      {ADMIN_LEVEL_LABELS[level]}
+    </span>
+  )
+}
+
+/** "Everything, including Access", "Shared work, Fund", "Shared work". */
+function canChangeText(row: Pick<Admin, 'level' | 'areas'>): string {
+  if (row.level === 'owner' || row.level === 'admin') return 'Everything, including Access'
+  if (row.level === 'team') return 'Shared work'
+  return row.areas.length ? ['Shared work', ...row.areas.map((area) => AREA_LABELS[area])].join(', ') : 'Shared work, no area yet'
+}
+
+/** An initial, from their Google name when we have it. */
+const initialOf = (row: Admin) => (row.name?.trim() || row.email).slice(0, 1).toUpperCase()
+
+/**
+ * The rows of the "who can change what" table, each with the gate behind it. Shared work comes
+ * first since it's what most people do most days.
+ */
+const MATRIX: { work: string; gate: Gate }[] = [
+  { work: 'People, orgs, activity, intros, follow-ups', gate: 'shared' },
+  { work: 'Asks, the Inbox, contacts, Proto facts', gate: 'shared' },
+  { work: 'Sign-ups, board interest, check-in, pictures', gate: 'shared' },
+  { work: 'Pipeline and logo walls', gate: 'partnerships' },
+  { work: 'Fund requests and payouts', gate: 'fund' },
+  { work: 'Events, hackathons, their imports, list email', gate: 'community' },
+  { work: 'Wins and the Devpost import', gate: 'scouting' },
+  { work: 'Board page, roles and applications, Access', gate: 'admin' },
+]
+
+const MATRIX_COLUMNS: { label: string; access: Access }[] = [
+  { label: 'Owners and admins', access: { level: 'admin', areas: [] } },
+  ...AREAS.map((area) => ({ label: AREA_LABELS[area], access: { level: 'board', areas: [area] } as Access })),
+  { label: 'Team', access: { level: 'team', areas: [] } },
+]
+
 export function Component() {
   const admins = useLoaderData<typeof adminsLoader>()
   const { me } = useSession()
   const guard = useAuthGuard()
+  const gated = useGated()
   const revalidator = useRevalidator()
+  const toast = useToast()
+  const locked = gated('admin')
 
-  const [email, setEmail] = useState('')
-  const [emailError, setEmailError] = useState('')
-  const [adding, setAdding] = useState(false)
-  const [status, setStatus] = useState<{ tone: StatusTone; text: string }>({ tone: 'info', text: '' })
+  // The dialog: adding someone, or one row being edited.
+  const [editing, setEditing] = useState<Admin | 'new' | null>(null)
   const [pending, setPending] = useState<Admin | null>(null)
   const [removing, setRemoving] = useState(false)
   const [removeError, setRemoveError] = useState('')
-  const [inviting, setInviting] = useState<string | null>(null)
 
   const isSelf = (row: Admin) => row.email.toLowerCase() === me.email.toLowerCase()
-
-  async function add(event: FormEvent) {
-    event.preventDefault()
-    // People paste "Name <name@bu.edu>" from mail clients; the API wants the bare address.
-    const value = email.trim().replace(/^.*<([^>]+)>\s*$/, '$1').trim()
-    setAdding(true)
-    setEmailError('')
-    setStatus({ tone: 'info', text: 'Adding…' })
-    try {
-      const { item, emailed } = await api<{ item: Admin; emailed: InviteEmail }>('/admin/admins', {
-        method: 'POST',
-        body: { email: value },
-      })
-      setEmail('')
-      setStatus(inviteStatus(item.email, emailed, true))
-      revalidator.revalidate()
-    } catch (error) {
-      if (guard(error)) return
-      const issue = error instanceof ApiError ? error.issues.email : undefined
-      setEmailError(issue ?? (error instanceof ApiError && error.status === 409 ? error.message : ''))
-      setStatus({ tone: 'error', text: messageFor(error) })
-    } finally {
-      setAdding(false)
-    }
-  }
-
-  async function resendInvite(row: Admin) {
-    setInviting(row.email)
-    setStatus({ tone: 'info', text: `Emailing ${row.email}…` })
-    try {
-      const { emailed } = await api<{ emailed: InviteEmail }>(`/admin/admins/${encodeURIComponent(row.email)}/invite`, {
-        method: 'POST',
-      })
-      setStatus(inviteStatus(row.email, emailed, false))
-    } catch (error) {
-      if (guard(error)) return
-      setStatus({ tone: 'error', text: messageFor(error) })
-    } finally {
-      setInviting(null)
-    }
-  }
+  const count = admins.length === 1 ? '1 person' : `${admins.length} people`
 
   async function remove() {
     if (!pending) return
@@ -99,7 +127,7 @@ export function Component() {
     setRemoveError('')
     try {
       await api(`/admin/admins/${encodeURIComponent(pending.email)}`, { method: 'DELETE' })
-      setStatus({ tone: 'ok', text: `Removed ${pending.email}. Their sessions end now.` })
+      toast(`Removed ${pending.email}. Their sessions end now.`)
       setPending(null)
       revalidator.revalidate()
     } catch (error) {
@@ -112,20 +140,277 @@ export function Component() {
 
   return (
     <div className={admin.page}>
-      <PageHeader title="Admins" lede="Everyone here can sign in to the portal with Google and change anything in it." />
+      <PageHeader
+        title="Access"
+        count={count}
+        lede="Everyone here signs in with Google and can read everything. Their level decides what they can change."
+        actions={
+          <button type="button" className={admin.primary} onClick={() => setEditing('new')} {...locked}>
+            <PlusIcon /> Add someone
+          </button>
+        }
+      />
 
-      <section className={admin.panel} aria-labelledby="add-admin-title">
-        <div className={admin.panelHead}>
-          <h2 id="add-admin-title" className={admin.panelTitle}>
-            Add an admin
+      <section className={admin.panelFlush} aria-label="People with access">
+        <table className={admin.table}>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Level</th>
+              <th scope="col">Seat</th>
+              <th scope="col">Can change</th>
+              <th scope="col">Last seen</th>
+              <th scope="col" className={admin.rowGo}>
+                <span className={admin.srOnly}>Edit</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {admins.map((row) => {
+              // Owners aren't edited here, and nobody without full access edits anyone.
+              const opens = !row.isOwner && !locked.disabled
+              const name = row.name?.trim() || row.email
+              return (
+                <tr key={row.email}>
+                  <td>
+                    <span className={admin.person}>
+                      {row.avatarUrl ? (
+                        <img className={styles.picture} src={row.avatarUrl} alt="" width={26} height={26} referrerPolicy="no-referrer" />
+                      ) : (
+                        <span className={admin.avatar} aria-hidden="true">
+                          {initialOf(row)}
+                        </span>
+                      )}
+                      <span className={styles.who}>
+                        <span className={styles.nameLine}>
+                          {opens ? (
+                            <button type="button" className={`${admin.rowTitle} ${styles.open}`} onClick={() => setEditing(row)}>
+                              {name}
+                            </button>
+                          ) : (
+                            <span className={admin.rowTitle}>{name}</span>
+                          )}
+                          {isSelf(row) && <span className={`${admin.flags} ${admin.flagMuted}`}>You</span>}
+                        </span>
+                        {row.name?.trim() && <span className={styles.email}>{row.email}</span>}
+                      </span>
+                    </span>
+                  </td>
+                  <td data-label="Level">
+                    <LevelState level={row.level} />
+                  </td>
+                  <td data-label="Seat" className={admin.soft}>
+                    {row.seat || <span className={admin.dim}>{row.isOwner ? 'Set in ADMIN_EMAILS' : 'No seat'}</span>}
+                  </td>
+                  <td data-label="Can change" className={`${admin.soft} ${styles.changes}`}>
+                    {canChangeText(row)}
+                  </td>
+                  <td data-label="Last seen" className={admin.soft}>
+                    {row.lastSeenAt ? (
+                      <time dateTime={row.lastSeenAt} title={formatTimestamp(row.lastSeenAt)}>
+                        {formatRelative(row.lastSeenAt)}
+                      </time>
+                    ) : (
+                      <span className={admin.dim}>Not yet</span>
+                    )}
+                  </td>
+                  <td className={admin.rowGo} aria-hidden="true">
+                    {opens && <ChevronRightIcon />}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </section>
+
+      <section className={admin.panelFlush} aria-labelledby="matrix-title">
+        <div className={admin.flushHead}>
+          <h2 id="matrix-title" className={admin.panelTitle}>
+            Who can change what
           </h2>
         </div>
-        <div className={styles.addLayout}>
-          <form className={styles.addForm} onSubmit={add} noValidate>
+        <table className={`${admin.table} ${styles.matrix}`}>
+          <thead>
+            <tr>
+              <th scope="col">
+                <span className={admin.srOnly}>Work</span>
+              </th>
+              {MATRIX_COLUMNS.map((column) => (
+                <th key={column.label} scope="col">
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {MATRIX.map((line) => (
+              <tr key={line.work}>
+                <th scope="row" className={styles.work}>
+                  {line.work}
+                </th>
+                {MATRIX_COLUMNS.map((column) =>
+                  canChange(column.access, line.gate) ? (
+                    <td key={column.label} data-label={column.label}>
+                      <span className={admin.state} data-tone="live">
+                        Edit
+                      </span>
+                    </td>
+                  ) : (
+                    <td key={column.label} data-label={column.label}>
+                      <span className={admin.state} data-tone="draft">
+                        Read
+                      </span>
+                    </td>
+                  ),
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <ul className={styles.legend}>
+          {(['owner', 'admin', 'board', 'team'] as const).map((level) => (
+            <li key={level}>
+              <LevelState level={level} />
+              <span className={admin.soft}>{LEVEL_NOTES[level]}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {editing && (
+        <AccessDialog
+          key={editing === 'new' ? 'new' : editing.email}
+          row={editing === 'new' ? null : editing}
+          self={editing !== 'new' && isSelf(editing)}
+          onClose={() => setEditing(null)}
+          onDone={(next) => {
+            setEditing(null)
+            toast(next)
+            revalidator.revalidate()
+          }}
+          onRemove={(row) => {
+            setEditing(null)
+            setRemoveError('')
+            setPending(row)
+          }}
+        />
+      )}
+
+      <ConfirmDialog
+        open={pending !== null}
+        title={`Remove ${pending?.email ?? ''}?`}
+        confirmLabel="Remove access"
+        danger
+        busy={removing}
+        error={removeError}
+        onConfirm={remove}
+        onCancel={() => setPending(null)}
+      >
+        <p>They’re signed out everywhere and can’t get back in unless someone adds them again.</p>
+      </ConfirmDialog>
+    </div>
+  )
+}
+
+interface AccessDialogProps {
+  /** The person being edited, or null to add someone. */
+  row: Admin | null
+  /** The signed-in admin's own row: their seat can change, their level and areas can't. */
+  self: boolean
+  onClose: () => void
+  onDone: (status: { tone: StatusTone; text: string }) => void
+  onRemove: (row: Admin) => void
+}
+
+/** Add someone, or change someone's level, areas and seat. Mounted only while open. */
+function AccessDialog({ row, self, onClose, onDone, onRemove }: AccessDialogProps) {
+  const ref = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
+  const guard = useAuthGuard()
+
+  const [email, setEmail] = useState('')
+  const [level, setLevel] = useState<AdminLevel>(row && row.level !== 'owner' ? row.level : 'admin')
+  const [areas, setAreas] = useState<Area[]>(row?.areas ?? [])
+  const [seat, setSeat] = useState(row?.seat ?? '')
+  const [issues, setIssues] = useState<Record<string, string>>({})
+  const [busy, setBusy] = useState<'save' | 'invite' | null>(null)
+  const [message, setMessage] = useState<{ tone: StatusTone; text: string }>({ tone: 'info', text: '' })
+
+  useEffect(() => {
+    ref.current?.showModal()
+  }, [])
+
+  const toggleArea = (area: Area) =>
+    setAreas((current) => (current.includes(area) ? current.filter((value) => value !== area) : AREAS.filter((value) => value === area || current.includes(value))))
+
+  async function save(event: FormEvent) {
+    event.preventDefault()
+    setBusy('save')
+    setIssues({})
+    setMessage({ tone: 'info', text: '' })
+    const chosen = level === 'board' ? areas : []
+    try {
+      if (row) {
+        // Your own level and areas stay put (the server says so too), so only the seat goes.
+        const body = self ? { seat } : { level, areas: chosen, seat }
+        await api<{ item: Admin }>(`/admin/admins/${encodeURIComponent(row.email)}`, { method: 'PATCH', body })
+        onDone({ tone: 'ok', text: `Saved ${row.name?.trim() || row.email}.` })
+      } else {
+        // People paste "Name <name@bu.edu>" from mail clients; the API wants the bare address.
+        const value = email.trim().replace(/^.*<([^>]+)>\s*$/, '$1').trim()
+        const { item, emailed } = await api<{ item: Admin; emailed: InviteEmail }>('/admin/admins', {
+          method: 'POST',
+          body: { email: value, level, areas: chosen, seat },
+        })
+        onDone(inviteStatus(item.email, emailed, true))
+      }
+    } catch (error) {
+      if (guard(error)) return
+      setIssues(error instanceof ApiError ? error.issues : {})
+      setMessage({ tone: 'error', text: messageFor(error) })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function resendInvite() {
+    if (!row) return
+    setBusy('invite')
+    setMessage({ tone: 'info', text: `Emailing ${row.email}…` })
+    try {
+      const { emailed } = await api<{ emailed: InviteEmail }>(`/admin/admins/${encodeURIComponent(row.email)}/invite`, { method: 'POST' })
+      setMessage(inviteStatus(row.email, emailed, false))
+    } catch (error) {
+      if (guard(error)) return
+      setMessage({ tone: 'error', text: messageFor(error) })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <dialog
+      ref={ref}
+      className={`${admin.dialog} ${styles.dialog}`}
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.preventDefault()
+        if (!busy) onClose()
+      }}
+    >
+      <form className={admin.dialogBody} onSubmit={save} noValidate>
+        <h2 id={titleId} className={admin.dialogTitle}>
+          {row ? row.name?.trim() || row.email : 'Add someone'}
+        </h2>
+        {row?.name?.trim() && <p className={`${admin.hint} ${styles.dialogEmail}`}>{row.email}</p>}
+
+        <div className={styles.dialogFields}>
+          {!row && (
             <Field
               label="Email"
-              hint="The address of their Google account (Gmail or BU). They sign in with that account."
-              error={emailError}
+              hint="The address of their Google account (Gmail or BU). They sign in with that account, and we email them the link."
+              error={issues.email}
             >
               {(control) => (
                 <input
@@ -136,112 +421,90 @@ export function Component() {
                   autoCapitalize="none"
                   spellCheck={false}
                   placeholder="name@bu.edu"
+                  autoFocus
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                 />
               )}
             </Field>
-            <button type="submit" className={admin.primary} disabled={adding || !email.trim()}>
-              {adding ? 'Adding…' : 'Add admin'}
-            </button>
-          </form>
-          <p className={`${admin.hint} ${styles.owners}`}>
-            Owners are listed in the <span className={admin.mono}>ADMIN_EMAILS</span> secret in the Worker’s settings, so
-            nobody can lock them out from here.
-          </p>
+          )}
+
+          <fieldset className={styles.fieldset} disabled={self}>
+            <legend className={admin.label}>Level</legend>
+            <div className={admin.tabs} role="group" aria-label="Level">
+              {ADMIN_LEVELS.map((value) => (
+                <button key={value} type="button" className={admin.tab} aria-pressed={level === value} onClick={() => setLevel(value)}>
+                  {ADMIN_LEVEL_LABELS[value]}
+                </button>
+              ))}
+            </div>
+            <p className={admin.hint}>{self ? 'You can’t change your own level. Another admin can.' : LEVEL_NOTES[level]}</p>
+            {issues.level && <p className={admin.error}>{issues.level}</p>}
+          </fieldset>
+
+          {level === 'board' && (
+            <fieldset className={styles.fieldset} disabled={self}>
+              <legend className={admin.label}>Areas they can change</legend>
+              <ul className={styles.areas}>
+                {AREAS.map((area) => (
+                  <li key={area}>
+                    <label className={styles.area}>
+                      <input type="checkbox" checked={areas.includes(area)} onChange={() => toggleArea(area)} />
+                      <span>{AREA_SEATS[area]}</span>
+                      <span className={admin.dim}>{AREA_COVERS[area]}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              {issues.areas && <p className={admin.error}>{issues.areas}</p>}
+            </fieldset>
+          )}
+
+          <Field label="Seat" hint="Shown next to their name, like Head of Community or Scout. Optional." error={issues.seat}>
+            {(control) => (
+              <input
+                {...control}
+                className={admin.input}
+                type="text"
+                maxLength={80}
+                autoComplete="off"
+                placeholder={level === 'board' && areas.length === 1 ? AREA_SEATS[areas[0]] : ''}
+                value={seat}
+                onChange={(event) => setSeat(event.target.value)}
+              />
+            )}
+          </Field>
         </div>
-        <StatusLine tone={status.tone}>{status.text}</StatusLine>
-      </section>
 
-      <div className={admin.panelFlush}>
-        <table className={admin.table}>
-          <thead>
-            <tr>
-              <th scope="col">Admin</th>
-              <th scope="col">Added</th>
-              <th scope="col">Last seen</th>
-              <th scope="col" className={admin.rowActions}>
-                <span className={admin.srOnly}>Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {admins.map((row) => (
-              <tr key={row.email}>
-                <td>
-                  <span className={styles.email}>{row.email}</span>
-                  {(row.isOwner || isSelf(row)) && (
-                    <span className={`${admin.flags} ${admin.flagMuted}`}>
-                      {row.isOwner && isSelf(row) ? 'Owner, you' : row.isOwner ? 'Owner' : 'You'}
-                    </span>
-                  )}
-                </td>
-                <td data-label="Added" className={admin.soft}>
-                  {row.isOwner ? (
-                    <span className={admin.dim}>In the Worker’s config</span>
-                  ) : (
-                    <>
-                      {row.createdAt && <span className={admin.figure}>{formatTimestamp(row.createdAt)}</span>}
-                      {row.addedBy && (
-                        <span className={admin.dim}>
-                          {row.createdAt ? ' by ' : 'By '}
-                          <span>{row.addedBy}</span>
-                        </span>
-                      )}
-                    </>
-                  )}
-                </td>
-                <td data-label="Last seen" className={admin.soft}>
-                  {row.lastSeenAt ? <time dateTime={row.lastSeenAt} title={formatTimestamp(row.lastSeenAt)}>{formatRelative(row.lastSeenAt)}</time> : 'Never signed in'}
-                </td>
-                <td className={admin.rowActions}>
-                  {row.isOwner ? (
-                    <span className={admin.dim}>Can’t be removed here</span>
-                  ) : isSelf(row) ? (
-                    <span className={admin.dim}>Another admin can remove you</span>
-                  ) : (
-                    <span className={styles.rowButtons}>
-                      <button
-                        type="button"
-                        className={`${admin.ghost} ${admin.small}`}
-                        aria-label={`Email ${row.email} the sign-in link again`}
-                        disabled={inviting !== null}
-                        onClick={() => resendInvite(row)}
-                      >
-                        {inviting === row.email ? 'Emailing…' : 'Resend email'}
-                      </button>
-                      <button
-                        type="button"
-                        className={`${admin.ghost} ${admin.small}`}
-                        aria-label={`Remove ${row.email}`}
-                        onClick={() => {
-                          setRemoveError('')
-                          setPending(row)
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        <div className={styles.dialogStatus}>
+          <StatusLine tone={message.tone}>{message.text}</StatusLine>
+        </div>
 
-      <ConfirmDialog
-        open={pending !== null}
-        title={`Remove ${pending?.email ?? ''}?`}
-        confirmLabel="Remove admin"
-        danger
-        busy={removing}
-        error={removeError}
-        onConfirm={remove}
-        onCancel={() => setPending(null)}
-      >
-        <p>They’re signed out everywhere and can’t get back in unless someone adds them again.</p>
-      </ConfirmDialog>
-    </div>
+        <div className={`${admin.dialogActions} ${styles.dialogActions}`}>
+          {row && !self && (
+            <span className={styles.rowButtons}>
+              <button type="button" className={`${admin.dangerGhost} ${admin.small}`} disabled={busy !== null} onClick={() => onRemove(row)}>
+                Remove access
+              </button>
+              <button
+                type="button"
+                className={`${admin.ghost} ${admin.small}`}
+                aria-label={`Email ${row.email} the sign-in link again`}
+                disabled={busy !== null}
+                onClick={resendInvite}
+              >
+                {busy === 'invite' ? 'Emailing…' : 'Resend email'}
+              </button>
+            </span>
+          )}
+          <button type="button" className={admin.button} onClick={onClose} disabled={busy !== null}>
+            Cancel
+          </button>
+          <button type="submit" className={admin.primary} disabled={busy !== null || (!row && !email.trim())}>
+            {busy === 'save' ? 'Saving…' : row ? 'Save' : 'Add and email them'}
+          </button>
+        </div>
+      </form>
+    </dialog>
   )
 }

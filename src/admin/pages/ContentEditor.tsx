@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useBlocker, useLoaderData, useNavigate } from 'react-router'
+import { CONTENT_GATES } from '../../../shared/access'
 import { api, ApiError } from '../../lib/api'
 import admin from '../admin.module.css'
 import { RowState } from '../components/bits'
@@ -8,6 +9,7 @@ import { ContentField } from '../components/ContentField'
 import { ArrowOutIcon, TrashIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { RsvpPanel } from '../components/RsvpPanel'
+import { useGated } from '../lib/access'
 import { useToast } from '../lib/toast'
 import { SAVE_KEYS, useSaveShortcut } from '../lib/keys'
 import { layoutFor, sectionsFor, sitePathFor, specFor, toForm, toPayload, type ContentRow, type FieldSection, type FormValues } from '../lib/content'
@@ -38,6 +40,8 @@ function Editor({ resource, item, rsvps }: Loaded) {
   const navigate = useNavigate()
   const guard = useAuthGuard()
   const toast = useToast()
+  // Saving covers publishing too: Published is one of the fields.
+  const locked = useGated()(CONTENT_GATES[resource])
   const formRef = useRef<HTMLFormElement>(null)
   // Set right before navigating away on purpose (after a create or delete), so the blocker lets it through.
   const leaving = useRef(false)
@@ -137,7 +141,7 @@ function Editor({ resource, item, rsvps }: Loaded) {
 
   // ⌘S saves what's on screen, through the form, so its own checks still run.
   const submit = useCallback(() => formRef.current?.requestSubmit(), [])
-  useSaveShortcut(submit, (dirty || !row) && !saving)
+  useSaveShortcut(submit, (dirty || !row) && !saving && !locked.disabled)
 
   function renderGrid(section: FieldSection) {
     return (
@@ -171,7 +175,7 @@ function Editor({ resource, item, rsvps }: Loaded) {
           <>
             {/* What the form is waiting on, said next to the button that settles it. */}
             <span className={styles.saveState} role="status">
-              {saving ? 'Saving…' : dirty ? 'Unsaved changes' : ''}
+              {saving ? 'Saving…' : locked.disabled ? 'Read only' : dirty ? 'Unsaved changes' : ''}
             </span>
             {dirty && !saving && (
               <button type="button" className={admin.ghost} onClick={discard}>
@@ -185,7 +189,7 @@ function Editor({ resource, item, rsvps }: Loaded) {
               </a>
             )}
             {/* Outside the form in the DOM (it rides in the bar), tied to it by id. */}
-            <button type="submit" form={FORM_ID} className={admin.primary} disabled={saving || (Boolean(row) && !dirty)} title={`${SAVE_KEYS} saves too`}>
+            <button type="submit" form={FORM_ID} className={admin.primary} disabled={saving || (Boolean(row) && !dirty) || locked.disabled} title={locked.title ?? `${SAVE_KEYS} saves too`}>
               {row ? 'Save changes' : `Create ${lower}`}
             </button>
           </>
@@ -252,6 +256,7 @@ function Editor({ resource, item, rsvps }: Loaded) {
             <button
               type="button"
               className={admin.dangerGhost}
+              {...locked}
               onClick={() => {
                 setDeleteError('')
                 setConfirmDelete(true)

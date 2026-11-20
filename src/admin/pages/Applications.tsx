@@ -6,6 +6,7 @@ import { api } from '../../lib/api'
 import ui from '../admin.module.css'
 import { ArrowOutIcon, DownloadIcon, TrashIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { useGated } from '../lib/access'
 import { useToast } from '../lib/toast'
 import { ConfirmDialog } from './people/ConfirmDialog'
 import { downloadFile, formatStampDate, stampToIso, toCsv } from './people/format'
@@ -217,6 +218,8 @@ interface EntryProps {
 function Entry({ entry, onSaved, onRoleFilled, onDelete }: EntryProps) {
   const id = useId()
   const toast = useToast()
+  // Roles and who gets them are for owners and admins.
+  const locked = useGated()('admin')
   const [notes, setNotes] = useState(entry.notes)
   const [saving, setSaving] = useState<'status' | 'notes' | 'role' | null>(null)
   const [error, setError] = useState('')
@@ -296,7 +299,8 @@ function Entry({ entry, onSaved, onRoleFilled, onDelete }: EntryProps) {
               className={ui.tab}
               data-tone={value}
               aria-pressed={entry.status === value}
-              disabled={saving !== null}
+              disabled={saving !== null || locked.disabled}
+              title={locked.title}
               onClick={() => entry.status !== value && patch('status', { status: value })}
             >
               {STATUS_LABELS[value]}
@@ -310,7 +314,7 @@ function Entry({ entry, onSaved, onRoleFilled, onDelete }: EntryProps) {
           <p>
             <strong>{entry.roleTitle}</strong> is still open on the site. Mark it filled to take it off the roles list and the board page.
           </p>
-          <button type="button" className={`${ui.button} ${ui.small}`} disabled={saving !== null} onClick={() => fillRole(true)}>
+          <button type="button" className={`${ui.button} ${ui.small}`} disabled={saving !== null || locked.disabled} title={locked.title} onClick={() => fillRole(true)}>
             {saving === 'role' ? 'Saving…' : 'Mark role filled'}
           </button>
         </div>
@@ -382,11 +386,11 @@ function Entry({ entry, onSaved, onRoleFilled, onDelete }: EntryProps) {
           onChange={(event) => setNotes(event.target.value)}
         />
         {notes !== entry.notes && (
-          <button type="button" className={`${ui.button} ${entries.saveNotes}`} disabled={saving !== null} onClick={() => patch('notes', { notes })}>
+          <button type="button" className={`${ui.button} ${entries.saveNotes}`} disabled={saving !== null || locked.disabled} title={locked.title} onClick={() => patch('notes', { notes })}>
             {saving === 'notes' ? 'Saving…' : 'Save notes'}
           </button>
         )}
-        <button type="button" className={`${ui.dangerGhost} ${entries.delete}`} aria-label={`Delete ${entry.name}’s application`} onClick={onDelete}>
+        <button type="button" className={`${ui.dangerGhost} ${entries.delete}`} aria-label={`Delete ${entry.name}’s application`} {...locked} onClick={onDelete}>
           <TrashIcon />
         </button>
       </div>

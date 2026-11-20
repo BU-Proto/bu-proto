@@ -16,6 +16,7 @@ import admin from '../admin.module.css'
 import { EmptyState, StatusLine, type StatusTone } from '../components/bits'
 import { ArrowOutIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { useGated } from '../lib/access'
 import { formatRelative, formatTimestamp } from '../lib/format'
 import styles from './HackathonImport.module.css'
 
@@ -103,6 +104,7 @@ export function Component() {
   const [loadError, setLoadError] = useState('')
   const [notice, setNotice] = useState<{ tone: StatusTone; text: string } | null>(null)
   const [busy, setBusy] = useState<number | 'run' | null>(null)
+  const locked = useGated()('community')
   const [nonce, setNonce] = useState(0)
 
   const query = new URLSearchParams({ status, ...(mode && { mode }), ...(near && { near: '1' }) }).toString()
@@ -203,7 +205,7 @@ export function Component() {
             <div className={styles.notice}>
               <StatusLine tone={notice?.tone}>{notice?.text}</StatusLine>
             </div>
-            <button type="button" className={admin.button} onClick={checkNow} disabled={busy === 'run'}>
+            <button type="button" className={admin.button} onClick={checkNow} disabled={busy === 'run' || locked.disabled} title={locked.title}>
               {busy === 'run' ? 'Checking…' : 'Check now'}
             </button>
           </>
@@ -343,7 +345,8 @@ export function Component() {
                         <button
                           type="button"
                           className={`${admin.button} ${admin.small}`}
-                          disabled={busy !== null}
+                          disabled={busy !== null || locked.disabled}
+                          title={locked.title}
                           onClick={() => add(candidate)}
                         >
                           Add as draft
@@ -351,7 +354,8 @@ export function Component() {
                         <button
                           type="button"
                           className={`${admin.ghost} ${admin.small}`}
-                          disabled={busy !== null}
+                          disabled={busy !== null || locked.disabled}
+                          title={locked.title}
                           onClick={() => act(candidate, 'dismiss')}
                         >
                           Dismiss
@@ -367,7 +371,7 @@ export function Component() {
                         <button
                           type="button"
                           className={`${admin.ghost} ${admin.small}`}
-                          disabled={busy !== null}
+                          disabled={busy !== null || locked.disabled}
                           onClick={() => act(candidate, 'restore')}
                           title="Its hackathon was deleted"
                         >
@@ -378,7 +382,8 @@ export function Component() {
                       <button
                         type="button"
                         className={`${admin.ghost} ${admin.small}`}
-                        disabled={busy !== null}
+                        disabled={busy !== null || locked.disabled}
+                        title={locked.title}
                         onClick={() => act(candidate, 'restore')}
                       >
                         Restore
