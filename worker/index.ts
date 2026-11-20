@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { gateWrites } from './lib/access'
 import { draftFollowUps } from './lib/asks'
 import { errorBody } from './lib/http'
 import { runImports } from './lib/importers'
@@ -34,6 +35,7 @@ const app = new Hono<AppEnv>()
 
 app.use('/api/*', sameOrigin)
 app.use('/api/admin/*', requireAdmin)
+app.use('/api/admin/*', gateWrites) // who can change what: lib/access.ts
 
 app.route('/', auth) //         /api/auth/*
 app.route('/', admins) //       /api/admin/me, /api/admin/admins

@@ -11,6 +11,8 @@
 // interactions, follow-ups, intros, asks and the one-to-one Inbox, triaging sign-ups and board
 // interest, checking people in at an event, and members' notes.
 
+import type { ContentResource } from './constants'
+
 export const ADMIN_LEVELS = ['admin', 'board', 'team'] as const
 export type AdminLevel = (typeof ADMIN_LEVELS)[number]
 export type AccessLevel = 'owner' | AdminLevel
@@ -78,6 +80,15 @@ export function whoCanChange(gate: Gate): string {
   if (gate === 'shared') return 'Anyone in the portal can change this.'
   if (gate === 'admin') return 'Only owners and admins can change this.'
   return `Only the ${AREA_SEATS[gate]} (or whoever holds ${AREA_LABELS[gate]}) and admins can change this.`
+}
+
+/** What changing each kind of site content needs. The board page and roles are seats, so admin. */
+export const CONTENT_GATES: Record<ContentResource, Gate> = {
+  events: 'community',
+  hackathons: 'community',
+  wins: 'scouting',
+  board: 'admin',
+  roles: 'admin',
 }
 
 /** "partnerships,fund" from the admins table → the areas it names, ignoring anything unknown. */
