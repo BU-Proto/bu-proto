@@ -6,6 +6,7 @@ import admin from '../admin.module.css'
 import { RowState } from '../components/bits'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ContentField } from '../components/ContentField'
+import { EventGuests } from '../components/EventGuests'
 import { ArrowOutIcon, TrashIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { RsvpPanel } from '../components/RsvpPanel'
@@ -267,6 +268,12 @@ function Editor({ resource, item, rsvps }: Loaded) {
           )}
         </aside>
       </form>
+
+      {resource === 'events' && row && (
+        <div className={styles.below}>
+          <EventGuests eventId={row.id} />
+        </div>
+      )}
 
       {resource === 'events' && row && rsvps && (
         <div className={styles.below}>
