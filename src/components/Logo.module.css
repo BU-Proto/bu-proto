@@ -1,0 +1,10 @@
+/* The lockup is 4822 by 1279, so its width follows from the height. */
+.logo {
+  display: block;
+  flex: none;
+  height: 1em;
+  aspect-ratio: 4822 / 1279;
+  background: currentColor;
+  -webkit-mask: var(--logo) center / contain no-repeat;
+  mask: var(--logo) center / contain no-repeat;
+}

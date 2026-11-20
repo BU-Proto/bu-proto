@@ -1,0 +1,13 @@
+/* The box the ribbon's path is laid out in. Whoever places it decides how it stacks: behind a
+   section's text, usually (z-index: -1 inside an isolated section). */
+.ribbon {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Only as big as the path's own bounds; the component sets where and how large. */
+.ribbon canvas {
+  position: absolute;
+  display: block;
+}

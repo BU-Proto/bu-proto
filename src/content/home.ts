@@ -82,6 +82,7 @@ export const JOURNEY = {
     { name: 'Build', text: 'Keep what works and cut what doesn’t, week after week, with people around to ask.' },
     { name: 'Ship', text: 'Take it to a hackathon or to demo night, and put it in front of people.' },
   ],
+  cta: { label: 'About Proto', href: '/about' },
 } as const
 
 export const RHYTHM_INTRO = {

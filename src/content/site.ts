@@ -5,7 +5,10 @@ import type { Sampleable } from './types'
 export const BRAND = {
   /** The name, everywhere: the top bar, the footer, tab titles. */
   name: 'Proto',
+  /** The mark alone, a flat filled shape on a square: icons, small marks. */
   seal: '/proto-seal.svg',
+  /** The logo: the mark and "Proto" in Satoshi Bold, outlined. A white file, for cutting out of any colour. */
+  logo: '/brand/proto-logo-horizontal-white.svg',
 } as const
 
 export interface NavItem {
