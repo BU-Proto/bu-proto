@@ -2,7 +2,7 @@
 // menu all read, so a page is named and found the same way everywhere.
 
 import type { ComponentType, SVGProps } from 'react'
-import { CalendarIcon, CodeIcon, CoinIcon, HomeIcon, KeyIcon, MailIcon, PeopleIcon, SeatIcon, SheetIcon, TrophyIcon } from './components/icons'
+import { ActivityIcon, CalendarIcon, CodeIcon, CoinIcon, HomeIcon, InboxIcon, KeyIcon, MailIcon, OrgIcon, PeopleIcon, PipelineIcon, SeatIcon, SheetIcon, TrophyIcon } from './components/icons'
 
 export type Icon = ComponentType<SVGProps<SVGSVGElement>>
 
@@ -35,11 +35,35 @@ export interface NavGroup {
   items: readonly NavItem[]
 }
 
-// Grouped the way people think about the portal: what's on the site, who's signed up, who runs it.
+// Grouped around how the team works: what needs doing today, the people and orgs we work with,
+// the things Proto runs, what's on the site, and who runs the portal.
 export const NAV: readonly NavGroup[] = [
-  { items: [{ to: '/admin', label: 'Overview', icon: HomeIcon, end: true }] },
   {
-    label: 'Site',
+    items: [
+      { to: '/admin', label: 'Today', icon: HomeIcon, end: true },
+      { to: '/admin/inbox', label: 'Inbox', icon: InboxIcon },
+    ],
+  },
+  {
+    label: 'Relationships',
+    items: [
+      { to: '/admin/people', label: 'People', icon: PeopleIcon, create: { to: '/admin/people?new=1', label: 'New person' } },
+      { to: '/admin/orgs', label: 'Orgs', icon: OrgIcon, create: { to: '/admin/orgs?new=1', label: 'New org' } },
+      { to: '/admin/pipeline', label: 'Pipeline', icon: PipelineIcon, create: { to: '/admin/pipeline?new=1', label: 'New deal' } },
+      {
+        to: '/admin/activity',
+        label: 'Activity',
+        icon: ActivityIcon,
+        tabs: [
+          { to: '/admin/activity', label: 'Log' },
+          { to: '/admin/activity/follow-ups', label: 'Follow-ups', command: 'Follow-ups' },
+          { to: '/admin/activity/intros', label: 'Intros', command: 'Intros' },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Programs',
     items: [
       {
         to: '/admin/events',
@@ -61,6 +85,7 @@ export const NAV: readonly NavGroup[] = [
         ],
         create: { to: '/admin/hackathons/new', label: 'New hackathon' },
       },
+      { to: '/admin/fund', label: 'Fund', icon: CoinIcon },
       {
         to: '/admin/wins',
         label: 'Wins',
@@ -70,16 +95,6 @@ export const NAV: readonly NavGroup[] = [
           { to: '/admin/wins/import', label: 'Import', command: 'Import a win' },
         ],
         create: { to: '/admin/wins/new', label: 'New win' },
-      },
-      {
-        to: '/admin/board',
-        label: 'Board',
-        icon: SeatIcon,
-        tabs: [
-          { to: '/admin/board', label: 'Board members' },
-          { to: '/admin/board/interest', label: 'Interest', command: 'Board interest' },
-        ],
-        create: { to: '/admin/board/new', label: 'New board member' },
       },
       {
         to: '/admin/roles',
@@ -94,19 +109,31 @@ export const NAV: readonly NavGroup[] = [
     ],
   },
   {
-    label: 'People',
+    label: 'Site',
     items: [
-      { to: '/admin/members', label: 'Members', icon: PeopleIcon },
-      { to: '/admin/fund', label: 'Fund', icon: CoinIcon },
+      {
+        to: '/admin/board',
+        label: 'Board',
+        icon: SeatIcon,
+        tabs: [
+          { to: '/admin/board', label: 'Board members' },
+          { to: '/admin/board/interest', label: 'Interest', command: 'Board interest' },
+        ],
+        create: { to: '/admin/board/new', label: 'New board member' },
+      },
+    ],
+  },
+  {
+    label: 'Outreach',
+    items: [
       {
         to: '/admin/email',
         label: 'Email',
         icon: MailIcon,
         pages: [
           { to: '/admin/email/compose', label: 'Write to a list', command: 'Write to a list' },
-          { to: '/admin/email/inbox', label: 'Inbox', command: 'Inbox' },
+          { to: '/admin/email/inbox', label: 'Conversations', command: 'Email conversations' },
           { to: '/admin/email/asks', label: 'Asks', command: 'Asks' },
-          { to: '/admin/email/contacts', label: 'Contacts', command: 'Email contacts' },
           { to: '/admin/email/facts', label: 'Proto facts', command: 'Proto facts' },
           { to: '/admin/email/automatic', label: 'Automatic', command: 'Automatic emails' },
         ],
@@ -114,7 +141,7 @@ export const NAV: readonly NavGroup[] = [
       },
     ],
   },
-  { label: 'Portal', items: [{ to: '/admin/admins', label: 'Admins', icon: KeyIcon }] },
+  { label: 'Portal', items: [{ to: '/admin/admins', label: 'Access', icon: KeyIcon }] },
 ]
 
 export const NAV_ITEMS: readonly NavItem[] = NAV.flatMap((group) => group.items)

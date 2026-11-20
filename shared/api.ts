@@ -11,6 +11,7 @@
 // - Lists come back as { items: T[] }, single records as { item: T }.
 
 import { z } from 'zod'
+import type { AccessLevel, Area } from './access'
 import {
   APPLICATION_STATUSES,
   ASK_STATUSES,
@@ -28,6 +29,8 @@ import {
 } from './constants'
 
 export * from './constants'
+export * from './access'
+export * from './crm'
 
 // ---- Content the portal edits ---------------------------------------------------------------
 
@@ -592,6 +595,12 @@ export interface Me {
   avatarUrl: string | null
   /** Listed in the ADMIN_EMAILS secret: can't be removed in the portal. */
   isOwner: boolean
+  /** What they can change (see shared/access.ts). Owners are 'owner'. */
+  level: AccessLevel
+  /** On the board, the areas their seat looks after. Empty for everyone else. */
+  areas: Area[]
+  /** What they're called in the portal ("Head of Community"), or ''. */
+  seat: string
 }
 
 /** GET /api/admin/admins → { items: Admin[] }  (owners first, then added admins) */

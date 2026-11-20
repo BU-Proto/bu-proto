@@ -53,8 +53,8 @@ async function sendInvite(c: Context<AppEnv>, email: string): Promise<InviteEmai
 }
 
 app.get('/api/admin/me', (c) => {
-  const { email, name, avatarUrl, isOwner } = c.var.admin
-  return c.json<Me>({ email, name, avatarUrl, isOwner })
+  const { email, name, avatarUrl, isOwner, level, areas, seat } = c.var.admin
+  return c.json<Me>({ email, name, avatarUrl, isOwner, level, areas, seat })
 })
 
 app.get('/api/admin/admins', async (c) => {

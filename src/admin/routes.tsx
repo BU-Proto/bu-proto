@@ -22,13 +22,20 @@ export const adminRoutes: RouteObject[] = [
         // Errors from any page render here, inside the shell, so the sidebar stays usable.
         lazy: { ErrorBoundary: async () => (await import('./components/RouteError')).RouteError },
         children: [
-          {
-            index: true,
-            lazy: {
-              loader: async () => (await loaders()).dashboardLoader,
-              Component: async () => (await import('./pages/Dashboard')).Component,
-            },
-          },
+          // Today: what needs doing (follow-ups, the Inbox, what's coming up). Replaces the old overview.
+          { index: true, lazy: () => import('./pages/Today') },
+          // The Inbox: everything waiting on us, from email replies to sign-ups to fund requests.
+          { path: 'inbox', lazy: () => import('./pages/Queue') },
+          // The CRM: people (members and contacts, keyed m12 / c4), orgs, deals and activity.
+          { path: 'people', lazy: () => import('./pages/People') },
+          { path: 'people/:key', lazy: () => import('./pages/Person') },
+          { path: 'orgs', lazy: () => import('./pages/Orgs') },
+          { path: 'orgs/:id', lazy: () => import('./pages/Org') },
+          { path: 'pipeline', lazy: () => import('./pages/Pipeline') },
+          { path: 'pipeline/:id', lazy: () => import('./pages/Deal') },
+          { path: 'activity', lazy: () => import('./pages/Activity') },
+          { path: 'activity/follow-ups', lazy: () => import('./pages/Activity') },
+          { path: 'activity/intros', lazy: () => import('./pages/Activity') },
           {
             path: 'admins',
             lazy: {
