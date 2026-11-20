@@ -3,7 +3,7 @@
 // per-property lazy), and so the component files only export components.
 
 import { data, type LoaderFunctionArgs, type ShouldRevalidateFunction } from 'react-router'
-import type { Admin, FundInterest, Me, Member, RoleApplication, Rsvp, Stats } from '../../shared/api'
+import type { Admin, Me, Rsvp, Stats } from '../../shared/api'
 import { api } from '../lib/api'
 import { specFor, type ContentRow } from './lib/content'
 import { isUnauthorized } from './lib/session'
@@ -18,28 +18,6 @@ export async function layoutLoader({ request }: LoaderFunctionArgs): Promise<{ m
     if (isUnauthorized(error)) return { me: null, stats: null }
     throw error
   }
-}
-
-export async function dashboardLoader({ request }: LoaderFunctionArgs) {
-  const { signal } = request
-  // The overview reads the lists themselves (they're small) so it can say what's next and who's
-  // new, not just how many. The counts are the one part it can't do without; a list that fails
-  // leaves its part of the page empty.
-  const list = <T>(path: string) =>
-    api<{ items: T[] }>(path, { signal })
-      .then((body) => body.items)
-      .catch(() => [] as T[])
-  const [stats, events, hackathons, members, fund, applications] = await Promise.all([
-    api<Stats>('/admin/stats', { signal }),
-    list<ContentRow>('/admin/content/events'),
-    list<ContentRow>('/admin/content/hackathons'),
-    list<Member>('/admin/members'),
-    list<FundInterest>('/admin/fund'),
-    list<RoleApplication>('/admin/applications'),
-  ])
-  // The time the page was loaded: "today" and "this week" are worked out from it, so a re-render
-  // can't land on a different day than the data did.
-  return { stats, events, hackathons, members, fund, applications, now: Date.now() }
 }
 
 export async function contentListLoader({ params, request }: LoaderFunctionArgs) {
