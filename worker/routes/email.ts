@@ -3,6 +3,7 @@ import {
   AUTOMATIC_EMAIL_KEYS,
   EMAIL_VARIABLES,
   emailAudience,
+  listDraftInput,
   previewEmailInput,
   sendEmailInput,
   testEmailInput,
@@ -12,7 +13,11 @@ import {
   type EmailAudience,
   type EmailCampaign,
   type EmailPreview,
+  type ListDraftResult,
 } from '../../shared/api'
+import { protoContext } from '../lib/asks'
+import { standInListEmail, writeListEmail, type ListContext, type ListDraft } from '../lib/claude'
+import { bostonToday } from '../lib/dates'
 import { applicationDraft, boardDraft, fundDraft, nextEvent, renderDraft, rsvpDraft, sendDraft, welcomeDraft } from '../lib/confirmations'
 import { randomToken } from '../lib/crypto'
 import {
@@ -289,6 +294,65 @@ app.post('/api/admin/email/automatic/:key/test', async (c) => {
   const result = await sendDraft(c.env, { ...draft, subject: `[Test] ${draft.subject}` }, origin, 'test')
   if (!result.logged && result.sent === 0) throw new ApiError(502, "Resend didn't accept the email. Check the server logs.")
   return c.json({ ok: true, logged: result.logged })
+})
+
+// ---- Drafting with Claude -----------------------------------------------------------------------
+
+/** Who an audience reaches, in words Claude can write to. */
+async function audienceWords(db: D1Database, audience: EmailAudience): Promise<string> {
+  switch (audience.type) {
+    case 'members':
+      return 'all members'
+    case 'track':
+      return `members on the ${audience.track} track`
+    case 'event': {
+      const event = await db.prepare('SELECT title, date FROM events WHERE id = ?').bind(audience.eventId).first<{ title: string; date: string }>()
+      if (!event) throw new ApiError(404, 'That event no longer exists.')
+      return `everyone who RSVP'd to ${event.title} (${event.date})`
+    }
+    case 'fund':
+      return audience.status ? `people on the microgrant interest list marked ${audience.status}` : 'everyone on the microgrant interest list'
+  }
+}
+
+// Claude writes the composer's email: nothing is sent or saved, the composer just fills in.
+app.post('/api/admin/email/draft', async (c) => {
+  const input = await readBody(c, listDraftInput)
+  const today = bostonToday()
+  const admin = c.var.admin
+  const variables = EMAIL_VARIABLES.filter((variable) => !variable.audiences || variable.audiences.includes(input.audience.type))
+  const [audienceText, proto] = await Promise.all([audienceWords(c.env.DB, input.audience), protoContext(c.env.DB, today)])
+  const context: ListContext = {
+    today,
+    teammate: { name: admin.name ?? '', email: admin.email },
+    audience: input.audience,
+    audienceText,
+    variables: variables.map(({ token, label }) => ({ token, label })),
+    brief: input.brief,
+    notes: input.notes,
+    previous: input.subject || input.body ? { subject: input.subject, body: input.body } : null,
+    ...proto,
+  }
+
+  let draft: ListDraft
+  let notice: string | undefined
+  if (c.env.ANTHROPIC_API_KEY) {
+    const written = await writeListEmail(c.env, context)
+    draft = written.draft
+    if (written.problems.length) notice = `Check the wording before you send: ${written.problems.join('; ')}.`
+  } else if (import.meta.env.DEV) {
+    draft = standInListEmail(context)
+    notice = 'Claude isn’t set up on this server (no ANTHROPIC_API_KEY), so this is a stand-in: your brief as typed.'
+  } else {
+    throw new ApiError(502, 'Claude isn’t set up yet. An owner adds the ANTHROPIC_API_KEY secret (see the README).')
+  }
+
+  // A variable this list doesn't fill would go out empty: say so.
+  const known = new Set(variables.map((variable) => variable.token.toLowerCase()))
+  const written = `${draft.subject}\n${draft.body}`.match(/\{\{\s*[A-Za-z]+\s*\}\}/g) ?? []
+  const strays = [...new Set(written.map((token) => token.replace(/\s+/g, '')))].filter((token) => !known.has(token.toLowerCase()))
+  const check = [...draft.check, ...strays.map((token) => `${token} isn't filled for this list, so it would go out empty`)]
+  return c.json({ subject: draft.subject.trim().slice(0, 150), body: draft.body.trim(), check, ...(notice && { notice }) } satisfies ListDraftResult)
 })
 
 app.get('/api/admin/email/campaigns', async (c) => {

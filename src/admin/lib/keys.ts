@@ -26,6 +26,29 @@ export function useSlashFocus(input: RefObject<HTMLInputElement | null>) {
   }, [input])
 }
 
+/** How sending is written on this machine: ⌘↵ or Ctrl ↵. */
+export const SEND_KEYS = isMac ? '⌘↵' : 'Ctrl ↵'
+
+/**
+ * Single-key shortcuts for a page, like a mail app's: each key runs its action unless you're
+ * typing in a field, a modifier is held, or a dialog is open.
+ */
+export function useKeys(actions: Record<string, () => void>, enabled = true) {
+  useEffect(() => {
+    if (!enabled) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return
+      if (document.querySelector('dialog[open]')) return
+      const action = actions[event.key]
+      if (!action) return
+      event.preventDefault()
+      action()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [actions, enabled])
+}
+
 /** ⌘S / Ctrl+S saves the form on screen instead of the web page. */
 export function useSaveShortcut(save: () => void, enabled = true) {
   useEffect(() => {

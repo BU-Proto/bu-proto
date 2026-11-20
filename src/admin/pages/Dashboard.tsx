@@ -164,7 +164,7 @@ export function Component() {
         title="Overview"
         actions={
           <>
-            <Link className={admin.button} to="/admin/email">
+            <Link className={admin.button} to="/admin/email/compose">
               <MailIcon /> Write an email
             </Link>
             <Link className={admin.primary} to="/admin/events/new">

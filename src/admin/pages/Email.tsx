@@ -1,10 +1,21 @@
 import { useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
-import { EMAIL_VARIABLES, type AdminEvent, type AudienceCount, type EmailAudience, type EmailCampaign, type FundStatus, type Track } from '../../../shared/api'
+import {
+  EMAIL_VARIABLES,
+  type AdminEvent,
+  type AudienceCount,
+  type EmailAudience,
+  type EmailCampaign,
+  type FundStatus,
+  type ListDraftInput,
+  type ListDraftResult,
+  type Track,
+} from '../../../shared/api'
 import { FUND_STATUSES, TRACKS } from '../../../shared/constants'
 import ui from '../admin.module.css'
 import { SendIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { useToast } from '../lib/toast'
 import { api } from '../../lib/api'
 import { daysUntil, formatDay } from '../../lib/dates'
 import { ConfirmDialog } from './people/ConfirmDialog'
@@ -222,7 +233,8 @@ export function Component() {
   return (
     <div className={`${shared.page} ${styles.root}`}>
       <PageHeader
-        title="Email"
+        title="Write to a list"
+        back={{ to: '/admin/email', label: 'Email' }}
         lede="Write once, send to a list. Every send is logged below."
         actions={
           <>
@@ -319,6 +331,17 @@ export function Component() {
             </p>
             {issues.audience && <p className={shared.fieldError}>{issues.audience}</p>}
           </fieldset>
+
+          <WriteWithClaude
+            audience={audience}
+            subject={subject}
+            body={body}
+            onDraft={(nextSubject, nextBody) => {
+              setSubject(nextSubject)
+              setBody(nextBody)
+              setIssues({})
+            }}
+          />
 
           <div className={`${shared.panel} ${styles.message}`}>
             <h2 className={shared.panelTitle}>Message</h2>
@@ -603,6 +626,111 @@ function SentResult({ campaign, audienceText }: { campaign: EmailCampaign; audie
         “{campaign.subject}” <span className={shared.dim}>to {audienceText}</span>
       </p>
       <p>{text}</p>
+    </div>
+  )
+}
+
+/**
+ * Say what the email is about and Claude writes it for this audience, with its {{variables}}, in
+ * plain human writing. It fills the composer and nothing else: the preview, the test and Send are
+ * as always. What's already in the composer is what it rewrites, and the toast can undo it.
+ */
+function WriteWithClaude({
+  audience,
+  subject,
+  body,
+  onDraft,
+}: {
+  audience: EmailAudience | null
+  subject: string
+  body: string
+  onDraft: (subject: string, body: string) => void
+}) {
+  const toast = useToast()
+  const [brief, setBrief] = useState('')
+  const [notes, setNotes] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [check, setCheck] = useState<string[]>([])
+  const [drafted, setDrafted] = useState(false)
+
+  const write = async () => {
+    if (busy) return
+    if (!audience) return setError('Choose who it goes to first: Claude writes for the list.')
+    if (!brief.trim()) return setError('Say what the email is about.')
+    setBusy(true)
+    setError('')
+    const before = { subject, body }
+    try {
+      const result = await api<ListDraftResult>('/admin/email/draft', {
+        body: { audience, brief, notes: drafted ? notes : '', subject, body } satisfies ListDraftInput,
+      })
+      onDraft(result.subject, result.body)
+      setCheck(result.check)
+      setDrafted(true)
+      setNotes('')
+      toast({
+        text: before.body.trim() ? 'Rewritten by Claude' : 'Draft ready',
+        detail: result.notice,
+        action: before.body.trim() || before.subject.trim() ? { label: 'Undo', onAction: () => onDraft(before.subject, before.body) } : undefined,
+      })
+    } catch (failure) {
+      setError(toApiError(failure).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className={`${shared.panel} ${styles.message}`}>
+      <h2 className={shared.panelTitle}>Write it with Claude</h2>
+      <label className={shared.field}>
+        <span className={shared.label}>What’s it about?</span>
+        <textarea
+          className={shared.input}
+          rows={3}
+          maxLength={4000}
+          value={brief}
+          placeholder="Hack night is back this Thursday at 7 in CDS 1750. Bring a laptop; first-timers welcome."
+          onChange={(event) => setBrief(event.target.value)}
+        />
+      </label>
+      {drafted && (
+        <label className={shared.field}>
+          <span className={shared.label}>Notes for Claude</span>
+          <input
+            className={shared.input}
+            maxLength={4000}
+            value={notes}
+            placeholder="Shorter. Mention the pizza."
+            onChange={(event) => setNotes(event.target.value)}
+          />
+        </label>
+      )}
+      <p className={shared.hint}>
+        It writes for the list you picked, with {'{{name}}'} and the other variables, from Proto’s facts and events. It never makes up a date or a
+        place: anything it can’t fill is listed below for you. Nothing is sent until you press Send.
+      </p>
+      <div>
+        <button type="button" className={ui.secondary} disabled={busy} onClick={write}>
+          {busy ? 'Claude is writing…' : drafted || body.trim() ? 'Rewrite it with Claude' : 'Write it with Claude'}
+        </button>
+      </div>
+      {error && (
+        <p className={shared.error} role="alert">
+          {error}
+        </p>
+      )}
+      {check.length > 0 && (
+        <div className={shared.hint}>
+          <p>Check before you send:</p>
+          <ul>
+            {check.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }

@@ -13,6 +13,7 @@
 import { z } from 'zod'
 import {
   APPLICATION_STATUSES,
+  ASK_STATUSES,
   BOARD_SEATS,
   EVENT_KINDS,
   FUND_AMOUNTS,
@@ -21,6 +22,7 @@ import {
   TRACKS,
   YEARS,
   type ApplicationStatus,
+  type AskStatus,
   type ContentResource,
   type FundStatus,
 } from './constants'
@@ -695,6 +697,8 @@ export interface Stats {
   /** Applications for a role nobody has looked at yet, and all of them. */
   applicationsNew: number
   applicationsTotal: number
+  /** Conversations with an email nobody has opened yet. */
+  inboxUnread: number
   admins: number
   /** Published wins that aren't samples: the number the site's record shows. */
   wins: number
@@ -739,6 +743,30 @@ export const testEmailInput = z.object({
 
 export type SendEmailInput = z.input<typeof sendEmailInput>
 export type TestEmailInput = z.input<typeof testEmailInput>
+
+/**
+ * POST /api/admin/email/draft → ListDraftResult: Claude writes (or rewrites) the composer's email
+ * for this audience, with its {{variables}}, in plain human writing. Nothing is sent or saved.
+ */
+export const listDraftInput = z.object({
+  audience: emailAudience,
+  /** What the email is about, in the teammate's words. */
+  brief: text(4000),
+  notes: optionalText(4000),
+  /** What's in the composer now, to rewrite. */
+  subject: optionalText(150),
+  body: optionalText(20000),
+})
+export type ListDraftInput = z.input<typeof listDraftInput>
+
+export interface ListDraftResult {
+  subject: string
+  body: string
+  /** What the teammate should fill in or double-check before sending. */
+  check: string[]
+  /** Set when the draft is the local stand-in, or still breaks a writing rule. */
+  notice?: string
+}
 
 /**
  * Placeholders the composer can insert into the subject or body; the Worker fills them in for
@@ -806,6 +834,281 @@ export interface EmailCampaign {
   sentBy: string
   createdAt: string
 }
+
+// ---- Portal: asks -----------------------------------------------------------------------------
+// Emails to people we need something from. A teammate says what they need, Claude drafts the
+// email, a teammate checks it and presses Send. Replies go to whoever
+// made the ask (Reply-To and Cc), so they mark it answered here.
+
+/** POST /api/admin/contacts, PATCH /api/admin/contacts/:id → { item: Contact } */
+export const contactInput = z.object({
+  name: text(120),
+  email: z.email('Enter an email'),
+  organization: optionalText(120),
+  /** What we know about them: what they handle, how they like to be asked. Claude reads it. */
+  notes: optionalText(2000),
+})
+export type ContactInput = z.input<typeof contactInput>
+
+/** GET /api/admin/contacts → { items: Contact[] } (by name) */
+export interface Contact {
+  id: number
+  name: string
+  email: string
+  organization: string
+  notes: string
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  /** How many asks went (or are going) to them. */
+  askCount: number
+}
+
+/** POST /api/admin/facts, PATCH /api/admin/facts/:id → { item: Fact } */
+export const factInput = z.object({
+  label: text(80),
+  value: text(2000),
+  /** Where it came from, so anyone can check it. */
+  source: optionalText(200),
+})
+export type FactInput = z.input<typeof factInput>
+
+/** GET /api/admin/facts → { items: Fact[] }: what Proto is, for Claude to write from. */
+export interface Fact {
+  id: number
+  label: string
+  value: string
+  source: string
+  updatedBy: string
+  updatedAt: string
+}
+
+/** Who an ask goes to: a saved contact, or someone new (saved as a contact on the way). */
+export const askRecipient = z.union([z.object({ contactId: z.number().int().positive() }), contactInput])
+
+/** POST /api/admin/asks → 201 { item: AskDetail }. The draft is asked for next. */
+export const newAskInput = z.object({
+  to: askRecipient,
+  /** What's needed, in the teammate's own words. */
+  request: text(4000),
+  /** Draft a follow-up when this many days pass with no reply (0 = never). */
+  followUpDays: z.number().int().min(0).max(60).default(5),
+})
+export type NewAskInput = z.input<typeof newAskInput>
+
+/**
+ * A question Claude needs answered. `remember`: the answer is a lasting fact about Proto, kept for
+ * next time under `factLabel` (an existing fact's name updates that fact; empty uses factLabelFor).
+ */
+export interface AskQuestion {
+  question: string
+  remember: boolean
+}
+
+/** What a teammate told Claude for an ask. */
+export interface AskAnswer {
+  question: string
+  answer: string
+  by: string
+  at: string
+}
+
+/**
+ * POST /api/admin/asks/:id/draft → { item: AskDetail, notice?: string }: Claude writes (or rewrites)
+ * the waiting email. Answers marked `remember` are kept as Proto facts.
+ */
+export const draftAskInput = z.object({
+  notes: optionalText(4000),
+  answers: z
+    .array(z.object({ question: text(500), answer: text(2000), remember: z.boolean(), factLabel: optionalText(80).optional() }))
+    .max(30)
+    .default([]),
+})
+export type DraftAskInput = z.input<typeof draftAskInput>
+
+/** PATCH /api/admin/asks/:id → { item: AskDetail }: a teammate's own changes. */
+export const askPatch = z
+  .object({
+    subject: optionalText(200),
+    body: optionalText(20000),
+    status: z.enum(ASK_STATUSES),
+    followUpDays: z.number().int().min(0).max(60),
+  })
+  .partial()
+export type AskPatch = z.input<typeof askPatch>
+
+/** POST /api/admin/asks/:id/send → { item: AskDetail, logged: boolean }: sends exactly this. */
+export const sendAskInput = z.object({ subject: text(200), body: text(20000) })
+export type SendAskInput = z.input<typeof sendAskInput>
+
+/** GET /api/admin/asks → { items: Ask[], setup: AskSetup } (newest first) */
+export interface Ask {
+  id: number
+  contactId: number | null
+  toName: string
+  toEmail: string
+  toOrganization: string
+  request: string
+  notes: string
+  /** The email waiting to go; empty when nothing is waiting. */
+  subject: string
+  body: string
+  draftKind: 'ask' | 'follow-up'
+  questions: AskQuestion[]
+  answers: AskAnswer[]
+  status: AskStatus
+  followUpDays: number
+  /** yyyy-mm-dd, while waiting for a reply. */
+  followUpDue: string | null
+  /** The latest reply, once one has come in, with Claude's reading of it (null until it has read it). */
+  lastReply: { at: string; threadId: number; reading: MailReading | null } | null
+  ownerEmail: string
+  ownerName: string
+  draftedAt: string | null
+  sentAt: string | null
+  closedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** GET /api/admin/asks/:id → { item: AskDetail } */
+export interface AskDetail extends Ask {
+  /** Its conversation once the first email has gone, replies included. */
+  threadId: number | null
+  messages: MailMessage[]
+}
+
+/** Whether the keys are in: without Claude's there are no drafts, without Resend's nothing leaves. */
+export interface AskSetup {
+  claude: boolean
+  resend: boolean
+  /** RESEND_WEBHOOK_SECRET is set: mail to proto.boston arrives in the inbox, so replies come back here. */
+  inbox: boolean
+}
+
+// ---- Portal: inbox ----------------------------------------------------------------------------
+// Every conversation by email. Mail to any address at proto.boston arrives through Resend's webhook;
+// each thread has its own reply address, so answers to what we sent come back onto it. Claude reads
+// every email that arrives and drafts replies on request; a teammate always presses Send.
+
+export const MAIL_STATUSES = ['open', 'waiting', 'done'] as const
+export type MailStatus = (typeof MAIL_STATUSES)[number]
+
+/** Claude's reading of an email that arrived. */
+export interface MailReading {
+  /** What it says and asks, in a sentence or two. */
+  summary: string
+  /** A person writing to us, an automatic email (receipts, notices), or spam. */
+  category: 'person' | 'automated' | 'spam'
+  needsReply: boolean
+  /** For a reply to an ask: does it give us what we asked for? null when it isn't one. */
+  answersAsk: 'yes' | 'partly' | 'no' | null
+  /** What they still need from us, or what's still missing for the ask, one line each. */
+  stillNeeded: string[]
+}
+
+export interface MailAttachment {
+  /** A received file's id at Resend (download through the portal); empty for a sent one. */
+  id: string
+  filename: string
+  contentType: string
+}
+
+export interface MailMessage {
+  id: number
+  threadId: number
+  direction: 'in' | 'out'
+  kind: 'message' | 'ask' | 'follow-up' | 'reply'
+  fromName: string
+  fromEmail: string
+  to: string[]
+  cc: string[]
+  subject: string
+  text: string
+  /** A received email's HTML (render it only in a sandboxed iframe), or empty. */
+  html: string
+  attachments: MailAttachment[]
+  status: 'received' | 'sent' | 'failed' | 'logged'
+  sentBy: string
+  reading: MailReading | null
+  createdAt: string
+}
+
+/** GET /api/admin/inbox?status=… → { items: MailThread[], setup: AskSetup } (latest first) */
+export interface MailThread {
+  id: number
+  subject: string
+  status: MailStatus
+  unread: number
+  contactId: number | null
+  askId: number | null
+  /** Who it's with: the other side's name and address, from the latest email. */
+  withName: string
+  withEmail: string
+  messageCount: number
+  /** The latest email, for the list. */
+  latest: { direction: 'in' | 'out'; snippet: string; at: string; reading: MailReading | null } | null
+  /** A reply is being written. */
+  hasDraft: boolean
+  lastMessageAt: string
+}
+
+/** GET /api/admin/inbox/:id → { item: MailThreadDetail, setup: AskSetup } */
+export interface MailThreadDetail extends MailThread {
+  messages: MailMessage[]
+  draftBody: string
+  draftNotes: string
+  draftQuestions: string[]
+  draftedAt: string | null
+  /** Who a reply goes to by default: the latest sender, and the others on that email. */
+  replyTo: string[]
+  replyCc: string[]
+  ask: { id: number; request: string; status: AskStatus } | null
+}
+
+/** PATCH /api/admin/inbox/:id → { item }: status, or the draft as a teammate edited it. */
+export const threadPatch = z
+  .object({ status: z.enum(MAIL_STATUSES), draftBody: optionalText(20000), read: z.literal(true) })
+  .partial()
+export type ThreadPatch = z.input<typeof threadPatch>
+
+/** POST /api/admin/inbox/:id/draft → { item, notice? }: Claude writes the reply to the latest email. */
+export const replyDraftInput = z.object({
+  notes: optionalText(4000),
+  /** Answers to the questions Claude asked last time. */
+  answers: z
+    .array(z.object({ question: text(500), answer: text(2000), remember: z.boolean(), factLabel: optionalText(80).optional() }))
+    .max(20)
+    .default([]),
+})
+export type ReplyDraftInput = z.input<typeof replyDraftInput>
+
+const addressList = z.array(z.email('Not an email address')).max(20)
+
+/** POST /api/admin/inbox/:id/send → { item, logged }: sends the reply in the same conversation. */
+export const replySendInput = z.object({
+  to: addressList.min(1, 'Add who it goes to'),
+  cc: addressList.default([]),
+  subject: text(200),
+  body: text(20000),
+})
+export type ReplySendInput = z.input<typeof replySendInput>
+
+/** GET /api/admin/inbox/sent → { items: SentMail[] } (newest first): every one-to-one email sent, for the Email page's history. */
+export interface SentMail extends MailMessage {
+  askId: number | null
+  withName: string
+}
+
+/** POST /api/admin/inbox/dev-receive (local dev only): an email as if it had arrived, to try the inbox without Resend. */
+export const devReceiveInput = z.object({
+  fromName: optionalText(120),
+  fromEmail: z.email(),
+  to: z.email().optional(),
+  subject: text(200),
+  text: text(20000),
+})
+export type DevReceiveInput = z.input<typeof devReceiveInput>
 
 // ---- Errors -----------------------------------------------------------------------------------
 

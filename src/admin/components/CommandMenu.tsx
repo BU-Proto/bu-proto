@@ -100,7 +100,7 @@ export function CommandMenu({ open, onClose, onSignOut }: CommandMenuProps) {
     const go = (to: string) => () => navigate(to)
     const pages: Command[] = NAV_ITEMS.flatMap((item) => [
       { id: item.to, group: 'Go to' as const, label: item.label, icon: item.icon, run: go(item.to) },
-      ...(item.tabs ?? []).slice(1).map((tab) => ({
+      ...[...(item.tabs ?? []).slice(1), ...(item.pages ?? [])].map((tab) => ({
         id: tab.to,
         group: 'Go to' as const,
         label: tab.command ?? `${item.label}: ${tab.label}`,

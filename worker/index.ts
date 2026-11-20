@@ -1,13 +1,16 @@
 import { Hono } from 'hono'
+import { draftFollowUps } from './lib/asks'
 import { errorBody } from './lib/http'
 import { runImports } from './lib/importers'
 import { requireAdmin, sameOrigin } from './lib/session'
 import admins from './routes/admins'
+import asks from './routes/asks'
 import auth from './routes/auth'
 import content from './routes/content'
 import devpost from './routes/devpost'
 import email from './routes/email'
 import eventImport from './routes/eventImport'
+import inbox from './routes/inbox'
 import imports from './routes/imports'
 import pages from './routes/pages'
 import people from './routes/people'
@@ -19,7 +22,8 @@ import type { AppEnv } from './types'
 // only /api/*, /privacy and /terms reach this Worker (see run_worker_first in wrangler.jsonc).
 //
 // Every router below defines full paths under /api. Two rules hold for all of them:
-// - state-changing requests must come from this origin (sameOrigin)
+// - state-changing requests must come from this origin (sameOrigin), except the unsubscribe link and
+//   Resend's webhook, which prove themselves another way (a token, a signature)
 // - everything under /api/admin needs a signed-in admin (requireAdmin sets c.var.admin)
 
 const app = new Hono<AppEnv>()
@@ -37,6 +41,8 @@ app.route('/', imports) //      /api/admin/hackathon-imports/*
 app.route('/', devpost) //      /api/admin/devpost/* (projects → win drafts)
 app.route('/', eventImport) //  /api/admin/event-import/* (Luma, Eventbrite pages → event drafts)
 app.route('/', uploads) //      /api/admin/uploads (portal), /api/uploads/:name (the pictures)
+app.route('/', asks) //         /api/admin/asks/*, /api/admin/contacts, /api/admin/facts
+app.route('/', inbox) //        /api/inbound/resend (Resend's webhook), /api/admin/inbox/*
 app.route('/', pages) //        /privacy, /terms rendered for crawlers
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404))
@@ -45,10 +51,12 @@ app.onError((error, c) => {
   return c.json(body, status as 400)
 })
 
-// The daily Cron Trigger (wrangler.jsonc) imports upcoming hackathons from MLH and Devpost.
+// The daily Cron Trigger (wrangler.jsonc) imports upcoming hackathons from MLH and Devpost, and
+// drafts a follow-up for each ask that's gone unanswered past its day (drafted, never sent).
 export default {
   fetch: app.fetch,
   scheduled(_controller, env, ctx) {
     ctx.waitUntil(runImports(env))
+    ctx.waitUntil(draftFollowUps(env))
   },
 } satisfies ExportedHandler<Env>

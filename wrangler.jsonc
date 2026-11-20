@@ -40,7 +40,7 @@
   ],
 
   // Daily at 09:17 UTC (4–5 AM in Boston): import upcoming hackathons from MLH and Devpost into
-  // the portal's review queue.
+  // the portal's review queue, and draft follow-ups for asks nobody has answered.
   "triggers": { "crons": ["17 9 * * *"] },
 
   // Branch previews (`wrangler preview`, run by Workers Builds on every non-main push). They get
@@ -81,6 +81,9 @@
   //   ADMIN_EMAILS                             owners: always admins, can't be removed in the
   //                                            portal. Comma-separated; a secret so personal
   //                                            emails stay out of this public repo
-  //   RESEND_API_KEY                           leave unset locally to log emails instead of sending
+  //   RESEND_API_KEY                           leave unset locally to log emails instead of sending.
+  //                                            Full access, so the inbox can read the email it receives
+  //   RESEND_WEBHOOK_SECRET                    the signing secret of Resend's email.received webhook (the inbox)
   //   TURNSTILE_SECRET_KEY                     the proto.boston widget's secret; empty locally uses the test key
+  //   ANTHROPIC_API_KEY                        Claude, for drafts, forms and reading the inbox; without it nothing is drafted
 }

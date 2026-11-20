@@ -40,8 +40,19 @@ export const adminRoutes: RouteObject[] = [
           { path: 'members', lazy: () => import('./pages/Members') },
           { path: 'members/:id', lazy: () => import('./pages/MemberDetail') },
           { path: 'fund', lazy: () => import('./pages/Fund') },
-          { path: 'email', lazy: () => import('./pages/Email') },
+          // Email opens on what needs doing; writing to a list is one of the pages it leads to.
+          { path: 'email', lazy: () => import('./pages/EmailHome') },
+          { path: 'email/compose', lazy: () => import('./pages/Email') },
           { path: 'email/automatic', lazy: () => import('./pages/AutomaticEmails') },
+          // Asks: emails to one person we need something from, which Claude drafts. Part of Email.
+          // The inbox: one-to-one email, beside Compose (list emails).
+          { path: 'email/inbox', lazy: () => import('./pages/Inbox') },
+          { path: 'email/inbox/:id', lazy: () => import('./pages/Thread') },
+          { path: 'email/asks', lazy: () => import('./pages/Asks') },
+          { path: 'email/asks/new', lazy: () => import('./pages/AskNew') },
+          { path: 'email/asks/:id', lazy: () => import('./pages/AskDetail') },
+          { path: 'email/contacts', lazy: () => import('./pages/Contacts') },
+          { path: 'email/facts', lazy: () => import('./pages/Facts') },
           // Before ':resource/:id', or "import", "interest" and "applications" would be read as a row's id.
           { path: 'hackathons/import', lazy: () => import('./pages/HackathonImport') },
           { path: 'wins/import', lazy: () => import('./pages/WinImport') },

@@ -11,25 +11,36 @@
 
   /* Grounds, darkest first: the frame round everything, the sheet pages sit on (the site's own
      harbor), panels a step above it, and what floats over those. Inputs are sunk into panels. */
+  /* Each is a clear step lighter than the one before (black, 0e, 19, 22), so the sheet reads as
+     lit beside the sidebar and a panel stands off the sheet without leaning on its border. */
   --side: #000;
-  --ground: var(--harbor);
-  --surface: color-mix(in srgb, var(--navy) 58%, var(--harbor));
-  --surface-raised: var(--navy);
-  --surface-sunk: rgb(var(--harbor-rgb) / 0.66);
+  --ground: #0e0e0e;
+  --surface: #191919;
+  --surface-raised: #222;
+  --surface-sunk: rgb(0 0 0 / 0.42);
   --scrim: rgb(0 0 0 / 0.66);
 
   /* Lines and fills, all frost at low strength so they sit on any of the grounds above. */
-  --line: rgb(var(--frost-rgb) / 0.07);
-  --line-strong: rgb(var(--frost-rgb) / 0.11);
-  --edge: rgb(var(--frost-rgb) / 0.16);
-  --edge-hover: rgb(var(--frost-rgb) / 0.28);
-  --hover: rgb(var(--frost-rgb) / 0.04);
-  --selected: rgb(var(--frost-rgb) / 0.08);
-  --fill: rgb(var(--frost-rgb) / 0.06);
-  --fill-hover: rgb(var(--frost-rgb) / 0.1);
-  --placeholder: rgb(var(--frost-rgb) / 0.4);
+  --line: rgb(var(--frost-rgb) / 0.09);
+  --line-strong: rgb(var(--frost-rgb) / 0.14);
+  --edge: rgb(var(--frost-rgb) / 0.2);
+  --edge-hover: rgb(var(--frost-rgb) / 0.32);
+  --hover: rgb(var(--frost-rgb) / 0.055);
+  --selected: rgb(var(--frost-rgb) / 0.1);
+  --fill: rgb(var(--frost-rgb) / 0.08);
+  --fill-hover: rgb(var(--frost-rgb) / 0.13);
+  --placeholder: rgb(var(--frost-rgb) / 0.46);
+  /* The sidebar is the darkest ground, so its fills are stronger than a panel's to show as much:
+     pointing at a link is plain to see, and the current section is a clear step above that. */
+  --side-hover: rgb(var(--frost-rgb) / 0.1);
+  --side-selected: rgb(var(--frost-rgb) / 0.16);
   /* The lit top edge a panel carries, as the site's slabs do. */
-  --rim: inset 0 1px 0 rgb(var(--frost-rgb) / 0.045);
+  --rim: inset 0 1px 0 rgb(var(--frost-rgb) / 0.06);
+
+  /* Second and third-rank text, a little brighter than the site's: here it's small type on a
+     screen people read for an hour, not captions over the field. */
+  --ink-soft: rgb(var(--frost-rgb) / 0.86);
+  --ink-dim: rgb(var(--frost-rgb) / 0.66);
 
   /* States: always the word in colour, never a capsule. Info is a pale sample of the field's blue. */
   --ok-ink: var(--mint);
@@ -284,8 +295,8 @@
   right: 4px;
   left: 4px;
   border-radius: var(--radius-control);
-  background: var(--selected);
-  box-shadow: inset 0 0 0 1px var(--line);
+  background: var(--side-selected);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
   pointer-events: none;
 }
 
@@ -340,7 +351,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .navLink:not([aria-current='page']):hover {
-    background: var(--hover);
+    background: var(--side-hover);
     color: var(--ink);
   }
 }
@@ -371,7 +382,7 @@
 
 .accountButton:hover,
 .accountButton[aria-expanded='true'] {
-  background: var(--fill);
+  background: var(--side-hover);
 }
 
 .avatar {
@@ -506,7 +517,7 @@
   z-index: 5;
   padding: 0 var(--gutter);
   border-bottom: 1px solid var(--line);
-  background: rgb(var(--harbor-rgb) / 0.86);
+  background: color-mix(in srgb, var(--ground) 86%, transparent);
   backdrop-filter: blur(14px) saturate(1.3);
 }
 

@@ -65,7 +65,7 @@ export function Component() {
     }
   }
 
-  const emailHref = `/admin/email?audience=fund${status ? `&status=${status}` : ''}`
+  const emailHref = `/admin/email/compose?audience=fund${status ? `&status=${status}` : ''}`
 
   return (
     <div className={shared.page}>

@@ -75,7 +75,7 @@ export function Component() {
     toast({ text: `${plural(members.length, 'member')} exported`, detail: filtered ? 'Only the people in this search or track.' : undefined })
   }
 
-  const emailHref = track ? `/admin/email?audience=track&track=${encodeURIComponent(track)}` : '/admin/email?audience=members'
+  const emailHref = track ? `/admin/email/compose?audience=track&track=${encodeURIComponent(track)}` : '/admin/email/compose?audience=members'
   const filtered = Boolean(q || track)
 
   return (
