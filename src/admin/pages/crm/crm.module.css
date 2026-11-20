@@ -1,0 +1,460 @@
+/* People, Orgs and their pages. Built on admin.module.css (panels, tables, states, tabs); these
+   are the pieces only the CRM has: the two-column record page, the timeline, key-value details
+   and the small lists in the side column. */
+
+/* ---- Lists ---------------------------------------------------------------------------------- */
+
+/* A second, quieter line under a table cell's main text (an email under a name). */
+.sub {
+  display: block;
+  margin-top: 1px;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.cellText {
+  display: grid;
+  min-width: 0;
+}
+
+.soft {
+  color: var(--ink-soft);
+}
+
+.small {
+  font-size: 12.5px;
+}
+
+/* A due day's colour: late in the danger ink, today in the warm one. */
+.late {
+  color: var(--danger-ink);
+}
+
+.today {
+  color: var(--warn-ink);
+}
+
+.later {
+  color: var(--ink-soft);
+}
+
+.search {
+  flex: 0 1 300px;
+}
+
+/* The previous results stay up while the next search loads, dimmed so it's clear they're old. */
+.stale {
+  opacity: 0.55;
+}
+
+/* ---- A record's page: the main column and a narrower side one --------------------------------- */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.column {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Who this is: a big disc, the name and kind, then the facts that place them. */
+.who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 16px;
+  padding: 18px 20px;
+}
+
+.bigAvatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgb(var(--sky-rgb) / 0.13);
+  color: var(--sky);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.whoText {
+  display: grid;
+  flex: 1 1 240px;
+  gap: 4px;
+  min-width: 0;
+}
+
+.whoName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.whoName h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+
+.meta a:hover {
+  color: var(--mint);
+}
+
+.stats {
+  display: flex;
+  gap: 22px;
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+}
+
+.stats div {
+  display: grid;
+  gap: 2px;
+}
+
+.stats dt {
+  order: 2;
+}
+
+.stats dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Panels in the record's columns ------------------------------------------------------------ */
+
+.panelBody {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.panelFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.panelFoot > :first-child:not(button) {
+  flex: 1 1 auto;
+}
+
+.none {
+  margin: 0;
+  padding: 16px;
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+/* A short list of people, deals or events: a disc or nothing, the name and a line under it, and
+   something on the right (a state, a day). */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list > li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 9px 16px;
+}
+
+.list > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.grow {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 1px;
+  min-width: 0;
+}
+
+.t1 {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+a.t1:hover {
+  color: var(--mint);
+}
+
+.t2 {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.end {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ---- The timeline: what kind, what happened, when and by whom --------------------------------- */
+
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline > li {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 2px 16px;
+  padding: 11px 16px;
+}
+
+.timeline > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.what {
+  color: var(--ink-dim);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+/* The kinds worth spotting at a glance get a colour, like the prototype's first column. */
+.what[data-kind='interaction'],
+.what[data-kind='intro'],
+.what[data-kind='email'],
+.what[data-kind='ask'] {
+  color: var(--info-ink);
+}
+
+.what[data-kind='fund'],
+.what[data-kind='deal'] {
+  color: var(--warn-ink);
+}
+
+.what[data-kind='application'],
+.what[data-kind='board_interest'] {
+  color: var(--ok-ink);
+}
+
+.body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.body .t1 {
+  line-height: 20px;
+}
+
+.detail {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.when {
+  display: grid;
+  justify-items: end;
+  align-content: start;
+  gap: 2px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.by {
+  color: var(--ink-dim);
+}
+
+/* The timeline's filter sits in the panel's head; smaller than a page's. */
+.filter {
+  margin-left: auto;
+}
+
+/* ---- Details: an editable form, or plain key-value rows ------------------------------------- */
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.kv dt {
+  color: var(--ink-dim);
+}
+
+.kv dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* "Unsaved changes" before the Save button. Empty, it takes no room. */
+.saveState {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+}
+
+.saveState:empty {
+  display: none;
+}
+
+/* The next step, at the top of the side column. */
+.next {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+}
+
+.nextLabel {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.nextTitle {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.nextMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: 12.5px;
+}
+
+/* ---- The logo wall panel --------------------------------------------------------------------- */
+
+.logoRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 64px;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  background: #f4f4f2;
+}
+
+.logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.order {
+  width: 96px;
+}
+
+/* ---- Dialogs with a form in them --------------------------------------------------------------- */
+
+.formDialog {
+  width: min(500px, calc(100vw - 32px));
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.danger {
+  justify-self: start;
+}
+
+@media (max-width: 860px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .timeline > li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .what {
+    grid-column: 1 / -1;
+    line-height: 18px;
+  }
+
+  .stats {
+    width: 100%;
+  }
+
+  .toolbarTabs {
+    width: 100%;
+  }
+
+  /* Beats the toolbar's own width for its search box, so it takes the row. */
+  label.search.search {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+
+  .kv {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .kv dd + dt {
+    margin-top: 8px;
+  }
+}

@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router'
+import { redirect, type RouteObject } from 'react-router'
 import { Loading } from './components/Loading'
 
 // The portal. Everything but the loading line is lazy, so none of it ships in the public
@@ -43,9 +43,10 @@ export const adminRoutes: RouteObject[] = [
               Component: async () => (await import('./pages/Admins')).Component,
             },
           },
-          // Members, fund and email are whole modules (Component, maybe loader) from admin-people.
-          { path: 'members', lazy: () => import('./pages/Members') },
-          { path: 'members/:id', lazy: () => import('./pages/MemberDetail') },
+          // Members and contacts moved into People; old links and bookmarks land there.
+          { path: 'members', loader: () => redirect('/admin/people?kind=member') },
+          { path: 'members/:id', loader: ({ params }) => redirect(`/admin/people/m${params.id ?? ''}`) },
+          // Fund and email are whole modules (Component, maybe loader) from admin-people.
           { path: 'fund', lazy: () => import('./pages/Fund') },
           // Email opens on what needs doing; writing to a list is one of the pages it leads to.
           { path: 'email', lazy: () => import('./pages/EmailHome') },
@@ -58,7 +59,7 @@ export const adminRoutes: RouteObject[] = [
           { path: 'email/asks', lazy: () => import('./pages/Asks') },
           { path: 'email/asks/new', lazy: () => import('./pages/AskNew') },
           { path: 'email/asks/:id', lazy: () => import('./pages/AskDetail') },
-          { path: 'email/contacts', lazy: () => import('./pages/Contacts') },
+          { path: 'email/contacts', loader: () => redirect('/admin/people?kind=contact') },
           { path: 'email/facts', lazy: () => import('./pages/Facts') },
           // Before ':resource/:id', or "import", "interest" and "applications" would be read as a row's id.
           { path: 'hackathons/import', lazy: () => import('./pages/HackathonImport') },
