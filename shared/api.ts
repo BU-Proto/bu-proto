@@ -712,6 +712,10 @@ export interface Stats {
   /** Published wins that aren't samples: the number the site's record shows. */
   wins: number
   sampleWins: number
+  /** Everything waiting in the Inbox, across its queues (see worker/lib/queue.ts). */
+  queueWaiting: number
+  /** The signed-in admin's open follow-ups due today or earlier. */
+  followUpsDueMine: number
 }
 
 // ---- Portal: email ----------------------------------------------------------------------------
