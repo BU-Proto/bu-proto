@@ -196,10 +196,8 @@ const memberItem = (row: MemberRow): TimelineItem => ({
   by: null,
 })
 
-// TimelineItem has no kind for a win; 'joined' is the nearest (something that happened to a
-// member, not something the team did), and the label says what it is.
 const winItem = (row: WinRow): TimelineItem => ({
-  kind: 'joined',
+  kind: 'win',
   label: 'Win',
   title: `${row.project}: ${row.placement} at ${row.event}`,
   detail: '',

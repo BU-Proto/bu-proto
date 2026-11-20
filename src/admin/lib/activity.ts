@@ -117,9 +117,11 @@ export function useOwners(): { owners: Owner[]; me: string; labelFor: (email: st
   const { data } = useApi<{ items: Admin[] }>('/admin/admins')
   return useMemo(() => {
     const mine = me.email.toLowerCase()
-    const others = (data?.items ?? []).map((admin) => admin.email.toLowerCase()).filter((email) => email !== mine)
-    const owners = [{ email: mine, label: 'You' }, ...[...new Set(others)].map((email) => ({ email, label: email }))]
-    const labelFor = (email: string | null) => (!email ? 'No one' : email.toLowerCase() === mine ? 'You' : email)
+    // Admins carry the name from their latest sign-in; someone who hasn't signed in yet is their email.
+    const names = new Map((data?.items ?? []).map((admin) => [admin.email.toLowerCase(), admin.name || admin.email]))
+    const others = [...names.keys()].filter((email) => email !== mine)
+    const owners = [{ email: mine, label: 'You' }, ...others.map((email) => ({ email, label: names.get(email) ?? email }))]
+    const labelFor = (email: string | null) => (!email ? 'No one' : email.toLowerCase() === mine ? 'You' : (names.get(email.toLowerCase()) ?? email))
     return { owners, me: mine, labelFor }
   }, [data, me.email])
 }

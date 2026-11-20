@@ -113,7 +113,7 @@ export interface PersonSummary {
 
 /** One line on a person's or org's timeline, newest first. `at` is a day or a timestamp. */
 export interface TimelineItem {
-  kind: 'interaction' | 'joined' | 'rsvp' | 'fund' | 'application' | 'board_interest' | 'ask' | 'email' | 'intro' | 'deal' | 'guest'
+  kind: 'interaction' | 'joined' | 'rsvp' | 'fund' | 'application' | 'board_interest' | 'ask' | 'email' | 'intro' | 'deal' | 'guest' | 'win'
   /** The short word in the timeline's first column ("Coffee", "Event", "Fund"). */
   label: string
   title: string
@@ -139,7 +139,10 @@ export interface PersonDetail extends PersonSummary {
 const text = (max: number) => z.string().trim().max(max)
 const optionalText = (max: number) => text(max).optional().default('')
 const email = z.string().trim().toLowerCase().email('Enter an email address.').max(254)
-const ownerEmail = z.union([email, z.literal(''), z.null()]).optional().transform((value) => value || null)
+// Someone on the team. Looser than `email`: local sign-in is you@localhost, which a strict email
+// check refuses, and these only ever come from the portal's own pickers.
+const teammate = z.string().trim().toLowerCase().regex(/^[^\s@]+@[^\s@]+$/, 'Pick someone on the team.').max(254)
+const ownerEmail = z.union([teammate, z.literal(''), z.null()]).optional().transform((value) => value || null)
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a day.')
 const id = z.number().int().positive()
 
@@ -294,7 +297,7 @@ export const interactionInput = z.object({
   dealId: id.nullable().optional().default(null),
   /** The next step, made into a follow-up on the same person, org or deal. */
   followUp: z
-    .object({ title: text(200).min(1, 'Say what the next step is.'), dueOn: isoDay, ownerEmail: email })
+    .object({ title: text(200).min(1, 'Say what the next step is.'), dueOn: isoDay, ownerEmail: teammate })
     .nullable()
     .optional()
     .default(null),
@@ -321,7 +324,7 @@ export interface FollowUp {
 export const followUpInput = z.object({
   title: text(200).min(1, 'Say what needs doing.'),
   dueOn: isoDay,
-  ownerEmail: email,
+  ownerEmail: teammate,
   personKey: personKeySchema.nullable().optional().default(null),
   orgId: id.nullable().optional().default(null),
   dealId: id.nullable().optional().default(null),
@@ -329,7 +332,7 @@ export const followUpInput = z.object({
 export type FollowUpInput = z.input<typeof followUpInput>
 /** PATCH /api/admin/follow-ups/:id → { item: FollowUp }. done: true ticks it off. */
 export const followUpPatch = z
-  .object({ title: text(200).min(1), dueOn: isoDay, ownerEmail: email, done: z.boolean() })
+  .object({ title: text(200).min(1), dueOn: isoDay, ownerEmail: teammate, done: z.boolean() })
   .partial()
 export type FollowUpPatch = z.input<typeof followUpPatch>
 
