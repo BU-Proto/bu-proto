@@ -1,5 +1,5 @@
-/* The Inbox: the filter, then one list. The picked row opens in place, on the row's own columns,
-   to show what it says and what can be done about it. */
+/* The Inbox: the filter, then one list. Picking a row opens it in a dialog over the list: what it
+   says and what can be done about it. */
 
 .toolbar {
   display: flex;
@@ -21,8 +21,7 @@
 /* ---- The list ------------------------------------------------------------------------------ */
 
 .list {
-  /* The columns every row and the open row's contents share: the dot, who, what, where it came
-     in, and when. */
+  /* The columns every row shares: the dot, who, what, where it came in, and when. */
   --columns: 8px minmax(96px, 184px) minmax(0, 1fr) 104px 104px;
 
   margin: 0;
@@ -34,12 +33,12 @@
   border-top: 1px solid var(--line);
 }
 
-/* The open one is lit as a whole: its row and what's under it. */
-.list > li[data-open] {
+/* The row the keys are on. */
+.list > li[data-cursor] {
   background: var(--hover);
 }
 
-/* A button that looks like a mail row: picking one opens it under its own line. */
+/* A button that looks like a mail row: picking one opens it over the list. */
 .row {
   display: grid;
   grid-template-columns: var(--columns);
@@ -61,7 +60,7 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .list > li:not([data-open]) > .row:hover {
+  .row:hover {
     background: var(--hover);
   }
 }
@@ -135,52 +134,125 @@
   font-size: 12px;
 }
 
-/* ---- The open row --------------------------------------------------------------------------- */
+/* ---- The open item --------------------------------------------------------------------------- */
 
-/* On the row's columns: their address and where it stands under the name, what it says and
-   what to do about it under the subject. */
-.detail {
-  display: grid;
-  grid-template-columns: var(--columns);
-  gap: 14px;
-  padding: 2px 16px 18px;
-}
-
-.detailSide {
-  display: grid;
-  grid-column: 2;
-  align-content: start;
-  justify-items: start;
-  gap: 8px;
-  min-width: 0;
-}
-
-.detailMain {
-  display: grid;
-  grid-column: 3 / -1;
-  gap: 16px;
-  min-width: 0;
-  max-width: 640px;
-}
-
-.detailMeta {
-  max-width: 100%;
+/* Wider than a confirm, since it holds an email or a form's answers. Centred in the page beside
+   the sidebar, not in the whole window: `left` moves the box the browser centres it in. */
+dialog.sheet {
+  left: var(--sidebar, 0px);
+  width: min(620px, calc(100vw - var(--sidebar, 0px) - 32px));
+  max-height: calc(100dvh - 32px);
   overflow: hidden;
-  color: var(--ink-dim);
-  font-size: 12.5px;
+}
+
+/* No sidebar at this width: the whole window is the page. */
+@media (max-width: 860px) {
+  dialog.sheet {
+    left: 0;
+    width: min(620px, calc(100vw - 32px));
+  }
+}
+
+.sheetFrame {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 34px);
+}
+
+.sheetHead {
+  display: flex;
+  flex: none;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 12px 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sheetWho {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sheetWho > * {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.detailBody {
-  display: grid;
-  gap: 12px;
+.sheetMeta {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 
-.detailActions {
+.sheetNav {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.position {
+  margin-right: 6px;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.iconButton {
+  width: 28px;
+  padding: 0;
+}
+
+.iconButton svg {
+  margin: 0;
+}
+
+.iconButton:disabled {
+  opacity: 0.35;
+}
+
+/* Its height is set from what's in it (see Glide), and it gives way and scrolls when that is
+   more than the window has room for. */
+.sheetBody {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.sheetBody[data-gliding] {
+  overflow-y: hidden;
+}
+
+.sheetContent {
+  display: grid;
+  gap: 14px;
+  padding: 16px 20px 20px;
+}
+
+.sheetFoot {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.sheetActions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
+  margin-left: auto;
 }
 
 .subjectLine {
@@ -310,9 +382,14 @@
     display: none;
   }
 
-  .detailSide,
-  .detailMain {
-    grid-column: 2 / -1;
+  .position {
+    display: none;
+  }
+
+  /* Room is short: the address, where it came in and when wrap, not cut off. */
+  .sheetMeta {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .facts > div {
@@ -321,8 +398,80 @@
   }
 }
 
+/* ---- Motion --------------------------------------------------------------------------------- */
+
 @media (prefers-reduced-motion: no-preference) {
   .row {
     transition: background-color var(--quick) ease;
+  }
+
+  /* The dot fades when something is handled, in the list and in the dialog's foot. */
+  .dot,
+  .standing::before {
+    transition: background-color var(--calm) ease;
+  }
+
+  /* The dialog rises in like the portal's others (admin.module.css). Leaving is quicker than
+     arriving: it drops back the way it came while the page comes back up behind it. */
+  dialog.sheet[data-closing] {
+    animation: leave var(--swift) ease-in forwards;
+  }
+
+  dialog.sheet[data-closing]::backdrop {
+    animation: undim var(--swift) ease-in forwards;
+  }
+
+  .sheetBody {
+    transition: height var(--calm) var(--ease-out);
+  }
+
+  /* Stepping: the next item comes up from below, the previous one down from above, the way
+     they sit in the list. */
+  .sheetWho[data-direction='next'],
+  .sheetContent[data-direction='next'] {
+    animation: fromBelow var(--calm) var(--ease-out);
+  }
+
+  .sheetWho[data-direction='prev'],
+  .sheetContent[data-direction='prev'] {
+    animation: fromAbove var(--calm) var(--ease-out);
+  }
+
+  /* What an item says fades in once it has loaded, where its placeholder was. */
+  .sheetContent > :not(.loading) {
+    animation: arrive var(--swift) ease;
+  }
+}
+
+@keyframes leave {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@keyframes undim {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fromBelow {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes fromAbove {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
   }
 }

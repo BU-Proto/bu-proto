@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link, useNavigate, useRevalidator, useSearchParams } from 'react-router'
+import { useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Link, useRevalidator, useSearchParams } from 'react-router'
 import { FUND_STATUSES, type BoardInterest, type FundInterest, type FundStatus, type MailThreadDetail, type MemberDetail, type RoleApplication } from '../../../shared/api'
 import { QUEUE_SOURCE_LABELS, QUEUE_SOURCES, type QueueItem, type QueueSource } from '../../../shared/crm'
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
-import { ArrowOutIcon } from '../components/icons'
+import { ArrowOutIcon, ChevronDownIcon, ChevronUpIcon, CloseIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { useGated } from '../lib/access'
 import { formatRelative, formatTimestamp, plural } from '../lib/format'
@@ -18,8 +18,9 @@ import styles from './Queue.module.css'
 import { SegmentGroup } from '../components/SegmentGroup'
 
 // The Inbox: everything waiting on the team in one list (email that's on us, sign-ups nobody has
-// looked at, fund requests, role applications, board interest), with the selected one beside it
-// and what can be done about it there. Recently handled ones stay in the list, without the dot.
+// looked at, fund requests, role applications, board interest). Picking one opens it over the
+// list: what it says and what can be done about it. Recently handled ones stay in the list,
+// without the dot.
 
 interface QueueData {
   items: QueueItem[]
@@ -27,6 +28,16 @@ interface QueueData {
 }
 
 type Filter = QueueSource | 'all'
+
+/** Which way the open item was stepped to, so its contents come in from that side. */
+type Direction = 'next' | 'prev' | null
+
+/** The item open over the list. `index` is where it sat, for stepping on once it has left the list. */
+interface Opened {
+  key: string
+  index: number
+  direction: Direction
+}
 
 const FILTERS: { key: Filter; label: string; empty: string }[] = [
   { key: 'all', label: 'All', empty: 'Nothing waiting. New email, sign-ups and requests from the site land here.' },
@@ -44,13 +55,16 @@ const isFilter = (value: string | null): value is QueueSource => (QUEUE_SOURCES 
 
 export function Component() {
   const [params, setParams] = useSearchParams()
-  const navigate = useNavigate()
   const { revalidate } = useRevalidator()
   const raw = params.get('source')
   const filter: Filter = isFilter(raw) ? raw : 'all'
   const waitingOnly = params.get('waiting') === '1'
   const { data, error, loading, setData } = useApi<QueueData>('/admin/queue')
-  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  // The row the keys are on, and the item open over the list.
+  const [cursorKey, setCursorKey] = useState<string | null>(null)
+  const [opened, setOpened] = useState<Opened | null>(null)
+  // Closing keeps `opened`, so the dialog still has its item to show while it leaves.
+  const [isOpen, setIsOpen] = useState(false)
   const list = useRef<HTMLUListElement>(null)
 
   const all = useMemo(() => data?.items ?? [], [data])
@@ -60,8 +74,14 @@ export function Component() {
   )
   const counts = data?.counts
   const total = counts ? QUEUE_SOURCES.reduce((sum, source) => sum + counts[source], 0) : 0
-  const selected = shown.find((item) => keyOf(item) === selectedKey) ?? shown[0]
-  const index = selected ? shown.indexOf(selected) : -1
+  const cursor = shown.findIndex((item) => keyOf(item) === cursorKey)
+
+  // The open item is looked up in everything, not just what's listed: marking it handled under
+  // "Waiting only" takes it off the list, and it should stay open while you read the toast.
+  const openItem = opened ? (all.find((item) => keyOf(item) === opened.key) ?? null) : null
+  const openAt = openItem ? shown.indexOf(openItem) : -1
+  const before = opened ? shown[(openAt >= 0 ? openAt : opened.index) - 1] : undefined
+  const after = opened ? shown[openAt >= 0 ? openAt + 1 : opened.index] : undefined
 
   const setParam = (name: string, value: string | null) =>
     setParams(
@@ -74,30 +94,34 @@ export function Component() {
       { replace: true },
     )
 
-  // j / k move down and up, Enter or o opens the item's own page: the email inbox's keys.
-  const keys = useMemo(
-    () => ({
-      j: () => shown[index + 1] && setSelectedKey(keyOf(shown[index + 1])),
-      k: () => shown[index - 1] && setSelectedKey(keyOf(shown[index - 1])),
-      o: () => selected && navigate(selected.href),
-      Enter: () => selected && navigate(selected.href),
-    }),
-    [shown, index, selected, navigate],
-  )
+  const open = (item: QueueItem, direction: Direction = null) => {
+    setCursorKey(keyOf(item))
+    setOpened({ key: keyOf(item), index: shown.indexOf(item), direction })
+    setIsOpen(true)
+  }
+
+  // j / k move down and up, Enter or o opens the row they're on: the email inbox's keys.
+  const keys = useMemo(() => {
+    const openCursor = () => {
+      const item = shown[Math.max(cursor, 0)]
+      if (!item) return
+      setCursorKey(keyOf(item))
+      setOpened({ key: keyOf(item), index: shown.indexOf(item), direction: null })
+      setIsOpen(true)
+    }
+    return {
+      j: () => shown[cursor + 1] && setCursorKey(keyOf(shown[cursor + 1])),
+      k: () => shown[cursor - 1] && setCursorKey(keyOf(shown[cursor - 1])),
+      o: openCursor,
+      Enter: openCursor,
+    }
+  }, [shown, cursor])
   useKeys(keys, shown.length > 0)
 
-  // The open row is kept in sight as j and k move through the list, and again once what's under
-  // it has loaded and made it taller.
-  const selectedId = selected ? keyOf(selected) : null
+  // The row the keys are on stays in sight, under the open item too, so closing lands on it.
   useEffect(() => {
-    const open = list.current?.querySelector('[data-open]')
-    if (!open) return
-    const reveal = () => open.scrollIntoView({ block: 'nearest' })
-    reveal()
-    const observer = new ResizeObserver(reveal)
-    observer.observe(open)
-    return () => observer.disconnect()
-  }, [selectedId])
+    list.current?.querySelector('[data-cursor]')?.scrollIntoView({ block: 'nearest' })
+  }, [cursorKey])
 
   /** An item was dealt with (or brought back): its dot, the tab counts and the sidebar's badges follow. */
   const setWaiting = (target: QueueItem, waiting: boolean) => {
@@ -154,50 +178,148 @@ export function Component() {
           <h2>All clear</h2>
           <p>{waitingOnly ? filterInfo.empty : `${filterInfo.empty} Nothing handled in the last 30 days either.`}</p>
         </div>
-      ) : data && selected ? (
+      ) : data ? (
         <>
-          {/* One list, as tall as what's in it. The picked row opens in place: what it says and
-              what can be done about it, under its own line, so nothing sits in a box of its own. */}
           <section className={ui.panelFlush} aria-label="Waiting">
             <ul ref={list} className={styles.list}>
-              {shown.map((item) => {
-                const open = item === selected
-                return (
-                  <li key={keyOf(item)} data-open={open || undefined}>
-                    <button type="button" className={styles.row} data-waiting={item.waiting} aria-expanded={open} onClick={() => setSelectedKey(keyOf(item))}>
-                      <span className={styles.dot} aria-label={item.waiting ? 'Waiting' : undefined} />
-                      <span className={styles.name}>{item.name}</span>
-                      <span className={styles.what}>
-                        <span className={styles.subject}>{item.title}</span>
-                        {item.snippet && <span className={styles.snippet}>{item.snippet}</span>}
-                      </span>
-                      <span className={styles.source}>{QUEUE_SOURCE_LABELS[item.source]}</span>
-                      <span className={styles.when}>{formatRelative(item.at)}</span>
-                    </button>
-                    {open && <Detail key={keyOf(item)} item={item} onWaiting={(waiting) => setWaiting(item, waiting)} />}
-                  </li>
-                )
-              })}
+              {shown.map((item, at) => (
+                <li key={keyOf(item)} data-cursor={at === cursor || undefined}>
+                  <button
+                    type="button"
+                    className={styles.row}
+                    data-waiting={item.waiting}
+                    aria-haspopup="dialog"
+                    onFocus={() => setCursorKey(keyOf(item))}
+                    onClick={() => open(item)}
+                  >
+                    <span className={styles.dot} aria-label={item.waiting ? 'Waiting' : undefined} />
+                    <span className={styles.name}>{item.name}</span>
+                    <span className={styles.what}>
+                      <span className={styles.subject}>{item.title}</span>
+                      {item.snippet && <span className={styles.snippet}>{item.snippet}</span>}
+                    </span>
+                    <span className={styles.source}>{QUEUE_SOURCE_LABELS[item.source]}</span>
+                    <span className={styles.when}>{formatRelative(item.at)}</span>
+                  </button>
+                </li>
+              ))}
             </ul>
           </section>
           <p className={styles.keys}>Keys: j and k to move, Enter to open.</p>
         </>
       ) : null}
+
+      <ItemDialog
+        open={isOpen}
+        item={openItem}
+        direction={opened?.direction ?? null}
+        position={openAt >= 0 ? `${openAt + 1} of ${shown.length}` : ''}
+        onPrevious={before && (() => open(before, 'prev'))}
+        onNext={after && (() => open(after, 'next'))}
+        onWaiting={setWaiting}
+        onClose={() => setIsOpen(false)}
+        // The browser hands focus back to the row that was clicked; after stepping, the row to
+        // land on is the one that was open last.
+        onClosed={() => list.current?.querySelector<HTMLElement>('[data-cursor] > button')?.focus({ preventScroll: true })}
+      />
     </div>
   )
 }
 
-// ---- The selected item ----------------------------------------------------------------------------
+// ---- The open item --------------------------------------------------------------------------------
 
-interface DetailProps {
-  item: QueueItem
-  onWaiting: (waiting: boolean) => void
+interface ItemDialogProps {
+  open: boolean
+  /** The item to show. Null when it's gone (deleted somewhere else), which closes the dialog. */
+  item: QueueItem | null
+  direction: Direction
+  /** "3 of 12", or nothing once the item has left the list. */
+  position: string
+  onPrevious: (() => void) | undefined
+  onNext: (() => void) | undefined
+  onWaiting: (item: QueueItem, waiting: boolean) => void
+  onClose: () => void
+  /** After it has left the screen. */
+  onClosed: () => void
 }
 
-function Detail({ item, onWaiting }: DetailProps) {
+/**
+ * The picked item, over the list. A modal <dialog> like the portal's others, with one difference:
+ * it also leaves with an animation, so its contents stay until that has played.
+ */
+function ItemDialog({ open, item, onClose, onClosed, ...rest }: ItemDialogProps) {
+  const ref = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
+  const showing = open && item !== null
+  const [present, setPresent] = useState(showing)
+  if (showing && !present) setPresent(true)
+  const closed = useEffectEvent(onClosed)
+
+  useEffect(() => {
+    const dialog = ref.current
+    if (!dialog) return
+    if (showing) {
+      delete dialog.dataset.closing
+      if (!dialog.open) dialog.showModal()
+      return
+    }
+    if (!dialog.open) return
+    // Play it out, then close. With reduced motion nothing runs and it closes straight away.
+    dialog.dataset.closing = ''
+    const run = { stale: false }
+    void Promise.allSettled(dialog.getAnimations().map((animation) => animation.finished)).then(() => {
+      if (run.stale) return
+      delete dialog.dataset.closing
+      dialog.close()
+      setPresent(false)
+      closed()
+    })
+    return () => {
+      run.stale = true
+    }
+  }, [showing])
+
+  return (
+    <dialog
+      ref={ref}
+      className={`${ui.dialog} ${styles.sheet}`}
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.preventDefault()
+        onClose()
+      }}
+      // A click on the dimmed page around it closes it.
+      onClick={(event) => event.target === event.currentTarget && onClose()}
+    >
+      {present && item && <ItemSheet {...rest} item={item} titleId={titleId} onClose={onClose} />}
+    </dialog>
+  )
+}
+
+interface ItemSheetProps extends Omit<ItemDialogProps, 'open' | 'item' | 'onClosed'> {
+  item: QueueItem
+  titleId: string
+}
+
+function ItemSheet({ item, direction, position, titleId, onPrevious, onNext, onWaiting, onClose }: ItemSheetProps) {
   const toast = useToast()
   const guard = useAuthGuard()
   const [busy, setBusy] = useState(false)
+  const itemKey = keyOf(item)
+
+  // j / k (or the arrows) step through the list without closing. The page's own keys stand
+  // down while a dialog is open, so these are the dialog's.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      const step = event.key === 'j' || event.key === 'ArrowDown' ? onNext : event.key === 'k' || event.key === 'ArrowUp' ? onPrevious : null
+      if (step === null) return
+      event.preventDefault()
+      step?.()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onPrevious, onNext])
 
   /** Run a change, say so with a way back, and keep the list's dot in step. */
   const change = async (run: () => Promise<unknown>, waiting: boolean, said: string, undo?: () => Promise<unknown>) => {
@@ -205,7 +327,7 @@ function Detail({ item, onWaiting }: DetailProps) {
     setBusy(true)
     try {
       await run()
-      onWaiting(waiting)
+      onWaiting(item, waiting)
       toast({
         text: said,
         detail: item.name,
@@ -233,9 +355,7 @@ function Detail({ item, onWaiting }: DetailProps) {
       body = <EmailBody id={item.id} />
       actions = (
         <>
-          <Link className={ui.primary} to={item.href}>
-            Open conversation
-          </Link>
+          {openPerson}
           {item.waiting && (
             <button
               type="button"
@@ -253,7 +373,9 @@ function Detail({ item, onWaiting }: DetailProps) {
               Mark done
             </button>
           )}
-          {openPerson}
+          <Link className={ui.primary} to={item.href}>
+            Open conversation
+          </Link>
         </>
       )
       break
@@ -261,6 +383,11 @@ function Detail({ item, onWaiting }: DetailProps) {
       body = <SignupBody id={item.id} />
       actions = (
         <>
+          {openPerson ?? (
+            <Link className={ui.ghost} to={item.href}>
+              Open person
+            </Link>
+          )}
           {item.waiting ? (
             <button type="button" className={ui.primary} disabled={busy} onClick={() => void change(review(false), false, 'Marked seen', review(true))}>
               Mark seen
@@ -270,22 +397,17 @@ function Detail({ item, onWaiting }: DetailProps) {
               Mark not seen
             </button>
           )}
-          {openPerson ?? (
-            <Link className={ui.ghost} to={item.href}>
-              Open person
-            </Link>
-          )}
         </>
       )
       break
     case 'fund':
-      body = <FundBody id={item.id} onWaiting={onWaiting} />
+      body = <FundBody id={item.id} onWaiting={(waiting) => onWaiting(item, waiting)} />
       actions = (
         <>
+          {openPerson}
           <Link className={ui.button} to={item.href}>
             Open fund
           </Link>
-          {openPerson}
         </>
       )
       break
@@ -293,10 +415,10 @@ function Detail({ item, onWaiting }: DetailProps) {
       body = <ApplicationBody id={item.id} />
       actions = (
         <>
+          {openPerson}
           <Link className={ui.primary} to={item.href}>
             Open application
           </Link>
-          {openPerson}
         </>
       )
       break
@@ -304,6 +426,10 @@ function Detail({ item, onWaiting }: DetailProps) {
       body = <BoardBody id={item.id} />
       actions = (
         <>
+          {openPerson}
+          <Link className={ui.ghost} to={item.href}>
+            Open board interest
+          </Link>
           {item.waiting ? (
             <button type="button" className={ui.primary} disabled={busy} onClick={() => void change(review(false), false, 'Marked answered', review(true))}>
               Mark answered
@@ -313,33 +439,99 @@ function Detail({ item, onWaiting }: DetailProps) {
               Mark not answered
             </button>
           )}
-          <Link className={ui.ghost} to={item.href}>
-            Open board interest
-          </Link>
-          {openPerson}
         </>
       )
       break
   }
 
-  // Laid out on the row's own columns: their address and where it stands under the name, and
-  // what it says and what to do about it under the subject.
+  // The head and the stepping buttons stay put; who it is and what it says are keyed to the
+  // item, so stepping brings the next one's in from the side it came from.
   return (
-    <div className={styles.detail}>
-      <div className={styles.detailSide}>
-        {item.email && (
-          <span className={styles.detailMeta} title={item.email}>
-            {item.email}
-          </span>
-        )}
-        <span className={ui.state} data-tone={item.waiting ? 'live' : undefined}>
+    <div className={styles.sheetFrame}>
+      <header className={styles.sheetHead}>
+        <div key={itemKey} className={styles.sheetWho} data-direction={direction ?? undefined}>
+          <h2 id={titleId} className={ui.dialogTitle}>
+            {item.name}
+          </h2>
+          <p className={styles.sheetMeta}>{[item.email, QUEUE_SOURCE_LABELS[item.source], formatRelative(item.at)].filter(Boolean).join(' · ')}</p>
+        </div>
+        <div className={styles.sheetNav}>
+          <span className={styles.position}>{position}</span>
+          <button type="button" className={`${ui.ghost} ${ui.small} ${styles.iconButton}`} aria-label="Previous" title="Previous (k)" disabled={!onPrevious} onClick={onPrevious}>
+            <ChevronUpIcon />
+          </button>
+          <button type="button" className={`${ui.ghost} ${ui.small} ${styles.iconButton}`} aria-label="Next" title="Next (j)" disabled={!onNext} onClick={onNext}>
+            <ChevronDownIcon />
+          </button>
+          <button type="button" className={`${ui.ghost} ${ui.small} ${styles.iconButton}`} aria-label="Close" onClick={onClose}>
+            <CloseIcon />
+          </button>
+        </div>
+      </header>
+      <Glide className={styles.sheetBody} resetKey={itemKey}>
+        <div key={itemKey} className={styles.sheetContent} data-direction={direction ?? undefined}>
+          {body}
+        </div>
+      </Glide>
+      <footer className={styles.sheetFoot}>
+        <span className={`${ui.state} ${styles.standing}`} data-tone={item.waiting ? 'live' : undefined}>
           {item.waiting ? 'Waiting' : 'Handled'}
         </span>
-      </div>
-      <div className={styles.detailMain}>
-        <div className={styles.detailBody}>{body}</div>
-        <div className={styles.detailActions}>{actions}</div>
-      </div>
+        <div className={styles.sheetActions}>{actions}</div>
+      </footer>
+    </div>
+  )
+}
+
+/**
+ * A box that glides to its contents' height when they change (an item's details loading in, or
+ * the next item being shorter) so the dialog never jumps. Scrolls when there's more than fits.
+ */
+function Glide({ className, resetKey, children }: { className: string; resetKey: string; children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null)
+  const content = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const outer = box.current
+    const inner = content.current
+    if (!outer || !inner) return
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const glide = { settled: false, timer: 0 }
+    const sync = () => {
+      const height = `${inner.offsetHeight}px`
+      if (outer.style.height === height) return
+      if (!glide.settled || still) {
+        // The first real measurement is where it starts, not something to glide to.
+        outer.style.transition = 'none'
+        outer.style.height = height
+        void outer.offsetHeight
+        outer.style.transition = ''
+        glide.settled = inner.offsetHeight > 0
+        return
+      }
+      // No scrollbar flickering in and out while it moves.
+      outer.dataset.gliding = ''
+      outer.style.height = height
+      window.clearTimeout(glide.timer)
+      glide.timer = window.setTimeout(() => delete outer.dataset.gliding, 280)
+    }
+    const observer = new ResizeObserver(sync)
+    observer.observe(inner)
+    sync()
+    return () => {
+      observer.disconnect()
+      window.clearTimeout(glide.timer)
+    }
+  }, [])
+
+  // A new item starts at its top.
+  useLayoutEffect(() => {
+    if (box.current) box.current.scrollTop = 0
+  }, [resetKey])
+
+  return (
+    <div ref={box} className={className}>
+      <div ref={content}>{children}</div>
     </div>
   )
 }
