@@ -49,19 +49,84 @@
   opacity: 0.55;
 }
 
-/* ---- A record's page: the main column and a narrower side one --------------------------------- */
+/* ---- Bentos (the grid and its cells are admin.module.css's; these place the boxes) ----------- */
 
-.split {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-  align-items: start;
-  gap: 16px;
+/* A person: who and the next step across the top, the timeline as the big box beside the
+   details and intros, and a member's RSVPs and fund requests along the bottom. Details keeps its
+   own height; intros takes what's left; the bottom row stops at a few lines and scrolls. */
+.personBento {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: auto auto minmax(96px, 1fr);
+  grid-template-areas:
+    'who who who who next next'
+    'time time time time details details'
+    'time time time time intros intros';
 }
 
-.column {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
+.personBento[data-member] {
+  grid-template-rows: auto auto minmax(96px, 1fr) fit-content(176px);
+  grid-template-areas:
+    'who who who who next next'
+    'time time time time details details'
+    'time time time time intros intros'
+    'rsvps rsvps rsvps fund fund fund';
+}
+
+/* An org: its deals and the next step across the top; under them the timeline as the tall box,
+   the people, events and intros down the middle, and the details and logo wall on the right. The
+   top row stops at a few lines and scrolls; the people and details keep their own heights. */
+.orgBento {
+  grid-template-columns: minmax(0, 10.2fr) minmax(0, 6.6fr) minmax(0, 8fr);
+  grid-template-rows: fit-content(208px) auto minmax(96px, 1fr) minmax(96px, 1fr);
+  grid-template-areas:
+    'deals deals next'
+    'time contacts details'
+    'time events wall'
+    'time intros wall';
+}
+
+.cellDeals {
+  grid-area: deals;
+}
+
+.cellContacts {
+  grid-area: contacts;
+}
+
+.cellEvents {
+  grid-area: events;
+}
+
+.cellWall {
+  grid-area: wall;
+}
+
+.cellWho {
+  grid-area: who;
+}
+
+.cellNext {
+  grid-area: next;
+}
+
+.cellTimeline {
+  grid-area: time;
+}
+
+.cellDetails {
+  grid-area: details;
+}
+
+.cellIntros {
+  grid-area: intros;
+}
+
+.cellRsvps {
+  grid-area: rsvps;
+}
+
+.cellFund {
+  grid-area: fund;
 }
 
 /* Who this is: a big disc, the name and kind, then the facts that place them. */
@@ -151,20 +216,6 @@
   display: grid;
   gap: 14px;
   padding: 16px;
-}
-
-.panelFoot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--line);
-}
-
-.panelFoot > :first-child:not(button) {
-  flex: 1 1 auto;
 }
 
 .none {
@@ -332,14 +383,30 @@ a.t1:hover {
   overflow-wrap: anywhere;
 }
 
-/* "Unsaved changes" before the Save button. Empty, it takes no room. */
-.saveState {
-  color: var(--ink-dim);
-  font-size: 12.5px;
+/* A record's details, to read, as a panel's body. */
+.facts {
+  padding: 16px;
 }
 
-.saveState:empty {
-  display: none;
+/* A long address stays on one line and trails off, not broken mid-word. */
+.factLink {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.factNotes {
+  color: var(--ink-soft);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Delete, in the Edit dialog's foot: a text button whose label lines up with the fields above. */
+.dialogDelete {
+  margin-left: -10px;
 }
 
 /* The next step, at the top of the side column. */
@@ -410,13 +477,37 @@ a.t1:hover {
   gap: 14px;
 }
 
-.danger {
-  justify-self: start;
+@media (max-width: 860px) {
+  /* One column: the boxes stack at their own heights and the page does the scrolling. */
+  .personBento,
+  .personBento[data-member] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: 'who' 'next' 'time' 'details' 'intros';
+  }
+
+  .personBento[data-member] {
+    grid-template-areas: 'who' 'next' 'time' 'details' 'intros' 'rsvps' 'fund';
+  }
+
+  .orgBento {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: 'deals' 'next' 'contacts' 'time' 'details' 'wall' 'events' 'intros';
+  }
 }
 
-@media (max-width: 860px) {
-  .split {
-    grid-template-columns: minmax(0, 1fr);
+/* A window too narrow for three columns of boxes: the timeline beside the people and details,
+   and the logo wall, events and intros along the bottom. */
+@media (min-width: 861px) and (max-width: 1380px) {
+  .orgBento {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-rows: fit-content(190px) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      'deals deals deals deals next next'
+      'time time time contacts contacts contacts'
+      'time time time details details details'
+      'wall wall events events intros intros';
   }
 }
 

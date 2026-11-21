@@ -1,10 +1,8 @@
 import { useCallback, useMemo } from 'react'
 import {
-  DEAL_STAGES,
   PERSON_KIND_LABELS,
   type Admin,
   type Deal,
-  type DealStage,
   type DealType,
   type OrgDetail,
   type PersonDetail,
@@ -131,10 +129,14 @@ export function useOwners(): { owners: Owner[]; me: string; labelFor: (email: st
 /** Each deal type's dot (a .state tone): sponsorships amber (money), partnerships sky, speakers and visits mint. */
 export const DEAL_TYPE_TONES: Record<DealType, string> = { sponsor: 'sample', partner: 'filled', visit: 'live' }
 
-/** The stage after this one, or null once it's delivered. */
-export function nextStage(stage: DealStage): DealStage | null {
-  const index = DEAL_STAGES.indexOf(stage)
-  return index < DEAL_STAGES.length - 1 ? DEAL_STAGES[index + 1] : null
+/**
+ * Whether a deal that was just moved lands above another in its new column, each given by its
+ * next follow-up's day (null: none). The board's order is the Worker's `compareDeals`: soonest
+ * follow-up first, then the most recently changed, which the moved deal now is.
+ */
+export function landsBefore(movedDue: string | null, otherDue: string | null): boolean {
+  if (otherDue === null) return true
+  return movedDue !== null && movedDue <= otherDue
 }
 
 /**

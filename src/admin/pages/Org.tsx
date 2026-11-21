@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type FormEvent } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
   DEAL_STAGE_LABELS,
@@ -14,15 +14,15 @@ import { whoCanChange } from '../../../shared/access'
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
 import { Field } from '../components/Field'
+import { FormDialog } from '../components/FormDialog'
 import { LogInteraction } from '../components/LogInteraction'
-import { ChevronRightIcon, PlusIcon, TrashIcon, UploadIcon } from '../components/icons'
+import { ChevronRightIcon, PlusIcon, UploadIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { useCan, useGated } from '../lib/access'
-import { useSaveShortcut } from '../lib/keys'
 import { useToast } from '../lib/toast'
 import { UPLOAD_ACCEPT, uploadPicture } from '../lib/upload'
 import styles from './crm/crm.module.css'
-import { formatAt, initials, isoOf } from './crm/format'
+import { formatAt, initials, isoOf, teammate } from './crm/format'
 import { NewPerson } from './crm/NewPerson'
 import { Due, FollowUpsPanel, IntrosPanel, TimelinePanel } from './crm/panels'
 import { useTeam } from './crm/data'
@@ -30,6 +30,7 @@ import { OwnerAvatar, OwnerSelect } from './crm/pickers'
 import { SetFollowUp } from './crm/SetFollowUp'
 import { ConfirmDialog } from './people/ConfirmDialog'
 import { toApiError, useApi } from './people/useApi'
+import { SegmentGroup } from '../components/SegmentGroup'
 
 // One org: its deals, people, what happened with them, and its spot on the logo walls.
 
@@ -82,7 +83,7 @@ function Detail({ org, reload, replace }: { org: OrgDetail; reload: () => void; 
   }
 
   return (
-    <div className={ui.page}>
+    <div className={ui.page} data-fit>
       <PageHeader
         title={org.name}
         tabTitle={`${org.name} · Orgs`}
@@ -100,8 +101,11 @@ function Detail({ org, reload, replace }: { org: OrgDetail; reload: () => void; 
         }
       />
 
-      <div className={styles.split}>
-        <div className={styles.column}>
+      {/* A bento that fits the screen: deals and the next step across the top; under them the
+          timeline as the tall box, the people, events and intros in the middle, and the details
+          and logo wall on the right. Each box scrolls inside when it holds more. */}
+      <div className={`${ui.bento} ${styles.orgBento}`}>
+        <div className={`${ui.cell} ${styles.cellDeals}`}>
           <section className={ui.panelFlush} aria-labelledby="deals-title">
             <div className={ui.flushHead}>
               <h2 id="deals-title" className={`${ui.panelTitle} ${ui.flushStatus}`}>
@@ -161,11 +165,13 @@ function Detail({ org, reload, replace }: { org: OrgDetail; reload: () => void; 
               </table>
             )}
           </section>
+        </div>
 
+        <div className={`${ui.cell} ${styles.cellTimeline}`}>
           <TimelinePanel items={org.timeline} />
         </div>
 
-        <div className={styles.column}>
+        <div className={`${ui.cell} ${styles.cellNext}`}>
           <FollowUpsPanel
             items={org.followUps}
             onChanged={reload}
@@ -175,11 +181,17 @@ function Detail({ org, reload, replace }: { org: OrgDetail; reload: () => void; 
               </button>
             }
           />
+        </div>
 
-          <OrgDetailsPanel key={`${org.id}-${org.updatedAt}`} org={org} onSaved={replace} />
+        <div className={`${ui.cell} ${styles.cellDetails}`}>
+          <OrgDetailsPanel org={org} onSaved={replace} onDelete={() => setDialog('delete')} />
+        </div>
 
+        <div className={`${ui.cell} ${styles.cellWall}`}>
           <LogoWallPanel org={org} onSaved={replace} />
+        </div>
 
+        <div className={`${ui.cell} ${styles.cellContacts}`}>
           <section className={ui.panelFlush} aria-labelledby="contacts-title">
             <div className={ui.flushHead}>
               <h2 id="contacts-title" className={`${ui.panelTitle} ${ui.flushStatus}`}>
@@ -211,7 +223,9 @@ function Detail({ org, reload, replace }: { org: OrgDetail; reload: () => void; 
               </ul>
             )}
           </section>
+        </div>
 
+        <div className={`${ui.cell} ${styles.cellEvents}`}>
           <section className={ui.panelFlush} aria-labelledby="events-title">
             <div className={ui.flushHead}>
               <h2 id="events-title" className={ui.panelTitle}>
@@ -240,12 +254,10 @@ function Detail({ org, reload, replace }: { org: OrgDetail; reload: () => void; 
               </ul>
             )}
           </section>
+        </div>
 
+        <div className={`${ui.cell} ${styles.cellIntros}`}>
           <IntrosPanel items={org.intros} />
-
-          <button type="button" className={`${ui.dangerGhost} ${styles.danger}`} onClick={() => setDialog('delete')}>
-            <TrashIcon /> Delete org
-          </button>
         </div>
       </div>
 
@@ -313,22 +325,81 @@ const orgDraft = (org: OrgDetail): OrgDraft => ({
   notes: org.notes,
 })
 
-function OrgDetailsPanel({ org, onSaved }: { org: OrgDetail; onSaved: (org: OrgDetail) => void }) {
+/** What's on file, to read. Edit opens the same fields in a dialog. */
+function OrgDetailsPanel({ org, onSaved, onDelete }: { org: OrgDetail; onSaved: (org: OrgDetail) => void; onDelete: () => void }) {
+  const [editing, setEditing] = useState(false)
+  const none = (text: string) => <span className={ui.dim}>{text}</span>
+
+  return (
+    <section className={ui.panelFlush} aria-labelledby="org-details-title">
+      <div className={ui.flushHead}>
+        <h2 id="org-details-title" className={`${ui.panelTitle} ${ui.flushStatus}`}>
+          Details
+        </h2>
+        <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setEditing(true)}>
+          Edit
+        </button>
+      </div>
+      <dl className={`${styles.kv} ${styles.facts}`}>
+        <dt>Owner</dt>
+        <dd>{org.ownerEmail ? teammate(org.ownerEmail) : none('No one yet')}</dd>
+        <dt>Kind</dt>
+        <dd>{org.kind === 'hackathon' ? 'Hackathon organizer' : ORG_KIND_LABELS[org.kind]}</dd>
+        <dt>Website</dt>
+        <dd>
+          {/^https?:\/\//.test(org.website) ? (
+            <a href={org.website} target="_blank" rel="noreferrer" className={`${ui.link} ${styles.factLink}`} title={org.website}>
+              {org.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+            </a>
+          ) : (
+            org.website || none('None')
+          )}
+        </dd>
+        <dt>Focus</dt>
+        <dd>{org.focus || none('Not set')}</dd>
+        <dt>Notes</dt>
+        <dd className={styles.factNotes}>{org.notes || none('None')}</dd>
+      </dl>
+
+      {editing && (
+        <EditOrg
+          org={org}
+          onClose={() => setEditing(false)}
+          onSaved={(item) => {
+            setEditing(false)
+            onSaved(item)
+          }}
+          onDelete={() => {
+            setEditing(false)
+            onDelete()
+          }}
+        />
+      )}
+    </section>
+  )
+}
+
+/**
+ * The Edit dialog. Mounted only while open, so each opening starts from what's saved. Deleting
+ * starts here too, on the far side from Save, and still asks before it does anything.
+ */
+function EditOrg({ org, onClose, onSaved, onDelete }: { org: OrgDetail; onClose: () => void; onSaved: (org: OrgDetail) => void; onDelete: () => void }) {
   const toast = useToast()
   const team = useTeam()
-  const form = useRef<HTMLFormElement>(null)
   const saved = orgDraft(org)
   const [draft, setDraft] = useState(saved)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
   const [issues, setIssues] = useState<Record<string, string>>({})
   const changed = (Object.keys(draft) as (keyof OrgDraft)[]).filter((field) => draft[field] !== saved[field])
-  const dirty = changed.length > 0
   const set = <K extends keyof OrgDraft>(field: K, value: OrgDraft[K]) => setDraft((prev) => ({ ...prev, [field]: value }))
 
-  const save = async (event?: FormEvent) => {
-    event?.preventDefault()
-    if (saving || !dirty) return
+  const save = async () => {
+    if (saving) return
+    if (changed.length === 0) {
+      onClose()
+      return
+    }
     setSaving(true)
     setFormError('')
     setIssues({})
@@ -342,68 +413,54 @@ function OrgDetailsPanel({ org, onSaved }: { org: OrgDetail; onSaved: (org: OrgD
       const apiError = toApiError(failure)
       setIssues(apiError.issues)
       setFormError(apiError.message)
-    } finally {
       setSaving(false)
     }
   }
 
-  const submit = useCallback(() => form.current?.requestSubmit(), [])
-  useSaveShortcut(submit, dirty && !saving)
-
   return (
-    <section className={ui.panelFlush} aria-labelledby="org-details-title">
-      <div className={ui.flushHead}>
-        <h2 id="org-details-title" className={ui.panelTitle}>
-          Details
-        </h2>
-      </div>
-      <form ref={form} className={styles.panelBody} onSubmit={save} noValidate>
-        <Field label="Name" error={issues.name}>
-          {(control) => <input className={ui.input} value={draft.name} onChange={(event) => set('name', event.target.value)} maxLength={120} {...control} />}
-        </Field>
-        <div className={styles.pair}>
-          <Field label="Kind" error={issues.kind}>
-            {(control) => (
-              <select className={ui.input} value={draft.kind} onChange={(event) => set('kind', event.target.value as OrgKind)} {...control}>
-                {ORG_KINDS.map((kind) => (
-                  <option key={kind} value={kind}>
-                    {kind === 'hackathon' ? 'Hackathon organizer' : ORG_KIND_LABELS[kind]}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Field>
-          <Field label="Owner" error={issues.ownerEmail}>
-            {(control) => <OwnerSelect value={draft.ownerEmail} team={team} onChange={(email) => set('ownerEmail', email)} {...control} />}
-          </Field>
-        </div>
-        <Field label="Website" error={issues.website}>
-          {(control) => <input className={ui.input} value={draft.website} onChange={(event) => set('website', event.target.value)} maxLength={300} {...control} />}
-        </Field>
-        <Field label="Focus" error={issues.focus}>
-          {(control) => <input className={ui.input} value={draft.focus} onChange={(event) => set('focus', event.target.value)} maxLength={160} {...control} />}
-        </Field>
-        <Field label="Notes" error={issues.notes}>
-          {(control) => <textarea className={ui.input} value={draft.notes} onChange={(event) => set('notes', event.target.value)} maxLength={4000} rows={3} {...control} />}
-        </Field>
-        <p className={ui.error} role="alert" hidden={!formError}>
-          {formError}
-        </p>
-      </form>
-      <div className={styles.panelFoot}>
-        <span className={styles.saveState} role="status">
-          {saving ? 'Saving…' : dirty ? 'Unsaved changes' : ''}
-        </span>
-        {dirty && !saving && (
-          <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setDraft(saved)}>
-            Discard
-          </button>
-        )}
-        <button type="button" className={`${ui.primary} ${ui.small}`} onClick={() => save()} disabled={!dirty || saving}>
-          Save
+    <FormDialog
+      open
+      title={`Edit ${org.name}`}
+      submitLabel="Save"
+      busy={saving}
+      error={formError}
+      note={
+        <button type="button" className={`${ui.dangerGhost} ${ui.small} ${styles.dialogDelete}`} onClick={onDelete} disabled={saving}>
+          Delete org
         </button>
+      }
+      onSubmit={save}
+      onClose={onClose}
+    >
+      <Field label="Name" error={issues.name}>
+        {(control) => <input className={ui.input} value={draft.name} onChange={(event) => set('name', event.target.value)} maxLength={120} {...control} />}
+      </Field>
+      <div className={styles.pair}>
+        <Field label="Kind" error={issues.kind}>
+          {(control) => (
+            <select className={ui.input} value={draft.kind} onChange={(event) => set('kind', event.target.value as OrgKind)} {...control}>
+              {ORG_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {kind === 'hackathon' ? 'Hackathon organizer' : ORG_KIND_LABELS[kind]}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        <Field label="Owner" error={issues.ownerEmail}>
+          {(control) => <OwnerSelect value={draft.ownerEmail} team={team} onChange={(email) => set('ownerEmail', email)} {...control} />}
+        </Field>
       </div>
-    </section>
+      <Field label="Website" error={issues.website}>
+        {(control) => <input className={ui.input} value={draft.website} onChange={(event) => set('website', event.target.value)} maxLength={300} {...control} />}
+      </Field>
+      <Field label="Focus" error={issues.focus}>
+        {(control) => <input className={ui.input} value={draft.focus} onChange={(event) => set('focus', event.target.value)} maxLength={160} {...control} />}
+      </Field>
+      <Field label="Notes" error={issues.notes}>
+        {(control) => <textarea className={ui.input} value={draft.notes} onChange={(event) => set('notes', event.target.value)} maxLength={4000} rows={3} {...control} />}
+      </Field>
+    </FormDialog>
   )
 }
 
@@ -495,7 +552,7 @@ function LogoWallPanel({ org, onSaved }: { org: OrgDetail; onSaved: (org: OrgDet
 
         {on && (
           <div className={styles.logoRow}>
-            <div className={ui.tabs} role="group" aria-label="Which wall">
+            <SegmentGroup label="Which wall">
               {WALL_CHOICES.map((choice) => (
                 <button
                   key={choice.id}
@@ -509,7 +566,7 @@ function LogoWallPanel({ org, onSaved }: { org: OrgDetail; onSaved: (org: OrgDet
                   {choice.label}
                 </button>
               ))}
-            </div>
+            </SegmentGroup>
             <label className={ui.field}>
               <span className={ui.srOnly}>Order on the wall</span>
               <input

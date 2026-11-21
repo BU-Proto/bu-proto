@@ -11,6 +11,7 @@ import { formatAt, isoOf, WALL_LABELS } from './crm/format'
 import { NewOrg } from './crm/NewOrg'
 import { OwnerAvatar } from './crm/pickers'
 import { useApi, useDebounced } from './people/useApi'
+import { SegmentGroup } from '../components/SegmentGroup'
 
 // Orgs: the funds, companies, BU offices and hackathon organizers we work with.
 
@@ -90,7 +91,7 @@ export function Component() {
       />
 
       <div className={ui.toolbar}>
-        <div className={`${ui.tabs} ${styles.toolbarTabs}`} role="group" aria-label="Show">
+        <SegmentGroup className={styles.toolbarTabs} label="Show">
           {tabs.map((entry) => (
             <button
               key={entry.id}
@@ -103,7 +104,7 @@ export function Component() {
               {data && <span className={ui.count}>{count(entry.id)}</span>}
             </button>
           ))}
-        </div>
+        </SegmentGroup>
         <label className={`${ui.search} ${styles.search}`} role="search">
           <span className={ui.srOnly}>Search orgs</span>
           <SearchIcon />

@@ -11,6 +11,7 @@ import { messageFor, useAuthGuard, useSession } from '../lib/session'
 import { useToast } from '../lib/toast'
 import { useApi } from './people/useApi'
 import styles from './Today.module.css'
+import { SegmentGroup } from '../components/SegmentGroup'
 
 // Today: the portal's front page. What the team owes people this week, what's waiting in the
 // Inbox, what's coming up, and what happened lately. Replaces the old overview.
@@ -137,7 +138,7 @@ export function Component() {
   const sentence = said.length ? listOf(said) : 'Nothing overdue and nothing waiting'
 
   return (
-    <div className={ui.page}>
+    <div className={ui.page} data-fit>
       <PageHeader
         title="Today"
         actions={
@@ -215,8 +216,10 @@ export function Component() {
         </ul>
       </section>
 
-      <div className={styles.split}>
-        <div className={styles.follow}>
+      {/* A bento that fits the screen: what's owed, what happened, and beside them what's
+          waiting and what's coming up. Each box scrolls inside when it holds more. */}
+      <div className={`${ui.bento} ${styles.todayBento}`}>
+        <div className={`${ui.cell} ${styles.cellFollow}`}>
           <FollowUps
             items={inScope}
             done={done}
@@ -231,7 +234,7 @@ export function Component() {
           />
         </div>
 
-        <div className={styles.aside}>
+        <div className={`${ui.cell} ${styles.cellWaiting}`}>
           <section className={ui.panelFlush} aria-labelledby="waiting-title">
             <div className={ui.flushHead}>
               <h2 id="waiting-title" className={ui.panelTitle}>
@@ -253,7 +256,9 @@ export function Component() {
               ))}
             </ul>
           </section>
+        </div>
 
+        <div className={`${ui.cell} ${styles.cellComing}`}>
           <section className={ui.panelFlush} aria-labelledby="next-title">
             <div className={ui.flushHead}>
               <h2 id="next-title" className={ui.panelTitle}>
@@ -298,31 +303,33 @@ export function Component() {
           </section>
         </div>
 
-        <section className={`${ui.panelFlush} ${styles.activity}`} aria-labelledby="activity-title">
-          <div className={ui.flushHead}>
-            <h2 id="activity-title" className={ui.panelTitle}>
-              Recent activity
-            </h2>
-            <span className={ui.flushStatus} />
-            <Link className={`${ui.ghost} ${ui.small}`} to="/admin/activity">
-              All activity
-            </Link>
-          </div>
-          {data && data.activity.length === 0 ? (
-            <div className={ui.empty}>
-              <h3>Nothing yet</h3>
-              <p>Logged calls and coffees, deals, sign-ups, wins and intros show up here as they happen.</p>
+        <div className={`${ui.cell} ${styles.cellActivity}`}>
+          <section className={ui.panelFlush} aria-labelledby="activity-title">
+            <div className={ui.flushHead}>
+              <h2 id="activity-title" className={ui.panelTitle}>
+                Recent activity
+              </h2>
+              <span className={ui.flushStatus} />
+              <Link className={`${ui.ghost} ${ui.small}`} to="/admin/activity">
+                All activity
+              </Link>
             </div>
-          ) : (
-            <ul className={styles.rows}>
-              {(data?.activity ?? []).map((item, index) => (
-                <li key={`${item.kind}-${item.at}-${index}`}>
-                  <ActivityRow item={item} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+            {data && data.activity.length === 0 ? (
+              <div className={ui.empty}>
+                <h3>Nothing yet</h3>
+                <p>Logged calls and coffees, deals, sign-ups, wins and intros show up here as they happen.</p>
+              </div>
+            ) : (
+              <ul className={styles.rows}>
+                {(data?.activity ?? []).map((item, index) => (
+                  <li key={`${item.kind}-${item.at}-${index}`}>
+                    <ActivityRow item={item} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
 
       <LogInteraction
@@ -405,13 +412,13 @@ function FollowUps({ items, done, onDone: setDone, loading, scope, counts, today
         <h2 id="follow-ups-title" className={ui.panelTitle}>
           Follow-ups
         </h2>
-        <div className={`${ui.tabs} ${styles.scope}`} role="group" aria-label="Whose follow-ups">
+        <SegmentGroup className={styles.scope} label="Whose follow-ups">
           {(['mine', 'everyone'] as const).map((value) => (
             <button key={value} type="button" className={ui.tab} aria-pressed={scope === value} onClick={() => onScope(value)}>
               {value === 'mine' ? 'Mine' : 'Everyone'} <span className={ui.count}>{counts[value]}</span>
             </button>
           ))}
-        </div>
+        </SegmentGroup>
         <span className={ui.flushStatus} />
         <Link className={`${ui.ghost} ${ui.small}`} to="/admin/activity/follow-ups">
           All follow-ups

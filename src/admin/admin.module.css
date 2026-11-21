@@ -14,6 +14,97 @@
   margin-inline: auto;
 }
 
+/* ---- Bento: a page as one rectangle of boxes ---------------------------------------------- */
+
+/* A grid of boxes of different sizes, each filling its cell edge to edge. The page's own class
+   sets the columns, rows and areas; a cell hands its whole size to the one box in it, and a box
+   with more in it than its cell holds scrolls inside, under its head. */
+.bento {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.cell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+.cell > * {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+/* A box's head stays put while its list scrolls, and every head is one height, so the rules
+   under neighbours' heads sit level. */
+.cell .flushHead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex-wrap: nowrap;
+  gap: 12px;
+  padding-block: 7px 8px;
+  background: var(--surface);
+}
+
+/* The head is one line whatever the box's width: a switch that doesn't fit scrolls sideways
+   beside its title, a title on its own trails off, and the buttons keep their size. */
+.cell .flushHead > * {
+  flex: none;
+}
+
+.cell .flushHead > .panelTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell .flushHead:has(> .tabs) > .panelTitle {
+  flex: none;
+}
+
+.cell .flushHead > .flushStatus {
+  flex: 1 1 0;
+}
+
+.cell .flushHead > .tabs {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cell .flushHead > .tabs > .tab {
+  flex: none;
+}
+
+/* With data-fit on the page, the bento takes exactly the room left on the screen (the frame
+   sizes the page: AdminLayout.module.css), so nothing but a box's own list ever scrolls. */
+@media (min-width: 861px) and (min-height: 700px) {
+  .page[data-fit] {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .page[data-fit] > * {
+    flex: none;
+  }
+
+  .page[data-fit] > .bento {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+}
+
 /* Single forms read better at a line length than at full width. The page keeps the shared
    column, so its left edge doesn't jump between a list and a form; only the content stops short. */
 .narrow > * {
@@ -923,6 +1014,8 @@ tr:has(> .rowGo) a.rowTitle:hover {
 
 /* A segmented control: a sunk track, the current option lifted out of it. */
 .tabs {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
@@ -938,6 +1031,8 @@ tr:has(> .rowGo) a.rowTitle:hover {
 
 /* Links or buttons, so it resets a button's own chrome. */
 .tab {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -951,6 +1046,7 @@ tr:has(> .rowGo) a.rowTitle:hover {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  transition: color 0.15s ease;
 }
 
 .tab:hover {
@@ -965,6 +1061,55 @@ tr:has(> .rowGo) a.rowTitle:hover {
   box-shadow:
     inset 0 0 0 1px var(--line-strong),
     0 1px 2px rgb(0 0 0 / 0.25);
+}
+
+/* The picked option's ground, as one piece that slides from the last pick to the new one
+   (components/SegmentGroup.tsx places it). Until it's placed, the picked option draws its own. */
+.tabIndicator {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-radius: 7px;
+  background: var(--fill-hover);
+  box-shadow:
+    inset 0 0 0 1px var(--line-strong),
+    0 1px 2px rgb(0 0 0 / 0.25);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tabs[data-live] > .tabIndicator {
+  opacity: 1;
+}
+
+.tabs[data-live] > .tab[aria-current='page'],
+.tabs[data-live] > .tab[aria-current='true'],
+.tabs[data-live] > .tab[aria-pressed='true'] {
+  background: transparent;
+  box-shadow: none;
+}
+
+.tabIndicator[data-sliding] {
+  transition:
+    transform 0.28s cubic-bezier(0.3, 0.7, 0.2, 1),
+    width 0.28s cubic-bezier(0.3, 0.7, 0.2, 1),
+    height 0.28s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabIndicator[data-sliding] {
+    transition: none;
+  }
+}
+
+/* While something is dragged (lib/pointerDrag.ts marks <html>), the pointer is a closed hand
+   wherever it goes. */
+:global(html[data-grabbing]),
+:global(html[data-grabbing]) * {
+  cursor: grabbing !important;
 }
 
 /* On a phone the options scroll sideways rather than wrapping onto a second row. */

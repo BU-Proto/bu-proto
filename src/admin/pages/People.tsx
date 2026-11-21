@@ -13,6 +13,7 @@ import { NewPerson } from './crm/NewPerson'
 import { Due } from './crm/panels'
 import { OwnerAvatar } from './crm/pickers'
 import { useApi, useDebounced } from './people/useApi'
+import { SegmentGroup } from '../components/SegmentGroup'
 
 // People: members (signed up on the site) and contacts (everyone else) as one list. A contact
 // with a member's email is the same person and only shows as the member.
@@ -111,7 +112,7 @@ export function Component() {
       />
 
       <div className={ui.toolbar}>
-        <div className={`${ui.tabs} ${styles.toolbarTabs}`} role="group" aria-label="Show">
+        <SegmentGroup className={styles.toolbarTabs} label="Show">
           {TABS.map((entry) => (
             <button
               key={entry.id}
@@ -124,7 +125,7 @@ export function Component() {
               {data && <span className={ui.count}>{everyone.filter((person) => inTab(person, entry.id)).length}</span>}
             </button>
           ))}
-        </div>
+        </SegmentGroup>
         <label className={`${ui.search} ${styles.search}`} role="search">
           <span className={ui.srOnly}>Search people</span>
           <SearchIcon />

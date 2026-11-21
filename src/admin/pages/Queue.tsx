@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useRevalidator, useSearchParams } from 'react-router'
 import { FUND_STATUSES, type BoardInterest, type FundInterest, type FundStatus, type MailThreadDetail, type MemberDetail, type RoleApplication } from '../../../shared/api'
 import { QUEUE_SOURCE_LABELS, QUEUE_SOURCES, type QueueItem, type QueueSource } from '../../../shared/crm'
@@ -15,6 +15,7 @@ import { useToast } from '../lib/toast'
 import inbox from './Inbox.module.css'
 import { useApi } from './people/useApi'
 import styles from './Queue.module.css'
+import { SegmentGroup } from '../components/SegmentGroup'
 
 // The Inbox: everything waiting on the team in one list (email that's on us, sign-ups nobody has
 // looked at, fund requests, role applications, board interest), with the selected one beside it
@@ -50,7 +51,7 @@ export function Component() {
   const waitingOnly = params.get('waiting') === '1'
   const { data, error, loading, setData } = useApi<QueueData>('/admin/queue')
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
-  const detail = useRef<HTMLElement>(null)
+  const list = useRef<HTMLUListElement>(null)
 
   const all = useMemo(() => data?.items ?? [], [data])
   const shown = useMemo(
@@ -73,12 +74,6 @@ export function Component() {
       { replace: true },
     )
 
-  const select = (item: QueueItem, reveal = false) => {
-    setSelectedKey(keyOf(item))
-    // On a phone the detail sits under the list, so a tap brings it into view.
-    if (reveal && window.matchMedia('(max-width: 900px)').matches) requestAnimationFrame(() => detail.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
-
   // j / k move down and up, Enter or o opens the item's own page: the email inbox's keys.
   const keys = useMemo(
     () => ({
@@ -90,6 +85,19 @@ export function Component() {
     [shown, index, selected, navigate],
   )
   useKeys(keys, shown.length > 0)
+
+  // The open row is kept in sight as j and k move through the list, and again once what's under
+  // it has loaded and made it taller.
+  const selectedId = selected ? keyOf(selected) : null
+  useEffect(() => {
+    const open = list.current?.querySelector('[data-open]')
+    if (!open) return
+    const reveal = () => open.scrollIntoView({ block: 'nearest' })
+    reveal()
+    const observer = new ResizeObserver(reveal)
+    observer.observe(open)
+    return () => observer.disconnect()
+  }, [selectedId])
 
   /** An item was dealt with (or brought back): its dot, the tab counts and the sidebar's badges follow. */
   const setWaiting = (target: QueueItem, waiting: boolean) => {
@@ -116,7 +124,7 @@ export function Component() {
       </p>
 
       <div className={styles.toolbar}>
-        <div className={ui.tabs} role="group" aria-label="Show">
+        <SegmentGroup label="Show">
           {FILTERS.map((entry) => (
             <button
               key={entry.key}
@@ -129,9 +137,9 @@ export function Component() {
               <span className={ui.count}>{counts ? (entry.key === 'all' ? total : counts[entry.key]) : ''}</span>
             </button>
           ))}
-        </div>
+        </SegmentGroup>
         <label className={styles.waitingOnly}>
-          <input type="checkbox" checked={waitingOnly} onChange={(event) => setParam('waiting', event.target.checked ? '1' : null)} />
+          <input type="checkbox" role="switch" className={ui.switch} checked={waitingOnly} onChange={(event) => setParam('waiting', event.target.checked ? '1' : null)} />
           Waiting only
         </label>
       </div>
@@ -148,38 +156,30 @@ export function Component() {
         </div>
       ) : data && selected ? (
         <>
-          <div className={styles.split}>
-            <section className={`${ui.panelFlush} ${styles.listPanel}`} aria-label="Waiting">
-              <ul className={styles.list}>
-                {shown.map((item) => (
-                  <li key={keyOf(item)}>
-                    <button
-                      type="button"
-                      className={styles.row}
-                      data-waiting={item.waiting}
-                      aria-pressed={item === selected}
-                      onClick={() => select(item, true)}
-                    >
+          {/* One list, as tall as what's in it. The picked row opens in place: what it says and
+              what can be done about it, under its own line, so nothing sits in a box of its own. */}
+          <section className={ui.panelFlush} aria-label="Waiting">
+            <ul ref={list} className={styles.list}>
+              {shown.map((item) => {
+                const open = item === selected
+                return (
+                  <li key={keyOf(item)} data-open={open || undefined}>
+                    <button type="button" className={styles.row} data-waiting={item.waiting} aria-expanded={open} onClick={() => setSelectedKey(keyOf(item))}>
                       <span className={styles.dot} aria-label={item.waiting ? 'Waiting' : undefined} />
-                      <span className={styles.who}>{item.name}</span>
+                      <span className={styles.name}>{item.name}</span>
                       <span className={styles.what}>
                         <span className={styles.subject}>{item.title}</span>
                         {item.snippet && <span className={styles.snippet}>{item.snippet}</span>}
-                        <span className={inbox.chips}>
-                          <span className={inbox.chip}>{QUEUE_SOURCE_LABELS[item.source]}</span>
-                        </span>
                       </span>
+                      <span className={styles.source}>{QUEUE_SOURCE_LABELS[item.source]}</span>
                       <span className={styles.when}>{formatRelative(item.at)}</span>
                     </button>
+                    {open && <Detail key={keyOf(item)} item={item} onWaiting={(waiting) => setWaiting(item, waiting)} />}
                   </li>
-                ))}
-              </ul>
-            </section>
-
-            <aside ref={detail} className={`${ui.panelFlush} ${styles.detail}`} aria-label="Selected">
-              <Detail key={keyOf(selected)} item={selected} onWaiting={(waiting) => setWaiting(selected, waiting)} />
-            </aside>
-          </div>
+                )
+              })}
+            </ul>
+          </section>
           <p className={styles.keys}>Keys: j and k to move, Enter to open.</p>
         </>
       ) : null}
@@ -322,26 +322,25 @@ function Detail({ item, onWaiting }: DetailProps) {
       break
   }
 
+  // Laid out on the row's own columns: their address and where it stands under the name, and
+  // what it says and what to do about it under the subject.
   return (
-    <>
-      <div className={styles.detailHead}>
-        <span className={`${ui.avatar} ${styles.bigAvatar}`} aria-hidden="true">
-          {item.name.trim().slice(0, 1).toUpperCase() || '?'}
-        </span>
-        <div className={styles.detailWho}>
-          <h2 className={styles.detailName}>{item.name}</h2>
-          <span className={styles.detailMeta}>
-            {item.email && `${item.email} · `}
-            {formatRelative(item.at)}
+    <div className={styles.detail}>
+      <div className={styles.detailSide}>
+        {item.email && (
+          <span className={styles.detailMeta} title={item.email}>
+            {item.email}
           </span>
-        </div>
+        )}
         <span className={ui.state} data-tone={item.waiting ? 'live' : undefined}>
           {item.waiting ? 'Waiting' : 'Handled'}
         </span>
       </div>
-      <div className={styles.detailBody}>{body}</div>
-      <div className={styles.detailActions}>{actions}</div>
-    </>
+      <div className={styles.detailMain}>
+        <div className={styles.detailBody}>{body}</div>
+        <div className={styles.detailActions}>{actions}</div>
+      </div>
+    </div>
   )
 }
 
@@ -495,7 +494,7 @@ function FundBody({ id, onWaiting }: { id: number; onWaiting: (waiting: boolean)
       />
       <div className={styles.statusRow}>
         <span className={styles.statusLabel}>Status</span>
-        <div className={`${ui.tabs} ${styles.status}`} role="group" aria-label={`Status for ${entry.name}`}>
+        <SegmentGroup className={styles.status} label={`Status for ${entry.name}`}>
           {FUND_STATUSES.map((value) => (
             <button
               key={value}
@@ -510,7 +509,7 @@ function FundBody({ id, onWaiting }: { id: number; onWaiting: (waiting: boolean)
               {FUND_LABELS[value]}
             </button>
           ))}
-        </div>
+        </SegmentGroup>
       </div>
     </>
   )

@@ -279,6 +279,49 @@
   }
 }
 
+/* On a screen with room, the page fits it (data-fit, see admin.module.css): the four boxes share
+   the height left between the top line and the links, still all one size, and a box with more
+   rows than it shows scrolls inside. */
+@media (min-width: 861px) and (min-height: 700px) {
+  .home {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .home > * {
+    flex: none;
+  }
+
+  .home > .boxes {
+    flex: 1 1 0;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+  }
+
+  .box {
+    grid-template-rows: var(--head) minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .body {
+    height: auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--fill-hover) transparent;
+  }
+
+  .body:has(> .empty) {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .empty {
+    height: auto;
+  }
+}
+
 /* One column: the boxes stack, so they no longer need to match each other. A box with rows is
    as tall as its rows; an empty one keeps a short note. */
 @media (max-width: 860px) {

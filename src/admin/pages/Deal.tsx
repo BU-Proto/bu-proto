@@ -40,6 +40,7 @@ import { messageFor, useAuthGuard } from '../lib/session'
 import { useToast } from '../lib/toast'
 import { useApi } from './people/useApi'
 import styles from './Deal.module.css'
+import { SegmentGroup } from '../components/SegmentGroup'
 
 /** One deal: where it stands, what it is, who it's with, what happened and what's owed next. */
 export function Component() {
@@ -125,7 +126,7 @@ export function Component() {
   const stageIndex = DEAL_STAGES.indexOf(deal.stage)
 
   return (
-    <div className={ui.page}>
+    <div className={ui.page} data-fit>
       <PageHeader
         title={deal.title}
         tabTitle={`${deal.title} · Pipeline`}
@@ -155,7 +156,7 @@ export function Component() {
         </p>
       )}
 
-      <div className={`${ui.tabs} ${styles.stepper}`} role="group" aria-label="Stage">
+      <SegmentGroup className={styles.stepper} label="Stage">
         {DEAL_STAGES.map((stage, index) => (
           <button
             key={stage}
@@ -173,10 +174,12 @@ export function Component() {
             {DEAL_STAGE_LABELS[stage]}
           </button>
         ))}
-      </div>
+      </SegmentGroup>
 
-      <div className={styles.layout}>
-        <div className={styles.main}>
+      {/* A bento that fits the screen: details and history down the left, the contact,
+          follow-ups and (for a sponsorship) the note about committing down the right. */}
+      <div className={`${ui.bento} ${styles.dealBento}`} data-about={deal.type === 'sponsor' || undefined}>
+        <div className={`${ui.cell} ${styles.cellDetails}`}>
           {editing ? (
             <DealEditor
               deal={deal}
@@ -194,10 +197,13 @@ export function Component() {
           ) : (
             <DealDetails deal={deal} gated={gated} onEdit={() => setEditing(true)} />
           )}
+        </div>
+
+        <div className={`${ui.cell} ${styles.cellHistory}`}>
           <History deal={deal} />
         </div>
 
-        <aside className={styles.aside}>
+        <div className={`${ui.cell} ${styles.cellContact}`}>
           <section className={ui.panelFlush} aria-labelledby="deal-contact">
             <div className={ui.flushHead}>
               <h2 id="deal-contact" className={ui.panelTitle}>
@@ -239,16 +245,20 @@ export function Component() {
               )}
             </div>
           </section>
+        </div>
 
+        <div className={`${ui.cell} ${styles.cellFollow}`}>
           <FollowUps deal={deal} onChange={reload} />
+        </div>
 
-          {deal.type === 'sponsor' && (
+        {deal.type === 'sponsor' && (
+          <div className={`${ui.cell} ${styles.cellAbout}`}>
             <section className={`${ui.panel} ${styles.aboutPanel}`}>
               <h2 className={ui.panelTitle}>When it commits</h2>
               <p className={styles.quiet}>Moving it to Committed offers to put {deal.orgName} on the Sponsors logo wall.</p>
             </section>
-          )}
-        </aside>
+          </div>
+        )}
       </div>
 
       <LogInteraction

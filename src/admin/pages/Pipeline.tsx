@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import {
   DEAL_STAGES,
@@ -20,7 +21,8 @@ import { PlusIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { PersonPicker, type PickedPerson } from '../components/PersonPicker'
 import { useCan, useGated } from '../lib/access'
-import { DEAL_TYPE_TONES, dueLabel, formatCents, formatDay, initials, nextStage, parseDollars, useOfferSponsorWall, useOwners } from '../lib/activity'
+import { DEAL_TYPE_TONES, dueLabel, formatCents, formatDay, initials, landsBefore, parseDollars, useOfferSponsorWall, useOwners } from '../lib/activity'
+import { boardDrag } from '../lib/boardDrag'
 import { formatRelative, plural } from '../lib/format'
 import { messageFor, useAuthGuard } from '../lib/session'
 import { useToast } from '../lib/toast'
@@ -35,6 +37,8 @@ const TYPE_FILTERS: { value: DealType | 'all'; label: string }[] = [
 ]
 
 const isType = (value: string | null): value is DealType => (DEAL_TYPES as readonly string[]).includes(value ?? '')
+const isStage = (value: string): value is DealStage => (DEAL_STAGES as readonly string[]).includes(value)
+const dueOf = (deal: Deal) => deal.nextFollowUp?.dueOn ?? null
 
 export function Component() {
   const [params, setParams] = useSearchParams()
@@ -56,7 +60,6 @@ export function Component() {
   const passed = useApi<{ items: Deal[] }>(`/admin/deals?passed=1${filters}`)
   const deals = data?.items ?? []
   const open = deals.filter((deal) => deal.stage !== 'delivered').length
-  const [moving, setMoving] = useState<number | null>(null)
 
   function setParam(key: string, value: string | null) {
     setParams(
@@ -71,9 +74,14 @@ export function Component() {
   }
 
   async function move(deal: Deal, stage: DealStage) {
-    setMoving(deal.id)
-    // Moves on the board at once; put back if the save fails.
-    setData((current) => current && { items: current.items.map((item) => (item.id === deal.id ? { ...item, stage } : item)) })
+    // Moves on the board at once, to where the board's order puts it; put back if the save fails.
+    const moved = { ...deal, stage }
+    setData((current) => {
+      if (!current) return current
+      const rest = current.items.filter((item) => item.id !== deal.id)
+      const at = rest.findIndex((item) => item.stage === stage && landsBefore(dueOf(moved), dueOf(item)))
+      return { items: at === -1 ? [...rest, moved] : [...rest.slice(0, at), moved, ...rest.slice(at)] }
+    })
     try {
       await api<{ item: DealDetail }>(`/admin/deals/${deal.id}`, { method: 'PATCH', body: { stage } })
       toast(`Moved to ${DEAL_STAGE_LABELS[stage]}`)
@@ -82,10 +90,27 @@ export function Component() {
       if (guard(failure)) return
       toast({ text: 'Couldn’t move that deal', detail: messageFor(failure), tone: 'error' })
       reload()
-    } finally {
-      setMoving(null)
     }
   }
+
+  // Cards drag between columns (lib/boardDrag.ts). The drop lands in the data before the next
+  // paint, so the card is in its new column the moment the lifted copy is gone.
+  const boardRef = useRef<HTMLDivElement>(null)
+  const canMove = !gated.disabled
+  const onDrop = useEffectEvent((card: HTMLElement, lane: string) => {
+    const deal = deals.find((item) => item.id === Number(card.dataset.card))
+    if (deal && isStage(lane)) flushSync(() => void move(deal, lane))
+  })
+  useEffect(() => {
+    const board = boardRef.current
+    if (!board || !canMove) return
+    return boardDrag(board, {
+      ghostClass: styles.ghost,
+      slotClass: styles.slot,
+      landing: (card, cards) => cards.find((other) => landsBefore(card.dataset.due || null, other.dataset.due || null)) ?? null,
+      onDrop,
+    })
+  }, [canMove])
 
   async function reopen(deal: Deal) {
     try {
@@ -131,11 +156,11 @@ export function Component() {
       </p>
 
       <div className={styles.scroll} aria-busy={!data && loading}>
-        <div className={styles.board}>
+        <div ref={boardRef} className={styles.board} data-draggable={canMove || undefined}>
           {DEAL_STAGES.map((stage) => {
             const cards = deals.filter((deal) => deal.stage === stage)
             return (
-              <section key={stage} className={styles.lane} aria-labelledby={`lane-${stage}`}>
+              <section key={stage} className={styles.lane} aria-labelledby={`lane-${stage}`} data-lane={stage}>
                 <div className={styles.laneHead}>
                   <h2 id={`lane-${stage}`}>{DEAL_STAGE_LABELS[stage]}</h2>
                   <span className={ui.count}>{data ? cards.length : ''}</span>
@@ -146,7 +171,7 @@ export function Component() {
                   <p className={styles.laneEmpty}>Nothing here</p>
                 ) : (
                   cards.map((deal) => (
-                    <DealCard key={deal.id} deal={deal} ownerLabel={labelFor(deal.ownerEmail)} busy={moving === deal.id} gated={gated} onMove={move} />
+                    <DealCard key={deal.id} deal={deal} ownerLabel={labelFor(deal.ownerEmail)} />
                   ))
                 )}
               </section>
@@ -222,24 +247,11 @@ export function Component() {
   )
 }
 
-function DealCard({
-  deal,
-  ownerLabel,
-  busy,
-  gated,
-  onMove,
-}: {
-  deal: Deal
-  ownerLabel: string
-  busy: boolean
-  gated: ReturnType<ReturnType<typeof useGated>>
-  onMove: (deal: Deal, stage: DealStage) => void
-}) {
-  const next = nextStage(deal.stage)
+function DealCard({ deal, ownerLabel }: { deal: Deal; ownerLabel: string }) {
   const due = deal.nextFollowUp ? dueLabel(deal.nextFollowUp.dueOn) : null
   const ask = deal.ask || (deal.amountCents !== null ? formatCents(deal.amountCents) : '')
   return (
-    <article className={styles.card}>
+    <article className={styles.card} data-card={deal.id} data-due={dueOf(deal) ?? undefined}>
       <div className={styles.cardTop}>
         <span className={ui.state} data-tone={DEAL_TYPE_TONES[deal.type]}>
           {DEAL_TYPE_LABELS[deal.type]}
@@ -266,17 +278,6 @@ function DealCard({
           )}
         </span>
       </div>
-      {next && (
-        <button
-          type="button"
-          className={`${ui.button} ${ui.small}`}
-          disabled={busy || gated.disabled}
-          title={gated.title}
-          onClick={() => onMove(deal, next)}
-        >
-          Move to {DEAL_STAGE_LABELS[next]}
-        </button>
-      )}
     </article>
   )
 }

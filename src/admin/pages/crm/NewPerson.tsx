@@ -11,6 +11,7 @@ import { FormDialog } from './FormDialog'
 import { NewOrg } from './NewOrg'
 import { NEW_ORG, useOrgList, useTeam } from './data'
 import { OrgSelect, OwnerSelect } from './pickers'
+import { SegmentGroup } from '../../components/SegmentGroup'
 
 interface NewPersonProps {
   open: boolean
@@ -73,13 +74,13 @@ export function NewPerson({ open, initialKind = 'contact', initialOrgId = null, 
   return (
     <>
       <FormDialog open={open && !makingOrg} title="New person" submitLabel="Add person" busy={busy} error={error} onSubmit={submit} onClose={onClose}>
-        <div className={ui.tabs} role="group" aria-label="Kind">
+        <SegmentGroup label="Kind">
           {CONTACT_KINDS.map((option) => (
             <button key={option} type="button" className={ui.tab} aria-pressed={kind === option} onClick={() => set('kind', option)}>
               {PERSON_KIND_LABELS[option]}
             </button>
           ))}
-        </div>
+        </SegmentGroup>
         <p className={ui.hint}>{KIND_HINTS[kind]}</p>
         <Field label="Name" error={issues.name}>
           {(control) => <input className={ui.input} value={values.name} onChange={(event) => set('name', event.target.value)} maxLength={120} {...control} />}

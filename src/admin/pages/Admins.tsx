@@ -7,12 +7,9 @@ import {
   AREA_LABELS,
   AREA_SEATS,
   AREAS,
-  canChange,
-  type Access,
   type AccessLevel,
   type AdminLevel,
   type Area,
-  type Gate,
 } from '../../../shared/access'
 import type { Admin, InviteEmail } from '../../../shared/api'
 import { api, ApiError } from '../../lib/api'
@@ -22,6 +19,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Field } from '../components/Field'
 import { ChevronRightIcon, PlusIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { SegmentGroup } from '../components/SegmentGroup'
 import { useGated } from '../lib/access'
 import { formatRelative, formatTimestamp } from '../lib/format'
 import { useToast } from '../lib/toast'
@@ -52,7 +50,7 @@ function inviteStatus(email: string, emailed: InviteEmail, added: boolean): { to
   }
 }
 
-/** One line on each level, under the picker and in the table's legend. */
+/** One line on each level, under the picker and in "Who can change what". */
 const LEVEL_NOTES: Record<AccessLevel, string> = {
   owner: 'Changes everything. Set in the Worker’s ADMIN_EMAILS, so nobody can lock them out from here.',
   admin: 'Changes everything, including who has access.',
@@ -81,27 +79,6 @@ function canChangeText(row: Pick<Admin, 'level' | 'areas'>): string {
 
 /** An initial, from their Google name when we have it. */
 const initialOf = (row: Admin) => (row.name?.trim() || row.email).slice(0, 1).toUpperCase()
-
-/**
- * The rows of the "who can change what" table, each with the gate behind it. Shared work comes
- * first since it's what most people do most days.
- */
-const MATRIX: { work: string; gate: Gate }[] = [
-  { work: 'People, orgs, activity, intros, follow-ups', gate: 'shared' },
-  { work: 'Asks, the Inbox, contacts, Proto facts', gate: 'shared' },
-  { work: 'Sign-ups, board interest, check-in, pictures', gate: 'shared' },
-  { work: 'Pipeline and logo walls', gate: 'partnerships' },
-  { work: 'Fund requests and payouts', gate: 'fund' },
-  { work: 'Events, hackathons, their imports, list email', gate: 'community' },
-  { work: 'Wins and the Devpost import', gate: 'scouting' },
-  { work: 'Board page, roles and applications, Access', gate: 'admin' },
-]
-
-const MATRIX_COLUMNS: { label: string; access: Access }[] = [
-  { label: 'Owners and admins', access: { level: 'admin', areas: [] } },
-  ...AREAS.map((area) => ({ label: AREA_LABELS[area], access: { level: 'board', areas: [area] } as Access })),
-  { label: 'Team', access: { level: 'team', areas: [] } },
-]
 
 export function Component() {
   const admins = useLoaderData<typeof adminsLoader>()
@@ -224,58 +201,34 @@ export function Component() {
         </table>
       </section>
 
-      <section className={admin.panelFlush} aria-labelledby="matrix-title">
-        <div className={admin.flushHead}>
-          <h2 id="matrix-title" className={admin.panelTitle}>
-            Who can change what
-          </h2>
-        </div>
-        <table className={`${admin.table} ${styles.matrix}`}>
-          <thead>
-            <tr>
-              <th scope="col">
-                <span className={admin.srOnly}>Work</span>
-              </th>
-              {MATRIX_COLUMNS.map((column) => (
-                <th key={column.label} scope="col">
-                  {column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {MATRIX.map((line) => (
-              <tr key={line.work}>
-                <th scope="row" className={styles.work}>
-                  {line.work}
-                </th>
-                {MATRIX_COLUMNS.map((column) =>
-                  canChange(column.access, line.gate) ? (
-                    <td key={column.label} data-label={column.label}>
-                      <span className={admin.state} data-tone="live">
-                        Edit
-                      </span>
-                    </td>
-                  ) : (
-                    <td key={column.label} data-label={column.label}>
-                      <span className={admin.state} data-tone="draft">
-                        Read
-                      </span>
-                    </td>
-                  ),
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <ul className={styles.legend}>
+      {/* Straight on the page, not a second table: four levels, a line each, and under the board
+          what each seat adds. */}
+      <section className={styles.rules} aria-labelledby="rules-title">
+        <h2 id="rules-title" className={admin.panelTitle}>
+          Who can change what
+        </h2>
+        <dl className={styles.levels}>
           {(['owner', 'admin', 'board', 'team'] as const).map((level) => (
-            <li key={level}>
-              <LevelState level={level} />
-              <span className={admin.soft}>{LEVEL_NOTES[level]}</span>
-            </li>
+            <div key={level} className={styles.level}>
+              <dt>
+                <LevelState level={level} />
+              </dt>
+              <dd>
+                {LEVEL_NOTES[level]}
+                {level === 'board' && (
+                  <ul className={styles.seats}>
+                    {AREAS.map((area) => (
+                      <li key={area}>
+                        <span>{AREA_LABELS[area]}</span>
+                        <span className={admin.dim}>{AREA_COVERS[area]}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </dd>
+            </div>
           ))}
-        </ul>
+        </dl>
       </section>
 
       {editing && (
@@ -431,13 +384,13 @@ function AccessDialog({ row, self, onClose, onDone, onRemove }: AccessDialogProp
 
           <fieldset className={styles.fieldset} disabled={self}>
             <legend className={admin.label}>Level</legend>
-            <div className={admin.tabs} role="group" aria-label="Level">
+            <SegmentGroup label="Level">
               {ADMIN_LEVELS.map((value) => (
                 <button key={value} type="button" className={admin.tab} aria-pressed={level === value} onClick={() => setLevel(value)}>
                   {ADMIN_LEVEL_LABELS[value]}
                 </button>
               ))}
-            </div>
+            </SegmentGroup>
             <p className={admin.hint}>{self ? 'You can’t change your own level. Another admin can.' : LEVEL_NOTES[level]}</p>
             {issues.level && <p className={admin.error}>{issues.level}</p>}
           </fieldset>

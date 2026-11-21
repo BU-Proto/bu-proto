@@ -224,8 +224,7 @@
   display: grid;
   gap: 6px;
   padding: 10px 14px;
-  border-left: 2px solid var(--sky);
-  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  border-radius: var(--radius-control);
   background: rgb(var(--sky-rgb) / 0.07);
   font-size: 13px;
   line-height: 1.5;

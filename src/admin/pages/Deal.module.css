@@ -54,18 +54,44 @@
   font-size: 13px;
 }
 
-.layout {
-  display: grid;
+/* The page's bento (the grid and cells are admin.module.css's). Details and the contact keep
+   their own heights; history and the follow-ups take what's left and scroll inside. */
+.dealBento {
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.68fr);
-  align-items: start;
-  gap: 16px;
+  grid-template-rows: auto auto minmax(120px, 1fr);
+  grid-template-areas:
+    'details contact'
+    'details follow'
+    'history follow';
 }
 
-.main,
-.aside {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
+.dealBento[data-about] {
+  grid-template-rows: auto auto minmax(120px, 1fr) auto;
+  grid-template-areas:
+    'details contact'
+    'details follow'
+    'history follow'
+    'history about';
+}
+
+.cellDetails {
+  grid-area: details;
+}
+
+.cellHistory {
+  grid-area: history;
+}
+
+.cellContact {
+  grid-area: contact;
+}
+
+.cellFollow {
+  grid-area: follow;
+}
+
+.cellAbout {
+  grid-area: about;
 }
 
 .facts {
@@ -307,9 +333,16 @@ a.eventTitle:hover {
   flex: 1 1 auto;
 }
 
-@media (max-width: 960px) {
-  .layout {
+@media (max-width: 860px) {
+  .dealBento,
+  .dealBento[data-about] {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: 'details' 'contact' 'follow' 'history';
+  }
+
+  .dealBento[data-about] {
+    grid-template-areas: 'details' 'contact' 'follow' 'history' 'about';
   }
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type FormEvent, type ReactNode } from 'react'
 import ui from '../admin.module.css'
 import { CloseIcon } from './icons'
 import styles from './FormDialog.module.css'
+import { SegmentGroup } from './SegmentGroup'
 
 interface FormDialogProps {
   open: boolean
@@ -97,7 +98,7 @@ export function Segmented<T extends string>({
   disabled?: boolean
 }) {
   return (
-    <div className={ui.tabs} role="group" aria-label={label}>
+    <SegmentGroup label={label}>
       {options.map((option) => (
         <button
           key={option.value}
@@ -110,6 +111,6 @@ export function Segmented<T extends string>({
           {option.label}
         </button>
       ))}
-    </div>
+    </SegmentGroup>
   )
 }

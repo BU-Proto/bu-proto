@@ -13,6 +13,7 @@ import { formatStampDate, plural, stampToIso } from './people/format'
 import { toApiError, useApi } from './people/useApi'
 import shared from './people/people.module.css'
 import styles from './Fund.module.css'
+import { SegmentGroup } from '../components/SegmentGroup'
 
 const isStatus = (value: string | null): value is FundStatus => (FUND_STATUSES as readonly string[]).includes(value ?? '')
 
@@ -257,7 +258,7 @@ function Entry({ entry, onSaved, onDelete }: EntryProps) {
           </p>
         </div>
         {/* One click sets it, as a switch would; the toast carries the undo. */}
-        <div className={`${ui.tabs} ${styles.status}`} role="group" aria-label={`Status for ${entry.name}`}>
+        <SegmentGroup className={styles.status} label={`Status for ${entry.name}`}>
           {FUND_STATUSES.map((value) => (
             <button
               key={value}
@@ -272,7 +273,7 @@ function Entry({ entry, onSaved, onDelete }: EntryProps) {
               {STATUS_LABELS[value]}
             </button>
           ))}
-        </div>
+        </SegmentGroup>
       </div>
 
       <dl className={styles.answers}>

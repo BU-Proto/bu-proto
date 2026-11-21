@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import type { Member, MemberDetail } from '../../../shared/api'
 import { TRACKS, YEARS } from '../../../shared/constants'
@@ -6,14 +6,14 @@ import { CONTACT_KINDS, PERSON_KIND_LABELS, type ContactKind, type PersonDetail,
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
 import { Field } from '../components/Field'
+import { FormDialog } from '../components/FormDialog'
 import { LogInteraction } from '../components/LogInteraction'
 import { MakeIntro } from '../components/MakeIntro'
-import { PlusIcon, TrashIcon } from '../components/icons'
+import { PlusIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
-import { useSaveShortcut } from '../lib/keys'
 import { useToast } from '../lib/toast'
 import styles from './crm/crm.module.css'
-import { formatAt, initials, isoOf, KIND_TONE } from './crm/format'
+import { formatAt, initials, isoOf, KIND_TONE, teammate } from './crm/format'
 import { NewOrg } from './crm/NewOrg'
 import { FollowUpsPanel, IntrosPanel, TimelinePanel } from './crm/panels'
 import { NEW_ORG, useOrgList, useTeam } from './crm/data'
@@ -93,7 +93,7 @@ function Detail({ person, reload }: { person: PersonDetail; reload: () => void }
   const fund = member?.fundInterest ?? []
 
   return (
-    <div className={ui.page}>
+    <div className={ui.page} data-fit>
       <PageHeader
         title={person.name}
         tabTitle={`${person.name} · People`}
@@ -113,8 +113,11 @@ function Detail({ person, reload }: { person: PersonDetail; reload: () => void }
         }
       />
 
-      <div className={styles.split}>
-        <div className={styles.column}>
+      {/* A bento that fits the screen: every box fills its cell and scrolls inside when it holds
+          more. Who and the next step across the top; the timeline beside the details and intros;
+          a member's RSVPs and fund requests along the bottom. */}
+      <div className={`${ui.bento} ${styles.personBento}`} data-member={isMember || undefined}>
+        <div className={`${ui.cell} ${styles.cellWho}`}>
           <section className={`${ui.panel} ${styles.who}`} aria-label="Who">
             <span className={styles.bigAvatar} aria-hidden="true">
               {initials(person.name)}
@@ -161,11 +164,9 @@ function Detail({ person, reload }: { person: PersonDetail; reload: () => void }
               </dl>
             )}
           </section>
-
-          <TimelinePanel items={person.timeline} />
         </div>
 
-        <div className={styles.column}>
+        <div className={`${ui.cell} ${styles.cellNext}`}>
           <FollowUpsPanel
             items={person.followUps}
             onChanged={reload}
@@ -175,15 +176,17 @@ function Detail({ person, reload }: { person: PersonDetail; reload: () => void }
               </button>
             }
           />
+        </div>
 
-          <DetailsPanel
-            // Fresh fields whenever what's saved changes (a save here, or a teammate's).
-            key={JSON.stringify(draftOf(person, member?.member))}
-            person={person}
-            member={member?.member}
-            onSaved={refresh}
-          />
+        <div className={`${ui.cell} ${styles.cellTimeline}`}>
+          <TimelinePanel items={person.timeline} />
+        </div>
 
+        <div className={`${ui.cell} ${styles.cellDetails}`}>
+          <DetailsPanel person={person} member={member?.member} onSaved={refresh} onDelete={() => setDialog('delete')} />
+        </div>
+
+        <div className={`${ui.cell} ${styles.cellIntros}`}>
           <IntrosPanel
             items={person.intros}
             selfKey={person.key}
@@ -193,79 +196,79 @@ function Detail({ person, reload }: { person: PersonDetail; reload: () => void }
               </button>
             }
           />
+        </div>
 
-          {isMember && (
-            <>
-              <section className={ui.panelFlush} aria-labelledby="rsvps-title">
-                <div className={ui.flushHead}>
-                  <h2 id="rsvps-title" className={ui.panelTitle}>
-                    RSVPs <span className={ui.count}>{rsvps.length}</span>
-                  </h2>
-                </div>
-                {rsvps.length === 0 ? (
-                  <p className={styles.none}>{member ? 'No RSVPs with this email.' : 'Loading…'}</p>
-                ) : (
-                  <ul className={styles.list}>
-                    {[...rsvps]
-                      .sort((a, b) => b.eventDate.localeCompare(a.eventDate))
-                      .map((rsvp) => (
-                        <li key={rsvp.id}>
-                          <div className={styles.grow}>
-                            <Link to={`/admin/events/${rsvp.eventId}`} className={styles.t1}>
-                              {rsvp.eventTitle}
-                            </Link>
-                          </div>
-                          <time className={styles.end} dateTime={rsvp.eventDate}>
-                            {formatAt(rsvp.eventDate)}
-                          </time>
-                        </li>
-                      ))}
-                  </ul>
-                )}
-              </section>
-
-              <section className={ui.panelFlush} aria-labelledby="fund-title">
-                <div className={ui.flushHead}>
-                  <h2 id="fund-title" className={`${ui.panelTitle} ${ui.flushStatus}`}>
-                    Fund requests <span className={ui.count}>{fund.length}</span>
-                  </h2>
-                  {fund.length > 0 && (
-                    <Link to="/admin/fund" className={`${ui.ghost} ${ui.small}`}>
-                      Open Fund
-                    </Link>
-                  )}
-                </div>
-                {fund.length === 0 ? (
-                  <p className={styles.none}>{member ? 'No fund requests.' : 'Loading…'}</p>
-                ) : (
-                  <ul className={styles.list}>
-                    {fund.map((entry) => (
-                      <li key={entry.id}>
+        {isMember && (
+          <>
+            <div className={`${ui.cell} ${styles.cellRsvps}`}>
+            <section className={ui.panelFlush} aria-labelledby="rsvps-title">
+              <div className={ui.flushHead}>
+                <h2 id="rsvps-title" className={ui.panelTitle}>
+                  RSVPs <span className={ui.count}>{rsvps.length}</span>
+                </h2>
+              </div>
+              {rsvps.length === 0 ? (
+                <p className={styles.none}>{member ? 'No RSVPs with this email.' : 'Loading…'}</p>
+              ) : (
+                <ul className={styles.list}>
+                  {[...rsvps]
+                    .sort((a, b) => b.eventDate.localeCompare(a.eventDate))
+                    .map((rsvp) => (
+                      <li key={rsvp.id}>
                         <div className={styles.grow}>
-                          <span className={styles.t1}>
-                            {entry.target} · {entry.amount}
-                          </span>
-                          <span className={styles.t2}>{entry.spend}</span>
+                          <Link to={`/admin/events/${rsvp.eventId}`} className={styles.t1}>
+                            {rsvp.eventTitle}
+                          </Link>
                         </div>
-                        <span className={styles.end}>
-                          <span className={ui.state} data-tone={entry.status === 'approved' ? 'live' : entry.status === 'new' ? 'filled' : entry.status === 'reviewing' ? 'sample' : undefined}>
-                            {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
-                          </span>
-                          <br />
-                          <time dateTime={isoOf(entry.createdAt)}>{formatAt(entry.createdAt)}</time>
-                        </span>
+                        <time className={styles.end} dateTime={rsvp.eventDate}>
+                          {formatAt(rsvp.eventDate)}
+                        </time>
                       </li>
                     ))}
-                  </ul>
-                )}
-              </section>
-            </>
-          )}
+                </ul>
+              )}
+            </section>
+            </div>
 
-          <button type="button" className={`${ui.dangerGhost} ${styles.danger}`} onClick={() => setDialog('delete')}>
-            <TrashIcon /> {isMember ? 'Delete member' : 'Delete person'}
-          </button>
-        </div>
+            <div className={`${ui.cell} ${styles.cellFund}`}>
+            <section className={ui.panelFlush} aria-labelledby="fund-title">
+              <div className={ui.flushHead}>
+                <h2 id="fund-title" className={`${ui.panelTitle} ${ui.flushStatus}`}>
+                  Fund requests <span className={ui.count}>{fund.length}</span>
+                </h2>
+                {fund.length > 0 && (
+                  <Link to="/admin/fund" className={`${ui.ghost} ${ui.small}`}>
+                    Open Fund
+                  </Link>
+                )}
+              </div>
+              {fund.length === 0 ? (
+                <p className={styles.none}>{member ? 'No fund requests.' : 'Loading…'}</p>
+              ) : (
+                <ul className={styles.list}>
+                  {fund.map((entry) => (
+                    <li key={entry.id}>
+                      <div className={styles.grow}>
+                        <span className={styles.t1}>
+                          {entry.target} · {entry.amount}
+                        </span>
+                        <span className={styles.t2}>{entry.spend}</span>
+                      </div>
+                      <span className={styles.end}>
+                        <span className={ui.state} data-tone={entry.status === 'approved' ? 'live' : entry.status === 'new' ? 'filled' : entry.status === 'reviewing' ? 'sample' : undefined}>
+                          {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                        </span>
+                        <br />
+                        <time dateTime={isoOf(entry.createdAt)}>{formatAt(entry.createdAt)}</time>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+            </div>
+          </>
+        )}
       </div>
 
       <SetFollowUp
@@ -361,13 +364,108 @@ const MEMBER_FIELDS = ['year', 'track', 'unsubscribed'] as const
 const MEMBER_PEOPLE_FIELDS = ['name', 'notes', 'ownerEmail'] as const
 const CONTACT_FIELDS = ['name', 'notes', 'ownerEmail', 'kind', 'orgId', 'title', 'link'] as const
 
-function DetailsPanel({ person, member, onSaved }: { person: PersonDetail; member: Member | undefined; onSaved: () => void }) {
+/** What's on file, to read. Edit opens the same fields in a dialog. */
+function DetailsPanel({ person, member, onSaved, onDelete }: { person: PersonDetail; member: Member | undefined; onSaved: () => void; onDelete: () => void }) {
+  const [editing, setEditing] = useState(false)
+  const isMember = person.type === 'member'
+  const saved = draftOf(person, member)
+  const none = (text: string) => <span className={ui.dim}>{text}</span>
+
+  return (
+    <section className={ui.panelFlush} aria-labelledby="details-title">
+      <div className={ui.flushHead}>
+        <h2 id="details-title" className={`${ui.panelTitle} ${ui.flushStatus}`}>
+          Details
+        </h2>
+        <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setEditing(true)}>
+          Edit
+        </button>
+      </div>
+      <dl className={`${styles.kv} ${styles.facts}`}>
+        <dt>Owner</dt>
+        <dd>{person.ownerEmail ? teammate(person.ownerEmail) : none('No one yet')}</dd>
+        {isMember ? (
+          <>
+            <dt>Year</dt>
+            <dd>{saved.year || none('Not set')}</dd>
+            <dt>Track</dt>
+            <dd>{saved.track || none('Not set')}</dd>
+            <dt>List email</dt>
+            <dd>{saved.unsubscribed ? 'Unsubscribed' : 'Subscribed'}</dd>
+          </>
+        ) : (
+          <>
+            <dt>Org</dt>
+            <dd>
+              {person.orgName && person.orgId !== null ? (
+                <Link to={`/admin/orgs/${person.orgId}`} className={ui.link}>
+                  {person.orgName}
+                </Link>
+              ) : (
+                none('None')
+              )}
+            </dd>
+            <dt>{person.kind === 'lead' ? 'Year or school' : 'Title'}</dt>
+            <dd>{person.title || none('Not set')}</dd>
+            <dt>Link</dt>
+            <dd>
+              {/^https?:\/\//.test(person.link) ? (
+                <a href={person.link} target="_blank" rel="noreferrer" className={`${ui.link} ${styles.factLink}`} title={person.link}>
+                  {person.link.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+                </a>
+              ) : (
+                person.link || none('None')
+              )}
+            </dd>
+          </>
+        )}
+        <dt>Notes</dt>
+        <dd className={styles.factNotes}>{person.notes || none('None')}</dd>
+      </dl>
+
+      {editing && (
+        <EditPerson
+          person={person}
+          member={member}
+          saved={saved}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false)
+            onSaved()
+          }}
+          onDelete={() => {
+            setEditing(false)
+            onDelete()
+          }}
+        />
+      )}
+    </section>
+  )
+}
+
+/**
+ * The Edit dialog. Mounted only while open, so each opening starts from what's saved. Deleting
+ * starts here too, on the far side from Save, and still asks before it does anything.
+ */
+function EditPerson({
+  person,
+  member,
+  saved,
+  onClose,
+  onSaved,
+  onDelete,
+}: {
+  person: PersonDetail
+  member: Member | undefined
+  saved: Draft
+  onClose: () => void
+  onSaved: () => void
+  onDelete: () => void
+}) {
   const toast = useToast()
   const team = useTeam()
   const isMember = person.type === 'member'
   const { orgs, setData: setOrgs } = useOrgList(!isMember)
-  const form = useRef<HTMLFormElement>(null)
-  const saved = draftOf(person, member)
   const [draft, setDraft] = useState(saved)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -375,14 +473,16 @@ function DetailsPanel({ person, member, onSaved }: { person: PersonDetail; membe
   const [makingOrg, setMakingOrg] = useState(false)
 
   const changed = (Object.keys(draft) as (keyof Draft)[]).filter((field) => draft[field] !== saved[field])
-  const dirty = changed.length > 0
   const set = <K extends keyof Draft>(field: K, value: Draft[K]) => setDraft((prev) => ({ ...prev, [field]: value }))
   const pick = (fields: readonly (keyof Draft)[]) =>
     Object.fromEntries(fields.filter((field) => changed.includes(field)).map((field) => [field, draft[field]]))
 
-  const save = async (event?: FormEvent) => {
-    event?.preventDefault()
-    if (saving || !dirty) return
+  const save = async () => {
+    if (saving) return
+    if (changed.length === 0) {
+      onClose()
+      return
+    }
     setSaving(true)
     setFormError('')
     setIssues({})
@@ -401,22 +501,26 @@ function DetailsPanel({ person, member, onSaved }: { person: PersonDetail; membe
       const apiError = toApiError(failure)
       setIssues(apiError.issues)
       setFormError(apiError.message)
-    } finally {
       setSaving(false)
     }
   }
 
-  const submit = useCallback(() => form.current?.requestSubmit(), [])
-  useSaveShortcut(submit, dirty && !saving)
-
   return (
-    <section className={ui.panelFlush} aria-labelledby="details-title">
-      <div className={ui.flushHead}>
-        <h2 id="details-title" className={ui.panelTitle}>
-          Details
-        </h2>
-      </div>
-      <form ref={form} className={styles.panelBody} onSubmit={save} noValidate>
+    <>
+      <FormDialog
+        open={!makingOrg}
+        title={`Edit ${person.name}`}
+        submitLabel="Save"
+        busy={saving}
+        error={formError}
+        note={
+          <button type="button" className={`${ui.dangerGhost} ${ui.small} ${styles.dialogDelete}`} onClick={onDelete} disabled={saving}>
+            {isMember ? 'Delete member' : 'Delete person'}
+          </button>
+        }
+        onSubmit={save}
+        onClose={onClose}
+      >
         <Field label="Name" error={issues.name}>
           {(control) => <input className={ui.input} value={draft.name} onChange={(event) => set('name', event.target.value)} maxLength={isMember ? 80 : 120} {...control} />}
         </Field>
@@ -500,11 +604,6 @@ function DetailsPanel({ person, member, onSaved }: { person: PersonDetail; membe
                 />
               )}
             </Field>
-            {draft.link && /^https?:\/\//.test(draft.link) && (
-              <a href={draft.link} target="_blank" rel="noreferrer" className={`${ui.hint} ${ui.link}`} style={{ justifySelf: 'start' }}>
-                Open link
-              </a>
-            )}
           </>
         )}
 
@@ -513,24 +612,7 @@ function DetailsPanel({ person, member, onSaved }: { person: PersonDetail; membe
             <textarea className={ui.input} value={draft.notes} onChange={(event) => set('notes', event.target.value)} maxLength={isMember ? 2000 : 4000} rows={4} {...control} />
           )}
         </Field>
-
-        <p className={ui.error} role="alert" hidden={!formError}>
-          {formError}
-        </p>
-      </form>
-      <div className={styles.panelFoot}>
-        <span className={styles.saveState} role="status">
-          {saving ? 'Saving…' : dirty ? 'Unsaved changes' : ''}
-        </span>
-        {dirty && !saving && (
-          <button type="button" className={`${ui.ghost} ${ui.small}`} onClick={() => setDraft(saved)}>
-            Discard
-          </button>
-        )}
-        <button type="button" className={`${ui.primary} ${ui.small}`} onClick={() => save()} disabled={!dirty || saving}>
-          Save
-        </button>
-      </div>
+      </FormDialog>
 
       <NewOrg
         open={makingOrg}
@@ -541,6 +623,6 @@ function DetailsPanel({ person, member, onSaved }: { person: PersonDetail; membe
           setMakingOrg(false)
         }}
       />
-    </section>
+    </>
   )
 }

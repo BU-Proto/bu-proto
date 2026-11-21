@@ -14,6 +14,7 @@ import { toApiError, useApi } from './people/useApi'
 import shared from './people/people.module.css'
 import entries from './Fund.module.css'
 import styles from './Applications.module.css'
+import { SegmentGroup } from '../components/SegmentGroup'
 
 const isStatus = (value: string | null): value is ApplicationStatus => (APPLICATION_STATUSES as readonly string[]).includes(value ?? '')
 
@@ -291,7 +292,7 @@ function Entry({ entry, onSaved, onRoleFilled, onDelete }: EntryProps) {
           </p>
         </div>
         {/* One click sets it, as a switch would; the toast carries the undo. */}
-        <div className={`${ui.tabs} ${entries.status}`} role="group" aria-label={`Status for ${entry.name}`}>
+        <SegmentGroup className={entries.status} label={`Status for ${entry.name}`}>
           {APPLICATION_STATUSES.map((value) => (
             <button
               key={value}
@@ -306,7 +307,7 @@ function Entry({ entry, onSaved, onRoleFilled, onDelete }: EntryProps) {
               {STATUS_LABELS[value]}
             </button>
           ))}
-        </div>
+        </SegmentGroup>
       </div>
 
       {entry.status === 'accepted' && entry.roleFilled === false && (

@@ -92,35 +92,32 @@
   }
 }
 
-/* ---- The two columns ---------------------------------------------------------------------- */
+/* ---- The bento ---------------------------------------------------------------------------- */
 
-/* Follow-ups and recent activity down the wide column, the Inbox and the calendar beside them.
-   The second row takes any slack, so a long side column never opens a gap under the follow-ups. */
-.split {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
+/* Two by two and all one size, so no box is a tall column: what's owed over what happened,
+   beside the Inbox over the calendar. (The grid and cells are admin.module.css's.) */
+.todayBento {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
-    'follow aside'
-    'activity aside';
-  align-items: start;
-  gap: 16px;
+    'follow waiting'
+    'activity coming';
 }
 
-.follow {
+.cellFollow {
   grid-area: follow;
-  min-width: 0;
 }
 
-.aside {
-  display: grid;
-  grid-area: aside;
-  gap: 16px;
-  min-width: 0;
-}
-
-.activity {
+.cellActivity {
   grid-area: activity;
+}
+
+.cellWaiting {
+  grid-area: waiting;
+}
+
+.cellComing {
+  grid-area: coming;
 }
 
 /* Mine / Everyone, in the panel's head beside its title. */
@@ -241,7 +238,8 @@ a.row:focus-visible,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 40px;
+  /* Five of these and the head fit the box on a 900px-tall screen without a sliver of scroll. */
+  min-height: 38px;
   padding: 8px 16px;
   color: var(--ink-soft);
   font-size: 13.5px;
@@ -376,17 +374,20 @@ a.row:focus-visible,
   color: var(--coral);
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 860px) {
   /* One column: what's owed, then what's waiting and coming up, then what happened. */
-  .split {
+  .todayBento {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
     grid-template-areas:
       'follow'
-      'aside'
+      'waiting'
+      'coming'
       'activity';
   }
+}
 
+@media (max-width: 1000px) {
   .figures {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

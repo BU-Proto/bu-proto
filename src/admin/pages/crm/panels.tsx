@@ -7,6 +7,7 @@ import { useToast } from '../../lib/toast'
 import { toApiError } from '../people/useApi'
 import styles from './crm.module.css'
 import { dueText, formatAt, isoOf, teammate } from './format'
+import { SegmentGroup } from '../../components/SegmentGroup'
 
 // The panels a person's page and an org's page share: the timeline, follow-ups and intros.
 
@@ -35,13 +36,13 @@ export function TimelinePanel({ items, action }: { items: TimelineItem[]; action
           Timeline
         </h2>
         {groups.length > 2 && (
-          <div className={`${ui.tabs} ${styles.filter}`} role="group" aria-label="Show">
+          <SegmentGroup className={styles.filter} label="Show">
             {groups.map((entry) => (
               <button key={entry.id} type="button" className={ui.tab} aria-pressed={entry.id === current.id} onClick={() => setGroup(entry.id)}>
                 {entry.label}
               </button>
             ))}
-          </div>
+          </SegmentGroup>
         )}
         {action}
       </div>
