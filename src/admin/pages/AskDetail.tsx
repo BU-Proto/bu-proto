@@ -128,7 +128,7 @@ export function Component() {
           <span>Asked by {ask.ownerName || ask.ownerEmail}</span>
           <span>{formatStampDate(ask.createdAt)}</span>
           {ask.contactId && (
-            <Link to={`/admin/email/contacts#contact-${ask.contactId}`} className={shared.link}>
+            <Link to={`/admin/people/c${ask.contactId}`} className={shared.link}>
               Contact
             </Link>
           )}

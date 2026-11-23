@@ -1,11 +1,13 @@
 import { useRef } from 'react'
 import { Link, useLoaderData, useSearchParams } from 'react-router'
+import { CONTENT_GATES } from '../../../shared/access'
 import admin from '../admin.module.css'
 import { EmptyState, RowState } from '../components/bits'
 import { Kbd } from '../components/Kbd'
 import { ChevronRightIcon, PlusIcon, SearchIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
 import { displayValue, specFor, type ContentRow } from '../lib/content'
+import { useGated } from '../lib/access'
 import { useSlashFocus } from '../lib/keys'
 import type { contentListLoader } from '../loaders'
 import styles from './ContentList.module.css'
@@ -31,6 +33,7 @@ export function Component() {
   const [params, setParams] = useSearchParams()
   const searchBox = useRef<HTMLInputElement>(null)
   useSlashFocus(searchBox)
+  const locked = useGated()(CONTENT_GATES[resource])
 
   const active = FILTERS.find((filter) => filter.value === params.get('show')) ?? FILTERS[0]
   const query = params.get('q') ?? ''
@@ -52,6 +55,16 @@ export function Component() {
         ? { label: 'Applications', of: (row: ContentRow) => row.applicationCount ?? 0 }
         : null
   const lower = spec.label.toLowerCase()
+  // A link can't be disabled, so someone who can't add one gets a button that says who can.
+  const newButton = locked.disabled ? (
+    <button type="button" className={admin.primary} {...locked}>
+      <PlusIcon /> New {spec.singular.toLowerCase()}
+    </button>
+  ) : (
+    <Link className={admin.primary} to={`/admin/${resource}/new`}>
+      <PlusIcon /> New {spec.singular.toLowerCase()}
+    </Link>
+  )
 
   // The filter and the search live in the URL, so Back and a shared link land on the same list.
   const setParam = (key: string, value: string) =>
@@ -70,20 +83,14 @@ export function Component() {
       <PageHeader
         title={spec.label}
         count={items.length}
-        actions={
-          <Link className={admin.primary} to={`/admin/${resource}/new`}>
-            <PlusIcon /> New {spec.singular.toLowerCase()}
-          </Link>
-        }
+        actions={newButton}
       />
 
       {items.length === 0 ? (
         <div className={admin.panel}>
           <EmptyState title={`No ${lower} yet`}>
             <p>Anything added here shows on the site once it’s published.</p>
-            <Link className={admin.primary} to={`/admin/${resource}/new`}>
-              <PlusIcon /> New {spec.singular.toLowerCase()}
-            </Link>
+            {newButton}
           </EmptyState>
         </div>
       ) : (

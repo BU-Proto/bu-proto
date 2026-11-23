@@ -15,6 +15,7 @@ import { FUND_STATUSES, TRACKS } from '../../../shared/constants'
 import ui from '../admin.module.css'
 import { SendIcon } from '../components/icons'
 import { PageHeader } from '../components/PageHeader'
+import { useGated } from '../lib/access'
 import { useToast } from '../lib/toast'
 import { api } from '../../lib/api'
 import { daysUntil, formatDay } from '../../lib/dates'
@@ -153,7 +154,9 @@ export function Component() {
   const [sent, setSent] = useState<EmailCampaign | null>(null)
 
   const composeReady = subject.trim() !== '' && body.trim() !== ''
-  const canSend = composeReady && audience !== null && recipients !== undefined && recipients > 0 && !sending
+  // A list email is Community's to send; anyone can still write one and send themselves a test.
+  const locked = useGated()('community')
+  const canSend = composeReady && audience !== null && recipients !== undefined && recipients > 0 && !sending && !locked.disabled
 
   const checkCompose = () => {
     const next: Record<string, string> = {}
@@ -241,7 +244,7 @@ export function Component() {
             <span className={styles.sendHint}>
               {!composeReady ? 'Add a subject and a message to send' : recipients === 0 ? 'No one is on that list yet' : ''}
             </span>
-            <button type="button" className={ui.primary} onClick={openConfirm} disabled={!canSend} aria-busy={sending || undefined}>
+            <button type="button" className={ui.primary} onClick={openConfirm} disabled={!canSend} title={locked.title} aria-busy={sending || undefined}>
               <SendIcon /> {sending ? 'Sending…' : recipients ? `Send to ${plural(recipients, 'person', 'people')}` : 'Send'}
             </button>
           </>

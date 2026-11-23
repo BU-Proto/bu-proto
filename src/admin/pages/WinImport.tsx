@@ -5,6 +5,7 @@ import { api } from '../../lib/api'
 import admin from '../admin.module.css'
 import { StatusLine, type StatusTone } from '../components/bits'
 import { PageHeader } from '../components/PageHeader'
+import { useGated } from '../lib/access'
 import styles from './WinImport.module.css'
 
 // Devpost projects to win drafts. Look up shows what each project would become; importing makes
@@ -36,6 +37,7 @@ export function Component() {
   const [items, setItems] = useState<DevpostLookupItem[] | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState<'lookup' | 'import' | null>(null)
+  const locked = useGated()('scouting')
   const [notice, setNotice] = useState<{ tone: StatusTone; text: string } | null>(null)
   const [result, setResult] = useState<DevpostImportResult | null>(null)
 
@@ -218,7 +220,7 @@ export function Component() {
           </div>
 
           <div className={styles.row}>
-            <button type="button" className={admin.primary} onClick={importSelected} disabled={busy !== null || count === 0}>
+            <button type="button" className={admin.primary} onClick={importSelected} disabled={busy !== null || count === 0 || locked.disabled} title={locked.title}>
               {busy === 'import' ? 'Importing…' : `Import ${count} as draft${count === 1 ? '' : 's'}`}
             </button>
           </div>

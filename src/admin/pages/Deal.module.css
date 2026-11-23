@@ -1,0 +1,375 @@
+/* A deal's page: the stage stepper across the top, then details and history beside the contact and
+   what's owed. */
+
+/* The segmented control, stretched to the column: one equal step a stage. */
+.stepper {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
+}
+
+.step {
+  justify-content: flex-start;
+  min-height: 34px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.step:disabled {
+  cursor: default;
+}
+
+.stepNum {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--edge-hover);
+  border-radius: 50%;
+  color: var(--ink-dim);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Stages behind it are done: a filled mint number. */
+.step[data-done] .stepNum {
+  border-color: transparent;
+  background: rgb(var(--mint-rgb) / 0.85);
+  color: var(--navy);
+}
+
+.step[aria-pressed='true'] .stepNum {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.passedNote {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--danger-edge);
+  border-radius: var(--radius-control);
+  background: var(--danger-wash);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* The page's bento (the grid and cells are admin.module.css's). Details and the contact keep
+   their own heights; history and the follow-ups take what's left and scroll inside. */
+.dealBento {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.68fr);
+  grid-template-rows: auto auto minmax(120px, 1fr);
+  grid-template-areas:
+    'details contact'
+    'details follow'
+    'history follow';
+}
+
+.dealBento[data-about] {
+  grid-template-rows: auto auto minmax(120px, 1fr) auto;
+  grid-template-areas:
+    'details contact'
+    'details follow'
+    'history follow'
+    'history about';
+}
+
+.cellDetails {
+  grid-area: details;
+}
+
+.cellHistory {
+  grid-area: history;
+}
+
+.cellContact {
+  grid-area: contact;
+}
+
+.cellFollow {
+  grid-area: follow;
+}
+
+.cellAbout {
+  grid-area: about;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 10px 16px;
+  margin: 0;
+  padding: 16px;
+  font-size: 13.5px;
+}
+
+.facts dt {
+  color: var(--ink-dim);
+}
+
+.facts dd {
+  min-width: 0;
+  margin: 0;
+}
+
+.notes {
+  color: var(--ink-soft);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.link {
+  color: var(--info-ink);
+}
+
+.link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.due[data-tone='late'] {
+  color: var(--danger-ink);
+}
+
+.due[data-tone='today'] {
+  color: var(--warn-ink);
+}
+
+.contact {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px 16px;
+}
+
+.contactText {
+  display: grid;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.aboutPanel {
+  display: grid;
+  gap: 6px;
+}
+
+.quiet {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pad {
+  padding: 14px 16px;
+}
+
+/* History: what kind, what happened, when and who. */
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.event:last-child {
+  border-bottom: 0;
+}
+
+.eventLabel {
+  color: var(--info-ink);
+  font-size: 12.5px;
+  line-height: 20px;
+}
+
+.eventLabel[data-kind='deal'] {
+  color: var(--ink-dim);
+}
+
+.eventText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.eventTitle {
+  font-weight: 500;
+}
+
+a.eventTitle:hover {
+  color: var(--mint);
+}
+
+.eventDetail {
+  color: var(--ink-soft);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.eventWhen {
+  display: grid;
+  justify-items: end;
+  align-content: start;
+  gap: 4px;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.eventBy {
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+
+/* Follow-ups on the deal. */
+.followUps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.followUp {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.followUp:last-child {
+  border-bottom: 0;
+}
+
+.followUpText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 13.5px;
+}
+
+.followUpTitle {
+  font-weight: 500;
+}
+
+.followUp[data-done] .followUpTitle {
+  color: var(--ink-dim);
+  text-decoration: line-through;
+}
+
+.followUpMeta {
+  color: var(--ink-dim);
+  font-size: 12.5px;
+}
+
+.check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--mint);
+  cursor: pointer;
+}
+
+.check:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.showDone {
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--line);
+}
+
+.addFollowUp {
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--hover);
+}
+
+.addRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+/* Editing the details. */
+.editGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px 12px;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.legend {
+  margin-bottom: 6px;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.editActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 860px) {
+  .dealBento,
+  .dealBento[data-about] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: 'details' 'contact' 'follow' 'history';
+  }
+
+  .dealBento[data-about] {
+    grid-template-areas: 'details' 'contact' 'follow' 'history' 'about';
+  }
+}
+
+/* On a phone the stepper scrolls sideways like any segmented control, and facts stack. */
+@media (max-width: 640px) {
+  .stepper {
+    display: flex;
+  }
+
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .facts dd + dt {
+    margin-top: 10px;
+  }
+
+  .event {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .eventLabel {
+    grid-column: 1 / -1;
+  }
+
+  .editGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

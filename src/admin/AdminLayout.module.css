@@ -535,6 +535,38 @@
   outline: none;
 }
 
+/* A page that fits the screen (its root carries data-fit: a bento whose boxes scroll inside
+   themselves, see admin.module.css). The sheet stops scrolling and the page takes exactly the
+   room under the bar. Only where there's room for it: on a phone or in a short window the page
+   flows and the sheet scrolls as usual. */
+@media (min-width: 861px) and (min-height: 700px) {
+  .sheet:has([data-fit]) {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+  }
+
+  .sheet:has([data-fit]) > .bar {
+    flex: none;
+  }
+
+  .sheet:has([data-fit]) > .main {
+    display: grid;
+    flex: 1 1 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+    padding-bottom: 24px;
+  }
+
+  .sheet:has([data-fit]) .page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+  }
+}
+
 .fatal {
   display: grid;
   place-items: center;

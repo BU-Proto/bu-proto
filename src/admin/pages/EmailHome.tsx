@@ -131,7 +131,7 @@ export function Component() {
   ].filter((part) => part !== false)
 
   return (
-    <div className={`${shared.page} ${styles.home}`}>
+    <div className={`${shared.page} ${styles.home}`} data-fit>
       <PageHeader
         title="Email"
         count={unread ? `${unread} unread` : undefined}
