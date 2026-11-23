@@ -51,6 +51,8 @@ const WRITE_GATES: readonly [RegExp, Gate | ((match: RegExpExecArray) => Gate)][
   // Shared work: members, sign-up triage, contacts, asks, facts, the one-to-one inbox, pictures.
   [/^\/api\/admin\/(?:members|board-interest|contacts|facts|asks|inbox)(?:\/.*)?$/, 'shared'],
   [/^\/api\/admin\/uploads$/, 'shared'],
+  // Everyone makes and revokes their own MCP tokens; a token acts with its maker's own access.
+  [/^\/api\/admin\/mcp-tokens(?:\/.*)?$/, 'shared'],
 ]
 
 /**

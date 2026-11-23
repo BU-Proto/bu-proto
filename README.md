@@ -69,6 +69,26 @@ The portal lives at `/admin`; see [Admin portal](#admin-portal).
 
 **Writing with Claude.** Compose has a *Write it with Claude* box too: say what the email is about and Claude writes it for the list you picked, with that list's `{{variables}}`, from Proto's facts and events; what's already in the composer is what it rewrites, and the toast can undo it. Whatever it can't fill in (a room, a time) is listed under the box instead of guessed. Every email Claude writes (list emails, asks and replies alike) follows the human-writing rules in [`worker/lib/humanWriting.ts`](worker/lib/humanWriting.ts) (from Wikipedia's *Signs of AI writing*): no em dashes, no words like "crucial" or "vibrant", no "not just X, but Y", no "I hope this email finds you well", straight quotes. Claude is told the rules, and each draft is checked in code for the ones a program can see; a draft that breaks one goes back to Claude once with what it broke (`npm test` covers the check).
 
+### Claude and other MCP clients
+
+The portal is also an [MCP](https://modelcontextprotocol.io) server, so Claude Code, Claude Desktop or any MCP client can work in it: "what needs doing today?", "log a coffee with Jane from Acme and remind me to send the deck Friday", "move the Acme deal to talking", "draft a reply to the Spark thread".
+
+**Connect.** In the portal, go to **Access → Claude** (`/admin/admins/claude`) and make a token. It's shown once, with the command for Claude Code:
+
+```bash
+claude mcp add --transport http proto https://proto.boston/api/mcp --header "Authorization: Bearer proto_mcp_…"
+```
+
+Any client that takes a remote server with headers works the same way: URL `https://proto.boston/api/mcp`, header `Authorization: Bearer <token>`.
+
+**What a token can do.** It acts as the teammate who made it, with their level and areas *as they are at each request*, so it never does more than they could in the portal today, and removing someone from Access stops their tokens at once (and deletes them). A **read-only** token sees only the tools that change nothing. Tokens last 30, 90 or 365 days, up to ten per person, and are revoked on the same page. Only their SHA-256 is stored. Over MCP you can't change who has access or make tokens; that stays in the portal.
+
+**How it works.** `POST /api/mcp` ([`worker/routes/mcp.ts`](worker/routes/mcp.ts)) speaks MCP's Streamable HTTP, stateless, with plain JSON answers (no sessions, no server-sent stream). Each of its ~95 tools ([`worker/mcp/tools.ts`](worker/mcp/tools.ts)) calls one of the portal's own `/api/admin` routes in-process as the token's teammate, so validation, the level-and-area checks in [`worker/lib/access.ts`](worker/lib/access.ts), Claude's drafting rules and the email guards all apply exactly as they do in the portal. The tools' input schemas are the same zod schemas the routes validate with (`shared/api.ts`, `shared/crm.ts`), so a new field shows up in both. The tools cover Today and the Inbox queue; people, members, orgs, the Pipeline, interactions, follow-ups and intros; events, hackathons, wins, the board and roles (create, partial update, delete), RSVPs and guests; fund requests, applications and board interest; list email (count, draft, preview, test, send), conversations, asks and Proto facts; the hackathon, event-page and Devpost imports; and who has access (read only).
+
+**Email stays a person's call.** Only `send_list_email`, `send_reply`, `send_ask` and `send_test_email` send anything. They're marked destructive, and the server's instructions tell the model to show the exact recipients, subject and body and wait for a yes. Drafting (`draft_reply`, `draft_ask`, `draft_list_email`) saves a draft and sends nothing, as in the portal. Email and form text from outside Proto is handed to the model as data, and a received email's raw HTML is left out.
+
+To try it locally, run `npm run dev`, make a token at `http://localhost:5173/admin/admins/claude`, and point the client at `http://localhost:5173/api/mcp`.
+
 ### Setting up Google sign-in
 
 In the [Google Cloud Console](https://console.cloud.google.com/):

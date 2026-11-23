@@ -36,6 +36,8 @@ export const adminRoutes: RouteObject[] = [
           { path: 'activity', lazy: () => import('./pages/Activity') },
           { path: 'activity/follow-ups', lazy: () => import('./pages/Activity') },
           { path: 'activity/intros', lazy: () => import('./pages/Activity') },
+          // MCP tokens: connect Claude (or any MCP client) to the portal. A tab of Access.
+          { path: 'admins/claude', lazy: () => import('./pages/Claude') },
           {
             path: 'admins',
             lazy: {

@@ -13,6 +13,7 @@ import devpost from './routes/devpost'
 import email from './routes/email'
 import eventImport from './routes/eventImport'
 import inbox from './routes/inbox'
+import { mcpRoutes } from './routes/mcp'
 import imports from './routes/imports'
 import pages from './routes/pages'
 import people from './routes/people'
@@ -27,8 +28,9 @@ import type { AppEnv } from './types'
 // only /api/*, /privacy and /terms reach this Worker (see run_worker_first in wrangler.jsonc).
 //
 // Every router below defines full paths under /api. Two rules hold for all of them:
-// - state-changing requests must come from this origin (sameOrigin), except the unsubscribe link and
-//   Resend's webhook, which prove themselves another way (a token, a signature)
+// - state-changing requests must come from this origin (sameOrigin), except the unsubscribe link,
+//   Resend's webhook and the MCP endpoint, which prove themselves another way (a token, a signature,
+//   a bearer token)
 // - everything under /api/admin needs a signed-in admin (requireAdmin sets c.var.admin)
 
 const app = new Hono<AppEnv>()
@@ -54,6 +56,9 @@ app.route('/', pipeline) //     /api/admin/deals*
 app.route('/', activity) //     /api/admin/interactions*, /follow-ups*, /intros*, /events/:id/guests*
 app.route('/', today) //        /api/admin/today, /api/admin/queue*
 app.route('/', pages) //        /privacy, /terms rendered for crawlers
+// /api/mcp (the portal as an MCP server, bearer token) and /api/admin/mcp-tokens. Its tools call
+// the routes above in-process, through this same app, as the token's teammate.
+app.route('/', mcpRoutes(async (request, env, ctx) => app.fetch(request, env, ctx)))
 
 app.notFound((c) => c.json({ error: 'Not found.' }, 404))
 app.onError((error, c) => {
