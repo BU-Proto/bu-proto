@@ -141,7 +141,20 @@ export const NAV: readonly NavGroup[] = [
       },
     ],
   },
-  { label: 'Portal', items: [{ to: '/admin/admins', label: 'Access', icon: KeyIcon }] },
+  {
+    label: 'Portal',
+    items: [
+      {
+        to: '/admin/admins',
+        label: 'Access',
+        icon: KeyIcon,
+        tabs: [
+          { to: '/admin/admins', label: 'Who has access' },
+          { to: '/admin/admins/claude', label: 'Claude', command: 'Connect Claude (MCP)' },
+        ],
+      },
+    ],
+  },
 ]
 
 export const NAV_ITEMS: readonly NavItem[] = NAV.flatMap((group) => group.items)

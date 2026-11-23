@@ -660,6 +660,32 @@ export const updateAdminInput = z
 
 export type UpdateAdminInput = z.input<typeof updateAdminInput>
 
+// ---- Portal: MCP tokens -----------------------------------------------------------------------
+// Personal tokens for the portal's MCP server at /api/mcp (worker/routes/mcp.ts), so Claude Code,
+// Claude Desktop or another MCP client can use the portal as the teammate who made the token.
+
+/** How long a new token lasts, in days. */
+export const MCP_TOKEN_DAYS = [30, 90, 365] as const
+
+/** POST /api/admin/mcp-tokens → 201 { item: McpToken, token }: the token is shown this once. */
+export const mcpTokenInput = z.object({
+  label: z.string().trim().min(1, 'Say what it’s for').max(80, 'Keep it under 80 characters'),
+  /** Read-only tokens see only the tools that change nothing. */
+  readOnly: z.boolean().default(false),
+  days: z.literal(MCP_TOKEN_DAYS, 'Pick 30, 90 or 365 days').default(90),
+})
+export type McpTokenInput = z.input<typeof mcpTokenInput>
+
+/** GET /api/admin/mcp-tokens → { items: McpToken[] }: the signed-in teammate's own tokens. DELETE /api/admin/mcp-tokens/:id → 204. */
+export interface McpToken {
+  id: number
+  label: string
+  readOnly: boolean
+  createdAt: string
+  expiresAt: string
+  lastUsedAt: string | null
+}
+
 // ---- Portal: members, RSVPs, fund interest --------------------------------------------------
 
 /** GET /api/admin/members?q=&track= → { items: Member[] } (newest first) */

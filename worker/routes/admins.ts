@@ -196,10 +196,12 @@ app.delete('/api/admin/admins/:email', async (c) => {
     throw new ApiError(400, 'You can’t remove yourself. Ask another admin.')
   }
 
-  // Dropping the sessions signs them out now rather than on their next request.
+  // Dropping the sessions signs them out now rather than on their next request, and their MCP
+  // tokens go too (they'd be refused anyway: every token request checks access again).
   const [deleted] = await c.env.DB.batch([
     c.env.DB.prepare('DELETE FROM admins WHERE email = ?').bind(email),
     c.env.DB.prepare('DELETE FROM admin_sessions WHERE email = ?').bind(email),
+    c.env.DB.prepare('DELETE FROM mcp_tokens WHERE email = ?').bind(email),
   ])
   if (!deleted.meta.changes) throw new ApiError(404, 'Not found.')
   return c.body(null, 204)

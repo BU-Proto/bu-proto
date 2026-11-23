@@ -1,7 +1,7 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { parseAreas, type AdminLevel } from '../../shared/access'
-import type { AppEnv } from '../types'
+import type { AdminSession, AppEnv } from '../types'
 import { randomToken, sha256 } from './crypto'
 import { ApiError } from './http'
 
@@ -80,11 +80,68 @@ export async function destroySession(c: Context<AppEnv>): Promise<void> {
   deleteCookie(c, SESSION_COOKIE, { path: '/', secure: true })
 }
 
+/** Who someone is, from a session or an MCP token: enough to work out what they can do. */
+export interface Identity {
+  email: string
+  googleSub: string
+  name: string | null
+  avatarUrl: string | null
+}
+
+/**
+ * The signed-in admin for an identity, with their level and areas as they are now, or null when
+ * the email no longer has access. Sessions and MCP tokens both go through here, so a token can
+ * never do more than its maker could in the portal today.
+ */
+export async function adminFor(env: Env, identity: Identity, url: string): Promise<AdminSession | null> {
+  if (!(await isAllowed(env, identity.email, url))) return null
+  const email = identity.email.toLowerCase()
+  const isOwner = owners(env).has(email)
+  // Level and areas live on the admins row; owners have no row and change everything. Local
+  // sign-in's stand-in has no row either, and gets full access the same way.
+  const row = isOwner
+    ? null
+    : await env.DB.prepare('SELECT level, areas, seat FROM admins WHERE email = ?')
+        .bind(email)
+        .first<{ level: AdminLevel; areas: string; seat: string }>()
+  return {
+    email: identity.email,
+    googleSub: identity.googleSub,
+    name: identity.name,
+    avatarUrl: identity.avatarUrl,
+    isOwner,
+    level: isOwner ? 'owner' : (row?.level ?? 'admin'),
+    areas: row?.level === 'board' ? parseAreas(row.areas) : [],
+    seat: row?.seat ?? '',
+  }
+}
+
+/**
+ * Requests the Worker makes to itself on someone's behalf (the MCP server calling the portal's own
+ * routes), each with the admin it acts as. Keyed by the Request object, which only code in this
+ * Worker can hold, so nothing from outside can claim an entry: no header or cookie is involved.
+ */
+const internalCalls = new WeakMap<Request, AdminSession>()
+
+/** Mark a Request the Worker is about to send itself as made by this admin. */
+export function actAs(request: Request, admin: AdminSession): Request {
+  internalCalls.set(request, admin)
+  return request
+}
+
 /**
  * Every /api/admin route: 401 without a live session, and 401 (session dropped) if the email
- * has since been removed from the admins. Sets `c.var.admin`.
+ * has since been removed from the admins. Sets `c.var.admin`. A call the MCP server makes for
+ * someone (see actAs) is already resolved and skips the cookie.
  */
 export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const internal = internalCalls.get(c.req.raw)
+  if (internal) {
+    c.set('admin', internal)
+    await next()
+    return
+  }
+
   const token = getCookie(c, SESSION_COOKIE)
   if (!token) throw new ApiError(401, 'Sign in to continue.')
   const hash = await sha256(token)
@@ -96,30 +153,17 @@ export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
     .first<{ email: string; google_sub: string; name: string | null; avatar_url: string | null }>()
   if (!session) throw new ApiError(401, 'Sign in to continue.')
 
-  if (!(await isAllowed(c.env, session.email, c.req.url))) {
+  const admin = await adminFor(
+    c.env,
+    { email: session.email, googleSub: session.google_sub, name: session.name, avatarUrl: session.avatar_url },
+    c.req.url,
+  )
+  if (!admin) {
     await c.env.DB.prepare('DELETE FROM admin_sessions WHERE email = ?').bind(session.email).run()
     deleteCookie(c, SESSION_COOKIE, { path: '/', secure: true })
     throw new ApiError(401, 'You no longer have access.')
   }
-
-  const isOwner = owners(c.env).has(session.email.toLowerCase())
-  // Level and areas live on the admins row; owners have no row and change everything. Local
-  // sign-in's stand-in has no row either, and gets full access the same way.
-  const row = isOwner
-    ? null
-    : await c.env.DB.prepare('SELECT level, areas, seat FROM admins WHERE email = ?')
-        .bind(session.email.toLowerCase())
-        .first<{ level: AdminLevel; areas: string; seat: string }>()
-  c.set('admin', {
-    email: session.email,
-    googleSub: session.google_sub,
-    name: session.name,
-    avatarUrl: session.avatar_url,
-    isOwner,
-    level: isOwner ? 'owner' : (row?.level ?? 'admin'),
-    areas: row?.level === 'board' ? parseAreas(row.areas) : [],
-    seat: row?.seat ?? '',
-  })
+  c.set('admin', admin)
   c.executionCtx.waitUntil(
     c.env.DB.prepare("UPDATE admin_sessions SET last_seen_at = datetime('now') WHERE token_hash = ?").bind(hash).run(),
   )
@@ -133,7 +177,9 @@ export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
 export const sameOrigin: MiddlewareHandler<AppEnv> = async (c, next) => {
   // Mail clients' one-click unsubscribe (RFC 8058) POSTs here with no Origin; it only needs the token.
   // Resend's webhook comes from Resend's servers; its signature is checked instead (routes/inbox.ts).
-  const exempt = c.req.path === '/api/unsubscribe' || c.req.path === '/api/inbound/resend'
+  // MCP clients aren't browsers and send a bearer token, which no other site can attach; the MCP
+  // route still refuses a browser Origin that isn't ours (routes/mcp.ts).
+  const exempt = c.req.path === '/api/unsubscribe' || c.req.path === '/api/inbound/resend' || c.req.path === '/api/mcp'
   if (!exempt && !['GET', 'HEAD', 'OPTIONS'].includes(c.req.method)) {
     const origin = c.req.header('Origin')
     if (origin !== new URL(c.req.url).origin) throw new ApiError(403, 'Cross-site request blocked.')
