@@ -48,11 +48,8 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: '/cs',
     inPill: true,
     children: [
-      { label: 'CS', to: '/cs', line: 'Hack nights, hackathon trips and the playbook' },
-      { label: 'Business', to: '/business', line: 'Pitch nights, customers and funding' },
-      { label: 'Hackathons', to: '/hackathons', line: "Where the CS group is going next" },
-      { label: 'Wins', to: '/wins', line: 'Prizes, launches and first customers' },
-      { label: 'Grants', to: '/grants', line: 'Microgrants for a first version, coming soon' },
+      { label: 'CS', to: '/cs', line: 'Hack nights, hackathons, the playbook and its wins' },
+      { label: 'Business', to: '/business', line: 'Pitch nights, pitch competitions, the playbook and its wins' },
     ],
   },
   {
@@ -129,6 +126,7 @@ export const FOOTER = {
       links: [
         { label: 'About Proto', to: '/about' },
         { label: 'Events', to: '/events' },
+        { label: 'Wins', to: '/wins' },
         { label: 'Track record', to: '/track-record' },
       ],
     },
@@ -138,7 +136,7 @@ export const FOOTER = {
         { label: 'CS', to: '/cs' },
         { label: 'Business', to: '/business' },
         { label: 'Hackathons', to: '/hackathons' },
-        { label: 'Wins', to: '/wins' },
+        { label: 'Pitch competitions', to: '/pitch-competitions' },
       ],
     },
     {

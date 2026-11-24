@@ -1,0 +1,66 @@
+/*
+ * A group's tab bar: the group's name on a tile of its colour, then its pages as plain tabs on a
+ * dark strip, the current one underlined in the group's colour. Scrolls sideways on a phone.
+ */
+.bar {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--slab-edge);
+  background: rgb(var(--navy-rgb) / 0.9);
+  scrollbar-width: none;
+}
+
+.bar::-webkit-scrollbar {
+  display: none;
+}
+
+.name {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--tone);
+  color: var(--tone-ink);
+  font-size: 15px;
+  font-weight: var(--display-weight);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.tabs {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  margin: 0;
+  padding: 0 6px;
+  list-style: none;
+}
+
+.tab {
+  display: block;
+  padding: 11px 12px 9px;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-current='page'] {
+  border-bottom-color: var(--tone);
+  color: var(--ink);
+}
+
+.tab:focus-visible,
+.name:focus-visible {
+  outline: 2px solid var(--tone);
+  outline-offset: -2px;
+}

@@ -10,6 +10,7 @@ import { daysUntil, formatDay, formatMonth, formatRange } from '../lib/dates'
 import { hash } from '../lib/glyphArt'
 import { statusOf } from '../lib/hackathons'
 import styles from './Hackathons.module.css'
+import { GroupTabs } from '../components/GroupTabs'
 
 /** The colours a card without a photo can take: a flat tile with ink of its own hue. */
 const TONES = ['sky', 'iris', 'rose', 'amber', 'mint'] as const
@@ -129,6 +130,7 @@ export function Hackathons() {
   return (
     // The trips are the month's beat, so the page is in iris (see the palette in index.css).
     <div className={ui.page} data-hue="iris">
+      <GroupTabs group="cs" />
       <PageIntro intro={HACKATHONS_INTRO} />
 
       {months.size === 0 && (

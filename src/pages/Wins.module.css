@@ -19,3 +19,31 @@
   line-height: 1;
   text-shadow: var(--on-field-shadow);
 }
+
+/* The filter over the wins: plain pills, the current one filled. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter {
+  padding: 8px 14px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.filter:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.filter[aria-current='page'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--harbor);
+}

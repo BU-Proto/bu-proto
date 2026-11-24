@@ -10,6 +10,7 @@ import { BRAND } from '../content/site'
 import { dateParts, daysUntil } from '../lib/dates'
 import { eventPath } from '../lib/paths'
 import styles from './GroupPage.module.css'
+import { GroupTabs } from '../components/GroupTabs'
 
 /** How many of the group's next nights the page lists. */
 const NEXT_COUNT = 4
@@ -30,6 +31,7 @@ export function GroupPage({ slug }: { slug: GroupSlug }) {
   return (
     <div className={ui.page}>
       <title>{`${group.tab} · ${BRAND.name}`}</title>
+      <GroupTabs group={slug} />
 
       <header className={styles.hero} data-tone={group.tone}>
         <div className={styles.heroWords}>

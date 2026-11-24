@@ -22,6 +22,7 @@ import {
   FUND_STATUSES,
   MAX_ROLE_QUESTIONS,
   TRACKS,
+  WIN_KINDS,
   YEARS,
   type ApplicationStatus,
   type AskStatus,
@@ -112,6 +113,8 @@ export const hackathonInput = z.object({
 })
 
 export const winInput = z.object({
+  /** A hackathon prize, a pitch competition, a launch, first customers or money raised. */
+  kind: z.enum(WIN_KINDS).default('Hackathon'),
   project: text(80),
   blurb: optionalText(300),
   event: text(80),
@@ -348,6 +351,7 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
     // Newest first; an undated win ('') sorts after every dated one, then the portal's order.
     orderBy: 'date DESC, position ASC, id DESC',
     fields: [
+      { key: 'kind', column: 'kind', label: 'Kind of win', type: 'select', options: WIN_KINDS, hint: 'Hackathon wins show under CS; the rest under Business.' },
       { key: 'project', column: 'project', label: 'Project', type: 'text' },
       { key: 'blurb', column: 'blurb', label: 'One line', type: 'textarea', hint: 'Shown on the card and under the title.' },
       { key: 'event', column: 'event', label: 'Hackathon or competition', type: 'text', hint: 'e.g. HackMIT, the MIT $100K pitch' },

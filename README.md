@@ -33,9 +33,12 @@ npm run dev                      # http://localhost:5173
 | Route | Page |
 | --- | --- |
 | `/` | Home: the hero film (set in `src/content/home.ts`), the three tracks, the habits founders share, what started in Boston, events, the groups, the rhythm and the next event, join |
-| `/hackathons` | Upcoming hackathons as a departures board |
+| `/cs`, `/business` | A group's page: what it runs, its next nights from the calendar, how to help. Each group's pages share a tab bar |
+| `/pitch-competitions` | The Business group's list of Boston pitch competitions, from `src/content/competitions.ts` (check the dates each year) |
+| `/business/playbook` | The Business group's guides (`src/content/businessGuides.ts`); each at `/business/playbook/<slug>` |
+| `/hackathons` | The CS group's upcoming hackathons |
 | `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
-| `/wins` | Win cards: photo, project, placement, team, Devpost |
+| `/wins` | Win cards: hackathon prizes (CS) and pitch wins, launches, first customers and funding (Business); `?group=cs` or `?group=business` filters |
 | `/track-record` | Logo walls: where members have worked, sponsors, partners, other wins |
 | `/resources` | The resources hub: a card each for the playbook, Spark! and Innovate@BU |
 | `/resources/spark`, `/resources/innovate` | A BU program's page: what it is, where and when, what to go there for, its programs |

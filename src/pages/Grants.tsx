@@ -11,6 +11,7 @@ import { api } from '../lib/api'
 import { hash } from '../lib/glyphArt'
 import { FUND_AMOUNTS, YEARS } from '../../shared/constants'
 import styles from './Grants.module.css'
+import { GroupTabs } from '../components/GroupTabs'
 
 /**
  * Each stop's sign, a flat drawing on a tile of its own colour: a question, a yes, the way there,
@@ -51,6 +52,7 @@ export function Grants() {
 
   return (
     <div className={styles.page}>
+      <GroupTabs group="cs" />
       <PageIntro intro={GRANTS_INTRO}>
         {/* Said once, before anything else: there is no money yet. */}
         <p className={styles.status} data-fog-clear>

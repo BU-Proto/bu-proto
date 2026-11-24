@@ -7,6 +7,7 @@ import { ORGS } from './content/resourcesHub'
 import { fetchBoardPage, fetchContent, fetchEventPage, fetchHome, fetchRolePage, fetchWinPage } from './lib/content'
 import { eventPath, rolePath, winPath } from './lib/paths'
 import { Board } from './pages/Board'
+import { BusinessGuide, BusinessPlaybook } from './pages/BusinessPlaybook'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
 import { Events } from './pages/Events'
 import { Grants } from './pages/Grants'
@@ -16,6 +17,7 @@ import { Home } from './pages/Home'
 import { Join } from './pages/Join'
 import { NotFound } from './pages/NotFound'
 import { OrgPage } from './pages/OrgPage'
+import { PitchCompetitions } from './pages/PitchCompetitions'
 import { Playbook } from './pages/Playbook'
 import { Privacy } from './pages/Privacy'
 import { Resources } from './pages/Resources'
@@ -86,6 +88,10 @@ const router = createBrowserRouter([
       // The groups' pages list their own next nights, so they read the calendar too.
       { path: 'cs', Component: CsGroup, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
       { path: 'business', Component: BusinessGroup, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
+      // The Business group's own pages, beside its overview.
+      { path: 'pitch-competitions', Component: PitchCompetitions },
+      { path: 'business/playbook', Component: BusinessPlaybook },
+      { path: 'business/playbook/:slug', Component: BusinessGuide },
       {
         path: 'events/:slug',
         Component: EventDetail,

@@ -14,6 +14,10 @@ export type EventKind = (typeof EVENT_KINDS)[number]
 
 export const YEARS = ['First year', 'Second year', 'Third year', 'Fourth year', 'Grad student', 'Not a student', 'Other'] as const
 
+/** What kind of win it was. Hackathon prizes are the CS group's; the rest are the Business group's. */
+export const WIN_KINDS = ['Hackathon', 'Pitch competition', 'Launch', 'First customers', 'Funding'] as const
+export type WinKind = (typeof WIN_KINDS)[number]
+
 /** What a member builds from: the groups Proto has or plans, and the rest. */
 export const FIELDS = ['Business', 'Engineering', 'Computer science', 'Design', 'Science', 'Something else'] as const
 export type Field = (typeof FIELDS)[number]

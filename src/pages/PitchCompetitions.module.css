@@ -1,0 +1,162 @@
+/*
+ * The pitch competitions, after brand.dropbox.com: two sections on the hairline grid, each a set
+ * of dark tiles topped with the entry's colour, who can enter on a tag of that colour (its own
+ * dark ink on it), the name bold, and the way out to the official page.
+ */
+
+.note {
+  max-width: 62ch;
+  margin: 8px 0 0;
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.section {
+  display: grid;
+  gap: 20px;
+  padding: 28px 0 12px;
+}
+
+.head {
+  display: grid;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 3.4vw, 44px);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: 1.02;
+}
+
+.lede {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 20px 22px 22px;
+  border-top: 4px solid var(--tone);
+  background: rgb(var(--navy-rgb) / 0.92);
+  box-shadow: inset 0 0 0 1px var(--slab-edge);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.who,
+.practice,
+.left {
+  padding: 4px 10px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.who {
+  background: var(--tone);
+  color: var(--tone-ink);
+}
+
+.practice {
+  border: 1px solid var(--tone);
+  color: var(--tone);
+}
+
+.left {
+  background: rgb(var(--frost-rgb) / 0.92);
+  color: var(--navy);
+}
+
+.name {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: var(--display-weight);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.host {
+  margin: -4px 0 0;
+  color: var(--tone);
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.offer {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.dates {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.official {
+  margin-top: auto;
+  padding-top: 4px;
+  color: var(--tone);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.official:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.official:focus-visible {
+  outline: 2px solid var(--tone);
+  outline-offset: 3px;
+}
+
+.outro {
+  margin: 20px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -157,7 +157,7 @@ export const GROUP_TILES: readonly GroupTile[] = [
     links: [
       { label: 'The CS group', href: '/cs' },
       { label: 'Hackathons', href: '/hackathons' },
-      { label: 'Wins', href: '/wins' },
+      { label: 'Wins', href: '/wins?group=cs' },
     ],
   },
   {
@@ -167,7 +167,8 @@ export const GROUP_TILES: readonly GroupTile[] = [
     text: 'For the company side: finding customers, pricing, pitching and raising money. Anyone can come.',
     links: [
       { label: 'The Business group', href: '/business' },
-      { label: 'Resources', href: '/resources' },
+      { label: 'Pitch competitions', href: '/pitch-competitions' },
+      { label: 'Playbook', href: '/business/playbook' },
     ],
   },
 ]

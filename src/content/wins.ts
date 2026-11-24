@@ -2,12 +2,35 @@
 
 import type { Logo } from './trackRecord'
 import type { PageIntro } from './types'
+import type { WinKind } from '../../shared/constants'
+import type { GroupSlug } from './groups'
 
 export const WINS_INTRO: PageIntro = {
   path: '~/proto/wins',
   title: 'Wins',
   lede: 'What members built and where it went: hackathon prizes from the CS group, and founder wins too, from pitch competitions to launches, first customers and money raised.',
 }
+
+/** Which group's a kind of win is: hackathon prizes the CS group's, the rest the Business group's. */
+export const WIN_GROUP: Record<WinKind, GroupSlug> = {
+  Hackathon: 'cs',
+  'Pitch competition': 'business',
+  Launch: 'business',
+  'First customers': 'business',
+  Funding: 'business',
+}
+
+/** The filter over the wins: everything, or one group's. */
+export const WIN_FILTERS: readonly { label: string; group: GroupSlug | null }[] = [
+  { label: 'All wins', group: null },
+  { label: 'CS: hackathons', group: 'cs' },
+  { label: 'Business: pitches, launches, customers', group: 'business' },
+]
+
+export const WINS_EMPTY_GROUP = {
+  cs: 'No hackathon wins posted yet. The first go up after the next hackathon.',
+  business: 'No Business wins posted yet. The first go up after the next pitch competition, launch or first sale.',
+} as const
 
 export const WINS_EMPTY = 'No wins posted yet. The first go up after the next hackathon, pitch competition or launch.'
 
