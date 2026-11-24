@@ -44,7 +44,7 @@ The energy of Jose's film: black and white with warm highlights, film grain, fla
 | 13.9 | 1.5 | WHAT STARTED HERE | A robot arm in a lab | Boston Dynamics, MIT, 1992 | Envato |
 | 15.4 | 1.5 | WHAT STARTED HERE | A dorm room at night, a laptop's glow | Meta's logo, "started as Facebook, a Harvard dorm, 2004" | Envato; Meta's approved logo |
 | 16.9 | 1.5 | WHAT STARTED HERE | Moderna's vials on the line, then a robot pipetting in its lab | Moderna, Cambridge, 2010 | Moderna's own footage, approved |
-| 18.4 | 1.5 | WHAT STARTED HERE | The Roomba crossing a sunlit floor, then its green scan | iRobot, the Roomba, MIT roboticists, 1990 | iRobot's own footage, approved |
+| 18.4 | 1.5 | WHAT STARTED HERE | The Roomba gliding out from under a sofa, then a close-up rolling towards the camera | iRobot, the Roomba, MIT roboticists, 1990 | iRobot's own footage, approved |
 | 19.9 | 1.5 | WHAT STARTED HERE | Code scrolling in a dark room | Dropbox, MIT students in Cambridge, 2007 | Envato |
 | 21.4 | 1.5 | WHAT STARTED HERE | A speaker cone pulsing | Bose, MIT professor Amar Bose, 1964 | Envato |
 | 22.9 | 2.1 | WHAT STARTED HERE | WHOOP's strap mid-workout, Sha'Carri Richardson, Cristiano Ronaldo | WHOOP, Harvard, 2012 | WHOOP's own pictures, approved |
@@ -93,7 +93,7 @@ Approved for this film (keep each approval in writing with the project):
 | Meta | Its company logo, for the Facebook card | `film/brand/meta-lockup-white.svg` |
 | WHOOP | Its body and athlete pictures, the athletes included | `film/brand/whoop/`, `film/brand/whoop-ambassadors/` |
 | Moderna | Four clips: vials on the line, vials into boxes, boxes, and a 4K lab reel from November 2020 | `film/brand/moderna/` |
-| iRobot | Two Roomba product films (Max 705 and Plus 505). Both copies are small, 420x236 at 15 fps, so they look soft at full size | `film/brand/irobot/` |
+| iRobot | Roomba j9+ b-roll and overview at 1080p (the b-roll is used; the overview has captions burned in), and two small product films (Max 705, Plus 505) | `film/brand/irobot/` |
 
 Every company the film names, and what to ask each for:
 
@@ -102,7 +102,7 @@ Every company the film names, and what to ask each for:
 | Boston Dynamics | Card, 1.5 s | Two seconds of Spot or Atlas walking, from their press footage; their logo | Press form, <https://bostondynamics.com/news/#press-form> | To ask |
 | Meta (Facebook) | Card, 1.5 s | Done: the logo. Optional: a photo of thefacebook.com in 2004 | press@meta.com | Logo approved |
 | Moderna | Card, 1.5 s | Optional: their logo | media@modernatx.com | Footage approved |
-| iRobot | Card, 1.5 s | The two Roomba films at full resolution (1080p or 4K); their logo | publicrelations@irobot.com | Footage approved, full size to ask |
+| iRobot | Card, 1.5 s | Optional: their logo | publicrelations@irobot.com | Footage approved, 1080p in hand |
 | Dropbox | Card, 1.5 s | Their logo, or one product screenshot | brand@dropbox.com, press@dropbox.com | To ask (their brand page says to check in first) |
 | Bose | Card, 1.5 s | Two seconds of a speaker or headphones close up; their logo | The press contact on <https://www.bose.com/pressroom> | To ask |
 | WHOOP | Card, 2.1 s | Optional: their logo | press@whoop.com | Pictures approved |
