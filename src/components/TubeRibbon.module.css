@@ -1,0 +1,33 @@
+/* The box the ribbon's path is laid out in. Whoever places it decides how it stacks. */
+.ribbon {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* As wide as the box and as tall as the path's own box at that width; the curve runs past it. */
+.svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.body,
+.shine {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+}
+
+/* The light along the top of the tube: soft, so it rounds the band without reading as a stripe. */
+.shine {
+  stroke: #fff;
+  opacity: 0.1;
+  filter: blur(3px);
+}

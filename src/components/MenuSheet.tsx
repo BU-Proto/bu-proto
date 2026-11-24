@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
-import { BRAND, NAV_ITEMS } from '../content/site'
+import { NAV_ITEMS } from '../content/site'
+import { Logo } from './Logo'
 import { IconButton } from './IconButton'
 import { CloseIcon, MenuIcon } from './icons'
 import styles from './MenuSheet.module.css'
@@ -38,8 +39,7 @@ export function MenuSheet() {
         <div className={styles.inner}>
           <div className={styles.head}>
             <span className={styles.title}>
-              <img src={BRAND.seal} alt="" width={20} height={20} />
-              {BRAND.name}
+              <Logo />
             </span>
             <IconButton label="Close menu" onClick={close}>
               <CloseIcon />

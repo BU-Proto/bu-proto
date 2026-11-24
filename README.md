@@ -32,7 +32,7 @@ npm run dev                      # http://localhost:5173
 
 | Route | Page |
 | --- | --- |
-| `/` | Home: hero, the three tracks, the rhythm, next event and hack night, upcoming deadlines, latest wins, join |
+| `/` | Home: the hero (a framed window onto the field), how a semester goes (the journey, in a frame that grows as you scroll), the latest wins, join |
 | `/hackathons` | Upcoming hackathons as a departures board |
 | `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
 | `/wins` | Win cards: photo, project, placement, team, Devpost |

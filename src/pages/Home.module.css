@@ -1,522 +1,88 @@
 /*
- * The home page below the hero. One dark ground, harbor, from the hero to the ask: the field
- * drains into it through its own characters, the plain harbor under the ways in takes on a frozen
- * texture of the field under the rhythm and the record, and the field fills back in for the ask.
- * The only seams are those two, both drawn in glyphs. Only the last section sits on the live
- * field, so only it marks text for the field to clear around.
+ * The landing below the hero: one harbor ground from the journey to the ask, the width of the
+ * screen. Its only seam is at the foot, where harbor drains back into the field under the footer.
  */
 
-/* Edge to edge, by undoing the shell's padding rather than sizing to 100vw, so the column inside
-   lines up with the hero's to the pixel even where the scrollbar takes up room. */
-.bleed {
+/* Edge to edge, by undoing the shell's padding rather than sizing to 100vw, so it lines up with
+   the hero to the pixel even where the scrollbar takes up room. */
+.ground {
   position: relative;
   margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  /* Room for the drain strip, which hangs below the band. */
+  margin-bottom: var(--drain);
   margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
-}
-
-/* The page column, inside a full-bleed band. */
-.column {
-  width: min(1180px, 100% - 2 * max(16px, env(safe-area-inset-left, 0px)));
-  margin-inline: auto;
-}
-
-.title {
-  margin: 0;
-  font-size: clamp(40px, 6.4vw, 84px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
-  line-height: 0.98;
-}
-
-
-/* ---- Harbor --------------------------------------------------------------------------------- */
-
-/* Plain harbor, the field's own base colour, so where the field drains away nothing changes. */
-.ink {
   background-color: var(--harbor);
   color: var(--ink);
 }
 
-/* The first harbor band. The drain strip hangs above it, partly under the hero's last lines (the
-   hero paints over it), so the field is already thinning by the time the copy ends. */
-.afterHero {
-  isolation: isolate;
-  margin-top: 170px;
-}
+/* ---- The ask ---------------------------------------------------------------------------------- */
 
-/* A heading inside a section: the next beat, the latest wins. */
-.subTitle {
-  margin: 0;
-  font-size: clamp(28px, 3vw, 40px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-}
-
-/* ---- The rhythm, drawn in the field's characters ------------------------------------------ */
-
-.rhythm {
-  display: grid;
-  gap: clamp(40px, 7vh, 72px);
-  padding: clamp(72px, 12vh, 140px) 0 clamp(120px, 20vh, 220px);
-}
-
-/* The score: a column of glyphs a week, its height and density the size of the night. Sized off
-   the score's own width, so fourteen weeks always fit across. */
-.score {
-  container-type: inline-size;
-  margin: 0;
-}
-
-.weeks,
-.axis {
-  display: grid;
-  grid-template-columns: repeat(14, minmax(0, 1fr));
-  gap: 0 1.2cqi;
-}
-
-.week {
-  margin: 0;
-  font-family: var(--font-mono);
-  letter-spacing: 0;
-  /* Mono ligatures would turn runs like => and <> into arrows and break the grid. */
-  font-variant-ligatures: none;
-  font-feature-settings: 'calt' 0, 'liga' 0;
-  white-space: pre;
-  user-select: none;
-}
-
-.week {
-  /* Eight glyphs across a week's share of the width; mono glyphs are about 0.6em wide. */
-  font-size: calc((100cqi - 13 * 1.2cqi) / 14 / 8 / 0.6);
-  line-height: 1;
-  text-align: center;
-  overflow: hidden;
-  color: rgb(var(--hue-rgb) / 0.66);
-}
-
-/* Each beat in its colour, warmer as the night gets bigger: hack nights a cool sky, the trips
-   iris, demo night the rose of the field's core. The bigger nights glow. */
-.week[data-beat='trip'],
-.week[data-beat='demo'] {
-  color: var(--hue);
-  text-shadow: 0 0 8px rgb(var(--hue-deep-rgb) / 0.85);
-}
-
-.axis {
-  padding-top: 10px;
-  border-top: 1px solid var(--rule-strong);
-  color: var(--ink-dim);
-  font-size: 12.5px;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-.caption {
-  margin-top: 14px;
-  color: var(--ink-dim);
-  font-size: 13px;
-}
-
-/* A beat in the four-up steps (landing.module.css): when it is, in its colour, under its name. */
-.when {
-  margin: 0 0 10px;
-  color: var(--hue);
-  font-size: 14px;
-}
-
-.beat[data-later] {
-  opacity: 0.62;
-}
-
-/* Faded, rose would drop under AA; its "not yet" line keeps to ink, and the swatch keeps the hue. */
-.beat[data-later] .when {
-  color: var(--ink);
-}
-
-/* ---- Next up and Apply by: the rhythm's next real beats --------------------------------------- */
-
-/* Two calm columns on a laptop: the next event, with room around it, and the deadlines beside it.
-   Each has its own heading row, so the two read as a pair and either can stand empty. */
-.next {
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  align-items: start;
-  gap: 72px clamp(48px, 8vw, 128px);
-  margin-top: clamp(40px, 7vh, 80px);
-  padding-top: clamp(48px, 8vh, 88px);
-  border-top: 1px solid var(--rule);
-}
-
-.nextEvent,
-.applyBy {
-  display: grid;
-  align-content: start;
-  gap: clamp(28px, 4.4vh, 44px);
-}
-
-.nextHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px 24px;
-}
-
-.event {
-  display: grid;
-  justify-items: start;
-  gap: 14px;
-}
-
-/* The day large, the month, weekday and how soon stacked beside its foot. */
-.date {
+.closing {
   position: relative;
   isolation: isolate;
-  display: flex;
-  align-items: flex-end;
-  gap: clamp(16px, 2vw, 24px);
-  /* The numeral's light top sits high in its line; this keeps it off the heading above. */
-  margin: 12px 0 clamp(14px, 2.4vh, 24px);
+  padding: 50px var(--edge) clamp(80px, 9vw, 160px);
 }
 
-/* The numeral in its night's colour, standing in that colour's light. */
-.date::before {
-  content: '';
-  position: absolute;
+/* Behind the words, which stand on it. */
+.ribbon {
   z-index: -1;
-  top: -60%;
-  left: -18%;
-  width: clamp(280px, 30vw, 420px);
-  aspect-ratio: 1.3;
-  background: radial-gradient(closest-side, rgb(var(--hue-deep-rgb, var(--iris-deep-rgb)) / 0.26), transparent);
-  pointer-events: none;
 }
 
-.dateDay {
-  color: var(--hue, var(--ink));
-  font-size: clamp(96px, 11vw, 152px);
-  font-weight: 200;
-  letter-spacing: -0.06em;
-  line-height: 0.76;
-  font-variant-numeric: tabular-nums;
+/* The ask's row, which the one-column ribbon is laid out on. */
+.statementRow {
+  position: relative;
+  margin: clamp(96px, 15vw, 300px) 0 clamp(40px, 4.4vw, 88px);
 }
 
-.dateRest {
-  font-size: 16px;
+/* One line across most of the page, a step under the journey's title in size. */
+.statement {
+  margin: 0 0 0 -0.05em;
+  font-size: clamp(56px, 8vw, 200px);
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+/* From the eighth of twelve columns, four and a bit wide. */
+.closingWords {
+  max-width: 20em;
+  margin-left: calc((100% + var(--col-gap)) * 7 / 12);
+  color: var(--ink-soft);
+  font-size: clamp(18px, 1.5vw, 34px);
+  font-weight: 300;
   line-height: 1.4;
 }
 
-.soon {
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.eventTitle {
-  max-width: 18ch;
+.closingWords p {
   margin: 0;
-  font-size: clamp(32px, 3.4vw, 46px);
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1.04;
-  text-wrap: balance;
-}
-
-.eventTitle a {
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
-}
-
-.eventTitle a:hover {
-  text-decoration-line: underline;
-}
-
-/* Kind, time and place, set apart by space and tone rather than separators. */
-.eventMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 1.2em;
-  margin: 0;
-  font-size: 16px;
-}
-
-.kind {
-  color: var(--hue, var(--accent));
-  font-weight: 500;
-}
-
-.place {
-  color: var(--ink-soft);
-}
-
-/* The event's line (the portal asks for one or two), or the empty state's. */
-.eventText {
-  max-width: 48ch;
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 16px;
-  line-height: 1.55;
   text-wrap: pretty;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px 24px;
-  margin: 12px 0 0;
+.closingWords p + p {
+  margin-top: 1em;
 }
 
-.rsvpForm {
-  justify-self: stretch;
-  max-width: 460px;
-  margin-top: 8px;
-  padding-top: 20px;
-  border-top: 1px solid var(--rule);
+.closingWords .closingAction {
+  margin-top: clamp(28px, 3vw, 52px);
 }
 
-/* Nothing booked: a quiet line in the title's place, not an error. */
-.emptyTitle {
-  max-width: 16ch;
-  margin: 0;
-  font-size: clamp(32px, 3.4vw, 46px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1.04;
-  text-wrap: balance;
-}
-
-.quiet {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 16px;
-}
-
-/* The deadlines: ruled rows, the days left large beside the name and when it closes. */
-.deadlineList {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-bottom: 1px solid var(--rule);
-}
-
-.deadline {
-  position: relative;
-  display: grid;
-  grid-template-columns: clamp(96px, 9vw, 120px) minmax(0, 1fr);
-  align-items: baseline;
-  gap: 2px 20px;
-  padding: clamp(18px, 3vh, 24px) 0;
-  border-top: 1px solid var(--rule);
-}
-
-.countdown {
-  grid-row: span 2;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  color: var(--hue);
-  font-size: 40px;
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.countdown small {
-  color: var(--ink-soft);
-  font-size: 14px;
-  letter-spacing: 0;
-}
-
-.deadlineName {
-  font-size: 19px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-.deadlineDate {
-  grid-column: 2;
-  color: var(--ink-soft);
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* An apply-by row is one link: its name, stretched over the row. */
-.stretch::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.stretch:focus-visible {
-  outline: none;
-}
-
-.deadline:has(.stretch:focus-visible) {
-  outline: 2px solid var(--frost);
-  outline-offset: 4px;
-  border-radius: 6px;
-}
-
-.deadline:has(.stretch:hover) .deadlineName a {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 5px;
-}
-
-/* ---- Harbor, textured: the rhythm, the record and the names we build with ------------------- */
-
-.inkTextured {
-  isolation: isolate;
-  /* Room below for the strip where the field fills back in. */
-  margin-bottom: 440px;
-  padding-bottom: clamp(40px, 6vh, 72px);
-}
-
-/* The frozen field texture, eased in over the rhythm's title so it never starts on a line. Behind
-   the content (the band isolates it), above the ink. Its glyphs are cut from the field's own sweep,
-   so the field freezes with its colour still in it, faint enough that copy reads over any of it. */
-.inkTextured::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--field-sweep);
-  opacity: 0.3;
-  -webkit-mask-image: var(--texture-mask), linear-gradient(transparent, #000 480px);
-  mask-image: var(--texture-mask), linear-gradient(transparent, #000 480px);
-  -webkit-mask-size: 595px 400px, 100% 100%;
-  mask-size: 595px 400px, 100% 100%;
-  -webkit-mask-repeat: repeat, no-repeat;
-  mask-repeat: repeat, no-repeat;
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
-  pointer-events: none;
-}
-
-/* Where the band fills back up with the field, the field's light rises into the harbor first:
-   teal and iris, the colours waiting below. Nothing at the seam itself, so the strip still starts
-   from plain harbor. */
-.inkTextured::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: auto 0 0;
-  height: min(clamp(420px, 70vh, 720px), 100%);
-  background:
-    radial-gradient(46% 70% at 30% 70%, rgb(var(--iris-deep-rgb) / 0.18), transparent 72%),
-    radial-gradient(46% 70% at 74% 72%, rgb(var(--lagoon-rgb) / 0.16), transparent 72%);
-  -webkit-mask-image: linear-gradient(transparent, #000 50%, transparent);
-  mask-image: linear-gradient(transparent, #000 50%, transparent);
-  pointer-events: none;
-}
-
-/* The record, laid out as on main: the tally in the column, then the orbit and the cards full width. */
-.wins {
-  position: relative;
-  display: grid;
-  /* minmax, so a wide tally on a small phone can't stretch the column past the screen. */
-  grid-template-columns: minmax(0, 1fr);
-  gap: calc(var(--cell) * 3);
-  padding-block: calc(var(--cell) * 7);
-}
-
-.tally {
-  padding-inline: var(--gutter);
-}
-
-/* The tally stands in the warm light of the field's core: the record is the peak. */
-.wins::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  top: clamp(-160px, -14vh, -80px);
-  left: -12%;
-  width: min(1100px, 110%);
-  height: clamp(420px, 60vh, 600px);
-  background:
-    radial-gradient(closest-side at 30% 50%, rgb(var(--rose-deep-rgb) / 0.26), transparent),
-    radial-gradient(closest-side at 62% 54%, rgb(var(--iris-deep-rgb) / 0.16), transparent);
-  pointer-events: none;
-}
-
-/* ---- Join, back on the field ---------------------------------------------------------------- */
-
+/* The site's own primary button, the top bar's Join, at this section's size. */
 .join {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  justify-items: center;
-  gap: 22px;
-  padding: clamp(96px, 18vh, 200px) 0 clamp(64px, 12vh, 120px);
-  text-align: center;
+  padding: clamp(14px, 1.05vw, 19px) clamp(24px, 1.8vw, 34px);
+  font-size: clamp(15px, 1vw, 18px);
 }
 
-/* The hero's pool of harbor again, under the ask, so it reads over the brightest part of the field. */
-.join::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 6% -10% 0;
-  background: radial-gradient(52% 56% at 50% 54%, rgb(var(--harbor-rgb) / 0.6), rgb(var(--harbor-rgb) / 0) 100%);
-  pointer-events: none;
-}
-
-.joinTitle {
-  max-width: 14ch;
-  margin: 0;
-  font-size: clamp(56px, 11vw, 168px);
-  font-weight: 300;
-  letter-spacing: -0.05em;
-  line-height: 0.9;
-  text-wrap: balance;
-  text-shadow: 0 4px 60px rgb(var(--harbor-rgb) / 0.5);
-}
-
-.joinLede {
-  max-width: 44ch;
-  margin: 0;
-  font-size: 17px;
-  text-wrap: balance;
-  text-shadow: var(--on-field-shadow);
-}
-
-.joinButton {
-  margin-top: 10px;
-  padding: 15px 26px;
-  font-size: 15px;
-}
-
-/* ---- Narrow screens ------------------------------------------------------------------------- */
-
-@media (max-width: 900px) {
-  /* Stacked: the next event, then the deadlines, with real room between. */
-  .next {
-    grid-template-columns: minmax(0, 1fr);
-    gap: clamp(64px, 12vw, 88px);
-  }
-}
-
-@media (max-width: 720px) {
-  .axis {
-    font-size: 10px;
-  }
-}
-
-@media (max-width: 560px) {
-  .deadline {
-    grid-template-columns: 88px minmax(0, 1fr);
-    gap: 2px 14px;
+@media (max-width: 860px) {
+  .closing {
+    padding-top: 24px;
   }
 
-  .countdown {
-    font-size: 32px;
+  .statement {
+    font-size: clamp(52px, 16vw, 120px);
   }
 
-  /* Every other week number, so they don't run together. */
-  .axis span:nth-child(even) {
-    visibility: hidden;
+  .closingWords {
+    max-width: 31em;
+    margin-left: 0;
   }
 }
