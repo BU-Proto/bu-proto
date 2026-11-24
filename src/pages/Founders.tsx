@@ -8,15 +8,12 @@ import { SampleTag } from '../components/SampleTag'
 import { Select } from '../components/Select'
 import ui from '../components/ui.module.css'
 import {
-  FOUNDERS_FOR,
   FOUNDERS_FORM,
   FOUNDERS_GET,
   FOUNDERS_HEAD,
   FOUNDERS_INTRO,
-  FOUNDERS_OPEN,
-  FOUNDERS_RECORD,
+  FOUNDERS_NUMBERS,
   FOUNDERS_STARTUPS,
-  FOUNDERS_STEPS,
 } from '../content/founders'
 import { api } from '../lib/api'
 import { winPath } from '../lib/paths'
@@ -24,113 +21,55 @@ import { tallyWins } from '../lib/wins'
 import { FOUNDER_COMMITMENTS, FOUNDER_STAGES } from '../../shared/constants'
 import styles from './Founders.module.css'
 
-/** Numbers as the rest of the site shows them: 01, 02. */
-const number = (index: number) => String(index + 1).padStart(2, '0')
-
-/** "Oct 2026" from yyyy-mm-dd, or nothing when the date isn't known. */
-function monthYear(date: string): string {
-  if (!date) return ''
-  const [year, month] = date.split('-').map(Number)
-  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })
-}
-
-/** The record: one line counted from the wins, then every win as a ruled row, newest first. */
-function Record({ wins }: { wins: readonly Win[] }) {
-  const tally = tallyWins(wins)
-  const dated = wins.filter((win) => win.date).map((win) => win.date).sort()
-  const since = dated[0]?.slice(0, 4)
-
-  return (
-    <section className={styles.block} aria-labelledby="circle-record">
-      <header className={styles.head}>
-        <h2 id="circle-record" className={styles.subtitle}>
-          {FOUNDERS_RECORD.title}
-        </h2>
-        {since && <p className={styles.lede}>{FOUNDERS_RECORD.lede(since)}</p>}
-      </header>
-      {wins.length === 0 ? (
-        <p className={styles.lede}>{FOUNDERS_RECORD.empty}</p>
-      ) : (
-        <>
-          <p className={styles.tally}>
-            <span>
-              <b>{tally.wins}</b> {FOUNDERS_RECORD.wins(tally.wins)}
-            </span>
-            <span>
-              <b>{tally.hackathons}</b> {FOUNDERS_RECORD.events(tally.hackathons)}
-            </span>
-            <span>
-              <b>{tally.builders}</b> {FOUNDERS_RECORD.builders(tally.builders)}
-            </span>
-          </p>
-          <ol className={styles.record}>
-            {wins.map((win) => (
-              <li key={win.id} className={styles.recordRow}>
-                <Link className={styles.recordLink} to={winPath(win)}>
-                  <span className={styles.recordProject}>{win.project}</span>
-                  <span className={styles.recordPrize}>{win.placement}</span>
-                  <span className={styles.recordEvent}>{win.event}</span>
-                  <span className={styles.recordDate}>{monthYear(win.date)}</span>
-                </Link>
-              </li>
-            ))}
-          </ol>
-          <p className={styles.more}>
-            <Link className={ui.textLink} to={FOUNDERS_RECORD.link.href}>
-              {FOUNDERS_RECORD.link.label}
-            </Link>
-          </p>
-        </>
-      )}
-    </section>
-  )
-}
-
-/** The projects named in FOUNDERS_STARTUPS, each with its photo, line and prize from its win. */
-function Startups({ wins }: { wins: readonly Win[] }) {
-  const picked = FOUNDERS_STARTUPS.projects
+/** The projects named in FOUNDERS_STARTUPS that have a published win, in the order listed. */
+function startupsFrom(wins: readonly Win[]): Win[] {
+  return FOUNDERS_STARTUPS.projects
     .map((name) => wins.find((win) => win.project.trim().toLowerCase() === name.toLowerCase()))
     .filter((win): win is Win => Boolean(win))
-  if (picked.length === 0) return null
+}
+
+/** The numbers, large, in one ruled row: wins, events, builders and startups. */
+function Numbers({ wins, startups }: { wins: readonly Win[]; startups: number }) {
+  const tally = tallyWins(wins)
+  if (tally.wins === 0) return null
+  const since = wins.map((win) => win.date).filter(Boolean).sort()[0]?.slice(0, 4)
+  const figures = [
+    { value: tally.wins, label: FOUNDERS_NUMBERS.wins },
+    { value: tally.hackathons, label: FOUNDERS_NUMBERS.events },
+    { value: tally.builders, label: FOUNDERS_NUMBERS.builders },
+    ...(startups > 0 ? [{ value: startups, label: FOUNDERS_NUMBERS.startups }] : []),
+  ]
 
   return (
-    <section className={styles.block} aria-labelledby="circle-startups">
-      <header className={styles.head}>
-        <h2 id="circle-startups" className={styles.subtitle}>
-          {FOUNDERS_STARTUPS.title}
-        </h2>
-        <p className={styles.lede}>{FOUNDERS_STARTUPS.lede}</p>
-      </header>
-      <ul className={styles.startups}>
-        {picked.map((win) => (
-          <li key={win.id} className={styles.startup}>
-            <Link className={styles.startupLink} to={winPath(win)}>
-              <div className={styles.startupPicture}>
-                {win.photo ? <img src={win.photo} alt="" loading="lazy" decoding="async" /> : <span aria-hidden="true">{win.project.slice(0, 1)}</span>}
-              </div>
-              <h3 className={styles.startupName}>{win.project}</h3>
-              {win.blurb && <p className={styles.startupText}>{win.blurb}</p>}
-              <p className={styles.startupWin}>
-                <span className={styles.startupPrize}>{win.placement}</span>
-                <span>{win.event}</span>
-              </p>
-              <span className={styles.startupMore}>{FOUNDERS_STARTUPS.more}</span>
-            </Link>
-          </li>
+    <section className={styles.block} aria-labelledby="circle-numbers">
+      <h2 id="circle-numbers" className={ui.srOnly}>
+        {FOUNDERS_NUMBERS.title}
+      </h2>
+      <dl className={styles.numbers}>
+        {figures.map((figure) => (
+          <div key={figure.label} className={styles.figure}>
+            <dt className={styles.figureLabel}>{figure.label}</dt>
+            <dd className={styles.figureValue}>{figure.value}</dd>
+          </div>
         ))}
-      </ul>
+      </dl>
+      <p className={styles.small}>
+        {since && `${FOUNDERS_NUMBERS.since(since)} `}
+        <Link className={ui.textLink} to={FOUNDERS_NUMBERS.link.href}>
+          {FOUNDERS_NUMBERS.link.label}
+        </Link>
+      </p>
     </section>
   )
 }
 
 /**
- * The Founders Circle: the one part of Proto people apply to. Kept quiet on purpose, in plain
- * ink with one amber accent: who gets in, the record, the startups, what members get, the way in,
- * a line that the rest of Proto stays open, and the application.
+ * The Founders Circle: the one part of Proto people apply to. It says as little as it can: the
+ * numbers, what members get, a few of our startups, and the form with a line on who it's for.
  */
 export function Founders() {
-  const all = useLoaderData<Win[]>()
-  const wins = all.filter((win) => !win.placeholder)
+  const wins = useLoaderData<Win[]>().filter((win) => !win.placeholder)
+  const startups = startupsFrom(wins)
   const { fields } = FOUNDERS_FORM
 
   return (
@@ -143,41 +82,15 @@ export function Founders() {
           <a className={ui.primary} href="#apply">
             {FOUNDERS_HEAD.apply}
           </a>
-          <a className={ui.secondary} href="#how">
-            {FOUNDERS_HEAD.how}
-          </a>
         </div>
       </PageIntro>
 
-      <section className={styles.block} aria-labelledby="circle-for">
-        <header className={styles.head}>
-          <h2 id="circle-for" className={styles.subtitle}>
-            {FOUNDERS_FOR.title}
-          </h2>
-          <p className={styles.lede}>{FOUNDERS_FOR.lede}</p>
-        </header>
-        <ol className={styles.criteria}>
-          {FOUNDERS_FOR.items.map((text, index) => (
-            <li key={text} className={styles.criterion}>
-              <span className={styles.number} aria-hidden="true">
-                {number(index)}
-              </span>
-              <span>{text}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <Record wins={wins} />
-      <Startups wins={wins} />
+      <Numbers wins={wins} startups={startups.length} />
 
       <section className={styles.block} aria-labelledby="circle-get">
-        <header className={styles.head}>
-          <h2 id="circle-get" className={styles.subtitle}>
-            {FOUNDERS_GET.title}
-          </h2>
-          <p className={styles.lede}>{FOUNDERS_GET.note}</p>
-        </header>
+        <h2 id="circle-get" className={styles.subtitle}>
+          {FOUNDERS_GET.title}
+        </h2>
         <ul className={styles.perks}>
           {FOUNDERS_GET.items.map((perk) => (
             <li key={perk.title} className={styles.perk}>
@@ -191,37 +104,43 @@ export function Founders() {
         </ul>
       </section>
 
-      <section id="how" className={styles.block} aria-labelledby="circle-steps">
-        <header className={styles.head}>
-          <h2 id="circle-steps" className={styles.subtitle}>
-            {FOUNDERS_STEPS.title}
+      {startups.length > 0 && (
+        <section className={styles.block} aria-labelledby="circle-startups">
+          <h2 id="circle-startups" className={styles.subtitle}>
+            {FOUNDERS_STARTUPS.title}
           </h2>
-        </header>
-        <ol className={styles.steps}>
-          {FOUNDERS_STEPS.items.map((step, index) => (
-            <li key={step.title} className={styles.step}>
-              <span className={styles.number} aria-hidden="true">
-                {number(index)}
-              </span>
-              <h3 className={styles.stepTitle}>{step.title}</h3>
-              <p className={styles.stepText}>{step.text}</p>
-            </li>
-          ))}
-        </ol>
-        <p className={styles.open}>
-          {FOUNDERS_OPEN.text}{' '}
-          <Link className={ui.textLink} to={FOUNDERS_OPEN.link.href}>
-            {FOUNDERS_OPEN.link.label}
-          </Link>
-        </p>
-      </section>
+          <ul className={styles.startups}>
+            {startups.map((win) => (
+              <li key={win.id}>
+                <Link className={styles.startup} to={winPath(win)}>
+                  <span className={styles.startupPicture}>
+                    {win.photo ? <img src={win.photo} alt="" loading="lazy" decoding="async" /> : <span aria-hidden="true">{win.project.slice(0, 1)}</span>}
+                  </span>
+                  <span className={styles.startupName}>{win.project}</span>
+                  <span className={styles.startupPrize}>{win.placement}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section id="apply" className={`${styles.block} ${styles.apply}`} aria-labelledby="circle-apply">
-        <header className={styles.head}>
+        <header className={styles.applyHead}>
           <h2 id="circle-apply" className={styles.subtitle}>
             {FOUNDERS_FORM.title}
           </h2>
-          <p className={styles.lede}>{FOUNDERS_FORM.lede}</p>
+          {FOUNDERS_FORM.lines.map((line) => (
+            <p key={line} className={styles.line}>
+              {line}
+            </p>
+          ))}
+          <p className={styles.small}>
+            {FOUNDERS_FORM.open.text}{' '}
+            <Link className={ui.textLink} to={FOUNDERS_FORM.open.link.href}>
+              {FOUNDERS_FORM.open.link.label}
+            </Link>
+          </p>
         </header>
 
         <div className={`${ui.panel} ${styles.formWrap}`}>

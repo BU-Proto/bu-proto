@@ -25,7 +25,7 @@ The one part of Proto with an application, and it's kept low-key on purpose: no 
 
 The way in: apply on /founders, a short call if it looks like a fit, then a decision either way. Members get an email invite to every Circle event. The plans for its first semester are invite-only dinners, closed firesides, office hours and warm introductions; none of them is booked yet, so the site marks them as plans.
 
-The page shows the record (every real win posted on the site, read live) and a few of our startups, picked by project name in FOUNDERS_STARTUPS in src/content/founders.ts. Only list a project its team calls a startup.
+The page says as little as it can: the numbers (wins, events and builders, counted live from every real win posted on the site, and our startups), what members get in a line each, a few of our startups (picked by project name in FOUNDERS_STARTUPS in src/content/founders.ts; only list a project its team calls a startup) and the form.
 
 Everything else stays open to everyone. Invite-only events show on the public calendar, marked "Invite only" with a link to how to get in, and the site takes no RSVPs for them; admins invite people through the event's guest list. The home page's "Next up" skips them, so the top of the page always points at something anyone can come to.
 
