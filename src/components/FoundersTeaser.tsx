@@ -10,16 +10,20 @@ import styles from './FoundersTeaser.module.css'
  */
 export function FoundersTeaser() {
   return (
-    <section className={styles.teaser} aria-labelledby="founders-circle" data-reveal="rise">
-      <CircleMark className={styles.mark} />
-      <p className={styles.badge}>{FOUNDERS_TEASER.badge}</p>
-      <h2 id="founders-circle" className={styles.title}>
-        {FOUNDERS_TEASER.title}
-      </h2>
-      <p className={styles.text}>{FOUNDERS_TEASER.text}</p>
-      <Link className={`${ui.textLink} ${styles.link}`} to={FOUNDERS_TEASER.link.href}>
-        {FOUNDERS_TEASER.link.label}
-      </Link>
-    </section>
+    // The space round the row is padding on this wrapper, never margin: a margin on the band's
+    // last child would leak out of the band and open a gap onto the field behind it.
+    <div className={styles.wrap}>
+      <section className={styles.teaser} aria-labelledby="founders-circle" data-reveal="rise">
+        <CircleMark className={styles.mark} />
+        <p className={styles.badge}>{FOUNDERS_TEASER.badge}</p>
+        <h2 id="founders-circle" className={styles.title}>
+          {FOUNDERS_TEASER.title}
+        </h2>
+        <p className={styles.text}>{FOUNDERS_TEASER.text}</p>
+        <Link className={`${ui.textLink} ${styles.link}`} to={FOUNDERS_TEASER.link.href}>
+          {FOUNDERS_TEASER.link.label}
+        </Link>
+      </section>
+    </div>
   )
 }

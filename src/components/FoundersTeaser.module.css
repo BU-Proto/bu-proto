@@ -1,3 +1,8 @@
+/* Padding, not margin, so the band it ends doesn't open a gap onto the field below it. */
+.wrap {
+  padding: clamp(32px, 6vh, 64px) 0 clamp(40px, 7vh, 80px);
+}
+
 /* One quiet row between two hairlines: the mark, label and name, the sentence, the link. */
 .teaser {
   display: grid;
@@ -8,7 +13,7 @@
   align-items: center;
   gap: 4px 40px;
   width: min(1180px, 100% - 2 * max(16px, env(safe-area-inset-left, 0px)));
-  margin: clamp(32px, 6vh, 64px) auto clamp(48px, 8vh, 88px);
+  margin-inline: auto;
   padding: 28px 0;
   border-block: 1px solid var(--rule);
 }
