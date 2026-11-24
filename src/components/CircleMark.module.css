@@ -1,0 +1,24 @@
+.mark {
+  display: block;
+  height: auto;
+}
+
+.lit {
+  fill: var(--amber);
+}
+
+.dim {
+  fill: rgb(var(--frost-rgb) / 0.22);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mark {
+    animation: turn 60s linear infinite;
+  }
+}
+
+@keyframes turn {
+  to {
+    rotate: 360deg;
+  }
+}

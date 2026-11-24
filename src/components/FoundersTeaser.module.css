@@ -1,20 +1,27 @@
-/* One quiet row between two hairlines: label and name on the left, the sentence, the link. */
+/* One quiet row between two hairlines: the mark, label and name, the sentence, the link. */
 .teaser {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.4fr) auto;
   grid-template-areas:
-    'badge text link'
-    'title text link';
+    'mark badge text link'
+    'mark title text link';
   align-items: center;
   gap: 4px 40px;
   width: min(1180px, 100% - 2 * max(16px, env(safe-area-inset-left, 0px)));
-  margin: clamp(32px, 6vh, 64px) auto clamp(16px, 3vh, 32px);
-  padding: 26px 0;
+  margin: clamp(32px, 6vh, 64px) auto clamp(48px, 8vh, 88px);
+  padding: 28px 0;
   border-block: 1px solid var(--rule);
+}
+
+.mark {
+  grid-area: mark;
+  width: clamp(120px, 11vw, 156px);
+  margin-right: 12px;
 }
 
 .badge {
   grid-area: badge;
+  align-self: end;
   margin: 0;
   color: var(--amber);
   font-family: var(--font-label);
@@ -26,6 +33,7 @@
 
 .title {
   grid-area: title;
+  align-self: start;
   margin: 0;
   font-size: clamp(26px, 2.6vw, 34px);
   font-weight: var(--display-weight);
@@ -49,13 +57,22 @@
 
 @media (max-width: 760px) {
   .teaser {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
-      'badge'
-      'title'
-      'text'
-      'link';
-    gap: 8px;
+      'mark badge'
+      'mark title'
+      'text text'
+      'link link';
+    gap: 8px 16px;
+  }
+
+  .mark {
+    width: 92px;
+    margin: 0;
+  }
+
+  .text {
+    margin-top: 8px;
   }
 
   .link {
