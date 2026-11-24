@@ -3,6 +3,7 @@ import { Link, useLoaderData, useOutletContext } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { newestWins } from '../components/accolade'
 import { GlyphEdge } from '../components/GlyphEdge'
+import { GroupsBento } from '../components/GroupsBento'
 import { AsciiJourney } from '../components/AsciiJourney'
 import { EventLedger } from '../components/EventLedger'
 import { Hero } from '../components/Hero'
@@ -225,6 +226,8 @@ export function Home() {
         <WaysIn />
         <AsciiJourney />
         <EventLedger events={events} />
+        {/* One community, with groups inside it: everyone's nights, CS, and the groups to come. */}
+        <GroupsBento />
       </div>
 
       {/* Harbor still, now with the field frozen into it: the rhythm and what's next on it, then

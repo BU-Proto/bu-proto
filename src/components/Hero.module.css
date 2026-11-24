@@ -159,3 +159,141 @@
     transform: none;
   }
 }
+
+/* ---- Cursors round the headline ------------------------------------------------------------- */
+
+/* Placed against the headline's box; they sit just outside it, never over the words. */
+.cursors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cursor {
+  position: absolute;
+  display: flex;
+  align-items: flex-start;
+  text-shadow: none;
+}
+
+.pointer {
+  width: 15px;
+  height: auto;
+  fill: var(--tone);
+  stroke: var(--tone-ink);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 6px rgb(var(--harbor-rgb) / 0.4));
+}
+
+.tag {
+  margin: 13px 0 0 -2px;
+  padding: 4px 9px 5px;
+  border-radius: 3px 9px 9px;
+  background: var(--tone);
+  box-shadow: 0 6px 18px rgb(var(--harbor-rgb) / 0.3);
+  color: var(--tone-ink);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.cursor[data-n='0'] {
+  top: -16%;
+  left: -12%;
+  --dx: 14px;
+  --dy: -8px;
+  --dur: 6.5s;
+  --delay: 700ms;
+}
+
+.cursor[data-n='1'] {
+  top: 34%;
+  right: -16%;
+  --dx: -12px;
+  --dy: 10px;
+  --dur: 7.5s;
+  --delay: 900ms;
+}
+
+.cursor[data-n='2'] {
+  top: 100%;
+  left: 4%;
+  --dx: 10px;
+  --dy: 6px;
+  --dur: 8s;
+  --delay: 1100ms;
+}
+
+.cursor[data-n='3'] {
+  top: 104%;
+  right: 10%;
+  --dx: -10px;
+  --dy: -6px;
+  --dur: 7s;
+  --delay: 1300ms;
+}
+
+.cursor[data-n='4'] {
+  top: -26%;
+  right: 2%;
+  --dx: -8px;
+  --dy: 8px;
+  --dur: 9s;
+  --delay: 1500ms;
+}
+
+/* They come in one after another once the headline is up, then drift slowly. */
+@media (prefers-reduced-motion: no-preference) {
+  .cursor {
+    animation:
+      cursor-in 500ms cubic-bezier(0.2, 0.7, 0.2, 1) var(--delay) both,
+      cursor-drift var(--dur) ease-in-out calc(var(--delay) + 500ms) infinite alternate;
+  }
+}
+
+@keyframes cursor-in {
+  from {
+    opacity: 0;
+    scale: 0.85;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes cursor-drift {
+  to {
+    translate: var(--dx) var(--dy);
+  }
+}
+
+/* On a phone the headline fills the width: three cursors, above and below it. */
+@media (max-width: 640px) {
+  .cursor[data-n='3'],
+  .cursor[data-n='4'] {
+    display: none;
+  }
+
+  .cursor[data-n='0'] {
+    top: -66%;
+    left: 2%;
+  }
+
+  .cursor[data-n='1'] {
+    top: 104%;
+    right: 4%;
+  }
+
+  .cursor[data-n='2'] {
+    top: 112%;
+    left: 8%;
+  }
+
+  .tag {
+    font-size: 12px;
+  }
+}

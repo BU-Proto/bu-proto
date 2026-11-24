@@ -153,6 +153,34 @@
   --hue-deep-rgb: var(--rose-deep-rgb);
 }
 
+/* A light tile or tag carries data-tone: --tone is its colour, --tone-ink a dark shade of the same
+   hue for whatever sits on it, never black on colour. Used by the groups' tiles and the hero's
+   cursors. */
+[data-tone='sky'] {
+  --tone: var(--sky);
+  --tone-ink: #062a40;
+}
+
+[data-tone='iris'] {
+  --tone: var(--iris);
+  --tone-ink: #22165e;
+}
+
+[data-tone='rose'] {
+  --tone: var(--rose);
+  --tone-ink: #4d0a2a;
+}
+
+[data-tone='amber'] {
+  --tone: rgb(var(--amber-rgb));
+  --tone-ink: #4a2c00;
+}
+
+[data-tone='mint'] {
+  --tone: rgb(var(--mint-rgb));
+  --tone-ink: #0b3d17;
+}
+
 *,
 *::before,
 *::after {

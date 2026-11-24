@@ -9,6 +9,21 @@ export const HERO_COPY = {
   tab: "A home for Boston's builders",
 } as const
 
+/** The colours the groups' tiles and the hero's cursors are set in: each light, with its own dark ink. */
+export type Tone = 'sky' | 'iris' | 'rose' | 'amber' | 'mint'
+
+/**
+ * Cursors drifting round the headline, the way collaborators' cursors do in a shared design file:
+ * everyone who builds, in one place. Phones show the first three.
+ */
+export const HERO_CURSORS: readonly { label: string; tone: Tone }[] = [
+  { label: 'Founder', tone: 'rose' },
+  { label: 'Engineer', tone: 'sky' },
+  { label: 'Designer', tone: 'iris' },
+  { label: 'Business', tone: 'amber' },
+  { label: 'CS', tone: 'mint' },
+]
+
 /** A film for the hero: silent, looping, cropped to fill its frame. */
 export interface HeroFilm {
   /** An MP4 (H.264), silent, under 25 MiB: Cloudflare won't serve a bigger single asset. */
@@ -114,6 +129,65 @@ export const TRACKS: readonly Track[] = [
   },
 ]
 
+/** One group's tile in the bento on the home page. */
+export interface GroupTile {
+  name: string
+  tone: Tone
+  /** The simple drawing in the tile's corner. */
+  picture: 'people' | 'prompt' | 'steps' | 'nut'
+  text: string
+  links: readonly Link[]
+  /** Not running yet. */
+  later?: boolean
+}
+
+export const GROUPS_INTRO = {
+  title: 'One community, with groups inside it',
+  lede: "Every event is open to everyone. A group's own nights say whose they are, and everyone else is welcome too.",
+  later: 'Later',
+} as const
+
+export const GROUP_TILES: readonly GroupTile[] = [
+  {
+    name: 'Everyone',
+    tone: 'sky',
+    picture: 'people',
+    text: 'Build nights every week, firesides most months and a demo night each semester. Open to all of Boston.',
+    links: [
+      { label: 'Events', href: '/events' },
+      { label: 'Join Proto', href: '/join' },
+    ],
+  },
+  {
+    name: 'CS',
+    tone: 'iris',
+    picture: 'prompt',
+    text: 'Hack nights, hackathon trips, the playbook and the wins. Anyone can come.',
+    links: [
+      { label: 'Hackathons', href: '/hackathons' },
+      { label: 'Wins', href: '/wins' },
+      { label: 'The playbook', href: '/resources/playbook' },
+      { label: 'Grants', href: '/grants' },
+    ],
+  },
+  {
+    name: 'Business',
+    tone: 'amber',
+    picture: 'steps',
+    text: 'Nights of its own come later. Until then, every event is yours too.',
+    links: [],
+    later: true,
+  },
+  {
+    name: 'Engineering',
+    tone: 'mint',
+    picture: 'nut',
+    text: "Nights of its own come later. Bring what you're building to build night.",
+    links: [],
+    later: true,
+  },
+]
+
 export interface Beat {
   when: string
   what: string
@@ -142,7 +216,7 @@ export const JOURNEY = {
 
 export const RHYTHM_INTRO = {
   title: 'The rhythm',
-  lede: 'For now it\'s one community on one calendar. Business, engineering and CS will each get nights of their own later.',
+  lede: 'A build night every week, a fireside and a hackathon trip most months, and demo night to close the semester.',
 } as const
 
 // Row order is size order: the score draws each row taller than the one before (see Home.tsx).
