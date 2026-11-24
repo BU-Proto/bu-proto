@@ -29,7 +29,7 @@ export const BUSINESS_PLAYBOOK = {
   tab: 'The Business playbook',
   label: 'Business group',
   title: 'The Business playbook',
-  lede: 'Short guides for the company side of building: pitching, finding customers, finding a co-founder and raising money. Written for people starting out, from any field.',
+  lede: 'Short guides for the company side of building: pitching, finding customers, finding a co-founder and raising money. Written for people starting from zero, with or without a business background.',
   byline: 'The Proto Business group',
   minutes: (minutes: number) => `${minutes} min read`,
   guideOf: (index: number, total: number) => `Guide ${String(index + 1).padStart(2, '0')} of ${String(total).padStart(2, '0')}`,

@@ -174,7 +174,8 @@
   --tone: var(--info-ink);
 }
 
-.status button[data-tone='reviewing'] {
+.status button[data-tone='reviewing'],
+.status button[data-tone='interview'] {
   --tone: var(--warn-ink);
 }
 

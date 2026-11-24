@@ -6,6 +6,7 @@ import { QUEUE_SOURCES, type QueueSource } from '../../shared/crm'
 //   signup       a sign-up nobody has looked at yet
 //   fund         a fund request that's new or being reviewed (approved and declined are decided)
 //   application  a role application nobody has read
+//   founder      a Founders Circle application nobody has read
 //   board        board interest nobody has answered
 
 export const WAITING_WHERE: Record<QueueSource, string> = {
@@ -13,6 +14,7 @@ export const WAITING_WHERE: Record<QueueSource, string> = {
   signup: 'reviewed_at IS NULL',
   fund: "status IN ('new', 'reviewing')",
   application: "status = 'new'",
+  founder: "status = 'new'",
   board: 'reviewed_at IS NULL',
 }
 
@@ -21,6 +23,7 @@ export const QUEUE_TABLES: Record<QueueSource, string> = {
   signup: 'members',
   fund: 'fund_interest',
   application: 'role_applications',
+  founder: 'founder_applications',
   board: 'board_interest',
 }
 

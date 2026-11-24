@@ -8,10 +8,10 @@ The shot list lives in code, in `film/shots.mjs`, and `film/render.mjs` cuts the
 
 ## How it drops in
 
-The hero plays `BOSTON_MONTAGE` from `src/content/home.ts`. To put a new render on the site:
+The home page plays the film in its own section, "Built in Boston", right after the map of where Boston's companies began. It plays `HOME_FILM` from `src/content/home.ts` (set to `BOSTON_MONTAGE`; set it to `null` to take the section off the page), loads only when the section is near the screen and plays only while it's in view. To put a new render on the site:
 
 1. Copy the three files from `film/out/` into `public/media/`, over the ones there.
-2. If the footage credited changes, update the film's `note` in `src/content/home.ts`: it prints under the headline.
+2. If the footage credited changes, update the film's `note` in `src/content/home.ts`: it prints under the film.
 3. Run `npm run dev` and check it at phone and desktop width.
 
 | File | What | Limits |

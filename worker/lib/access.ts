@@ -35,8 +35,9 @@ const WRITE_GATES: readonly [RegExp, Gate | ((match: RegExpExecArray) => Gate)][
   // Taking someone off an event's RSVPs is the event's business.
   [/^\/api\/admin\/rsvps\/[^/]+$/, 'community'],
   [/^\/api\/admin\/fund\/[^/]+$/, 'fund'],
-  // Roles and who gets them are the owners' and admins' call.
+  // Roles and who gets them are the owners' and admins' call, and so is who joins the Founders Circle.
   [/^\/api\/admin\/applications\/[^/]+$/, 'admin'],
+  [/^\/api\/admin\/founders\/[^/]+$/, 'admin'],
   [/^\/api\/admin\/roles\/[^/]+\/filled$/, 'admin'],
   [/^\/api\/admin\/admins(?:\/.*)?$/, 'admin'],
   // A list email goes to hundreds of people; Compose's test and preview and Claude's draft send

@@ -38,7 +38,7 @@ export const GROUP_PAGE = {
   runs: 'What it runs',
   next: 'Coming up',
   allEvents: 'All events',
-  welcome: 'Everyone is welcome at every group night, whatever you study.',
+  welcome: "Everyone is welcome at every group night, whatever you study or do, and whatever you've built so far.",
 } as const
 
 export const GROUPS: Record<GroupSlug, GroupPageContent> = {
@@ -49,16 +49,16 @@ export const GROUPS: Record<GroupSlug, GroupPageContent> = {
     picture: 'prompt',
     tab: 'The CS group',
     title: 'The CS group',
-    lede: 'For anyone who builds with code, from first-timers to hackathon regulars. CS nights are open to everyone, whatever you study.',
+    lede: "For building with code, from your first line to your tenth hackathon. You don't need to know how to code to come, and CS nights are open to everyone, whatever you study.",
     activities: [
-      { name: 'Hack nights', text: 'A night to build with code: bring a project, or find one and a team.' },
+      { name: 'Hack nights', text: 'An evening to build with code. Bring a project, or come with nothing and find one and a team.' },
       {
         name: 'Hackathon trips',
-        text: 'We go to hackathons together, with team matching and a veteran for your first one.',
+        text: "Hackathons are weekend events where teams build something from scratch. We go together, help you find a team, and pair first-timers with someone who's been before.",
         link: { label: 'Upcoming hackathons', href: '/hackathons' },
       },
       { name: 'Prep nights', text: 'The week before a big hackathon: ideas, teams and pitch practice.' },
-      { name: 'The playbook', text: 'Our guides to hackathons, start to finish.', link: { label: 'Read the playbook', href: '/resources/playbook' } },
+      { name: 'The playbook', text: 'Our guides to hackathons, from your first one to winning one.', link: { label: 'Read the playbook', href: '/resources/playbook' } },
       { name: 'Wins', text: 'What CS teams built and took home.', link: { label: 'See the wins', href: '/wins?group=cs' } },
       { name: 'Grants', text: "Microgrants for a first version. Coming soon: they aren't funded yet.", link: { label: 'About the fund', href: '/grants' } },
     ],
@@ -73,18 +73,18 @@ export const GROUPS: Record<GroupSlug, GroupPageContent> = {
     picture: 'steps',
     tab: 'The Business group',
     title: 'The Business group',
-    lede: 'For the company side of building: finding customers, pricing, pitching and raising money. Business nights are open to everyone, and engineers and CS people are welcome.',
+    lede: "For the company side of building: finding customers, pricing, pitching and raising money. You don't need a business background to come, and Business nights are open to everyone, engineers and CS people included.",
     note: "The Business group is new. Its first nights are being planned now.",
     activities: [
-      { name: 'Pitch nights', text: 'Practise your pitch in front of people who build, and get honest notes back.' },
+      { name: 'Pitch nights', text: 'Practise a short talk on what you are making and why, in front of a friendly room, and get honest notes back. First pitches welcome.' },
       { name: 'Customer nights', text: "Work out who you're building for and how to reach them, together." },
       {
         name: 'Pitch competitions',
-        text: 'We go to pitch competitions together, the way the CS group goes to hackathons.',
+        text: 'Contests where founders pitch to judges for prizes. We go together, the way the CS group goes to hackathons.',
         link: { label: 'Pitch competitions', href: '/pitch-competitions' },
       },
       { name: 'Find a builder', text: 'Meet the engineers and CS people who can build your idea, at build night and CS nights.' },
-      { name: 'The playbook', text: 'Short guides to pitching, finding customers, finding a co-founder and early fundraising.', link: { label: 'Read the playbook', href: '/business/playbook' } },
+      { name: 'The playbook', text: 'Short guides to pitching, finding customers, finding a co-founder and early fundraising, written for people starting from zero.', link: { label: 'Read the playbook', href: '/business/playbook' } },
       { name: 'Wins', text: 'Pitch competition wins, launches, first customers and money raised.', link: { label: 'See the wins', href: '/wins?group=business' } },
     ],
     kinds: ['Pitch night'],

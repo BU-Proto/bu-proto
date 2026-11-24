@@ -390,20 +390,21 @@ export const eventGuestPatch = eventGuestInput.omit({ contactKey: true }).partia
 // ---------------------------------------------------------------- today and the inbox
 
 /** Where something waiting in the Inbox came from. */
-export const QUEUE_SOURCES = ['email', 'signup', 'fund', 'application', 'board'] as const
+export const QUEUE_SOURCES = ['email', 'signup', 'fund', 'application', 'founder', 'board'] as const
 export type QueueSource = (typeof QUEUE_SOURCES)[number]
 export const QUEUE_SOURCE_LABELS: Record<QueueSource, string> = {
   email: 'Email',
   signup: 'Sign-up',
   fund: 'Fund request',
   application: 'Application',
+  founder: 'Founders Circle',
   board: 'Board interest',
 }
 
 /** GET /api/admin/queue?source=&waiting=1 → { items: QueueItem[], counts: Record<QueueSource, number> } */
 export interface QueueItem {
   source: QueueSource
-  /** The row's id in its own table (mail_threads, members, fund_interest, role_applications, board_interest). */
+  /** The row's id in its own table (mail_threads, members, fund_interest, role_applications, founder_applications, board_interest). */
   id: number
   name: string
   email: string

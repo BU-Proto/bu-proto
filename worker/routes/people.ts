@@ -3,11 +3,14 @@ import {
   FUND_STATUSES,
   TRACKS,
   applicationPatch,
+  founderApplicationPatch,
   fundPatch,
   memberPatch,
   roleFilledPatch,
   type ApplicationStatus,
   type BoardInterest,
+  type FounderApplication,
+  type FounderStatus,
   type FundInterest,
   type FundStatus,
   type Member,
@@ -21,8 +24,8 @@ import { ApiError, idParam, readBody } from '../lib/http'
 import { owners } from '../lib/session'
 import type { AppEnv } from '../types'
 
-// Members, fund interest, board interest, role applications and the dashboard numbers. Everything here sits under /api/admin, so
-// requireAdmin has already run.
+// Members, fund interest, board interest, role applications, Founders Circle applications and the
+// dashboard numbers. Everything here sits under /api/admin, so requireAdmin has already run.
 
 const app = new Hono<AppEnv>()
 
@@ -99,8 +102,8 @@ const toFund = (row: FundRow): FundInterest => ({
 })
 
 /** SET clause and values for a partial patch whose keys are column names. Empty patch → 400. */
-function setClause(patch: Record<string, string | boolean | undefined>): { sql: string; values: (string | number)[] } {
-  const entries = Object.entries(patch).filter(([, value]) => value !== undefined) as [string, string | boolean][]
+function setClause(patch: Record<string, string | boolean | null | undefined>): { sql: string; values: (string | number | null)[] } {
+  const entries = Object.entries(patch).filter(([, value]) => value !== undefined) as [string, string | boolean | null][]
   if (entries.length === 0) throw new ApiError(400, 'Nothing to change.')
   return {
     sql: [...entries.map(([key]) => `${key} = ?`), "updated_at = datetime('now')"].join(', '),
@@ -176,8 +179,9 @@ app.patch('/api/admin/members/:id', async (c) => {
   return c.json({ item: toMember(row) })
 })
 
-// Deleting a member deletes everything we hold under their email: RSVPs, fund sign-ups and role
-// applications too, as the privacy policy promises. One batch, so it all goes or none of it does.
+// Deleting a member deletes everything we hold under their email: RSVPs, fund sign-ups, role
+// applications and Founders Circle applications too, as the privacy policy promises. One batch, so
+// it all goes or none of it does.
 app.delete('/api/admin/members/:id', async (c) => {
   const id = idParam(c)
   const member = await c.env.DB.prepare('SELECT email FROM members WHERE id = ?').bind(id).first<{ email: string }>()
@@ -186,6 +190,7 @@ app.delete('/api/admin/members/:id', async (c) => {
     c.env.DB.prepare('DELETE FROM rsvps WHERE email = ?').bind(member.email),
     c.env.DB.prepare('DELETE FROM fund_interest WHERE email = ?').bind(member.email),
     c.env.DB.prepare('DELETE FROM role_applications WHERE email = ?').bind(member.email),
+    c.env.DB.prepare('DELETE FROM founder_applications WHERE email = ?').bind(member.email),
     c.env.DB.prepare('DELETE FROM members WHERE id = ?').bind(id),
   ])
   return c.body(null, 204)
@@ -359,6 +364,73 @@ app.delete('/api/admin/applications/:id', async (c) => {
   return c.body(null, 204)
 })
 
+// ---- Founders Circle applications: who applied, and where each one stands -------------------------
+
+interface FounderRow {
+  id: number
+  name: string
+  email: string
+  school: string
+  company: string
+  link: string
+  stage: string
+  commitment: string
+  building: string
+  progress: string
+  team: string
+  help: string
+  status: FounderStatus
+  notes: string
+  interview_on: string | null
+  created_at: string
+  updated_at: string
+}
+
+const FOUNDER_COLUMNS =
+  'id, name, email, school, company, link, stage, commitment, building, progress, team, help, status, notes, interview_on, created_at, updated_at'
+
+const toFounder = (row: FounderRow): FounderApplication => ({
+  id: row.id,
+  name: row.name,
+  email: row.email,
+  school: row.school,
+  company: row.company,
+  link: row.link,
+  stage: row.stage,
+  commitment: row.commitment,
+  building: row.building,
+  progress: row.progress,
+  team: row.team,
+  help: row.help,
+  status: row.status,
+  notes: row.notes,
+  interviewOn: row.interview_on || null,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+})
+
+app.get('/api/admin/founders', async (c) => {
+  const { results } = await c.env.DB.prepare(`SELECT ${FOUNDER_COLUMNS} FROM founder_applications ORDER BY created_at DESC, id DESC`).all<FounderRow>()
+  return c.json({ items: results.map(toFounder) })
+})
+
+app.patch('/api/admin/founders/:id', async (c) => {
+  const id = idParam(c)
+  const { interviewOn, ...rest } = await readBody(c, founderApplicationPatch)
+  const { sql, values } = setClause({ ...rest, interview_on: interviewOn })
+  const row = await c.env.DB.prepare(`UPDATE founder_applications SET ${sql} WHERE id = ? RETURNING ${FOUNDER_COLUMNS}`)
+    .bind(...values, id)
+    .first<FounderRow>()
+  if (!row) throw new ApiError(404, 'No such application.')
+  return c.json({ item: toFounder(row) })
+})
+
+app.delete('/api/admin/founders/:id', async (c) => {
+  const { meta } = await c.env.DB.prepare('DELETE FROM founder_applications WHERE id = ?').bind(idParam(c)).run()
+  if (meta.changes === 0) throw new ApiError(404, 'No such application.')
+  return c.body(null, 204)
+})
+
 // ---- Dashboard --------------------------------------------------------------------------------
 
 app.get('/api/admin/stats', async (c) => {
@@ -377,6 +449,8 @@ app.get('/api/admin/stats', async (c) => {
            (SELECT COUNT(*) FROM fund_interest) AS fundTotal,
            (SELECT COUNT(*) FROM role_applications WHERE status = 'new') AS applicationsNew,
            (SELECT COUNT(*) FROM role_applications) AS applicationsTotal,
+           (SELECT COUNT(*) FROM founder_applications WHERE status = 'new') AS foundersNew,
+           (SELECT COUNT(*) FROM founder_applications) AS foundersTotal,
            (SELECT COUNT(*) FROM mail_threads WHERE unread > 0 AND status != 'done') AS inboxUnread,
            (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 0) AS wins,
            (SELECT COUNT(*) FROM wins WHERE published = 1 AND placeholder = 1) AS sampleWins,
@@ -399,6 +473,8 @@ app.get('/api/admin/stats', async (c) => {
     fundTotal: row.fundTotal,
     applicationsNew: row.applicationsNew,
     applicationsTotal: row.applicationsTotal,
+    foundersNew: row.foundersNew ?? 0,
+    foundersTotal: row.foundersTotal ?? 0,
     inboxUnread: row.inboxUnread ?? 0,
     admins: emails.size,
     wins: row.wins,

@@ -22,7 +22,9 @@ export function StartedHereWall() {
         </p>
       </header>
       <div className={styles.body}>
-        <BostonMap active={active} onActive={setActive} />
+        <div className={styles.mapSide}>
+          <BostonMap active={active} onActive={setActive} />
+        </div>
         <ul className={styles.list}>
           {STARTED_HERE.items.map((item, index) => (
             <li

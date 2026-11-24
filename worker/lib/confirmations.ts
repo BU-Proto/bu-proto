@@ -1,5 +1,6 @@
 // The emails the public forms send back: a welcome for a new member, and a confirmation for an
-// RSVP, the fund list, a board seat and an application for a role. Each is sent from waitUntil after the form has answered, and never
+// RSVP, the fund list, a board seat, an application for a role and one for the Founders Circle.
+// Each is sent from waitUntil after the form has answered, and never
 // throws, so a slow or failing Resend can't hold up or undo a sign-up. The portal previews and
 // test-sends them through the same builders, so what it shows is what people get.
 
@@ -26,11 +27,11 @@ interface Draft {
   reason: EmailReason
 }
 
-/** The next published event, for the welcome email's "come to" line. */
+/** The next published event anyone can RSVP to, for the welcome email's "come to" line. */
 export async function nextEvent(env: Env): Promise<EventDetails | null> {
   return env.DB.prepare(
     `SELECT title, date, time, place FROM events
-     WHERE published = 1 AND placeholder = 0 AND date >= ? ORDER BY date, id LIMIT 1`,
+     WHERE published = 1 AND placeholder = 0 AND invite_only = 0 AND date >= ? ORDER BY date, id LIMIT 1`,
   )
     .bind(bostonToday())
     .first<EventDetails>()
@@ -183,4 +184,26 @@ function applicationNoticeDrafts(env: Env, origin: string, application: Applicat
 export async function sendApplicationEmails(env: Env, origin: string, application: ApplicationNotice) {
   await sendDraft(env, applicationDraft(application, application.roleTitle), origin, 'application')
   for (const notice of applicationNoticeDrafts(env, origin, application)) await sendDraft(env, notice, origin, 'application')
+}
+
+/** A Founders Circle application as the confirmation needs it: who sent it, and for what. */
+export interface FounderNotice {
+  name: string
+  email: string
+  company: string
+}
+
+export function foundersDraft(person: FounderNotice, origin: string): Draft {
+  const body = [
+    'We got your application, {{name}}',
+    `Thanks for telling us about ${person.company.trim()}. Founders Circle is a small group inside Proto for founders who are already building something real.`,
+    "We read every application, and we invite some applicants to a short call to hear more. If we'd like to talk, we'll write to this address.",
+    `In the meantime, the rest of Proto is open to anyone. What's coming up: ${origin}/events`,
+    'Anything to add? Just reply to this email.',
+  ].join('\n\n')
+  return { recipient: person, subject: 'We got your Founders Circle application', body, reason: { kind: 'founders' } }
+}
+
+export async function sendFounderConfirmation(env: Env, origin: string, person: FounderNotice) {
+  await sendDraft(env, foundersDraft(person, origin), origin, 'founders')
 }

@@ -1,75 +1,11 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { HERO_COPY, HERO_CURSORS, HERO_FILM, HERO_FILM_CONTROLS, type HeroFilm } from '../content/home'
-import { useMediaQuery } from '../lib/useMediaQuery'
-import { PauseIcon, PlayIcon } from './icons'
-import { IconButton } from './IconButton'
+import { Link } from 'react-router'
+import type { ProtoEvent } from '../../shared/api'
+import { HERO_COPY, HERO_CURSORS } from '../content/home'
+import { KIND_HUE } from '../content/events'
+import { dateParts } from '../lib/dates'
+import { eventPath } from '../lib/paths'
+import ui from './ui.module.css'
 import styles from './Hero.module.css'
-
-const PHONE = '(max-width: 640px)'
-const STILL = '(prefers-reduced-motion: reduce)'
-
-/** Whether the visitor asked to save data: then the film waits for a tap instead of downloading. */
-function savingData(): boolean {
-  if (typeof navigator === 'undefined') return false
-  return Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData)
-}
-
-/**
- * The hero film in its frame: muted, looping, cropped to fill the frame. Phones get the film's tall
- * cut when it has one. Under reduced motion it holds on its poster and there's nothing to pause;
- * otherwise a button pauses it, since it moves on its own for longer than five seconds.
- */
-function Film({ film }: { film: HeroFilm }) {
-  const video = useRef<HTMLVideoElement>(null)
-  const phone = useMediaQuery(PHONE)
-  const still = useMediaQuery(STILL)
-  const [paused, setPaused] = useState(savingData)
-  const tall = phone && Boolean(film.phoneSrc)
-  const src = tall && film.phoneSrc ? film.phoneSrc : film.src
-  const playing = !paused && !still
-
-  useEffect(() => {
-    const node = video.current
-    if (!node) return
-    if (playing) void node.play().catch(() => setPaused(true))
-    else node.pause()
-  }, [playing, src])
-
-  return (
-    <div
-      className={styles.frame}
-      data-tall={tall || undefined}
-      style={{ '--film-wide': film.aspect } as CSSProperties}
-      data-fog-ignore
-    >
-      {/* A new source is a new element, so the browser drops the old download. */}
-      <video
-        key={src}
-        ref={video}
-        className={styles.film}
-        src={src}
-        poster={film.poster}
-        muted
-        loop
-        playsInline
-        preload={playing ? 'auto' : 'none'}
-        aria-hidden="true"
-        tabIndex={-1}
-        disablePictureInPicture
-      />
-      {!still && (
-        <IconButton
-          className={styles.toggle}
-          label={paused ? HERO_FILM_CONTROLS.play : HERO_FILM_CONTROLS.pause}
-          aria-pressed={paused}
-          onClick={() => setPaused((was) => !was)}
-        >
-          {paused ? <PlayIcon /> : <PauseIcon />}
-        </IconButton>
-      )}
-    </div>
-  )
-}
 
 /**
  * Collaborators' cursors drifting round the headline, as in a shared design file: a founder, an
@@ -91,28 +27,57 @@ function Cursors() {
   )
 }
 
-/**
- * The home hero. With a film (content/home.ts), the film's frame sits over the field with what
- * Proto is set under it; without one, the field's light fills the screen and the line sits low on
- * it. The way in is in the top bar; the opening lead below says the rest.
- */
-export function Hero() {
+/** The next thing on the calendar, as one slim card: its kind, when, what, and the way to RSVP. */
+function NextUp({ event }: { event: ProtoEvent | undefined }) {
+  if (!event) {
+    return (
+      <p className={styles.next} data-fog-clear="box">
+        <span className={styles.nextLabel}>{HERO_COPY.next}</span>
+        <span className={styles.nextWhat}>{HERO_COPY.nothingYet}</span>
+      </p>
+    )
+  }
+  const { day, month, weekday } = dateParts(event.date)
   return (
-    <section className={styles.hero} data-film={HERO_FILM ? '' : undefined}>
-      {HERO_FILM && <Film film={HERO_FILM} />}
+    <Link className={styles.next} to={eventPath(event)} data-hue={KIND_HUE[event.kind]} data-fog-clear="box">
+      <span className={styles.nextLabel}>{HERO_COPY.next}</span>
+      <span className={styles.nextWhen}>
+        {weekday}, {month} {day}
+      </span>
+      <span className={styles.nextWhat}>{event.title}</span>
+      <span className={styles.nextGo} aria-hidden="true">
+        {HERO_COPY.rsvp} →
+      </span>
+    </Link>
+  )
+}
+
+/**
+ * The top of the home page, on the field: what Proto is, in one line, with collaborators' cursors
+ * round it; who it's for; the two ways in; and the next thing on the calendar. The film is further
+ * down, in its own section.
+ */
+export function Hero({ next }: { next?: ProtoEvent }) {
+  return (
+    <section className={styles.hero}>
       <div className={styles.copy}>
-        {/* The cursors are placed against the headline alone, so they keep clear of the note. */}
         <div className={styles.headlineBox}>
           <h1 className={styles.headline} data-fog-clear>
             {HERO_COPY.headline}
           </h1>
           <Cursors />
         </div>
-        {HERO_FILM?.note && (
-          <p className={styles.note} data-fog-clear>
-            {HERO_FILM.note}
-          </p>
-        )}
+        <p className={styles.lede} data-fog-clear>
+          {HERO_COPY.lede}
+        </p>
+        <div className={styles.actions}>
+          {HERO_COPY.actions.map((action, index) => (
+            <Link key={action.href} className={index === 0 ? ui.primary : ui.secondary} to={action.href} data-fog-clear="box">
+              {action.label}
+            </Link>
+          ))}
+        </div>
+        <NextUp event={next} />
       </div>
     </section>
   )

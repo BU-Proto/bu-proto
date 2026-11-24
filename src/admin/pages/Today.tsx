@@ -72,6 +72,7 @@ const SOURCE_NAMES: Record<QueueSource, [string, string]> = {
   signup: ['sign-up', 'sign-ups'],
   fund: ['fund request', 'fund requests'],
   application: ['role application', 'role applications'],
+  founder: ['Founders Circle application', 'Founders Circle applications'],
   board: ['board interest', 'board interest'],
 }
 const SOURCE_TITLES: Record<QueueSource, string> = {
@@ -79,6 +80,7 @@ const SOURCE_TITLES: Record<QueueSource, string> = {
   signup: 'Sign-ups',
   fund: 'Fund requests',
   application: 'Role applications',
+  founder: 'Founders Circle',
   board: 'Board interest',
 }
 

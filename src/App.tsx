@@ -11,6 +11,7 @@ import { BusinessGuide, BusinessPlaybook } from './pages/BusinessPlaybook'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
 import { Events } from './pages/Events'
 import { Grants } from './pages/Grants'
+import { Founders } from './pages/Founders'
 import { BusinessGroup, CsGroup } from './pages/GroupPage'
 import { Hackathons } from './pages/Hackathons'
 import { Home } from './pages/Home'
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
       // links land on the list instead of a 404.
       { path: 'hackathons/:id', loader: () => redirect('/hackathons'), HydrateFallback: PageLoading },
       { path: 'grants', Component: Grants },
+      { path: 'founders', Component: Founders },
       { path: 'wins', Component: Wins, loader: ({ request }) => fetchContent('wins', request.signal), ...dataRoute },
       {
         path: 'wins/:slug',

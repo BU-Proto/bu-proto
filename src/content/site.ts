@@ -48,8 +48,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: '/cs',
     inPill: true,
     children: [
-      { label: 'CS', to: '/cs', line: 'Hack nights, hackathons, the playbook and its wins' },
-      { label: 'Business', to: '/business', line: 'Pitch nights, pitch competitions, the playbook and its wins' },
+      { label: 'CS', to: '/cs', line: 'Building with code, for first-timers too' },
+      { label: 'Business', to: '/business', line: 'Pitching, customers and money, for first-timers too' },
+      { label: 'Founders Circle', to: '/founders', line: 'Invite only, for founders already building' },
     ],
   },
   {
@@ -117,7 +118,7 @@ export interface FooterGroup {
 }
 
 export const FOOTER = {
-  line: 'A home in Boston for anyone who wants to build something. Started at BU, open to every school.',
+  line: 'A home in Boston for anyone who wants to build something, from a first idea on. Started at BU, open to everyone.',
   note: 'Proto is a working name. Nothing here is official with Spark! or Innovate@BU yet.',
   /** The site, sorted into columns. Legal links come from LEGAL_LINKS, the email from CONTACT_EMAIL. */
   groups: [
@@ -135,6 +136,7 @@ export const FOOTER = {
       links: [
         { label: 'CS', to: '/cs' },
         { label: 'Business', to: '/business' },
+        { label: 'Founders Circle', to: '/founders' },
         { label: 'Hackathons', to: '/hackathons' },
         { label: 'Pitch competitions', to: '/pitch-competitions' },
       ],

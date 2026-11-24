@@ -54,6 +54,6 @@ test('activity sorts days and timestamps together, newest first', () => {
 })
 
 test('waiting adds up across the queues', () => {
-  assert.equal(totalWaiting({ email: 2, signup: 3, fund: 0, application: 1, board: 0 }), 6)
+  assert.equal(totalWaiting({ email: 2, signup: 3, fund: 0, application: 1, founder: 2, board: 0 }), 8)
   assert.equal(totalWaiting({}), 0)
 })

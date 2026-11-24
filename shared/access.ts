@@ -30,8 +30,8 @@ export const ADMIN_LEVEL_LABELS: Record<AccessLevel, string> = {
  *   fund          fund requests: status, decisions, payouts
  *   community     events (and their guests), hackathons, imports of either, list email and automatic email
  *   scouting      wins and the Devpost import
- * Everything else that isn't shared work (board members, roles and applications, admins, the
- * hackathon import runs' settings) is 'admin': owners and admins only.
+ * Everything else that isn't shared work (board members, roles and applications, Founders Circle
+ * applications, admins, the hackathon import runs' settings) is 'admin': owners and admins only.
  */
 export const AREAS = ['partnerships', 'fund', 'community', 'scouting'] as const
 export type Area = (typeof AREAS)[number]

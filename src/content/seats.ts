@@ -33,13 +33,13 @@ export const SEATS: Readonly<Record<string, Seat>> = {
     headline: 'Build the fund that pays for first versions.',
     own: ['Setting up the fund from zero', 'Eligibility and criteria', 'The budget, then running it'],
     get: ['A student grant program you designed and run', 'A rare line on a résumé'],
-    firstMonth: ['The fund’s structure and criteria, written down', 'Funding sources identified', 'A launch date'],
+    firstMonth: ["The fund's structure and criteria, written down", 'Funding sources identified', 'A launch date'],
     fit: 'you like spreadsheets and want to say you ran money.',
   },
   'Head of Community': {
     headline: 'Be the person every builder group in Boston knows.',
     own: ['Build nights and Proto events', 'Spark!, Innovate@BU, and student groups at other schools'],
-    get: ['A direct line to the people who run BU’s innovation programs', 'Co-host credit on every joint event'],
+    get: ["A direct line to the people who run BU's innovation programs", 'Co-host credit on every joint event'],
     firstMonth: [
       '1 build night run end to end',
       'Intro meetings with Spark! and Innovate@BU',
@@ -57,10 +57,10 @@ export const SEATS: Readonly<Record<string, Seat>> = {
     ],
     get: [
       'You built and ran a talent pipeline, the same work VC scouts do',
-      'You’re the one who brings founders into the VC sessions',
+      "You're the one who brings founders into the VC sessions",
     ],
     firstMonth: ['Recruit 2 scouts', '25 builders found and contacted', '5 spotlights posted'],
-    fit: 'you always know who’s building what.',
+    fit: "you always know who's building what.",
   },
 }
 
@@ -80,7 +80,7 @@ export const SEAT_SECTIONS = {
   get: 'What you get',
   firstMonth: {
     title: 'First 30 days',
-    text: 'By the end of your first month, you’ll have shipped these. If that sounds like too much right now, this seat isn’t the one yet.',
+    text: "By the end of your first month, you'll have done these. If that sounds like too much right now, this seat isn't the one yet.",
   },
   fit: 'Good fit if',
 } as const

@@ -50,6 +50,8 @@ export const adminRoutes: RouteObject[] = [
           { path: 'members/:id', loader: ({ params }) => redirect(`/admin/people/m${params.id ?? ''}`) },
           // Fund and email are whole modules (Component, maybe loader) from admin-people.
           { path: 'fund', lazy: () => import('./pages/Fund') },
+          // Applications to the Founders Circle. Before ':resource', which would take "founders" for a content type.
+          { path: 'founders', lazy: () => import('./pages/Founders') },
           // Email opens on what needs doing; writing to a list is one of the pages it leads to.
           { path: 'email', lazy: () => import('./pages/EmailHome') },
           { path: 'email/compose', lazy: () => import('./pages/Email') },

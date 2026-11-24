@@ -8,7 +8,7 @@ import type { GroupSlug } from './groups'
 export const WINS_INTRO: PageIntro = {
   path: '~/proto/wins',
   title: 'Wins',
-  lede: 'What members built and where it went: hackathon prizes from the CS group, and founder wins too, from pitch competitions to launches, first customers and money raised.',
+  lede: 'What members built and where it went: launches, first customers, pitch competition wins, money raised, and hackathon prizes from the CS group.',
 }
 
 /** Which group's a kind of win is: hackathon prizes the CS group's, the rest the Business group's. */
@@ -41,7 +41,7 @@ export const WIN_DETAIL = {
   stack: 'Built with',
   gallery: 'Photos',
   funding: 'Funding',
-  nextSteps: 'Where it’s going',
+  nextSteps: "Where it's going",
   github: 'GitHub',
   devpost: 'Devpost',
   previous: 'Previous win',
@@ -50,8 +50,8 @@ export const WIN_DETAIL = {
 } as const
 
 export const WIN_NOT_FOUND = {
-  title: 'That win isn’t here',
-  text: 'It may have been taken down, or the link is off by a digit. Every win we’ve posted is on the wins page.',
+  title: "That win isn't here",
+  text: "It may have been taken down, or the link is off by a digit. Every win we've posted is on the wins page.",
   back: 'See all wins',
 } as const
 

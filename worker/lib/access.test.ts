@@ -48,6 +48,7 @@ test('areas read from the admins table, ignoring blanks, repeats and anything un
 test('reads are never gated', () => {
   for (const method of ['GET', 'HEAD', 'OPTIONS', 'get']) {
     assert.equal(gateFor(method, '/api/admin/fund/3'), null)
+    assert.equal(gateFor(method, '/api/admin/founders'), null)
     assert.equal(gateFor(method, '/api/admin/admins'), null)
   }
 })
@@ -75,6 +76,8 @@ test('every other existing write has its gate', () => {
     ['PATCH', '/api/admin/applications/5', 'admin'],
     ['DELETE', '/api/admin/applications/5', 'admin'],
     ['PATCH', '/api/admin/roles/2/filled', 'admin'],
+    ['PATCH', '/api/admin/founders/6', 'admin'],
+    ['DELETE', '/api/admin/founders/6', 'admin'],
     ['POST', '/api/admin/admins', 'admin'],
     ['PATCH', '/api/admin/admins/sam%40bu.edu', 'admin'],
     ['POST', '/api/admin/admins/sam%40bu.edu/invite', 'admin'],

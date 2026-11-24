@@ -19,6 +19,16 @@ Every event is open to everyone. Some are for the whole community (build nights,
 
 On the site, each group has a page (/cs and /business) under Groups in the nav.
 
+## Founders Circle (invite only)
+
+The one part of Proto with an application. It's a small group for founders who are already building something real: a product people use, customers, revenue, a pilot or a working prototype, with real time going into it. Any school or none, any field.
+
+The way in: apply on /founders, a short call if it looks like a fit, then a decision either way. Members get an email invite to every Circle event. The plans for its first semester are invite-only dinners, closed firesides, office hours and warm introductions; none of them is booked yet, so the site marks them as plans.
+
+Everything else stays open to everyone. Invite-only events show on the public calendar, marked "Invite only" with a link to how to get in, and the site takes no RSVPs for them; admins invite people through the event's guest list. The home page's "Next up" skips them, so the top of the page always points at something anyone can come to.
+
+"Founders Circle" is a working name, set once in src/content/founders.ts.
+
 ## Three ways in
 
 The tracks are stages, not groups, and anyone in any group can be on any of them. Their names are stored with each member, so the names stay.
@@ -47,7 +57,7 @@ Planned microgrants of $50 to $500 for hackathon travel, registration, API credi
 
 ## The home page film
 
-The hero plays the Boston montage in a frame above the headline: what started here, cut with each company's own footage where we have it, ending on Proto. Today it's a basic cut made from the footage on hand; the full cut replaces it at the same paths. The shot list, sources, permissions and licences are in docs/hero-montage.md.
+The home page plays the Boston montage in its own section, "Built in Boston", after the map of where Boston's companies began: what started here, cut with each company's own footage where we have it, ending on Proto. Today it's a basic cut made from the footage on hand; the full cut replaces it at the same paths. The shot list, sources, permissions and licences are in docs/hero-montage.md.
 
 ## Fits with BU and Boston
 

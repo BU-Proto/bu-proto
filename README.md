@@ -32,11 +32,12 @@ npm run dev                      # http://localhost:5173
 
 | Route | Page |
 | --- | --- |
-| `/` | Home: the hero film (set in `src/content/home.ts`), the three tracks, the habits founders share, what started in Boston, events, the groups, the rhythm and the next event, join |
+| `/` | Home: who Proto is for and the next event at the top, "Proto is for you if", the three tracks, the map of what started in Boston, the Boston film (`HOME_FILM` in `src/content/home.ts`), the groups, the Founders Circle, the rhythm and the next event, join |
 | `/cs`, `/business` | A group's page: what it runs, its next nights from the calendar, how to help. Each group's pages share a tab bar |
 | `/pitch-competitions` | The Business group's list of Boston pitch competitions, from `src/content/competitions.ts` (check the dates each year) |
 | `/business/playbook` | The Business group's guides (`src/content/businessGuides.ts`); each at `/business/playbook/<slug>` |
 | `/hackathons` | The CS group's upcoming hackathons |
+| `/founders` | The Founders Circle: the one invite-only part of Proto, for founders already building. Who it's for, what members get, how to get in, and the application. Applications land in the admin portal, where each moves from new to interview to a decision |
 | `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
 | `/wins` | Win cards: hackathon prizes (CS) and pitch wins, launches, first customers and funding (Business); `?group=cs` or `?group=business` filters |
 | `/track-record` | Logo walls: where members have worked, sponsors, partners, other wins |

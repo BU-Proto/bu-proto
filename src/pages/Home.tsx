@@ -4,6 +4,9 @@ import type { ProtoEvent } from '../../shared/api'
 import { GlyphEdge } from '../components/GlyphEdge'
 import { GroupsBento } from '../components/GroupsBento'
 import { StartedHereWall } from '../components/StartedHereWall'
+import { FilmSection } from '../components/FilmSection'
+import { Welcome } from '../components/Welcome'
+import { FoundersTeaser } from '../components/FoundersTeaser'
 import { Hero } from '../components/Hero'
 import { ScrubWords } from '../components/motion/ScrubWords'
 import { LogoBand } from '../components/LogoBand'
@@ -27,7 +30,6 @@ import {
 } from '../content/home'
 import { KIND_HUE, NEXT_EVENT } from '../content/events'
 import { BRAND, groupInvite } from '../content/site'
-import { WHY } from '../content/about'
 import type { HomeData } from '../lib/content'
 import { dateParts, daysUntil } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
@@ -65,10 +67,6 @@ const hueOf = (week: number) => RHYTHM[beatIndex(week)]?.hue
 
 /** A week's bar height, as a share of the score's height. */
 const heightOf = (week: number) => (BEATS[beatIndex(week)]?.height ?? 0) / SCORE_ROWS
-
-/** The opening lead: the first sentence in full ink, the rest in the softer second voice. */
-const LEAD_BREAK = WHY.text.indexOf('. ') + 1
-const LEAD = { open: WHY.text.slice(0, LEAD_BREAK), rest: WHY.text.slice(LEAD_BREAK + 1) }
 
 /** Step numbers as main shows them: 01, 02. */
 const stepNumber = (index: number) => String(index + 1).padStart(2, '0')
@@ -179,8 +177,9 @@ function useClosingShape(harborRef: RefObject<HTMLElement | null>) {
 
 export function Home() {
   const { events } = useLoaderData<HomeData>()
+  // The next event anyone can come to: invite-only nights stay on the calendar, not at the top.
   const nextEvent = events
-    .filter((event) => daysUntil(event.date) >= 0)
+    .filter((event) => daysUntil(event.date) >= 0 && !event.inviteOnly)
     .sort((a, b) => a.date.localeCompare(b.date))[0]
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
@@ -191,27 +190,25 @@ export function Home() {
   return (
     <>
       <title>{`${BRAND.name} · ${HERO_COPY.tab}`}</title>
-      <Hero />
+      <Hero next={nextEvent} />
 
       {/* Everything below the hero settles in as it comes up the screen (see motion/useReveal). */}
       <div ref={revealRef} className={motion.reveal}>
       {/* Harbor: the field drains into it, and the three ways in stand on it. */}
       <div className={`${styles.bleed} ${styles.ink} ${styles.afterHero}`}>
         <GlyphEdge color={GROUND.harbor} mode="drain" rows={44} cell={10} />
-        {/* The opening lead, as on main: what Proto is for, in two voices. */}
-        <div className={lui.tight}>
-          <div className={lui.wrap}>
-            <p className={lui.lead} data-reveal="rise">
-              {LEAD.open} <em>{LEAD.rest}</em>
-            </p>
-          </div>
-        </div>
-        {/* Main's order: the three ways in, how a semester goes, then what's on. */}
+        {/* Who it's for, right under the top: anyone, at any stage, from any side. */}
+        <Welcome />
+        {/* The three ways in, how a semester goes, then what's on. */}
         <WaysIn />
         {/* Things that started in Boston, from every kind of field. */}
         <StartedHereWall />
+        {/* The Boston film, after the map: where things began, then what they were. */}
+        <FilmSection />
         {/* One community, with groups inside it: everyone's nights, CS, and the groups to come. */}
         <GroupsBento />
+        {/* The one invite-only part: founders already building apply to the Circle. */}
+        <FoundersTeaser />
       </div>
 
       {/* Harbor still, now with the field frozen into it: the rhythm and what's next on it, then

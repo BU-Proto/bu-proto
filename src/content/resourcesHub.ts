@@ -25,7 +25,7 @@ export const HUB_PATH = '/resources'
 export const HUB_INTRO: PageIntro = {
   path: '~/proto/resources',
   title: 'Resources',
-  lede: "Where founders in Boston go to meet people, pitch and get help, whatever they're building. What's open to anyone comes first, then what your school runs.",
+  lede: "Where founders in Boston go to meet people, pitch and get help, whatever they're building, or before they've started. What's open to anyone comes first, then what each school runs for its own students.",
 }
 
 /** Someone else's program or event, described from its own page. */
@@ -188,11 +188,11 @@ export const ORGS: readonly Org[] = [
     id: 'spark',
     slug: 'spark',
     name: 'Spark!',
-    line: 'BU’s lab for building real things in computing and data science, with mentors, courses and two hackathons a year.',
+    line: "BU's lab for building real things in computing and data science, with mentors, courses and two hackathons a year.",
     part: 'Faculty of Computing & Data Sciences',
     about: [
-      'Spark! is BU’s innovation and experiential learning lab, in the Faculty of Computing & Data Sciences. Students build real projects there: their own idea with mentors, or a semester on a problem brought in by an outside partner.',
-      'Some of its programs need an application, but many don’t, and anyone can join the community.',
+      "Spark! is BU's innovation and experiential learning lab, in the Faculty of Computing & Data Sciences. Students build real projects there: their own idea with mentors, or a semester on a problem brought in by an outside partner.",
+      "Some of its programs need an application, but many don't, and anyone can join the community.",
     ],
     track: 'Build',
     fit: 'The natural next step for a hackathon project that needs mentors, a team or a stage.',
@@ -204,10 +204,10 @@ export const ORGS: readonly Org[] = [
     more: [
       {
         term: 'Walking in',
-        detail: 'Stop by any time. Its student ambassadors are there to tell you what’s on and point you at a way to get involved.',
+        detail: "Stop by any time. Its student ambassadors are there to tell you what's on and point you at a way to get involved.",
       },
       {
-        term: 'When it’s shut',
+        term: "When it's shut",
         detail: 'Weekends are for Spark! students and staff only, and the space closes on BU holidays, over intersession and for the summer.',
       },
     ],
@@ -217,13 +217,13 @@ export const ORGS: readonly Org[] = [
       { want: 'Show a project and get feedback', go: 'Code & Tell', href: 'https://www.bu.edu/spark/code-tell/' },
       { want: 'Do a hackathon without leaving campus', go: 'DS+X and CivicHacks', href: 'https://www.bu.edu/spark/events/bu-spark-hackathons/' },
       { want: 'Work on a real problem for a real partner', go: 'X-Lab', href: 'https://www.bu.edu/spark/students/courses/' },
-      { want: 'Ask someone who’s done it before', go: 'Free one-to-one consultations', href: 'https://www.bu.edu/spark/resources/' },
+      { want: "Ask someone who's done it before", go: 'Free one-to-one consultations', href: 'https://www.bu.edu/spark/resources/' },
     ],
     // In order of how often they come round, which is how the page sets them.
     programs: [
       {
-        name: 'Cookie O’Clock',
-        text: 'An hour’s break on floor 2 of CDS: play some games and grab a cookie.',
+        name: "Cookie O'Clock",
+        text: "An hour's break on floor 2 of CDS: play some games and grab a cookie.",
         when: '3 to 4 PM',
         href: 'https://www.bu.edu/spark/events/',
         every: { label: 'Every Wednesday', beat: 'weekly' },
@@ -237,14 +237,14 @@ export const ORGS: readonly Org[] = [
       },
       {
         name: 'Tech Talk',
-        text: 'Spark!’s student ambassadors host a workshop each week, to build a skill and to meet people who work in industry.',
+        text: "Spark!'s student ambassadors host a workshop each week, to build a skill and to meet people who work in industry.",
         when: '6 to 7:30 PM',
         href: 'https://www.bu.edu/spark/events/',
         every: { label: 'Every Wednesday', beat: 'weekly' },
       },
       {
         name: 'Code & Tell',
-        text: 'An open-mic night for student builders. Demo what you’re working on, finished or not, and get feedback from the room. Two Spark! alumni host it with the Spark! staff, and presenters and the audience both sign up on Eventbrite.',
+        text: "An open-mic night for student builders. Demo what you're working on, finished or not, and get feedback from the room. Two Spark! alumni host it with the Spark! staff, and presenters and the audience both sign up on Eventbrite.",
         when: '6 PM, in the Spark! space',
         href: 'https://www.bu.edu/spark/code-tell/',
         every: { label: 'Once a month', beat: 'monthly' },
@@ -257,7 +257,7 @@ export const ORGS: readonly Org[] = [
       },
       {
         name: 'XC475',
-        text: 'The Technology Innovation course takes a project from an idea to a working prototype in one semester, with Spark! experts and industry mentors. It’s for undergraduates, who apply as a technical or a design teammate, and it fills four Hub units. No idea yet? You can join someone else’s team.',
+        text: "The Technology Innovation course takes a project from an idea to a working prototype in one semester, with Spark! experts and industry mentors. It's for undergraduates, who apply as a technical or a design teammate, and it fills four Hub units. No idea yet? You can join someone else's team.",
         when: 'Fall and spring, by application',
         href: 'https://www.bu.edu/spark/students/xc475/',
         every: { label: 'Every semester', beat: 'semester' },
@@ -271,7 +271,7 @@ export const ORGS: readonly Org[] = [
       },
       {
         name: 'Demo Day',
-        text: 'At the end of each semester Spark! and BU’s Cross-College Challenge put on Demo Day together, as part of the Experiential Learning Expo, where the semester’s teams show what they built.',
+        text: "At the end of each semester Spark! and BU's Cross-College Challenge put on Demo Day together, as part of the Experiential Learning Expo, where the semester's teams show what they built.",
         when: 'The end of each semester, on floors 1 and 2 of CDS',
         href: 'https://www.bu.edu/spark/events/demo-day/',
         every: { label: 'Every semester', beat: 'semester' },
@@ -284,7 +284,7 @@ export const ORGS: readonly Org[] = [
       },
       {
         name: 'DS+X and CivicHacks',
-        text: 'Spark!’s two hackathons. DS+X is for BU students of every major and level, beginners welcome, building their own idea. CivicHacks is open nationwide, with challenges set by civic partners. DS+X 2026 had 250 students registered and 52 teams hand in a working project; CivicHacks 2026 drew 116 people from 20 universities and colleges, with $7,050 in prizes.',
+        text: "Spark!'s two hackathons. DS+X is for BU students of every major and level, beginners welcome, building their own idea. CivicHacks is open nationwide, with challenges set by civic partners. DS+X 2026 had 250 students registered and 52 teams hand in a working project; CivicHacks 2026 drew 116 people from 20 universities and colleges, with $7,050 in prizes.",
         when: 'DS+X in the fall, CivicHacks in the spring',
         href: 'https://www.bu.edu/spark/events/bu-spark-hackathons/',
         every: { label: 'Twice a year', beat: 'twice' },
@@ -297,7 +297,7 @@ export const ORGS: readonly Org[] = [
       },
       {
         name: 'Ignite Student Council',
-        text: 'Spark! runs the council behind BU’s tech clubs, BostonHacks and Hack4Impact among them, and helps them with funding, recruiting and outreach. It also funds students and informal groups with an idea for BU’s computing community.',
+        text: "Spark! runs the council behind BU's tech clubs, BostonHacks and Hack4Impact among them, and helps them with funding, recruiting and outreach. It also funds students and informal groups with an idea for BU's computing community.",
         href: 'https://www.bu.edu/spark/students/ignite/',
         every: { label: 'All year', beat: 'always' },
       },
@@ -333,10 +333,10 @@ export const ORGS: readonly Org[] = [
     id: 'innovate',
     slug: 'innovate',
     name: 'Innovate@BU',
-    line: 'BU’s home for turning a project into a startup or nonprofit: funding, mentors, competitions and free events.',
+    line: "BU's home for turning a project into a startup or nonprofit: funding, mentors, competitions and free events.",
     part: 'Open to every BU student, in every major',
     about: [
-      'Innovate@BU is BU’s home for innovation and entrepreneurship, and it’s open to every student, not just business majors. It’s where a project goes when it could become a startup, a nonprofit or a community venture.',
+      "Innovate@BU is BU's home for innovation and entrepreneurship, and it's open to students in every major. It's where a project goes when it could become a startup, a nonprofit or a community venture.",
       'It has funding, mentors, competitions and dozens of free events a year, and staff and student ambassadors you can drop in on.',
     ],
     track: 'Launch',
@@ -349,11 +349,11 @@ export const ORGS: readonly Org[] = [
     more: [
       {
         term: 'Walking in',
-        detail: 'Come by any time it’s open, to study or to work on your venture. Student ambassadors hold drop-in hours on Mondays, Wednesdays and Fridays; the week’s times are at the front desk.',
+        detail: "Come by any time it's open, to study or to work on your venture. Student ambassadors hold drop-in hours on Mondays, Wednesdays and Fridays; the week's times are at the front desk.",
       },
       {
         term: 'No idea yet',
-        detail: 'Its own site says that’s no problem: there are workshops and programs for finding one, and a board of student teams looking for people.',
+        detail: "Its own site says that's no problem: there are workshops and programs for finding one, and a board of student teams looking for people.",
       },
     ],
     figures: [
@@ -374,7 +374,7 @@ export const ORGS: readonly Org[] = [
     programs: [
       {
         name: 'Office hours',
-        text: 'One-to-one time with staff or experts in residence, who are working founders, plus drop-in hours with student ambassadors. The easiest first step, whether you’re new to this or already have a venture.',
+        text: "One-to-one time with staff or experts in residence, who are working founders, plus drop-in hours with student ambassadors. The easiest first step, whether you're new to this or already have a venture.",
         when: 'Book any time, or drop in',
         href: 'https://www.bu.edu/innovate/about/office-hours/',
       },
@@ -393,7 +393,7 @@ export const ORGS: readonly Org[] = [
       },
       {
         name: 'New Venture Competition',
-        text: 'An $85K pitch competition with coaching on your idea and your pitch. Two tracks, general and social impact, each with a $20,000 first prize. Early-stage ideas and solo founders are welcome. Its final is Innovators’ Night.',
+        text: "An $85K pitch competition with coaching on your idea and your pitch. Two tracks, general and social impact, each with a $20,000 first prize. Early-stage ideas and solo founders are welcome. Its final is Innovators' Night.",
         when: 'Applications open in the fall',
         stake: '$20,000 first prize',
         href: 'https://www.bu.edu/innovate/programs-competitions/new-venture-competition/',
@@ -401,19 +401,19 @@ export const ORGS: readonly Org[] = [
       {
         name: 'Summer Accelerator',
         text: 'Ten weeks on your venture full-time, in person in Boston, with a stipend of up to $10,000, workshops twice a week, mentors, and a final presentation to a panel of investors and community members.',
-        when: 'Summer. 2027 applications aren’t open yet',
+        when: "Summer. 2027 applications aren't open yet",
         stake: 'Up to $10,000',
         href: 'https://www.bu.edu/innovate/programs-competitions/summer-accelerator/',
       },
       {
         name: 'The Problem Validator',
-        text: 'Five short modules for testing whether a problem is worth working on, against real evidence. Self-paced, start any time, and you don’t need a polished idea.',
+        text: "Five short modules for testing whether a problem is worth working on, against real evidence. Self-paced, start any time, and you don't need a polished idea.",
         href: 'https://www.bu.edu/innovate/programs-competitions/the-problem-validator/',
         aside: true,
       },
       {
         name: 'First-Year Innovation Fellowship',
-        text: 'A semester-long program for first-years, offered each fall and spring, with a $500 seed grant. You don’t need an idea already.',
+        text: "A semester-long program for first-years, offered each fall and spring, with a $500 seed grant. You don't need an idea already.",
         href: 'https://www.bu.edu/innovate/programs-competitions/first-year-innovation-fellowship/',
         aside: true,
       },
@@ -425,7 +425,7 @@ export const ORGS: readonly Org[] = [
       },
       {
         name: 'Sustainability Innovation Seed Grants',
-        text: 'Help BU tackle a sustainability problem and get $500. You don’t need a fully formed plan to apply.',
+        text: "Help BU tackle a sustainability problem and get $500. You don't need a fully formed plan to apply.",
         href: 'https://www.bu.edu/innovate/programs-competitions/sustainability-innovation-seed-grants/',
         aside: true,
       },
@@ -437,7 +437,7 @@ export const ORGS: readonly Org[] = [
       },
       {
         name: 'Innovation & Entrepreneurship minor',
-        text: 'Open to every undergraduate: one required course, Ideas2Impact, and four electives. Spark!’s XC475 counts toward it.',
+        text: "Open to every undergraduate: one required course, Ideas2Impact, and four electives. Spark!'s XC475 counts toward it.",
         href: 'https://www.bu.edu/innovate/academics/innovation-entrepreneurship-minor/',
         aside: true,
       },
@@ -455,7 +455,7 @@ export const ORGS: readonly Org[] = [
     },
     site: { label: 'bu.edu/innovate', href: 'https://www.bu.edu/innovate/' },
     photo: MARSH_CHAPEL,
-    photoNote: 'Marsh Chapel. Innovate@BU’s center is across the street from it.',
+    photoNote: "Marsh Chapel. Innovate@BU's center is across the street from it.",
   },
 ]
 
@@ -483,7 +483,7 @@ export const HUB_COPY = {
   atBu: 'At BU',
   open: 'Open',
   boston: { title: 'Open to anyone in Boston', line: 'No school needed. Go on your own or come with us.' },
-  schools: { title: 'At your school', line: 'For students at that school. BU first, since that\'s where Proto started.' },
+  schools: { title: 'At a school', line: 'For students at that school. BU first, since that\'s where Proto started.' },
   cs: { title: 'From the CS group', line: 'Hackathons have their own guide.' },
   visit: 'Their site',
   note: `All of these are run by others, not by us, and nothing is official with any of them yet. Checked against their own pages in ${CHECKED}; dates change, so check theirs before you go.`,
@@ -522,7 +522,7 @@ export const ORG_PAGE = {
   },
   missing: {
     title: 'Nothing here',
-    text: 'That page doesn’t exist.',
+    text: "That page doesn't exist.",
     back: 'Back to resources',
   },
 } as const

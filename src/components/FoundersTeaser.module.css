@@ -1,0 +1,138 @@
+/*
+ * One dark card with an amber edge: the Circle's words on the left, its mark on the right, a small
+ * lit ring inside two quiet ones. Amber is the Circle's colour wherever it appears.
+ */
+.teaser {
+  width: min(1180px, 100% - 2 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-inline: auto;
+  padding: clamp(40px, 7vh, 80px) 0 clamp(24px, 4vh, 48px);
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 40px;
+  overflow: hidden;
+  padding: clamp(28px, 4vw, 56px);
+  border: 1px solid rgb(var(--amber-rgb) / 0.35);
+  border-radius: 24px;
+  background:
+    radial-gradient(60% 90% at 100% 50%, rgb(var(--amber-rgb) / 0.14), transparent 70%),
+    var(--navy);
+}
+
+.words {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+}
+
+.badge {
+  margin: 0;
+  padding: 5px 11px 6px;
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  color: var(--amber);
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(40px, 5.6vw, 76px);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: 0.98;
+}
+
+.text {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.45;
+}
+
+.points {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+}
+
+.points li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.points li::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  translate: 0 -1px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+  margin-top: 8px;
+}
+
+.apply {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: #000;
+}
+
+.mark {
+  width: clamp(180px, 22vw, 300px);
+  height: auto;
+}
+
+.lit {
+  fill: var(--amber);
+}
+
+.dim {
+  fill: rgb(var(--frost-rgb) / 0.22);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mark {
+    animation: turn 60s linear infinite;
+  }
+}
+
+@keyframes turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (max-width: 760px) {
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 18px;
+  }
+
+  .mark {
+    position: absolute;
+    top: -40px;
+    right: -50px;
+    width: 180px;
+    opacity: 0.45;
+  }
+}

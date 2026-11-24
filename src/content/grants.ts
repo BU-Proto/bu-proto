@@ -37,7 +37,7 @@ export const PLAN = {
       title: 'What it would cover',
       text: 'Parts and materials, software credits, or the ticket and travel for a hackathon or a pitch competition.',
     },
-    { title: 'Any Proto member', text: 'From any school, on any kind of project, from your very first one.' },
+    { title: 'Any Proto member', text: 'At any school or none, on any kind of project, from your very first one.' },
   ] satisfies Fact[],
 } as const
 

@@ -27,9 +27,10 @@ const STATUS_TONES: Record<GuestStatus, string> = { invited: 'sample', confirmed
 
 /**
  * Speakers, judges, sponsors and VCs coming to one event, under its editor. Anyone can read the
- * list; adding, confirming and removing guests is Community's (the Worker checks too).
+ * list; adding, confirming and removing guests is Community's (the Worker checks too). An
+ * invite-only event takes no RSVPs, so its guests are everyone coming, members included.
  */
-export function EventGuests({ eventId }: { eventId: number }) {
+export function EventGuests({ eventId, inviteOnly = false }: { eventId: number; inviteOnly?: boolean }) {
   const guard = useAuthGuard()
   const toast = useToast()
   const gated = useGated()('community')
@@ -52,7 +53,7 @@ export function EventGuests({ eventId }: { eventId: number }) {
   async function add(event: FormEvent) {
     event.preventDefault()
     if (!person) {
-      setAddError('Pick a contact.')
+      setAddError(inviteOnly ? 'Pick someone.' : 'Pick a contact.')
       return
     }
     setSaving(true)
@@ -119,13 +120,13 @@ export function EventGuests({ eventId }: { eventId: number }) {
         <form className={styles.add} onSubmit={add} noValidate>
           <div className={styles.addPerson}>
             <label className={ui.label} htmlFor={`guest-person-${eventId}`}>
-              Contact
+              {inviteOnly ? 'Person' : 'Contact'}
             </label>
             <PersonPicker
               id={`guest-person-${eventId}`}
               value={person}
               onChange={setPerson}
-              kinds={['contact', 'alum']}
+              kinds={inviteOnly ? undefined : ['contact', 'alum']}
               exclude={guests.map((guest) => guest.contact.key)}
               placeholder="Search People"
             />
@@ -166,7 +167,11 @@ export function EventGuests({ eventId }: { eventId: number }) {
         </div>
       ) : guests.length === 0 ? (
         <EmptyState title="No guests yet">
-          <p>Add the speakers, judges, sponsors and VCs coming to this event.</p>
+          {inviteOnly ? (
+            <p>This event is invite only, so the site takes no RSVPs. Add everyone you invite here, Founders Circle members included.</p>
+          ) : (
+            <p>Add the speakers, judges, sponsors and VCs coming to this event.</p>
+          )}
         </EmptyState>
       ) : (
         <table className={ui.table}>

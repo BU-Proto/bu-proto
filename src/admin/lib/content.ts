@@ -207,6 +207,7 @@ export interface FieldSection {
 const SECTIONS: Partial<Record<ContentResource, SectionPlan[]>> = {
   events: [
     { title: 'Basics', keys: ['title', 'kind', 'date', 'time', 'place', 'text', 'registerUrl'] },
+    { title: 'Who can come', keys: ['inviteOnly'] },
     { title: 'Event page', hint: 'The write-up on the event’s own page.', keys: ['description', 'agenda', 'hosts'] },
     { title: 'Photos', keys: ['photo', 'gallery'] },
     { title: 'Publishing', keys: ['placeholder', 'published'] },

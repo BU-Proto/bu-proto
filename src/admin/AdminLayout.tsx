@@ -159,6 +159,7 @@ function Shell({ me, stats }: { me: Me; stats: Stats | null }) {
               '/admin/inbox': stats?.queueWaiting ?? 0,
               '/admin/fund': stats?.fundNew ?? 0,
               '/admin/roles': stats?.applicationsNew ?? 0,
+              '/admin/founders': stats?.foundersNew ?? 0,
               '/admin/email': stats?.inboxUnread ?? 0,
             }}
             onNavigate={close}

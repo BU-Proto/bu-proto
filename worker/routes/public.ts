@@ -3,6 +3,7 @@ import {
   RESUME_MAX_BYTES,
   RESUME_TYPE,
   boardInterestInput,
+  founderApplicationInput,
   fundInterestInput,
   joinInput,
   roleApplicationInput,
@@ -10,7 +11,14 @@ import {
   type RsvpResult,
 } from '../../shared/api'
 import { randomToken } from '../lib/crypto'
-import { sendApplicationEmails, sendBoardInterest, sendFundConfirmation, sendRsvpConfirmation, sendWelcome } from '../lib/confirmations'
+import {
+  sendApplicationEmails,
+  sendBoardInterest,
+  sendFounderConfirmation,
+  sendFundConfirmation,
+  sendRsvpConfirmation,
+  sendWelcome,
+} from '../lib/confirmations'
 import { PUBLIC_ROWS } from '../lib/content'
 import { bostonToday } from '../lib/dates'
 import { limitForms } from '../lib/forms'
@@ -18,8 +26,8 @@ import { ApiError, bodyFields, idParam, parseInput, readBody } from '../lib/http
 import { requireHuman } from '../lib/turnstile'
 import type { AppEnv } from '../types'
 
-// The five forms the public site posts. None needs a session; all are rate limited per IP, then
-// need a Turnstile token (lib/turnstile) before anything is read or written. Four send JSON; a
+// The six forms the public site posts. None needs a session; all are rate limited per IP, then
+// need a Turnstile token (lib/turnstile) before anything is read or written. Five send JSON; a
 // role application sends a multipart form, for its résumé. The action names
 // match the ones the forms render their widgets with.
 
@@ -108,6 +116,32 @@ app.post('/api/fund-interest', limitForms, requireHuman('fund-interest'), async 
     .bind(input.name, input.email, input.year, input.target, input.spend, input.amount)
     .run()
   c.executionCtx.waitUntil(sendFundConfirmation(c.env, origin(c), input))
+  return c.json({ ok: true }, 201)
+})
+
+// An application to the Founders Circle. Each one is its own row, like the fund list's.
+app.post('/api/founders/apply', limitForms, requireHuman('founders-apply'), async (c) => {
+  if (await isBot(c)) return c.json({ ok: true }, 201)
+  const input = await readBody(c, founderApplicationInput)
+  await c.env.DB.prepare(
+    `INSERT INTO founder_applications (name, email, school, company, link, stage, commitment, building, progress, team, help)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      input.name,
+      input.email,
+      input.school,
+      input.company,
+      input.link,
+      input.stage,
+      input.commitment,
+      input.building,
+      input.progress,
+      input.team,
+      input.help,
+    )
+    .run()
+  c.executionCtx.waitUntil(sendFounderConfirmation(c.env, origin(c), input))
   return c.json({ ok: true }, 201)
 })
 
@@ -202,10 +236,12 @@ app.post('/api/roles/:id/apply', limitForms, withinUploadSize, requireHuman('rol
 
 app.post('/api/events/:id/rsvp', limitForms, requireHuman('rsvp'), async (c) => {
   const id = idParam(c)
-  const event = await c.env.DB.prepare(`SELECT title, date, time, place FROM events WHERE id = ? AND ${PUBLIC_ROWS}`)
+  const event = await c.env.DB.prepare(`SELECT title, date, time, place, invite_only FROM events WHERE id = ? AND ${PUBLIC_ROWS}`)
     .bind(id)
-    .first<{ title: string; date: string; time: string; place: string }>()
+    .first<{ title: string; date: string; time: string; place: string; invite_only: number }>()
   if (!event) throw new ApiError(404, 'That event isn’t on the calendar.')
+  // The team adds who's coming to an invite-only event as its guests; the site takes no RSVPs.
+  if (event.invite_only) throw new ApiError(403, "This event is invite only, so it doesn't take RSVPs.")
   if (event.date < bostonToday()) throw new ApiError(400, 'That event has already happened.')
 
   const countRsvps = c.env.DB.prepare('SELECT COUNT(*) AS count FROM rsvps WHERE event_id = ?').bind(id)

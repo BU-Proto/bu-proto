@@ -1,0 +1,57 @@
+/*
+ * A film's frame: as wide as its column, in the film's own shape (a tall one on phones), with
+ * rounded corners and a soft shadow on the dark ground. The pause button sits in its corner.
+ */
+.frame {
+  --film-aspect: var(--film-wide, 16 / 9);
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--film-aspect);
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--harbor);
+  box-shadow:
+    0 0 0 1px rgb(var(--frost-rgb) / 0.16),
+    0 30px 90px -20px rgb(var(--harbor-rgb) / 0.75);
+}
+
+/* What the in-view check watches: the frame's middle, so it plays once most of it shows. */
+.watch {
+  position: absolute;
+  inset: 25% 0;
+  pointer-events: none;
+}
+
+/* The film fills the frame exactly: cropped to its shape, never stretched or letterboxed. */
+.film {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  background: var(--harbor);
+}
+
+.toggle {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 38px;
+  height: 38px;
+  opacity: 0.7;
+  transition: opacity 200ms ease;
+}
+
+.frame:hover .toggle,
+.toggle:focus-visible,
+.toggle[aria-pressed='true'] {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  /* A phone's frame is tall; the film's own tall cut fills it, or else src is cropped to its middle. */
+  .frame {
+    --film-aspect: 4 / 5;
+    border-radius: 18px;
+  }
+}

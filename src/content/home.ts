@@ -3,10 +3,23 @@
 
 import type { Hue, Link, TrackName } from './types'
 
+/**
+ * The top of the home page: what Proto is, who it's for, the two ways in, and the next thing on
+ * the calendar. Said for anyone, at any stage, from anywhere.
+ */
 export const HERO_COPY = {
-  headline: 'Bring an idea. Find the people to build it.',
+  headline: 'Anyone can build anything. Start here.',
+  lede: "First idea or fifth company, any background, any school or none. Proto is where Boston's founders find their people.",
+  actions: [
+    { label: "Join Proto, it's free", href: '/join' },
+    { label: "See what's on", href: '/events' },
+  ],
+  next: 'Next up',
+  /** When nothing is booked yet. */
+  nothingYet: "Build nights start soon. Join and we'll email you before the first one.",
+  rsvp: 'RSVP',
   /** The browser tab's title on the home page. */
-  tab: "A home for Boston's builders",
+  tab: "A home for Boston's founders",
 } as const
 
 /** The colours the groups' tiles and the hero's cursors are set in: each light, with its own dark ink. */
@@ -14,17 +27,34 @@ export type Tone = 'sky' | 'iris' | 'rose' | 'amber' | 'mint'
 
 /**
  * Cursors drifting round the headline, the way collaborators' cursors do in a shared design file:
- * everyone who builds, in one place. Phones show the first three.
+ * people at every stage and from every side, in one place. Phones show the first two.
  */
 export const HERO_CURSORS: readonly { label: string; tone: Tone }[] = [
-  { label: 'Founder', tone: 'rose' },
+  { label: 'First-timer', tone: 'rose' },
   { label: 'Engineer', tone: 'sky' },
   { label: 'Designer', tone: 'iris' },
   { label: 'Business', tone: 'amber' },
-  { label: 'CS', tone: 'mint' },
+  { label: 'Serial founder', tone: 'mint' },
 ]
 
-/** A film for the hero: silent, looping, cropped to fill its frame. */
+/**
+ * Who Proto is for, said as plainly as possible, right under the top: nobody needs an idea, a
+ * team, a skill or a school to come.
+ */
+export const WELCOME: { title: string; items: readonly { text: string; tone: Tone }[]; coda: string } = {
+  title: 'Proto is for you if',
+  items: [
+    { text: 'You have an idea and no team yet.', tone: 'sky' },
+    { text: 'You have skills and no idea yet.', tone: 'iris' },
+    { text: "You've never built anything before.", tone: 'rose' },
+    { text: "You've started a company before and want people around you.", tone: 'amber' },
+    { text: "You study business, art, biology or code, or you're not a student at all.", tone: 'mint' },
+    { text: "You'd just like to meet people who make things.", tone: 'sky' },
+  ],
+  coda: 'Joining Proto is free, with no application and nothing to prepare. Come to a build night and say hello.',
+}
+
+/** A film for the home page: silent, looping, cropped to fill its frame. */
 export interface HeroFilm {
   /** An MP4 (H.264), silent, under 25 MiB: Cloudflare won't serve a bigger single asset. */
   src: string
@@ -52,11 +82,17 @@ export const BOSTON_MONTAGE: HeroFilm = {
   note: 'Footage from Moderna, iRobot and WHOOP, used with their permission. Proto is not affiliated with the companies shown.',
 }
 
-/** What the hero plays. Null leaves the hero to the field alone. */
-export const HERO_FILM: HeroFilm | null = BOSTON_MONTAGE
+/** The film on the home page, in its own section under the map. Null leaves it out. */
+export const HOME_FILM: HeroFilm | null = BOSTON_MONTAGE
 
-/** The hero film's pause control: anything that moves on its own for more than five seconds needs one. */
-export const HERO_FILM_CONTROLS = {
+/** The film's section: a title over it, and a line on what it shows. */
+export const FILM_SECTION = {
+  title: 'Built in Boston',
+  lede: 'Half a minute of what started here, from the telephone to the Roomba.',
+} as const
+
+/** The film's pause control: anything that moves on its own for more than five seconds needs one. */
+export const HOME_FILM_CONTROLS = {
   pause: 'Pause the film',
   play: 'Play the film',
 } as const
@@ -206,11 +242,15 @@ export const STARTED_HERE: {
   lede: string
   coda: string
   mapCaption: string
-  /** Each place's pin on the map: its name, and where it sits on the 1000 by 640 drawing. */
-  places: Record<MapPlace, { label: string; x: number; y: number; labelBelow?: true }>
+  /**
+   * Each place's pin on the map: its name, where it sits on the 1000 by 640 drawing, and which
+   * side of the pin its name goes, chosen so no two names touch, even on a phone.
+   */
+  places: Record<MapPlace, { label: string; x: number; y: number; side: 'left' | 'right' | 'above' | 'below' }>
   /** The map's own labels: the two cities, a neighbourhood, the river and the harbour. */
-  areas: readonly { label: string; x: number; y: number; vertical?: true }[]
-  proto: string
+  areas: readonly { label: string; x: number; y: number; angle?: number; water?: true }[]
+  /** Proto's own pin: its name, and the words after it, which a phone leaves off. */
+  proto: { name: string; note: string }
   items: readonly StartedHere[]
 } = {
   title: "It's been done here before",
@@ -218,21 +258,21 @@ export const STARTED_HERE: {
   coda: 'Business, science, hardware and software. Different fields, the same start.',
   mapCaption: 'Roughly where each began: the school or neighbourhood it came from. Not to scale.',
   places: {
-    harvard: { label: 'Harvard', x: 250, y: 190 },
-    allston: { label: 'Harvard i-lab, Allston', x: 215, y: 500, labelBelow: true },
-    mit: { label: 'MIT', x: 610, y: 285 },
-    cambridge: { label: 'Cambridge', x: 735, y: 215 },
-    boston: { label: 'Boston', x: 860, y: 400 },
-    bu: { label: 'BU', x: 440, y: 470 },
+    harvard: { label: 'Harvard', x: 255, y: 190, side: 'right' },
+    allston: { label: 'Harvard i-lab', x: 195, y: 450, side: 'below' },
+    mit: { label: 'MIT', x: 620, y: 300, side: 'right' },
+    cambridge: { label: 'Cambridge', x: 745, y: 205, side: 'left' },
+    boston: { label: 'Boston', x: 875, y: 420, side: 'left' },
+    bu: { label: 'BU', x: 450, y: 470, side: 'right' },
   },
   areas: [
-    { label: 'CAMBRIDGE', x: 470, y: 130 },
-    { label: 'BOSTON', x: 700, y: 560 },
-    { label: 'ALLSTON', x: 90, y: 625 },
-    { label: 'THE CHARLES', x: 330, y: 402 },
-    { label: 'HARBOR', x: 962, y: 470, vertical: true },
+    { label: 'Cambridge', x: 470, y: 110 },
+    { label: 'Boston', x: 760, y: 575 },
+    { label: 'Allston', x: 95, y: 585 },
+    { label: 'Charles River', x: 640, y: 377, angle: -14, water: true },
+    { label: 'Boston Harbor', x: 972, y: 500, angle: -90, water: true },
   ],
-  proto: 'Proto started here',
+  proto: { name: 'Proto', note: 'started here' },
   items: [
     { name: 'Facebook', field: 'Social', origin: 'A Harvard dorm, Cambridge, Mass., 2004', tone: 'sky', place: 'harvard' },
     { name: 'Boston Dynamics', field: 'Robotics', origin: 'Spun out of MIT, Cambridge, Mass., 1992', tone: 'mint', place: 'mit' },

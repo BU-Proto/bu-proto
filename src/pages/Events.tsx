@@ -7,6 +7,7 @@ import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { coverThumb, EVENT_COVERS, type CoverPhoto } from '../content/covers'
 import { BUILD_NIGHT, EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, KIND_GROUP, KIND_HUE, NEXT_EVENT } from '../content/events'
+import { INVITE_ONLY } from '../content/founders'
 import { groupInvite } from '../content/site'
 import { dateParts, daysUntil, formatMonth } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
@@ -204,8 +205,18 @@ function Empty() {
   )
 }
 
-/** A group's own night says whose it is, and that everyone else is welcome. Nothing for the rest. */
+/**
+ * A group's own night says whose it is, and that everyone else is welcome; an invite-only night
+ * says who it's for. Nothing for the rest.
+ */
 function GroupLine({ event }: { event: ProtoEvent }) {
+  if (event.inviteOnly) {
+    return (
+      <p className={styles.group} data-fog-clear>
+        {INVITE_ONLY.text}
+      </p>
+    )
+  }
   const group = KIND_GROUP[event.kind]
   if (!group) return null
   return (

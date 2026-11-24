@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
-import { useLoaderData } from 'react-router'
+import { Link, useLoaderData } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { BuMark } from '../components/BuMark'
 import { DetailGallery, DetailLoadError, DetailNav, OutLink, type Person } from '../components/DetailPage'
@@ -8,6 +8,7 @@ import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { EVENT_COVERS, type CoverPhoto } from '../content/covers'
 import { EVENT_DETAIL, EVENT_NOT_FOUND, KIND_GROUP, KIND_HUE } from '../content/events'
+import { INVITE_ONLY } from '../content/founders'
 import { BRAND, groupInvite } from '../content/site'
 import { eventToIcs, icsFileName } from '../lib/calendar'
 import type { EventPageData } from '../lib/content'
@@ -138,8 +139,16 @@ function Head({ event, past, rsvp, shape }: { event: ProtoEvent; past: boolean; 
         {event.title}
         <SampleTag show={event.placeholder} />
       </h1>
-      {/* A group's own night says whose it is, and that everyone else is welcome. */}
-      {KIND_GROUP[event.kind] && (
+      {/* An invite-only night says who it's for and how to get in; a group's own night says whose
+          it is, and that everyone else is welcome. */}
+      {event.inviteOnly ? (
+        <p className={styles.group} data-fog-clear>
+          {INVITE_ONLY.text}{' '}
+          <Link className={ui.textLink} to={INVITE_ONLY.link.href}>
+            {INVITE_ONLY.link.label}
+          </Link>
+        </p>
+      ) : KIND_GROUP[event.kind] && (
         <p className={styles.group} data-fog-clear>
           {groupInvite(KIND_GROUP[event.kind] ?? '')}
         </p>

@@ -1,0 +1,273 @@
+/*
+ * The Founders Circle page, on plain harbor like the other inner pages. Amber is the Circle's
+ * colour: the badge, the apply button and the step numbers. Who it's for sits on colour tiles like
+ * the home page's; what members get on dark cards with a hairline; the steps in a ruled row.
+ */
+.page {
+  width: min(1180px, 100% - 2 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-inline: auto;
+  padding: clamp(28px, 6vh, 64px) 0 clamp(64px, 10vh, 104px);
+}
+
+/* First thing in the intro, above the title. */
+.badge {
+  order: -1;
+  justify-self: start;
+  margin: 0 0 4px;
+  padding: 6px 12px 7px;
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  color: var(--amber);
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.headActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.applyButton,
+.form button[type='submit'] {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: #000;
+}
+
+.block {
+  display: grid;
+  gap: 28px;
+  padding-top: clamp(72px, 11vh, 120px);
+  scroll-margin-top: 80px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 40px;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: clamp(34px, 4.6vw, 60px);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: 1;
+}
+
+.lede {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.45;
+}
+
+/* ---- Who it's for ----------------------------------------------------------------------------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: flex;
+  align-items: flex-end;
+  min-height: 210px;
+  padding: 22px;
+  background: var(--tone);
+  color: var(--tone-ink);
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: var(--display-weight);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+/* ---- What members get ------------------------------------------------------------------------- */
+
+.perks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perk {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 26px 26px 28px;
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--amber);
+  background: var(--navy);
+}
+
+.perkTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: var(--display-weight);
+  letter-spacing: -0.02em;
+}
+
+.perkText {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ---- How to get in ---------------------------------------------------------------------------- */
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 22px 22px 6px 0;
+}
+
+.step + .step {
+  padding-left: 22px;
+  border-left: 1px solid var(--rule);
+}
+
+.stepNumber {
+  color: var(--amber);
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--display-weight);
+  letter-spacing: -0.02em;
+}
+
+.stepText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+
+.open {
+  max-width: 70ch;
+  margin: 8px 0 0;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: rgb(var(--frost-rgb) / 0.06);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ---- Apply ------------------------------------------------------------------------------------ */
+
+.apply {
+  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+  align-items: start;
+  gap: 36px clamp(32px, 6vw, 96px);
+}
+
+.apply .head {
+  display: grid;
+  gap: 14px;
+}
+
+.formWrap {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.form {
+  gap: 18px 16px;
+}
+
+.privacy {
+  margin: 0;
+}
+
+.formWrap > [role='status'] {
+  justify-items: start;
+  padding: 8px 0 0;
+  text-align: left;
+}
+
+.formWrap:has(> [role='status']) .privacy {
+  display: none;
+}
+
+/* ---- Smaller screens -------------------------------------------------------------------------- */
+
+@media (max-width: 1000px) {
+  .tiles,
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .step:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .step:nth-child(n + 3) {
+    border-top: 1px solid var(--rule);
+  }
+
+  .apply {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .tiles,
+  .perks,
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tile {
+    min-height: 0;
+    padding: 18px 20px;
+  }
+
+  .step,
+  .step + .step {
+    padding: 18px 0 4px;
+    border-left: 0;
+  }
+
+  .step + .step {
+    border-top: 1px solid var(--rule);
+  }
+}

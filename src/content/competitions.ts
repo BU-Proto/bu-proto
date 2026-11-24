@@ -30,7 +30,7 @@ export interface Competition {
 export const COMPETITIONS_INTRO: PageIntro = {
   path: '~/proto/pitch-competitions',
   title: 'Pitch competitions',
-  lede: 'For founders on the company side. The Business group goes to these together, the way the CS group goes to hackathons, and practises the pitch first.',
+  lede: "Contests where founders pitch an idea or a company to judges, often for prize money. The Business group goes to these together and practises the pitch first, and you don't need to have pitched before.",
 }
 
 export const COMPETITIONS_PAGE = {

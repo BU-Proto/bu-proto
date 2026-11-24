@@ -14,7 +14,7 @@ export { PLAYBOOK_HREF }
 export const PLAYBOOK_INTRO: PageIntro = {
   path: '~/proto/resources/playbook',
   title: 'The playbook',
-  lede: 'Everything we wish we’d known before our first hackathon, written down.',
+  lede: "Everything we wish we'd known before our first hackathon, written down.",
 }
 
 export const CONTENTS_LABEL = 'Contents'
@@ -146,7 +146,7 @@ export const GUIDE_PAGE = {
   all: 'All guides',
   missing: {
     title: 'No guide here',
-    text: 'That guide doesn’t exist, or hasn’t been written yet.',
+    text: "That guide doesn't exist, or hasn't been written yet.",
     back: 'Back to the playbook',
   },
 }

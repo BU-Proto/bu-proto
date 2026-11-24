@@ -271,7 +271,7 @@ function Editor({ resource, item, rsvps }: Loaded) {
 
       {resource === 'events' && row && (
         <div className={styles.below}>
-          <EventGuests eventId={row.id} />
+          <EventGuests eventId={row.id} inviteOnly={row.inviteOnly === true} />
         </div>
       )}
 

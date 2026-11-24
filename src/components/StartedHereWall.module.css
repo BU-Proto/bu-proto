@@ -40,7 +40,7 @@
 /* The map and the list side by side; on a phone, the map first. */
 .body {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
   align-items: start;
   gap: clamp(28px, 4vw, 56px);
 }
@@ -108,9 +108,19 @@
   letter-spacing: -0.02em;
 }
 
+/* The map stays in view while the list beside it scrolls past. */
+.mapSide {
+  position: sticky;
+  top: 96px;
+}
+
 @media (max-width: 960px) {
   .body {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mapSide {
+    position: static;
   }
 }
 

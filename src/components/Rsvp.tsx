@@ -3,7 +3,9 @@
 // themselves, so the hook (lib/useRsvp) holds the state and the two components share it.
 
 import type { KeyboardEvent } from 'react'
+import { Link } from 'react-router'
 import { RSVP } from '../content/events'
+import { INVITE_ONLY } from '../content/founders'
 import type { RsvpState } from '../lib/useRsvp'
 import { Field, Form } from './Form'
 import { inputClass } from './formFields'
@@ -28,6 +30,14 @@ export function RsvpButton({ rsvp, className, prominent }: { rsvp: RsvpState; cl
   const { going, open, setOpen, close, buttonRef, formId } = rsvp
   const extra = className ? ` ${className}` : ''
   const registerUrl = rsvp.event.registerUrl
+  if (rsvp.event.inviteOnly) {
+    // Members get their invite by email; everyone else sees what it is and how to get in.
+    return (
+      <Link className={`${ui.secondary} ${styles.inviteOnly}${extra}`} to={INVITE_ONLY.link.href} title={INVITE_ONLY.text} data-fog-clear="box" data-fog-ignore>
+        {INVITE_ONLY.tag}
+      </Link>
+    )
+  }
   if (registerUrl) {
     // The event has its own sign-up page: people register there, so we don't take the RSVP.
     return (
@@ -71,7 +81,7 @@ export function RsvpButton({ rsvp, className, prominent }: { rsvp: RsvpState; cl
 /** The form itself, rendered only while it's open. `className` places it. */
 export function RsvpForm({ rsvp, className }: { rsvp: RsvpState; className?: string }) {
   const { event, going, open, close, submit, formId } = rsvp
-  if (!open || going || event.registerUrl) return null
+  if (!open || going || event.registerUrl || event.inviteOnly) return null
 
   const onKeyDown = (keyEvent: KeyboardEvent) => {
     if (keyEvent.key !== 'Escape') return

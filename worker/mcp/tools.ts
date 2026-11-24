@@ -15,6 +15,8 @@ import {
   eventGuestPatch,
   eventImportInput,
   factInput,
+  FOUNDER_STATUSES,
+  founderApplicationPatch,
   followUpInput,
   followUpPatch,
   FUND_STATUSES,
@@ -198,7 +200,7 @@ function contentSummary(resource: ContentResource, row: Record<string, unknown>)
   const spec = RESOURCE_SPECS[resource]
   const summary: Record<string, unknown> = { id: row.id, [spec.titleKey]: row[spec.titleKey] }
   for (const key of spec.summaryKeys) summary[key] = row[key]
-  for (const key of ['date', 'starts', 'published', 'placeholder', 'filled', 'rsvpCount']) if (key in row) summary[key] = row[key]
+  for (const key of ['date', 'starts', 'published', 'placeholder', 'filled', 'inviteOnly', 'rsvpCount']) if (key in row) summary[key] = row[key]
   return summary
 }
 
@@ -207,7 +209,8 @@ const CONTENT: readonly { resource: ContentResource; one: string; gate: string; 
     resource: 'events',
     one: 'event',
     gate: 'Needs Community.',
-    notes: 'Dates are yyyy-mm-dd; `time` is free text like "6:30–8:30 PM". Event pages live at their title, so two events can’t share one.',
+    notes:
+      'Dates are yyyy-mm-dd; `time` is free text like "6:30–8:30 PM". Event pages live at their title, so two events can’t share one. inviteOnly: true is for Founders Circle members and people we invite: it stays on the calendar but takes no RSVPs; add the people coming with add_event_guest (members too).',
   },
   { resource: 'hackathons', one: 'hackathon', gate: 'Needs Community.', notes: 'starts, ends and applyBy are yyyy-mm-dd; ends can’t be before starts.' },
   { resource: 'wins', one: 'win', gate: 'Needs Scouting.', notes: 'A hackathon result by a BU team. `position` orders the list (lower first). Win pages live at the project name.' },
@@ -270,14 +273,16 @@ const SPECS: ToolSpec[] = [
   {
     name: 'get_stats',
     title: 'Stats',
-    description: 'Headline counts: members (and this week’s), upcoming events and RSVPs, fund requests, role applications, unread email, wins, what’s waiting, follow-ups due.',
+    description:
+      'Headline counts: members (and this week’s), upcoming events and RSVPs, fund requests, role applications, Founders Circle applications, unread email, wins, what’s waiting, follow-ups due.',
     kind: 'read',
     run: (_args, api) => api.get('/api/admin/stats'),
   },
   {
     name: 'list_queue',
     title: 'Inbox queue',
-    description: 'Everything waiting on the team in one list: email conversations, sign-ups, fund requests, role applications and board interest. Each item has its source, id, who, what, and whether it still needs someone.',
+    description:
+      'Everything waiting on the team in one list: email conversations, sign-ups, fund requests, role applications, Founders Circle applications ("founder") and board interest. Each item has its source, id, who, what, and whether it still needs someone.',
     input: z.object({
       source: z.enum(QUEUE_SOURCES).optional().describe('Only this kind.'),
       waitingOnly: z.boolean().optional().describe('Only what still needs someone.'),
@@ -288,7 +293,8 @@ const SPECS: ToolSpec[] = [
   {
     name: 'mark_queue_item_reviewed',
     title: 'Mark reviewed',
-    description: 'Mark a sign-up ("signup") or board interest ("board") as seen, or back to waiting with waiting: true. Email, fund requests and applications have statuses of their own: change those instead.',
+    description:
+      'Mark a sign-up ("signup") or board interest ("board") as seen, or back to waiting with waiting: true. Email, fund requests and both kinds of application have statuses of their own: change those instead.',
     input: z.object({ source: z.enum(['signup', 'board']), id: idSchema, waiting: z.boolean().optional() }),
     kind: 'write',
     run: (args, api) => api.send('POST', `/api/admin/queue/${oneOf(args, 'source', ['signup', 'board'])}/${idArg(args)}/review`, { waiting: args.waiting === true }),
@@ -637,7 +643,8 @@ const SPECS: ToolSpec[] = [
   {
     name: 'add_event_guest',
     title: 'Add event guest',
-    description: 'Invite a contact to an event as a speaker, judge, sponsor, host, moderator or guest. Records it; sends nothing. Needs Community.',
+    description:
+      'Invite a contact to an event as a speaker, judge, sponsor, host, moderator or guest. A member can only be a guest at an invite-only event (other events take their RSVPs). Records it; sends nothing. Needs Community.',
     input: z.object({ eventId: idSchema }).extend(eventGuestInput.shape),
     kind: 'write',
     run: (args, api) => api.send('POST', `/api/admin/events/${idArg(args, 'eventId')}/guests`, bodyOf(args, 'eventId')),
@@ -659,7 +666,7 @@ const SPECS: ToolSpec[] = [
     run: (args, api) => api.send('DELETE', `/api/admin/events/${idArg(args, 'eventId')}/guests/${idArg(args, 'guestId')}`),
   },
 
-  // Fund, applications, board interest
+  // Fund, applications, Founders Circle, board interest
   {
     name: 'list_fund_requests',
     title: 'Fund requests',
@@ -714,6 +721,22 @@ const SPECS: ToolSpec[] = [
     input: z.object({ id: idSchema }),
     kind: 'destructive',
     run: (args, api) => api.send('DELETE', `/api/admin/applications/${idArg(args)}`),
+  },
+  {
+    name: 'list_founder_applications',
+    title: 'Founders Circle applications',
+    description: `Applications to the Founders Circle, newest first: the company, its stage, what they're building and have done lately, status (${FOUNDER_STATUSES.join(', ')}), the interview day and notes.`,
+    kind: 'read',
+    run: (_args, api) => api.get('/api/admin/founders'),
+  },
+  {
+    name: 'update_founder_application',
+    title: 'Update Founders Circle application',
+    description:
+      "Set a Founders Circle application's status, private notes or interview day (yyyy-mm-dd, or null to clear it). The applicant isn't told: someone has to write to them. Owners and admins only.",
+    input: withId(founderApplicationPatch),
+    kind: 'write',
+    run: (args, api) => api.send('PATCH', `/api/admin/founders/${idArg(args)}`, bodyOf(args, 'id')),
   },
   {
     name: 'list_board_interest',
