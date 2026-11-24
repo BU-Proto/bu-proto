@@ -192,14 +192,39 @@
 /* ---- Apply ------------------------------------------------------------------------------------ */
 
 .apply {
-  grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
-  align-items: start;
-  gap: 32px clamp(32px, 6vw, 96px);
+  gap: 28px;
 }
 
+/* The title and two lines, then the button that unfolds the form. */
 .applyHead {
   display: grid;
+  justify-items: start;
   gap: 12px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* A small chevron that turns as the form opens. */
+.chevron {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  rotate: 45deg;
+  translate: 0 -2px;
+  transition:
+    rotate 220ms ease,
+    translate 220ms ease;
+}
+
+.chevron[data-open] {
+  rotate: -135deg;
+  translate: 0 2px;
 }
 
 .line {
@@ -218,6 +243,25 @@
   display: grid;
   gap: 18px;
   align-content: start;
+  max-width: 820px;
+}
+
+/* Folded away: the class's grid would otherwise override the hidden attribute. */
+.formWrap[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .formWrap:not([hidden]) {
+    animation: unfold 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    translate: 0 -10px;
+  }
 }
 
 .form {
@@ -256,10 +300,6 @@
   .figure:nth-child(n + 3),
   .perk:nth-child(n + 3) {
     border-top: 1px solid var(--rule);
-  }
-
-  .apply {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

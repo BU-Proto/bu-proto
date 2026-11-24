@@ -65,6 +65,8 @@ export const FOUNDERS_FORM = {
     "If it looks like a fit, we'll set up a short call.",
   ],
   open: { text: 'Everything else at Proto stays open to everyone.', link: { label: "See what's on", href: '/events' } },
+  /** The application stays folded away until someone asks for it. */
+  toggle: { open: 'Start your application', close: 'Hide the application' },
   submit: 'Send my application',
   thanks: {
     title: 'Got it, thank you',

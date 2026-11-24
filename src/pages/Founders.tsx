@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useLoaderData } from 'react-router'
 import type { Win } from '../../shared/api'
 import { Field, Form } from '../components/Form'
@@ -17,6 +18,7 @@ import {
 } from '../content/founders'
 import { api } from '../lib/api'
 import { winPath } from '../lib/paths'
+import { reducedMotion } from '../lib/useInView'
 import { tallyWins } from '../lib/wins'
 import { FOUNDER_COMMITMENTS, FOUNDER_STAGES } from '../../shared/constants'
 import styles from './Founders.module.css'
@@ -63,14 +65,32 @@ function Numbers({ wins, startups }: { wins: readonly Win[]; startups: number })
   )
 }
 
+/** Arriving at /founders#apply, the application starts open. */
+const arrivedToApply = () => typeof window !== 'undefined' && window.location.hash === '#apply'
+
 /**
  * The Founders Circle: the one part of Proto people apply to. It says as little as it can: the
- * numbers, what members get, a few of our startups, and the form with a line on who it's for.
+ * numbers, what members get, a few of our startups, and the form with a line on who it's for. The
+ * form stays folded away until someone asks for it, so the page stays short for everyone else.
+ * Once opened it stays mounted when folded again, so nothing typed is lost.
  */
 export function Founders() {
   const wins = useLoaderData<Win[]>().filter((win) => !win.placeholder)
   const startups = startupsFrom(wins)
   const { fields } = FOUNDERS_FORM
+  const [applying, setApplying] = useState(arrivedToApply)
+  const [opened, setOpened] = useState(arrivedToApply)
+  const toggle = (open: boolean) => {
+    setApplying(open)
+    if (open) setOpened(true)
+  }
+  /** The button at the top: open the application and bring it into view. */
+  const startApplying = () => {
+    toggle(true)
+    requestAnimationFrame(() =>
+      document.getElementById('apply')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' }),
+    )
+  }
 
   return (
     <div className={styles.page}>
@@ -79,9 +99,9 @@ export function Founders() {
           {FOUNDERS_HEAD.badge}
         </p>
         <div className={styles.headActions} data-fog-clear="box">
-          <a className={ui.primary} href="#apply">
+          <button type="button" className={ui.primary} onClick={startApplying}>
             {FOUNDERS_HEAD.apply}
-          </a>
+          </button>
         </div>
       </PageIntro>
 
@@ -141,60 +161,72 @@ export function Founders() {
               {FOUNDERS_FORM.open.link.label}
             </Link>
           </p>
+          <button
+            type="button"
+            className={`${applying ? ui.secondary : ui.primary} ${styles.toggle}`}
+            aria-expanded={applying}
+            aria-controls={opened ? 'apply-form' : undefined}
+            onClick={() => toggle(!applying)}
+          >
+            {applying ? FOUNDERS_FORM.toggle.close : FOUNDERS_FORM.toggle.open}
+            <span className={styles.chevron} data-open={applying || undefined} aria-hidden="true" />
+          </button>
         </header>
 
-        <div className={`${ui.panel} ${styles.formWrap}`}>
-          <Form
-            className={styles.form}
-            submitLabel={FOUNDERS_FORM.submit}
-            thanks={FOUNDERS_FORM.thanks}
-            turnstile="founders-apply"
-            onSubmit={(values) => api<{ ok: true }>('/founders/apply', { body: values })}
-          >
-            <Field label={fields.name.label}>
-              <input className={inputClass} name="name" autoComplete="name" maxLength={80} required />
-            </Field>
-            <Field label={fields.email.label}>
-              <input
-                className={inputClass}
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder={fields.email.placeholder}
-                maxLength={254}
-                required
-              />
-            </Field>
-            <Field label={fields.company.label}>
-              <input className={inputClass} name="company" autoComplete="organization" maxLength={120} required />
-            </Field>
-            <Field label={fields.school.label} hint={fields.school.hint}>
-              <input className={inputClass} name="school" maxLength={120} />
-            </Field>
-            <Field label={fields.stage.label}>
-              <Select name="stage" options={FOUNDER_STAGES} placeholder={fields.stage.placeholder} required />
-            </Field>
-            <Field label={fields.commitment.label}>
-              <Select name="commitment" options={FOUNDER_COMMITMENTS} placeholder={fields.commitment.placeholder} required />
-            </Field>
-            <Field label={fields.link.label} hint={fields.link.hint} wide>
-              <input className={inputClass} name="link" inputMode="url" placeholder={fields.link.placeholder} maxLength={300} />
-            </Field>
-            <Field label={fields.building.label} wide>
-              <textarea className={inputClass} name="building" maxLength={1000} rows={4} required />
-            </Field>
-            <Field label={fields.progress.label} hint={fields.progress.hint} wide>
-              <textarea className={inputClass} name="progress" maxLength={1000} rows={4} required />
-            </Field>
-            <Field label={fields.team.label} hint={fields.team.hint} wide>
-              <textarea className={inputClass} name="team" maxLength={500} rows={2} />
-            </Field>
-            <Field label={fields.help.label} hint={fields.help.hint} wide>
-              <textarea className={inputClass} name="help" maxLength={600} rows={2} />
-            </Field>
-          </Form>
-          <PrivacyNote className={styles.privacy} text={FOUNDERS_FORM.privacy} />
-        </div>
+        {opened && (
+          <div id="apply-form" className={`${ui.panel} ${styles.formWrap}`} hidden={!applying}>
+            <Form
+              className={styles.form}
+              submitLabel={FOUNDERS_FORM.submit}
+              thanks={FOUNDERS_FORM.thanks}
+              turnstile="founders-apply"
+              onSubmit={(values) => api<{ ok: true }>('/founders/apply', { body: values })}
+            >
+              <Field label={fields.name.label}>
+                <input className={inputClass} name="name" autoComplete="name" maxLength={80} required />
+              </Field>
+              <Field label={fields.email.label}>
+                <input
+                  className={inputClass}
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder={fields.email.placeholder}
+                  maxLength={254}
+                  required
+                />
+              </Field>
+              <Field label={fields.company.label}>
+                <input className={inputClass} name="company" autoComplete="organization" maxLength={120} required />
+              </Field>
+              <Field label={fields.school.label} hint={fields.school.hint}>
+                <input className={inputClass} name="school" maxLength={120} />
+              </Field>
+              <Field label={fields.stage.label}>
+                <Select name="stage" options={FOUNDER_STAGES} placeholder={fields.stage.placeholder} required />
+              </Field>
+              <Field label={fields.commitment.label}>
+                <Select name="commitment" options={FOUNDER_COMMITMENTS} placeholder={fields.commitment.placeholder} required />
+              </Field>
+              <Field label={fields.link.label} hint={fields.link.hint} wide>
+                <input className={inputClass} name="link" inputMode="url" placeholder={fields.link.placeholder} maxLength={300} />
+              </Field>
+              <Field label={fields.building.label} wide>
+                <textarea className={inputClass} name="building" maxLength={1000} rows={4} required />
+              </Field>
+              <Field label={fields.progress.label} hint={fields.progress.hint} wide>
+                <textarea className={inputClass} name="progress" maxLength={1000} rows={4} required />
+              </Field>
+              <Field label={fields.team.label} hint={fields.team.hint} wide>
+                <textarea className={inputClass} name="team" maxLength={500} rows={2} />
+              </Field>
+              <Field label={fields.help.label} hint={fields.help.hint} wide>
+                <textarea className={inputClass} name="help" maxLength={600} rows={2} />
+              </Field>
+            </Form>
+            <PrivacyNote className={styles.privacy} text={FOUNDERS_FORM.privacy} />
+          </div>
+        )}
       </section>
     </div>
   )
