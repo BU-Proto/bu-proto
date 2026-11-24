@@ -49,7 +49,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     inPill: true,
     children: [
       { label: 'Hackathons', to: '/hackathons', line: 'Where we\'re going next, and when to apply' },
-      { label: 'Wins', to: '/wins', line: 'What our teams built and took home' },
+      { label: 'Wins', to: '/wins', line: 'Prizes, launches and first customers' },
       { label: 'The playbook', to: '/resources/playbook', line: 'Our guides to hackathons, start to finish' },
       { label: 'Grants', to: '/grants', line: 'A travel fund for hackathons, coming soon' },
     ],
@@ -59,6 +59,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: '/resources',
     inPill: true,
     children: [
+      { label: 'Around Boston', to: '/resources#boston-wide', line: 'Founder events open to anyone in the city' },
       { label: 'Spark!', to: '/resources/spark', line: 'BU\'s lab for building things, with mentors' },
       { label: 'Innovate@BU', to: '/resources/innovate', line: 'Funding and mentors to launch a venture' },
     ],

@@ -7,14 +7,28 @@ import type { Hue, PageIntro } from './types'
 export const EVENTS_INTRO: PageIntro = {
   path: '~/proto/events',
   title: 'Events',
-  lede: 'Talks, workshops, prep nights and demo nights at BU. Everything is open to every track.',
+  lede: 'Firesides with founders and investors, a build night every week and a demo night each semester. Every event is open to everyone, from any school.',
 }
 
-/** The weekly beat beside the intro. No day or time: hack night's slot isn't booked yet. */
-export const HACK_NIGHT = {
-  title: 'Hack night is every week',
-  text: 'Open to everyone, with food. Bring something you’re building, or find a team there.',
+/** The weekly beat beside the intro. No day or time: build night's slot isn't booked yet. */
+export const BUILD_NIGHT = {
+  title: 'Build night is every week',
+  text: "Open to everyone, with food. Bring what you're building, or find people to build with.",
   next: 'The next one is',
+} as const
+
+/**
+ * Firesides on the events page: a founder or investor and an hour of questions. The ones in the
+ * calendar so far are filed as panels with "Fireside" in the title, and count too.
+ */
+export const FIRESIDES = {
+  id: 'firesides',
+  title: 'Firesides',
+  lede: 'A founder or investor talks about how companies get built, then takes questions from people building their own.',
+  upcoming: 'Coming up',
+  past: 'Past',
+  empty: 'The next fireside is being booked now. Join Proto and we\'ll email you when it is.',
+  join: { label: 'Join Proto', href: '/join' },
 } as const
 
 /** The next event, set large at the top of the page. */
@@ -30,7 +44,7 @@ export const EVENTS_LATER = 'Also coming up'
 export const EVENT_LEDGER = {
   title: 'Events',
   words: ['Meet', 'Build', 'Ship', 'Demo', 'Repeat'],
-  empty: 'This semester’s nights are being planned now.',
+  empty: "This semester's nights are being planned now.",
 } as const
 
 /**
@@ -38,6 +52,9 @@ export const EVENT_LEDGER = {
  * sky, the month's one-offs iris (as the hackathon trips are), the semester's demo night rose.
  */
 export const KIND_HUE: Record<EventKind, Hue> = {
+  'Build night': 'sky',
+  Social: 'sky',
+  Fireside: 'iris',
   'Hack night': 'sky',
   'Why hackathons': 'iris',
   'Prep night': 'iris',
@@ -46,12 +63,22 @@ export const KIND_HUE: Record<EventKind, Hue> = {
   'Demo night': 'rose',
 }
 
+/**
+ * The kinds that are a group's own night. Everyone else is welcome too, and the page says so
+ * ("CS group, everyone welcome"); every other kind is for the whole community.
+ */
+export const KIND_GROUP: Partial<Record<EventKind, string>> = {
+  'Hack night': 'CS',
+  'Why hackathons': 'CS',
+  'Prep night': 'CS',
+}
+
 /** Nothing scheduled: say what's coming and how to hear about it first. */
 export const EVENTS_EMPTY = {
   title: 'Nothing on the calendar yet',
-  text: 'This semester’s hack nights, talks and demo night are being planned now. Join Proto and we’ll email you before the first one.',
+  text: "This semester's build nights, firesides and demo night are being planned now. Join Proto and we'll email you before the first one.",
   join: { label: 'Join Proto', href: '/join' },
-  hackathons: { label: 'See upcoming hackathons', href: '/hackathons' },
+  more: { label: 'What Proto does', href: '/about#offer' },
 } as const
 
 export const RSVP = {

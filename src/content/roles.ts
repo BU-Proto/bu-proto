@@ -21,7 +21,7 @@ export const ROLES_LIST = {
 
 export const ROLES_EMPTY = {
   title: 'Every role is taken for now',
-  text: 'Nothing’s open at the moment. Join the list and you’ll hear when something is, or come to a hack night and tell us what you’d like to run.',
+  text: "Nothing's open at the moment. Join the list and you'll hear when something is, or come to a build night and tell us what you'd like to run.",
   join: { label: 'Join Proto', href: '/join' },
   events: { label: 'See what’s on', href: '/events' },
 } as const

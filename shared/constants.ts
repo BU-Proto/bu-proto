@@ -4,10 +4,18 @@
 export const CONTENT_RESOURCES = ['events', 'hackathons', 'wins', 'board', 'roles'] as const
 export type ContentResource = (typeof CONTENT_RESOURCES)[number]
 
-export const EVENT_KINDS = ['Hack night', 'Why hackathons', 'Prep night', 'Panel', 'Workshop', 'Demo night'] as const
+/**
+ * Every kind of event, the community's own first. Hack night, Why hackathons and Prep night are
+ * the CS group's (content/events.ts says so on the page); everyone is welcome at all of them.
+ */
+export const EVENT_KINDS = ['Build night', 'Fireside', 'Social', 'Demo night', 'Workshop', 'Panel', 'Hack night', 'Why hackathons', 'Prep night'] as const
 export type EventKind = (typeof EVENT_KINDS)[number]
 
-export const YEARS = ['First year', 'Second year', 'Third year', 'Fourth year', 'Grad student', 'Other'] as const
+export const YEARS = ['First year', 'Second year', 'Third year', 'Fourth year', 'Grad student', 'Not a student', 'Other'] as const
+
+/** What a member builds from: the groups Proto has or plans, and the rest. */
+export const FIELDS = ['Business', 'Engineering', 'Computer science', 'Design', 'Science', 'Something else'] as const
+export type Field = (typeof FIELDS)[number]
 export const TRACKS = ['Start', 'Build', 'Launch', 'Not sure yet'] as const
 export type Track = (typeof TRACKS)[number]
 

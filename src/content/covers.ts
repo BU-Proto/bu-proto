@@ -27,7 +27,8 @@ const CDS: CoverPhoto = {
 /** A cover at thumbnail size: Commons serves a 500px copy beside the 1920px one. */
 export const coverThumb = (src: string) => src.replace('/1920px-', '/500px-')
 
-export const EVENT_COVERS: Record<EventKind, CoverPhoto> = {
+const BASE_COVERS: Record<Exclude<EventKind, 'Fireside' | 'Social'>, CoverPhoto> = {
+  'Build night': CDS,
   'Hack night': CDS,
   'Demo night': {
     src: commons('6/60', '2023-0323-Boston_University_Center_of_Computing_and_Data_Science.jpg'),
@@ -64,6 +65,13 @@ export const EVENT_COVERS: Record<EventKind, CoverPhoto> = {
     license: 'CC BY-SA 3.0',
     source: 'https://commons.wikimedia.org/wiki/File:Sunset_and_Photonics_Center.JPG',
   },
+}
+
+/** Firesides share the panel's photo, socials the workshop's. */
+export const EVENT_COVERS: Record<EventKind, CoverPhoto> = {
+  ...BASE_COVERS,
+  Fireside: BASE_COVERS.Panel,
+  Social: BASE_COVERS.Workshop,
 }
 
 /** For hackathons without a cover: the BU Bridge, where every trip out of Boston starts. */

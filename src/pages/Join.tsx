@@ -6,7 +6,7 @@ import { Select } from '../components/Select'
 import ui from '../components/ui.module.css'
 import { JOIN_FORM, JOIN_INTRO, JOIN_THANKS, PERKS } from '../content/join'
 import { api } from '../lib/api'
-import { TRACKS, YEARS } from '../../shared/constants'
+import { FIELDS, TRACKS, YEARS } from '../../shared/constants'
 import styles from './Join.module.css'
 
 export function Join() {
@@ -57,11 +57,20 @@ export function Join() {
                   required
                 />
               </Field>
+              <Field label={JOIN_FORM.school.label} hint={JOIN_FORM.school.hint} wide>
+                <input className={inputClass} name="school" autoComplete="organization" maxLength={120} placeholder={JOIN_FORM.school.placeholder} />
+              </Field>
+              <Field label={JOIN_FORM.field}>
+                <Select name="field" options={FIELDS} required />
+              </Field>
               <Field label="Year">
                 <Select name="year" options={YEARS} required />
               </Field>
-              <Field label="Track">
+              <Field label="Track" hint={JOIN_FORM.trackHint} wide>
                 <Select name="track" options={TRACKS} required />
+              </Field>
+              <Field label={JOIN_FORM.building.label} hint={JOIN_FORM.building.hint} wide>
+                <textarea className={inputClass} name="building" maxLength={500} rows={3} placeholder={JOIN_FORM.building.placeholder} />
               </Field>
             </Form>
             <PrivacyNote text={JOIN_FORM.privacy} className={styles.privacy} />

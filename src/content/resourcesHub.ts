@@ -1,7 +1,11 @@
 // The resources hub at /resources, and a page each for the BU programs it points to.
 //
-// The hub stays short: a card each for the playbook, Spark! and Innovate@BU, and nothing else.
-// The detail lives on each program's own page (/resources/spark, /resources/innovate).
+// The hub is for founders anywhere in Boston: first what's open to anyone in the city, then what's
+// there for students at each school (BU's two programs with pages of their own, at
+// /resources/spark and /resources/innovate), then the CS group's hackathon playbook.
+//
+// BOSTON_WIDE and AT_SCHOOLS describe other people's programs: every line was checked against the
+// source linked beside it in CHECKED, and says no more than that source does.
 //
 // Spark! and Innovate@BU are BU's, not ours, and nothing is official with either yet, so these
 // pages describe them and point at them, never speak for them. Every fact about them below was
@@ -21,8 +25,85 @@ export const HUB_PATH = '/resources'
 export const HUB_INTRO: PageIntro = {
   path: '~/proto/resources',
   title: 'Resources',
-  lede: 'Our playbook for hackathons, and the two places at BU we send people when a project needs more.',
+  lede: "Where founders in Boston go to meet people, pitch and get help, whatever they're building. What's open to anyone comes first, then what your school runs.",
 }
+
+/** Someone else's program or event, described from its own page. */
+export interface OutsideLink {
+  name: string
+  /** Who runs it, or whose students it's for. */
+  who: string
+  text: string
+  href: string
+}
+
+/** Open to anyone in Boston, student or not. */
+export const BOSTON_WIDE: readonly OutsideLink[] = [
+  {
+    name: 'Thursday Gathering',
+    who: 'Venture Café Cambridge',
+    text: 'A free evening at CIC Cambridge, 1 Broadway, every Thursday. Founders and investors come to meet, and it takes talks and pitches from the community.',
+    href: 'https://venturecafecambridge.org/programs/thursday-gathering/',
+  },
+  {
+    name: 'Precision Pitch Practice',
+    who: 'Boston New Technology',
+    text: 'Pitch your startup online and get feedback, with no scores and no competition. Its meetup also runs events where startups show what they make.',
+    href: 'https://www.meetup.com/boston_new_technology/',
+  },
+  {
+    name: 'Boston Tech Week',
+    who: 'Across the city',
+    text: 'A week of tech and startup events all over Boston. The first ran May 26 to 31, 2026; next year\'s dates aren\'t out yet.',
+    href: 'https://professional.mit.edu/events/boston-tech-week',
+  },
+  {
+    name: 'The Boston Tech Scene',
+    who: 'A Luma calendar',
+    text: 'Founder and tech events across Boston on one calendar, run by their organizers. Luma Boston lists more.',
+    href: 'https://luma.com/thebostontechscene',
+  },
+]
+
+/** Programs for students at one school. BU's two have pages of their own (ORGS). */
+export const AT_SCHOOLS: readonly OutsideLink[] = [
+  {
+    name: 'Student i-lab',
+    who: 'Harvard',
+    text: 'Open to degree-seeking students from all 13 Harvard schools.',
+    href: 'https://innovationlabs.harvard.edu/labs/student-i-lab',
+  },
+  {
+    name: 'Sandbox',
+    who: 'MIT',
+    text: 'Funding of up to $25,000 for MIT student teams, without taking a stake.',
+    href: 'https://sandbox.mit.edu/',
+  },
+  {
+    name: 'IDEA',
+    who: 'Northeastern',
+    text: "Northeastern's venture accelerator, run by students.",
+    href: 'https://ideaneu.com/',
+  },
+  {
+    name: 'Blank Center',
+    who: 'Babson',
+    text: 'Runs Rocket Pitch and the B.E.T.A. Challenge for Babson founders.',
+    href: 'https://www.babson.edu/entrepreneurship-center',
+  },
+  {
+    name: 'Derby Entrepreneurship Center',
+    who: 'Tufts',
+    text: 'A speaker series and Innovation Month.',
+    href: 'https://derbyecenter.tufts.edu/programs/',
+  },
+  {
+    name: 'Shea Center',
+    who: 'Boston College',
+    text: 'An Entrepreneurship Summit each October.',
+    href: 'https://www.bc.edu/bc-web/schools/carroll-school/sites/shea-center/flagship-events.html',
+  },
+]
 
 export type OrgId = 'spark' | 'innovate'
 
@@ -391,9 +472,9 @@ export interface HubCard {
 }
 
 export const PLAYBOOK_CARD: HubCard = {
-  kicker: 'Ours',
+  kicker: 'The CS group',
   title: 'The playbook',
-  line: 'Everything we wish we’d known before our first hackathon, written down.',
+  line: "Our guides to hackathons, start to finish: what we wish we'd known before our first one.",
   href: PLAYBOOK_HREF,
 }
 
@@ -401,7 +482,11 @@ export const HUB_COPY = {
   cardsLabel: 'Resources',
   atBu: 'At BU',
   open: 'Open',
-  note: `Spark! and Innovate@BU are run by BU, not by us, and nothing is official with either yet.`,
+  boston: { title: 'Open to anyone in Boston', line: 'No school needed. Go on your own or come with us.' },
+  schools: { title: 'At your school', line: 'For students at that school. BU first, since that\'s where Proto started.' },
+  cs: { title: 'From the CS group', line: 'Hackathons have their own guide.' },
+  visit: 'Their site',
+  note: `All of these are run by others, not by us, and nothing is official with any of them yet. Checked against their own pages in ${CHECKED}; dates change, so check theirs before you go.`,
 } as const
 
 /** Copy around a program's page. */

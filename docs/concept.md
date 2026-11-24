@@ -32,7 +32,7 @@ The tracks are stages, not groups, and anyone in any group can be on any of them
 
 - Weekly: build night (was hack night). Open to anyone, with food. Bring what you're working on or come to meet people who are. Room and time not booked yet.
 - About monthly: a fireside. A founder or investor talks about how companies get built, then takes questions from people building their own.
-- About monthly: a hackathon trip, with the CS group (everyone welcome).
+- About monthly: a group night, one group's own (CS now, with its hack nights and hackathon trips; business and engineering soon). Everyone else is welcome.
 - Each semester: demo night. Anyone can show anything, finished or not.
 - Later: our own hackathon (CS), and nights for Business and Engineering.
 
@@ -56,6 +56,4 @@ We're the community layer that feeds BU's programs (Spark!, Innovate@BU), not a 
 
 ## Not settled yet
 
-- The join form only accepts @bu.edu addresses, so people from other schools can't sign up yet.
-- Events have no group field. A group's night can't be tagged in the portal yet, so the "CS group, everyone welcome" line is in the home page copy only. Event kinds still say "Hack night", and the firesides are filed as "Panel".
-- The about, join, events, hackathons and other inner pages still use the old wording. They change once this positioning is agreed.
+- The two firesides in production are filed as "Panel". Once this branch is live, refile them as "Fireside" in the portal so they show in the firesides section by kind.

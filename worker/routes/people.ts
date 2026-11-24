@@ -30,8 +30,11 @@ interface MemberRow {
   id: number
   name: string
   email: string
+  school: string
+  field: string
   year: string
   track: string
+  building: string
   notes: string
   unsubscribed: number
   created_at: string
@@ -63,15 +66,18 @@ interface RsvpRow {
 }
 
 // Listed explicitly so unsubscribe_token never leaves the database.
-const MEMBER_COLUMNS = 'id, name, email, year, track, notes, unsubscribed, created_at, updated_at'
+const MEMBER_COLUMNS = 'id, name, email, school, field, year, track, building, notes, unsubscribed, created_at, updated_at'
 const FUND_COLUMNS = 'id, name, email, year, target, spend, amount, status, notes, created_at, updated_at'
 
 const toMember = (row: MemberRow): Member => ({
   id: row.id,
   name: row.name,
   email: row.email,
+  school: row.school,
+  field: row.field,
   year: row.year,
   track: row.track,
+  building: row.building,
   notes: row.notes,
   unsubscribed: row.unsubscribed === 1,
   createdAt: row.created_at,

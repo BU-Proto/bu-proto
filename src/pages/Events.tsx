@@ -1,25 +1,28 @@
 import { Link, useLoaderData } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
+import { Firesides } from '../components/Firesides'
 import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { coverThumb, EVENT_COVERS, type CoverPhoto } from '../content/covers'
-import { EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, HACK_NIGHT, KIND_HUE, NEXT_EVENT } from '../content/events'
+import { BUILD_NIGHT, EVENTS_EMPTY, EVENTS_INTRO, EVENTS_LATER, KIND_GROUP, KIND_HUE, NEXT_EVENT } from '../content/events'
+import { groupInvite } from '../content/site'
 import { dateParts, daysUntil, formatMonth } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useRsvp } from '../lib/useRsvp'
 import styles from './Events.module.css'
 import { eventPath } from '../lib/paths'
 
-const HACK_NIGHT_COVER = EVENT_COVERS['Hack night']
+const BUILD_NIGHT_COVER = EVENT_COVERS['Build night']
 
 /** The BU building an event without a photo of its own opens with, matched to its kind. */
-const stockCover = (event: ProtoEvent) => EVENT_COVERS[event.kind] ?? HACK_NIGHT_COVER
+const stockCover = (event: ProtoEvent) => EVENT_COVERS[event.kind] ?? BUILD_NIGHT_COVER
 
 /**
- * What's coming up: the next event set large with its photo, then the rest as one ruled list
- * grouped by month. Past events are left off; each event's own page links to its neighbours.
+ * What's coming up: the next event set large with its photo, the firesides (coming up and past),
+ * then the rest as one ruled list grouped by month. Other past events are left off; each event's
+ * own page links to its neighbours.
  */
 export function Events() {
   const events = useLoaderData<ProtoEvent[]>()
@@ -27,7 +30,7 @@ export function Events() {
     .filter((event) => daysUntil(event.date) >= 0)
     .sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id)
   const [next, ...later] = upcoming
-  const nextHackNight = upcoming.find((event) => event.kind === 'Hack night')
+  const nextBuildNight = upcoming.find((event) => event.kind === 'Build night')
 
   const months = new Map<string, ProtoEvent[]>()
   for (const event of later) {
@@ -39,13 +42,15 @@ export function Events() {
 
   return (
     <div className={`${ui.page} ${styles.page}`}>
-      {/* The intro and hack night's note side by side: the ground drains in under both. */}
+      {/* The intro and build night's note side by side: the ground drains in under both. */}
       <div className={styles.head} data-ground-after="">
         <PageIntro intro={EVENTS_INTRO} groundAfter={false} />
-        <HackNight next={nextHackNight} />
+        <BuildNight next={nextBuildNight} />
       </div>
 
       {next ? <NextEvent key={next.id} event={next} /> : <Empty />}
+
+      <Firesides events={events} />
 
       {months.size > 0 && (
         <section className={styles.later} aria-labelledby="later">
@@ -87,20 +92,20 @@ export function Events() {
   )
 }
 
-/** The weekly beat, beside the intro. It names the next hack night only when one is on the list. */
-function HackNight({ next }: { next: ProtoEvent | undefined }) {
+/** The weekly beat, beside the intro. It names the next build night only when one is on the list. */
+function BuildNight({ next }: { next: ProtoEvent | undefined }) {
   const date = next && dateParts(next.date)
   return (
-    <aside className={styles.rhythm} data-hue={KIND_HUE['Hack night']} aria-label={HACK_NIGHT.title}>
+    <aside className={styles.rhythm} data-hue={KIND_HUE['Build night']} aria-label={BUILD_NIGHT.title}>
       <p className={styles.rhythmTitle} data-fog-clear>
-        {HACK_NIGHT.title}
+        {BUILD_NIGHT.title}
       </p>
       <p className={styles.rhythmText} data-fog-clear>
-        {HACK_NIGHT.text}
+        {BUILD_NIGHT.text}
       </p>
       {next && date && (
         <p className={styles.rhythmText} data-fog-clear>
-          {HACK_NIGHT.next}{' '}
+          {BUILD_NIGHT.next}{' '}
           <Link className={ui.textLink} to={eventPath(next)}>
             {date.weekdayLong}, {date.monthLong} {date.day}
           </Link>
@@ -160,6 +165,7 @@ function NextEvent({ event }: { event: ProtoEvent }) {
           <span>{event.time}</span>
           <span className={styles.place}>{event.place}</span>
         </p>
+        <GroupLine event={event} />
         {event.text && <p className={styles.leadText}>{event.text}</p>}
 
         <div className={styles.actions}>
@@ -175,11 +181,11 @@ function NextEvent({ event }: { event: ProtoEvent }) {
   )
 }
 
-/** Nothing scheduled: the same frame as the lead, with hack night's room and a way to hear first. */
+/** Nothing scheduled: the same frame as the lead, with build night's room and a way to hear first. */
 function Empty() {
   return (
     <section className={styles.lead} aria-labelledby="no-events">
-      <Cover src={HACK_NIGHT_COVER.src} alt={HACK_NIGHT_COVER.alt} credit={HACK_NIGHT_COVER} />
+      <Cover src={BUILD_NIGHT_COVER.src} alt={BUILD_NIGHT_COVER.alt} credit={BUILD_NIGHT_COVER} />
       <div className={`${styles.leadBody} ${styles.emptyBody}`}>
         <h2 id="no-events" className={styles.emptyTitle}>
           {EVENTS_EMPTY.title}
@@ -189,12 +195,23 @@ function Empty() {
           <Link className={ui.primary} to={EVENTS_EMPTY.join.href}>
             {EVENTS_EMPTY.join.label}
           </Link>
-          <Link className={ui.textLink} to={EVENTS_EMPTY.hackathons.href}>
-            {EVENTS_EMPTY.hackathons.label}
+          <Link className={ui.textLink} to={EVENTS_EMPTY.more.href}>
+            {EVENTS_EMPTY.more.label}
           </Link>
         </div>
       </div>
     </section>
+  )
+}
+
+/** A group's own night says whose it is, and that everyone else is welcome. Nothing for the rest. */
+function GroupLine({ event }: { event: ProtoEvent }) {
+  const group = KIND_GROUP[event.kind]
+  if (!group) return null
+  return (
+    <p className={styles.group} data-fog-clear>
+      {groupInvite(group)}
+    </p>
   )
 }
 
@@ -228,6 +245,7 @@ function EventRow({ event }: { event: ProtoEvent }) {
           <span>{event.time}</span>
           <span className={styles.place}>{event.place}</span>
         </p>
+        <GroupLine event={event} />
         {event.text && (
           <p className={styles.text} data-fog-clear>
             {event.text}

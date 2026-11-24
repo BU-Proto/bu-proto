@@ -8,7 +8,7 @@ import type { PageIntro } from './types'
 export const BOARD_INTRO: PageIntro = {
   path: '~/proto/board',
   title: 'The board',
-  lede: 'Proto is run by BU students who build things themselves. They plan the hack nights, book the trips and find the sponsors, and they read every message.',
+  lede: 'Proto is run by BU students who build things themselves, for builders from any school in Boston. They plan the build nights and firesides, and they read every message.',
 }
 
 export const BOARD_CONTACT = {

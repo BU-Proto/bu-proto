@@ -10,10 +10,10 @@ import styles from './WinTally.module.css'
 const plural = (count: number, one: string, many: string) => (count === 1 ? one : many)
 
 /**
- * The running record, set as one sentence with the numbers large: "12 wins at 9 hackathons, by
- * 31 builders." Counts up the first time it's seen. Renders nothing until there's a win to count.
- * Each count is in the colour of what it counts: wins the peak's rose, hackathons the trips' iris,
- * builders the everyday sky of hack night.
+ * The running record, set as one sentence with the numbers large: "12 wins at 9 events, by 31
+ * builders." Events are hackathons and pitch competitions alike. Counts up the first time it's
+ * seen. Renders nothing until there's a win to count. Each count is in the colour of what it
+ * counts: wins the peak's rose, events the month's iris, builders the everyday sky of build night.
  */
 export function WinTally({ wins, showLink = false }: { wins: readonly Win[]; showLink?: boolean }) {
   const tally = tallyWins(wins)
@@ -33,7 +33,7 @@ export function WinTally({ wins, showLink = false }: { wins: readonly Win[]; sho
           <b data-hue="iris">
             <NumberTicker value={tally.hackathons} />
           </b>{' '}
-          {plural(tally.hackathons, 'hackathon', 'hackathons')},
+          {plural(tally.hackathons, 'event', 'events')},
         </span>{' '}
         <span className={styles.figure}>
           by{' '}

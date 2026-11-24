@@ -6,10 +6,10 @@ import type { PageIntro } from './types'
 export const WINS_INTRO: PageIntro = {
   path: '~/proto/wins',
   title: 'Wins',
-  lede: 'Things people built at hackathons, and what they took home.',
+  lede: 'What members built and where it went: hackathon prizes from the CS group, and founder wins too, from pitch competitions to launches, first customers and money raised.',
 }
 
-export const WINS_EMPTY = 'No wins posted yet. The first ones go up after the next hackathon.'
+export const WINS_EMPTY = 'No wins posted yet. The first go up after the next hackathon, pitch competition or launch.'
 
 /** Copy for a win's own page, /wins/:id. */
 export const WIN_DETAIL = {
@@ -44,7 +44,7 @@ export const WIN_SHOWCASE = {
   at: 'at',
   builtBy: 'Built by',
   /** Over the projects that follow the lead win on /wins. */
-  moreTitle: 'More projects that won',
+  moreTitle: 'More wins',
 } as const
 
 /** The sheet the landing's latest wins sit on. */
@@ -71,10 +71,10 @@ export interface WonAtSchool extends Logo {
  * where the hackathons were held, and nothing here should read as a school backing Proto.
  */
 export const WON_AT = {
-  label: 'Schools whose hackathons we’ve won at',
-  title: 'Schools we’ve won at',
+  label: "Schools whose hackathons we've won at",
+  title: "Hackathons we've won at",
   /** Names each row of the band for screen readers, since the two rows hold different schools. */
-  rowLabel: (row: number, of: number) => (of > 1 ? `Schools we’ve won at, row ${row} of ${of}` : 'Schools we’ve won at'),
+  rowLabel: (row: number, of: number) => (of > 1 ? `Schools whose hackathons we've won at, row ${row} of ${of}` : "Schools whose hackathons we've won at"),
   schools: [
     { name: 'Harvard University', src: '/schools/harvard.png', size: [635, 160], events: /hackharvard/i },
     { name: 'MIT', src: '/schools/mit.png', size: [198, 160], events: /hackmit/i },

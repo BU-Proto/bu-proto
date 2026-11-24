@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { Field, Form } from '../components/Form'
-import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
+import { inputClass } from '../components/formFields'
 import { AsciiFigure } from '../components/motion/AsciiFigure'
 import { PageIntro } from '../components/PageIntro'
 import { PrivacyNote } from '../components/PrivacyNote'
@@ -162,7 +162,7 @@ export function Grants() {
         </div>
 
         <div className={`${ui.panel} ${styles.formWrap}`}>
-          {/* Interest list only, never an application. The trip first, then who you are. */}
+          {/* Interest list only, never an application. What you would build first, then who you are. */}
           <Form
             className={styles.form}
             submitLabel={INTEREST.submit}
@@ -204,8 +204,7 @@ export function Grants() {
                 type="email"
                 autoComplete="email"
                 placeholder={fields.email.placeholder}
-                pattern={BU_EMAIL_PATTERN}
-                title="Use your @bu.edu address"
+                maxLength={254}
                 required
               />
             </Field>

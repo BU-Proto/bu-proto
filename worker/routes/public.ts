@@ -86,13 +86,13 @@ app.post('/api/join', limitForms, requireHuman('join'), async (c) => {
   const token = randomToken()
   // On conflict the stored token survives, so getting ours back means the row is new.
   const row = await c.env.DB.prepare(
-    `INSERT INTO members (name, email, year, track, unsubscribe_token) VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO members (name, email, school, field, year, track, building, unsubscribe_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (email) DO UPDATE SET
-       name = excluded.name, year = excluded.year, track = excluded.track,
-       unsubscribed = 0, updated_at = datetime('now')
+       name = excluded.name, school = excluded.school, field = excluded.field, year = excluded.year,
+       track = excluded.track, building = excluded.building, unsubscribed = 0, updated_at = datetime('now')
      RETURNING unsubscribe_token = ? AS inserted`,
   )
-    .bind(input.name, input.email, input.year, input.track, token, token)
+    .bind(input.name, input.email, input.school, input.field, input.year, input.track, input.building, token, token)
     .first<{ inserted: number }>()
   // Only a new member gets the welcome; someone updating their details has had it already.
   if (row?.inserted) c.executionCtx.waitUntil(sendWelcome(c.env, origin(c), { ...input, unsubscribeToken: token }))

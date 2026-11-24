@@ -139,7 +139,7 @@ function Detail({ person, reload }: { person: PersonDetail; reload: () => void }
                     {' · '}
                   </>
                 ) : isMember ? (
-                  `${[person.year, person.track].filter(Boolean).join(' · ')} · `
+                  `${[person.school, person.field, person.year, person.track].filter(Boolean).join(' · ')} · `
                 ) : person.title ? (
                   `${person.title} · `
                 ) : null}
@@ -386,6 +386,12 @@ function DetailsPanel({ person, member, onSaved, onDelete }: { person: PersonDet
         <dd>{person.ownerEmail ? teammate(person.ownerEmail) : none('No one yet')}</dd>
         {isMember ? (
           <>
+            <dt>School</dt>
+            <dd>{person.school || none('None given')}</dd>
+            <dt>Field</dt>
+            <dd>{person.field || none('Not set')}</dd>
+            <dt>Building</dt>
+            <dd>{person.building || none('Not said')}</dd>
             <dt>Year</dt>
             <dd>{saved.year || none('Not set')}</dd>
             <dt>Track</dt>

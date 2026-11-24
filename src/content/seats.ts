@@ -20,8 +20,8 @@ export interface Seat {
 
 export const SEATS: Readonly<Record<string, Seat>> = {
   'Head of Partnerships': {
-    headline: 'Bring Boston’s startups, VCs and hackathons to BU.',
-    own: ['The sponsor pipeline', 'Company partners', 'Partner hackathons'],
+    headline: "Bring Boston's founders, investors and companies to Proto.",
+    own: ['The sponsor pipeline', 'Company partners', 'Fireside speakers'],
     get: [
       'First contact with founders and investors, on behalf of a BU-sponsored org',
       'Your name on every sponsor deck',
@@ -30,26 +30,31 @@ export const SEATS: Readonly<Record<string, Seat>> = {
     fit: 'you already DM founders for fun.',
   },
   'Head of the Fund': {
-    headline: 'Build the fund that sends BU students to hackathons.',
-    own: ['Setting up the travel fund from zero', 'Eligibility and criteria', 'The budget, then running it'],
+    headline: 'Build the fund that pays for first versions.',
+    own: ['Setting up the fund from zero', 'Eligibility and criteria', 'The budget, then running it'],
     get: ['A student grant program you designed and run', 'A rare line on a résumé'],
     firstMonth: ['The fund’s structure and criteria, written down', 'Funding sources identified', 'A launch date'],
     fit: 'you like spreadsheets and want to say you ran money.',
   },
   'Head of Community': {
-    headline: 'Be the person every builder group at BU knows.',
-    own: ['Hack nights and Proto events', 'Spark!, Innovate@BU, clubs, departments'],
+    headline: 'Be the person every builder group in Boston knows.',
+    own: ['Build nights and Proto events', 'Spark!, Innovate@BU, and student groups at other schools'],
     get: ['A direct line to the people who run BU’s innovation programs', 'Co-host credit on every joint event'],
     firstMonth: [
-      '1 hack night run end to end',
+      '1 build night run end to end',
       'Intro meetings with Spark! and Innovate@BU',
       '1 co-hosted event on the calendar',
     ],
-    fit: 'you already know half the club presidents.',
+    fit: 'you already know half the student group presidents.',
   },
   'Head of Scouting': {
-    headline: 'Find every builder at BU before anyone else does.',
-    own: ['Scouting team of 3 to 5', 'Bringing builders and founders into Proto', 'Wins wall and member spotlights', 'Socials'],
+    headline: 'Find every builder in Boston before anyone else does.',
+    own: [
+      'Scouting team of 3 to 5',
+      'Bringing builders and founders into Proto',
+      'The wins wall: hackathon prizes, pitch competitions, launches',
+      'Member spotlights and socials',
+    ],
     get: [
       'You built and ran a talent pipeline, the same work VC scouts do',
       'You’re the one who brings founders into the VC sessions',

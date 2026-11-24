@@ -17,6 +17,7 @@ import {
   ASK_STATUSES,
   BOARD_SEATS,
   EVENT_KINDS,
+  FIELDS,
   FUND_AMOUNTS,
   FUND_STATUSES,
   MAX_ROLE_QUESTIONS,
@@ -349,9 +350,9 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
     fields: [
       { key: 'project', column: 'project', label: 'Project', type: 'text' },
       { key: 'blurb', column: 'blurb', label: 'One line', type: 'textarea', hint: 'Shown on the card and under the title.' },
-      { key: 'event', column: 'event', label: 'Hackathon', type: 'text' },
+      { key: 'event', column: 'event', label: 'Hackathon or competition', type: 'text', hint: 'e.g. HackMIT, the MIT $100K pitch' },
       { key: 'date', column: 'date', label: 'Date', type: 'date', hint: 'When the hackathon ended. Wins show newest first.' },
-      { key: 'placement', column: 'placement', label: 'Placement', type: 'text', hint: 'e.g. 1st overall, 2nd place, Best hardware hack' },
+      { key: 'placement', column: 'placement', label: 'Placement', type: 'text', hint: 'e.g. 1st overall, finalist, Best hardware hack' },
       { key: 'track', column: 'track', label: 'Track or prize category', type: 'text', hint: 'Optional, e.g. Healthcare track, Best use of AI' },
       { key: 'team', column: 'team', label: 'Team', type: 'people', hint: 'Each name can link to a LinkedIn, personal site or GitHub.' },
       { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'Upload one, or paste a full URL or a path under public/, e.g. /photos/pantry-pal.jpg' },
@@ -456,19 +457,27 @@ const anyEmail = z.string().trim().toLowerCase().pipe(z.email('Enter an email').
 /** Bots fill every field; people never see this one. Must be empty. */
 const honeypot = { website: z.literal('').optional() }
 
-/** POST /api/join → 201 { ok: true }. Joining again with the same email updates the row (200). */
+/**
+ * POST /api/join → 201 { ok: true }. Joining again with the same email updates the row (200).
+ * Anyone in Boston can join: any email, any school or none, any field.
+ */
 export const joinInput = z.object({
   name: text(80),
   email: anyEmail,
+  /** Where they study, or nothing. */
+  school: optionalText(120).default(''),
+  field: z.enum(FIELDS),
   year: z.enum(YEARS),
   track: z.enum(TRACKS),
+  /** What they're building, or want to. Optional. */
+  building: optionalText(500).default(''),
   ...honeypot,
 })
 
-/** POST /api/fund-interest → 201 { ok: true } */
+/** POST /api/fund-interest → 201 { ok: true }. Open to anyone, like joining. */
 export const fundInterestInput = z.object({
   name: text(80),
-  email: buEmail,
+  email: anyEmail,
   year: z.enum(YEARS),
   target: text(200),
   spend: text(1000),
@@ -693,8 +702,11 @@ export interface Member {
   id: number
   name: string
   email: string
+  school: string
+  field: string
   year: string
   track: string
+  building: string
   notes: string
   unsubscribed: boolean
   createdAt: string

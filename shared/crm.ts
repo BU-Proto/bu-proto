@@ -103,6 +103,10 @@ export interface PersonSummary {
   /** Members only. */
   year: string | null
   track: string | null
+  /** Members only: where they study (empty for none), their field, and what they're building. */
+  school: string | null
+  field: string | null
+  building: string | null
   ownerEmail: string | null
   /** The latest thing that happened with them, from any source. */
   lastTouch: { label: string; at: string } | null

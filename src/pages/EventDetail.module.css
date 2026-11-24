@@ -227,6 +227,14 @@
 }
 
 /* A past event has nothing to press: one plain line where the buttons were. */
+/* Whose night it is, under the title, when it's a group's own. */
+.group {
+  margin: 10px 0 0;
+  color: var(--on-field-soft);
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
 .past {
   margin: 0;
   color: var(--on-field-soft);

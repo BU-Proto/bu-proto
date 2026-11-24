@@ -38,8 +38,11 @@ interface MemberRow {
   id: number
   name: string
   email: string
+  school: string
+  field: string
   year: string
   track: string
+  building: string
   notes: string
   unsubscribed: number
   owner_email: string | null
@@ -77,7 +80,7 @@ interface NextRow {
   contact_id: number | null
 }
 
-const MEMBER_COLUMNS = 'id, name, email, year, track, notes, unsubscribed, owner_email, created_at'
+const MEMBER_COLUMNS = 'id, name, email, school, field, year, track, building, notes, unsubscribed, owner_email, created_at'
 const CONTACT_SELECT = `SELECT c.id, c.name, c.email, c.kind, c.org_id, o.name AS org_name, c.title, c.notes, c.link,
   c.owner_email, c.created_by, c.created_at FROM contacts c LEFT JOIN orgs o ON o.id = c.org_id`
 
@@ -178,6 +181,9 @@ export async function loadPeople(db: D1Database): Promise<PeopleIndex> {
       title: atOrg?.title ?? '',
       year: member.year,
       track: member.track,
+      school: member.school,
+      field: member.field,
+      building: member.building,
       ownerEmail: member.owner_email ?? extra.find((contact) => contact.owner_email)?.owner_email ?? null,
       lastTouch: latestTouch([...keys.flatMap((key) => touches.get(key) ?? []), { label: 'Signed up', at: member.created_at }]),
       nextFollowUp: toNext(earliest(keys)),
@@ -199,6 +205,9 @@ export async function loadPeople(db: D1Database): Promise<PeopleIndex> {
       title: contact.title,
       year: null,
       track: null,
+      school: null,
+      field: null,
+      building: null,
       ownerEmail: contact.owner_email,
       lastTouch: latestTouch([...keys.flatMap((key) => touches.get(key) ?? []), { label: 'Added', at: contact.created_at }]),
       nextFollowUp: toNext(earliest(keys)),
@@ -440,7 +449,7 @@ export async function loadPersonDetail(db: D1Database, ref: PersonRef, index?: P
       kind: 'joined',
       label: 'Joined',
       title: 'Signed up on proto.boston',
-      detail: [member.year, member.track].filter(Boolean).join(' · '),
+      detail: [member.school, member.field, member.year, member.track].filter(Boolean).join(' · '),
       at: member.created_at,
       href: null,
       by: null,

@@ -7,8 +7,8 @@ import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import ui from '../components/ui.module.css'
 import { EVENT_COVERS, type CoverPhoto } from '../content/covers'
-import { EVENT_DETAIL, EVENT_NOT_FOUND, KIND_HUE } from '../content/events'
-import { BRAND } from '../content/site'
+import { EVENT_DETAIL, EVENT_NOT_FOUND, KIND_GROUP, KIND_HUE } from '../content/events'
+import { BRAND, groupInvite } from '../content/site'
 import { eventToIcs, icsFileName } from '../lib/calendar'
 import type { EventPageData } from '../lib/content'
 import { dateParts, formatDay } from '../lib/dates'
@@ -84,7 +84,7 @@ function EventPage({ event, photoRatio, children }: { event: ProtoEvent; photoRa
   }
 
   // No photo of its own yet: a BU building matched to the kind of event, known to be wide.
-  const cover = EVENT_COVERS[event.kind] ?? EVENT_COVERS['Hack night']
+  const cover = EVENT_COVERS[event.kind] ?? EVENT_COVERS['Build night']
   const flyerRatio = ownRatio ?? UNKNOWN_RATIO
   const shape = event.photo && flyerRatio < BANNER_FROM ? 'flyer' : 'banner'
 
@@ -138,6 +138,12 @@ function Head({ event, past, rsvp, shape }: { event: ProtoEvent; past: boolean; 
         {event.title}
         <SampleTag show={event.placeholder} />
       </h1>
+      {/* A group's own night says whose it is, and that everyone else is welcome. */}
+      {KIND_GROUP[event.kind] && (
+        <p className={styles.group} data-fog-clear>
+          {groupInvite(KIND_GROUP[event.kind] ?? '')}
+        </p>
+      )}
       {shape === 'flyer' && filled(event.text) && (
         <p className={styles.lede} data-long={event.text.length > LONG_LEDE || undefined} data-fog-clear>
           {event.text}

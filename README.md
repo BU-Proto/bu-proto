@@ -32,7 +32,7 @@ npm run dev                      # http://localhost:5173
 
 | Route | Page |
 | --- | --- |
-| `/` | Home: the hero film (set in `src/content/home.ts`), the three tracks, the rhythm, next event, the CS group's hackathon deadlines, latest wins, join |
+| `/` | Home: the hero film (set in `src/content/home.ts`), the three tracks, the habits founders share, what started in Boston, events, the groups, the rhythm and the next event, join |
 | `/hackathons` | Upcoming hackathons as a departures board |
 | `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
 | `/wins` | Win cards: photo, project, placement, team, Devpost |
@@ -43,7 +43,7 @@ npm run dev                      # http://localhost:5173
 | `/events` | Upcoming events with RSVP |
 | `/board` | The board |
 | `/roles` | The parts of Proto that need someone, as a sign-up sheet; each role's page (`/roles/<id>`) has its write-up and the application form |
-| `/join` | What you get, the sign-up form and the Discord |
+| `/join` | What you get and the sign-up form: anyone can join, with their school (or none), field and what they're building |
 
 Anything else renders the 404 page. Every route is a client-side route; the Worker serves `index.html` for any path that isn't a file or under `/api` (`not_found_handling` in `wrangler.jsonc`), so deep links work on refresh.
 

@@ -1,5 +1,6 @@
-/* The resources hub: three cards on one plain navy sheet, a picture over each title, the way the
-   playbook sets its guides. No glow, no coloured edges: just the sheet and a hairline rule. */
+/* The resources hub: a plain navy sheet for each part (open to anyone in Boston, at your school,
+   from the CS group), ruled rows for other people's programs and cards for our own pages, a
+   picture over each card's title, the way the playbook sets its guides. */
 
 .sheet {
   padding: clamp(20px, 3vw, 36px);
@@ -7,6 +8,87 @@
   border-radius: 22px;
   background: var(--navy);
   box-shadow: var(--slab-shadow);
+}
+
+.head {
+  display: grid;
+  gap: 6px;
+  margin-bottom: clamp(18px, 2.4vw, 28px);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: clamp(26px, 2.8vw, 36px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.sectionLine {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Other people's programs: whose it is on the left, the name and a line about it beside. */
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cards + .rows {
+  margin-top: clamp(24px, 3vw, 36px);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(120px, 13rem) minmax(0, 1fr);
+  gap: 6px 24px;
+  padding: 16px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.who {
+  padding-top: 3px;
+  color: var(--ink-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rowBody {
+  display: grid;
+  gap: 4px;
+}
+
+.rowName {
+  justify-self: start;
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.rowName:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.rowName:focus-visible {
+  outline: 2px solid var(--frost);
+  outline-offset: 3px;
+}
+
+.rowText {
+  max-width: 64ch;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .cards {
@@ -101,8 +183,29 @@ a.card:focus-visible {
   text-shadow: var(--on-field-shadow);
 }
 
+/* Two cards share the width; one card keeps a card's width. */
+.cards[data-count='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cards[data-count='1'] {
+  grid-template-columns: minmax(0, 26rem);
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .who {
+    padding-top: 0;
+  }
+}
+
 @media (max-width: 860px) {
-  .cards {
+  .cards,
+  .cards[data-count='2'],
+  .cards[data-count='1'] {
     grid-template-columns: minmax(0, 1fr);
     gap: 32px;
   }

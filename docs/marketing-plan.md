@@ -45,7 +45,7 @@ Goals: the site says what Proto is now, and spring rooms and dates are set.
 Main moves:
 
 - Rewrite the site copy and move hackathon material into a CS section. Owner: to pick.
-- Decide whether to open the join form beyond @bu.edu emails. Most of this plan depends on it: the firesides drew builders from Wellesley, Tufts, BC and across Boston, and none of them can join today.
+- The join form takes any email, and now asks for school (or none), field and what someone's building, so sign-ups can be counted by school and by kind of builder. The fund's interest list is open to anyone too.
 - Add school (with "none" as a choice) and "what you make" to the join form. It asks only for year and track now, so the measures below can't be counted without them.
 - Post recaps of the Kent Bennett (Bessemer Venture Partners) and Eric Silver (Mass Magnetics, YC) firesides, built around what guests are making, and invite guests who aren't members to join.
 - Book a spring build night room and time. At BU only a student group's secretary can request space, through 25Live, after a Blackboard course ([BU Student Activities](https://www.bu.edu/studentactivities/your-group/plan-events)). Owner: to pick.
@@ -216,7 +216,7 @@ Hackathon trips and the travel fund sit outside this budget; the fund has no mon
 
 ## Open questions
 
-- When does the join form open to everyone, and what keeps spam out without the @bu.edu check?
+- Is Turnstile on the forms enough to keep spam out now that anyone can join?
 - Who books rooms, and which room and time work for build night?
 - Discord or GroupMe?
 - Who are the spring fireside speakers, and which investors come to demo night?
