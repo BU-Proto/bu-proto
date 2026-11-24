@@ -8,7 +8,7 @@ export const ABOUT_INTRO = {
   /** The browser tab's title. */
   tab: 'About Proto',
   title: 'A home in Boston for people who build things',
-  lede: "Proto is free and open to anyone in Boston, from any school or none. There's a build night every week and a fireside with a founder or investor most months.",
+  lede: "Proto is free and open to anyone in Boston, from any school or none. There's a build night every week and a fireside with a founder or investor every two weeks.",
 } as const
 
 /** The tracks themselves come from the landing's TRACKS, so the two never disagree. */

@@ -79,12 +79,17 @@ export interface GlyphAtlas {
 
 const ATLAS_PAD = 2
 
-/** Draw every glyph the field uses into `canvas`, each clipped to one cell of `geometry`. */
+/**
+ * Draw every glyph the field uses into `canvas`, each clipped to one cell of `geometry`. With
+ * `dots`, the ramp is a halftone: each step a filled dot whose area grows with the step, and the
+ * trail's three marks are a ring, a dot and a small dot in place of ○ > _.
+ */
 export function drawGlyphAtlas(
   canvas: HTMLCanvasElement,
   ramp: string,
   geometry: FieldGeometry,
   cellSize: number,
+  dots = false,
 ): GlyphAtlas {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas 2D is not supported in this browser')
@@ -98,8 +103,34 @@ export function drawGlyphAtlas(
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   ctx.fillStyle = '#fff'
+  ctx.strokeStyle = '#fff'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
+  if (dots) {
+    const steps = ramp.length - 1
+    const most = (Math.min(cellPxW, cellPxH) / 2) * 0.94
+    const centre = (slot: number) => [slot * slotW + pad + cellPxW / 2, pad + cellPxH / 2] as const
+    for (let slot = 1; slot <= steps; slot++) {
+      // Area, not radius, follows the step, as in a printed halftone.
+      const [x, y] = centre(slot)
+      ctx.beginPath()
+      ctx.arc(x, y, Math.max(0.5, most * Math.sqrt(slot / steps)), 0, Math.PI * 2)
+      ctx.fill()
+    }
+    const trail = ramp.length
+    const [rx, ry] = centre(trail)
+    ctx.lineWidth = Math.max(1, most * 0.3)
+    ctx.beginPath()
+    ctx.arc(rx, ry, most * 0.78, 0, Math.PI * 2)
+    ctx.stroke()
+    for (const [offset, size] of [[1, 0.66], [2, 0.34]] as const) {
+      const [x, y] = centre(trail + offset)
+      ctx.beginPath()
+      ctx.arc(x, y, most * size, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    return { canvas, slotW, slotH, pad, trailBase: ramp.length }
+  }
   glyphs.forEach((glyph, slot) => {
     let size = cellSize * dpr
     ctx.font = `500 ${size}px ${MONO_STACK}`

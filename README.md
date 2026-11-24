@@ -2,7 +2,7 @@
 
 The site for **Proto** (working name), a home in Boston for anyone who builds things, started at BU, built with React, TypeScript, React Router and Vite. The concept behind every page is in [`docs/concept.md`](docs/concept.md).
 
-The background is an ASCII field: the gradient from the reference design rendered as monospace characters that drift and shimmer on their own. The cursor's wind slides the characters around and rewrites the ones along its path into a Stable-Fluids trail of `○ > _` glyphs that dissolves within about a second. The gradient's colors never move with the cursor.
+The background is a halftone field: the gradient from the reference design rendered as dots, each sized by the light under it, that drift and shimmer on their own. The cursor's wind slides the dots around and turns the ones along its path into a Stable-Fluids trail of rings and dots that dissolves within about a second. The gradient's colors never move with the cursor. (The field can still draw characters instead: `ramp` in `src/ascii-field/settings.ts` picks `dots`, the default, or one of the character ramps.)
 
 ## Run it
 
