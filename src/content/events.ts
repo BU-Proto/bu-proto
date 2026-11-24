@@ -40,13 +40,6 @@ export const NEXT_EVENT = {
 
 export const EVENTS_LATER = 'Also coming up'
 
-/** The landing's events section: the giant words behind it, and its heading. */
-export const EVENT_LEDGER = {
-  title: 'Events',
-  words: ['Meet', 'Build', 'Ship', 'Demo', 'Repeat'],
-  empty: "This semester's nights are being planned now.",
-} as const
-
 /**
  * Each kind of night in the field's colours, by its size in the rhythm: the weekly hack night
  * sky, the month's one-offs iris (as the hackathon trips are), the semester's demo night rose.

@@ -1,0 +1,140 @@
+/*
+ * The map: flat shapes on the dark ground, after brand.dropbox.com. The river and harbour in a
+ * quiet sky, bridges as short rules, area names in small spaced capitals, pins in their tone with
+ * a halo that grows when the pin or its row is pointed at. Proto's pin is white and pulses.
+ */
+.map {
+  margin: 0;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: rgb(var(--frost-rgb) / 0.05);
+  stroke-width: 1;
+}
+
+.harbor {
+  fill: rgb(var(--sky-rgb) / 0.12);
+}
+
+.river {
+  fill: none;
+  stroke: rgb(var(--sky-rgb) / 0.28);
+  stroke-width: 46;
+  stroke-linecap: round;
+}
+
+.riverLine {
+  fill: none;
+  stroke: rgb(var(--sky-rgb) / 0.45);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 10;
+}
+
+.bridge {
+  stroke: rgb(var(--frost-rgb) / 0.4);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.area {
+  fill: rgb(var(--frost-rgb) / 0.34);
+  font-family: var(--font-label);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+}
+
+.pin {
+  cursor: default;
+}
+
+.dot {
+  fill: var(--tone);
+  stroke: var(--tone-ink);
+  stroke-width: 2;
+}
+
+.halo {
+  fill: var(--tone);
+  opacity: 0.18;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 260ms ease;
+}
+
+.label {
+  fill: rgb(var(--frost-rgb) / 0.82);
+  font-family: var(--font-label);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: fill 200ms ease;
+}
+
+.pin[data-active] .halo {
+  opacity: 0.4;
+  transform: scale(1.7);
+}
+
+.pin[data-active] .label {
+  fill: var(--tone);
+}
+
+/* Proto's own pin: white, with a ring that keeps pulsing outwards. */
+.pin[data-proto] .dot {
+  fill: var(--frost);
+  stroke: var(--harbor);
+}
+
+.pin[data-proto] .halo {
+  fill: var(--frost);
+  opacity: 0.25;
+}
+
+.pin[data-proto] .label {
+  fill: var(--frost);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pin[data-proto] .halo {
+    animation: pulse 2.4s ease-out infinite;
+  }
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.45;
+    transform: scale(0.6);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+/* On a phone the drawing is a third of its size, so its words grow to stay readable. */
+@media (max-width: 600px) {
+  .area {
+    font-size: 28px;
+  }
+
+  .label {
+    font-size: 34px;
+  }
+}
+
+.caption {
+  margin-top: 10px;
+  color: var(--ink-dim);
+  font-size: 13px;
+}

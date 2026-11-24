@@ -83,8 +83,8 @@ export interface Track {
 }
 
 export const TRACKS_INTRO = {
-  title: 'Three ways in',
-  lede: 'Pick the one that fits today. Move whenever you like.',
+  title: 'Start. Build. Launch.',
+  lede: 'Business, engineering, design or CS: everyone here is at one of three stages. Pick yours today and move whenever you like.',
 } as const
 
 export const TRACKS: readonly Track[] = [
@@ -186,20 +186,8 @@ export interface Beat {
   hue: Hue
 }
 
-/**
- * What founders here have in common, whatever they study: drawn as the ASCII journey on the
- * landing, one habit a step.
- */
-export const JOURNEY = {
-  title: 'Start. Team up.\nBuild. Ship.',
-  lede: 'Business, engineering, design or CS: the founders here have the same habits, whatever they studied.',
-  steps: [
-    { name: 'Start', text: 'Before you feel ready, with half an idea. Build night is a good place to begin.' },
-    { name: 'Team up', text: 'The engineer finds someone who can sell it. The business student finds someone who can build it.' },
-    { name: 'Build', text: 'Week after week, with people around to ask and someone a step ahead of you.' },
-    { name: 'Ship', text: "Put it in front of the people it's for, then on stage at demo night, and one day in front of investors." },
-  ],
-} as const
+/** Where on the map a company began: the school or neighbourhood it came from. */
+export type MapPlace = 'harvard' | 'allston' | 'mit' | 'cambridge' | 'boston' | 'bu'
 
 /** One company or invention that started in Boston, for the wall on the landing. */
 export interface StartedHere {
@@ -208,6 +196,7 @@ export interface StartedHere {
   /** Where and when it started: checked, see docs/hero-montage.md. */
   origin: string
   tone: Tone
+  place: MapPlace
 }
 
 /** Things that started in Boston, from every kind of field: the same start as Proto's founders. */
@@ -215,22 +204,45 @@ export const STARTED_HERE: {
   title: string
   lede: string
   coda: string
+  mapCaption: string
+  /** Each place's pin on the map: its name, and where it sits on the 1000 by 640 drawing. */
+  places: Record<MapPlace, { label: string; x: number; y: number; labelBelow?: true }>
+  /** The map's own labels: the two cities, a neighbourhood, the river and the harbour. */
+  areas: readonly { label: string; x: number; y: number; vertical?: true }[]
+  proto: string
   items: readonly StartedHere[]
 } = {
   title: "It's been done here before",
   lede: 'Each of these began with a few people in Boston and an idea. Some of them were students.',
   coda: 'Business, science, hardware and software. Different fields, the same start.',
+  mapCaption: 'Roughly where each began: the school or neighbourhood it came from. Not to scale.',
+  places: {
+    harvard: { label: 'Harvard', x: 250, y: 190 },
+    allston: { label: 'Harvard i-lab, Allston', x: 215, y: 500, labelBelow: true },
+    mit: { label: 'MIT', x: 610, y: 285 },
+    cambridge: { label: 'Cambridge', x: 735, y: 215 },
+    boston: { label: 'Boston', x: 860, y: 400 },
+    bu: { label: 'BU', x: 440, y: 470 },
+  },
+  areas: [
+    { label: 'CAMBRIDGE', x: 470, y: 130 },
+    { label: 'BOSTON', x: 700, y: 560 },
+    { label: 'ALLSTON', x: 90, y: 625 },
+    { label: 'THE CHARLES', x: 330, y: 402 },
+    { label: 'HARBOR', x: 962, y: 470, vertical: true },
+  ],
+  proto: 'Proto started here',
   items: [
-    { name: 'Facebook', field: 'Social', origin: 'A Harvard dorm, Cambridge, Mass., 2004', tone: 'sky' },
-    { name: 'Boston Dynamics', field: 'Robotics', origin: 'Spun out of MIT, Cambridge, Mass., 1992', tone: 'mint' },
-    { name: 'Moderna', field: 'Biotech', origin: 'Cambridge, Mass., 2010', tone: 'rose' },
-    { name: 'Bose', field: 'Audio', origin: 'An MIT professor, Massachusetts, 1964', tone: 'amber' },
-    { name: 'Dropbox', field: 'Software', origin: 'MIT students, Cambridge, Mass., 2007', tone: 'iris' },
-    { name: 'WHOOP', field: 'Wearables', origin: 'Started at Harvard, Boston, Mass., 2012', tone: 'mint' },
-    { name: 'iRobot', field: 'Home robots', origin: 'MIT roboticists, Massachusetts, 1990', tone: 'sky' },
-    { name: 'Wayfair', field: 'Retail', origin: 'Boston, Mass., 2002', tone: 'amber' },
-    { name: 'HubSpot', field: 'Business software', origin: 'MIT grads, Cambridge, Mass., 2006', tone: 'rose' },
-    { name: 'The telephone', field: 'Communication', origin: 'A BU professor, Boston, Mass., 1876', tone: 'iris' },
+    { name: 'Facebook', field: 'Social', origin: 'A Harvard dorm, Cambridge, Mass., 2004', tone: 'sky', place: 'harvard' },
+    { name: 'Boston Dynamics', field: 'Robotics', origin: 'Spun out of MIT, Cambridge, Mass., 1992', tone: 'mint', place: 'mit' },
+    { name: 'Moderna', field: 'Biotech', origin: 'Cambridge, Mass., 2010', tone: 'rose', place: 'cambridge' },
+    { name: 'Bose', field: 'Audio', origin: 'An MIT professor, Massachusetts, 1964', tone: 'amber', place: 'mit' },
+    { name: 'Dropbox', field: 'Software', origin: 'MIT students, Cambridge, Mass., 2007', tone: 'iris', place: 'cambridge' },
+    { name: 'WHOOP', field: 'Wearables', origin: 'Started at Harvard, Boston, Mass., 2012', tone: 'mint', place: 'allston' },
+    { name: 'iRobot', field: 'Home robots', origin: 'MIT roboticists, Massachusetts, 1990', tone: 'sky', place: 'mit' },
+    { name: 'Wayfair', field: 'Retail', origin: 'Boston, Mass., 2002', tone: 'amber', place: 'boston' },
+    { name: 'HubSpot', field: 'Business software', origin: 'MIT grads, Cambridge, Mass., 2006', tone: 'rose', place: 'cambridge' },
+    { name: 'The telephone', field: 'Communication', origin: 'A BU professor, Boston, Mass., 1876', tone: 'iris', place: 'boston' },
   ],
 }
 

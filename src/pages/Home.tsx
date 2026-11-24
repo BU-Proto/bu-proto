@@ -4,8 +4,6 @@ import type { ProtoEvent } from '../../shared/api'
 import { GlyphEdge } from '../components/GlyphEdge'
 import { GroupsBento } from '../components/GroupsBento'
 import { StartedHereWall } from '../components/StartedHereWall'
-import { Journey } from '../components/Journey'
-import { EventLedger } from '../components/EventLedger'
 import { Hero } from '../components/Hero'
 import { ScrubWords } from '../components/motion/ScrubWords'
 import { LogoBand } from '../components/LogoBand'
@@ -210,10 +208,8 @@ export function Home() {
         </div>
         {/* Main's order: the three ways in, how a semester goes, then what's on. */}
         <WaysIn />
-        <Journey />
         {/* Things that started in Boston, from every kind of field. */}
         <StartedHereWall />
-        <EventLedger events={events} />
         {/* One community, with groups inside it: everyone's nights, CS, and the groups to come. */}
         <GroupsBento />
       </div>
