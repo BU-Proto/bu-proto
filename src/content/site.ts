@@ -50,7 +50,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     children: [
       { label: 'CS', to: '/cs', line: 'Building with code, for first-timers too' },
       { label: 'Business', to: '/business', line: 'Pitching, customers and money, for first-timers too' },
-      { label: 'Founders Circle', to: '/founders', line: 'Invite only, for founders already building' },
+      { label: 'Founders Circle', to: '/founders', line: 'By application, for founders already building' },
     ],
   },
   {

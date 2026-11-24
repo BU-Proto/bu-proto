@@ -58,7 +58,13 @@ const router = createBrowserRouter([
       // links land on the list instead of a 404.
       { path: 'hackathons/:id', loader: () => redirect('/hackathons'), HydrateFallback: PageLoading },
       { path: 'grants', Component: Grants },
-      { path: 'founders', Component: Founders },
+      // The page shows the record from the wins, but the application must open even if they fail.
+      {
+        path: 'founders',
+        Component: Founders,
+        loader: ({ request }) => fetchContent('wins', request.signal).catch(() => []),
+        HydrateFallback: PageLoading,
+      },
       { path: 'wins', Component: Wins, loader: ({ request }) => fetchContent('wins', request.signal), ...dataRoute },
       {
         path: 'wins/:slug',

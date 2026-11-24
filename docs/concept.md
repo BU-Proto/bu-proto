@@ -19,11 +19,13 @@ Every event is open to everyone. Some are for the whole community (build nights,
 
 On the site, each group has a page (/cs and /business) under Groups in the nav.
 
-## Founders Circle (invite only)
+## Founders Circle (by application)
 
-The one part of Proto with an application. It's a small group for founders who are already building something real: a product people use, customers, revenue, a pilot or a working prototype, with real time going into it. Any school or none, any field.
+The one part of Proto with an application, and it's kept low-key on purpose: no hype, a place people work for, and the record does the talking. It's a small group for founders who are already building something real: a product people use, customers, revenue, a pilot or a working prototype, with real time going into it. Any school or none, any field.
 
 The way in: apply on /founders, a short call if it looks like a fit, then a decision either way. Members get an email invite to every Circle event. The plans for its first semester are invite-only dinners, closed firesides, office hours and warm introductions; none of them is booked yet, so the site marks them as plans.
+
+The page shows the record (every real win posted on the site, read live) and a few of our startups, picked by project name in FOUNDERS_STARTUPS in src/content/founders.ts. Only list a project its team calls a startup.
 
 Everything else stays open to everyone. Invite-only events show on the public calendar, marked "Invite only" with a link to how to get in, and the site takes no RSVPs for them; admins invite people through the event's guest list. The home page's "Next up" skips them, so the top of the page always points at something anyone can come to.
 

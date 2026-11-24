@@ -1,8 +1,8 @@
-// Founders Circle: a small, invite-only group inside Proto for founders already building something
-// real. Everything else at Proto stays open to everyone; this is the one part with an application
-// and a call. "Founders Circle" is a working name: change it here and it changes everywhere.
+// Founders Circle: a small group inside Proto, by application, for founders already building
+// something real. Everything else at Proto stays open to everyone; this is the one part people
+// apply to and earn. It's said quietly on purpose: no hype, the record does the talking.
+// "Founders Circle" is a working name: change it here and it changes everywhere.
 
-import type { Tone } from './home'
 import type { PageIntro, Sampleable } from './types'
 
 export const CIRCLE_NAME = 'Founders Circle'
@@ -10,23 +10,23 @@ export const CIRCLE_NAME = 'Founders Circle'
 export const FOUNDERS_INTRO: PageIntro = {
   path: '~/proto/founders',
   title: CIRCLE_NAME,
-  lede: "A small, invite-only group inside Proto for founders who are already building something real. Members meet at closed events, get to know each other well and help each other through the hard parts.",
+  lede: "A small group inside Proto for founders who are already building. It's by application and stays small on purpose, so members get the most from Proto's network.",
 }
 
 export const FOUNDERS_HEAD = {
-  badge: 'Invite only',
-  apply: 'Apply to join',
+  badge: 'By application',
+  apply: 'Apply',
   how: 'How it works',
 } as const
 
-export const FOUNDERS_FOR: { title: string; lede: string; items: readonly { text: string; tone: Tone }[] } = {
-  title: "Who it's for",
-  lede: 'Any school or none, any field, any background. What we look at is the work.',
+export const FOUNDERS_FOR: { title: string; lede: string; items: readonly string[] } = {
+  title: 'Who gets in',
+  lede: 'A place is earned by the work and kept by showing up. Any school or none, any field.',
   items: [
-    { text: "You're working on a company or project right now, and it's past the idea stage.", tone: 'amber' },
-    { text: 'Something exists: a product people use, customers, revenue, a pilot or a working prototype.', tone: 'rose' },
-    { text: "You're putting real time into it, full time or alongside school or a job.", tone: 'iris' },
-    { text: "You'll show up for other founders the way you'd want them to show up for you.", tone: 'mint' },
+    "You're building a company or project now, and it's past the idea stage.",
+    'Something exists that people can see: a product, users, customers, revenue, a pilot or a prototype.',
+    'It gets real time from you every week, full time or alongside school or a job.',
+    "You'll put as much into the group as you take from it.",
   ],
 }
 
@@ -38,38 +38,66 @@ export interface CirclePerk extends Sampleable {
 /** What members get. Nothing here is booked yet, so each is marked as a plan. */
 export const FOUNDERS_GET: { title: string; note: string; items: readonly CirclePerk[] } = {
   title: 'What members get',
-  note: "The Circle is new. These are the plans for its first semester, and members will help shape them.",
+  note: 'The Circle is starting now. These are the plans for its first semester.',
   items: [
     {
-      title: 'Invite-only dinners',
-      text: 'A small table of members and one guest, often a founder or investor a few years ahead of you.',
+      title: 'First call on the network',
+      text: "Introductions to the founders, investors and operators Proto knows, when you're ready for them.",
       placeholder: true,
     },
     {
-      title: 'Closed firesides',
-      text: 'Firesides for members only, where guests can talk about what actually happened, mistakes included.',
+      title: 'Opportunities first',
+      text: "Sponsor introductions, pitch slots and demo night spots go to members before they're shared wider.",
       placeholder: true,
     },
     {
-      title: 'Office hours',
-      text: 'Time with people who have done it, on the problem in front of you this week.',
+      title: 'Small, closed events',
+      text: 'Dinners and firesides for members and a guest, where people talk about what actually happened.',
       placeholder: true,
     },
     {
-      title: 'Introductions',
-      text: "Warm introductions to customers, hires and investors when you're ready, from Proto and from other members.",
+      title: 'Each other',
+      text: "A handful of people working as hard as you are, who'll read your deck and answer a late message.",
       placeholder: true,
     },
   ],
 }
 
+/**
+ * The record: every real win posted on the site, read live, so it's always the whole list. The
+ * line over it is counted from the same wins.
+ */
+export const FOUNDERS_RECORD = {
+  title: 'The record',
+  lede: (since: string) =>
+    `Proto's builders have been winning hackathons since ${since}. This is every win posted so far, and it updates as new ones go up.`,
+  wins: (count: number) => (count === 1 ? 'win' : 'wins'),
+  events: (count: number) => (count === 1 ? 'event' : 'events'),
+  builders: (count: number) => (count === 1 ? 'builder' : 'builders'),
+  link: { label: 'See every win', href: '/wins' },
+  empty: 'Wins go up here as members post them.',
+} as const
+
+/**
+ * Our startups: projects from the wins above that their teams are taking further. Listed by the
+ * win's project name, exactly as it's spelled on the win, so each picks up its prize, event and
+ * page from the live list. A name with no published win is skipped. Only list a project its team
+ * calls a startup.
+ */
+export const FOUNDERS_STARTUPS = {
+  title: 'Our startups',
+  lede: 'Each started as a hackathon project, and each team has a plan for what comes next.',
+  projects: ['Flowcast', 'PIXX-AR', 'Eyrie', 'noogie'],
+  more: 'Read more',
+} as const
+
 export const FOUNDERS_STEPS: { title: string; items: readonly { title: string; text: string }[] } = {
   title: 'How to get in',
   items: [
     { title: 'Apply', text: "A short form about what you're building, how far along it is and what would help." },
-    { title: 'A short call', text: "If it looks like a fit, we'll set up a call to hear more about it and answer your questions." },
+    { title: 'A call', text: "If it looks like a fit, we'll set up a call to hear more and answer your questions." },
     { title: 'A decision', text: "After the call we'll tell you either way. If it's not the right time, you can apply again later." },
-    { title: 'Your first invite', text: 'Members get an email invite to every Circle event.' },
+    { title: "You're in", text: 'Members get an email invite to every Circle event.' },
   ],
 }
 
@@ -81,7 +109,7 @@ export const FOUNDERS_OPEN = {
 
 export const FOUNDERS_FORM = {
   title: 'Apply',
-  lede: 'We read every application. Tell us about the work as it is today; a rough start is fine.',
+  lede: 'Tell us about the work as it is today. We read every application.',
   submit: 'Send my application',
   thanks: {
     title: 'Got it, thank you',
@@ -103,14 +131,12 @@ export const FOUNDERS_FORM = {
   },
 } as const
 
-/** The home page's pointer to the Circle, after the groups. */
+/** The home page's quiet pointer to the Circle, after the groups. */
 export const FOUNDERS_TEASER = {
-  badge: 'Invite only',
+  badge: 'By application',
   title: CIRCLE_NAME,
-  text: "For founders already building something real: a small group that meets at invite-only events. Apply, and if it looks like a fit, we'll talk.",
-  points: ['Closed dinners and firesides', 'Office hours with people who have done it', 'Warm introductions when you are ready'],
-  cta: { label: 'Apply to join', href: '/founders#apply' },
-  more: { label: 'How it works', href: '/founders' },
+  text: "A small group inside Proto for founders who are already building, with first call on Proto's network.",
+  link: { label: 'How to apply', href: '/founders' },
 } as const
 
 /** What an invite-only event says where the RSVP would be. */

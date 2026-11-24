@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react'
-import { Link } from 'react-router'
+import { Link, useLoaderData } from 'react-router'
+import type { Win } from '../../shared/api'
 import { Field, Form } from '../components/Form'
 import { inputClass } from '../components/formFields'
 import { PageIntro } from '../components/PageIntro'
@@ -14,21 +14,123 @@ import {
   FOUNDERS_HEAD,
   FOUNDERS_INTRO,
   FOUNDERS_OPEN,
+  FOUNDERS_RECORD,
+  FOUNDERS_STARTUPS,
   FOUNDERS_STEPS,
 } from '../content/founders'
 import { api } from '../lib/api'
+import { winPath } from '../lib/paths'
+import { tallyWins } from '../lib/wins'
 import { FOUNDER_COMMITMENTS, FOUNDER_STAGES } from '../../shared/constants'
 import styles from './Founders.module.css'
 
-/** Step numbers as the rest of the site shows them: 01, 02. */
-const stepNumber = (index: number) => String(index + 1).padStart(2, '0')
+/** Numbers as the rest of the site shows them: 01, 02. */
+const number = (index: number) => String(index + 1).padStart(2, '0')
+
+/** "Oct 2026" from yyyy-mm-dd, or nothing when the date isn't known. */
+function monthYear(date: string): string {
+  if (!date) return ''
+  const [year, month] = date.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })
+}
+
+/** The record: one line counted from the wins, then every win as a ruled row, newest first. */
+function Record({ wins }: { wins: readonly Win[] }) {
+  const tally = tallyWins(wins)
+  const dated = wins.filter((win) => win.date).map((win) => win.date).sort()
+  const since = dated[0]?.slice(0, 4)
+
+  return (
+    <section className={styles.block} aria-labelledby="circle-record">
+      <header className={styles.head}>
+        <h2 id="circle-record" className={styles.subtitle}>
+          {FOUNDERS_RECORD.title}
+        </h2>
+        {since && <p className={styles.lede}>{FOUNDERS_RECORD.lede(since)}</p>}
+      </header>
+      {wins.length === 0 ? (
+        <p className={styles.lede}>{FOUNDERS_RECORD.empty}</p>
+      ) : (
+        <>
+          <p className={styles.tally}>
+            <span>
+              <b>{tally.wins}</b> {FOUNDERS_RECORD.wins(tally.wins)}
+            </span>
+            <span>
+              <b>{tally.hackathons}</b> {FOUNDERS_RECORD.events(tally.hackathons)}
+            </span>
+            <span>
+              <b>{tally.builders}</b> {FOUNDERS_RECORD.builders(tally.builders)}
+            </span>
+          </p>
+          <ol className={styles.record}>
+            {wins.map((win) => (
+              <li key={win.id} className={styles.recordRow}>
+                <Link className={styles.recordLink} to={winPath(win)}>
+                  <span className={styles.recordProject}>{win.project}</span>
+                  <span className={styles.recordPrize}>{win.placement}</span>
+                  <span className={styles.recordEvent}>{win.event}</span>
+                  <span className={styles.recordDate}>{monthYear(win.date)}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+          <p className={styles.more}>
+            <Link className={ui.textLink} to={FOUNDERS_RECORD.link.href}>
+              {FOUNDERS_RECORD.link.label}
+            </Link>
+          </p>
+        </>
+      )}
+    </section>
+  )
+}
+
+/** The projects named in FOUNDERS_STARTUPS, each with its photo, line and prize from its win. */
+function Startups({ wins }: { wins: readonly Win[] }) {
+  const picked = FOUNDERS_STARTUPS.projects
+    .map((name) => wins.find((win) => win.project.trim().toLowerCase() === name.toLowerCase()))
+    .filter((win): win is Win => Boolean(win))
+  if (picked.length === 0) return null
+
+  return (
+    <section className={styles.block} aria-labelledby="circle-startups">
+      <header className={styles.head}>
+        <h2 id="circle-startups" className={styles.subtitle}>
+          {FOUNDERS_STARTUPS.title}
+        </h2>
+        <p className={styles.lede}>{FOUNDERS_STARTUPS.lede}</p>
+      </header>
+      <ul className={styles.startups}>
+        {picked.map((win) => (
+          <li key={win.id} className={styles.startup}>
+            <Link className={styles.startupLink} to={winPath(win)}>
+              <div className={styles.startupPicture}>
+                {win.photo ? <img src={win.photo} alt="" loading="lazy" decoding="async" /> : <span aria-hidden="true">{win.project.slice(0, 1)}</span>}
+              </div>
+              <h3 className={styles.startupName}>{win.project}</h3>
+              {win.blurb && <p className={styles.startupText}>{win.blurb}</p>}
+              <p className={styles.startupWin}>
+                <span className={styles.startupPrize}>{win.placement}</span>
+                <span>{win.event}</span>
+              </p>
+              <span className={styles.startupMore}>{FOUNDERS_STARTUPS.more}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
 
 /**
- * The Founders Circle: the one invite-only part of Proto. Who it's for on colour tiles, what
- * members get, the way in as four numbered steps, a plain line that the rest of Proto stays open,
- * and the application.
+ * The Founders Circle: the one part of Proto people apply to. Kept quiet on purpose, in plain
+ * ink with one amber accent: who gets in, the record, the startups, what members get, the way in,
+ * a line that the rest of Proto stays open, and the application.
  */
 export function Founders() {
+  const all = useLoaderData<Win[]>()
+  const wins = all.filter((win) => !win.placeholder)
   const { fields } = FOUNDERS_FORM
 
   return (
@@ -38,7 +140,7 @@ export function Founders() {
           {FOUNDERS_HEAD.badge}
         </p>
         <div className={styles.headActions} data-fog-clear="box">
-          <a className={`${ui.primary} ${styles.applyButton}`} href="#apply">
+          <a className={ui.primary} href="#apply">
             {FOUNDERS_HEAD.apply}
           </a>
           <a className={ui.secondary} href="#how">
@@ -54,14 +156,20 @@ export function Founders() {
           </h2>
           <p className={styles.lede}>{FOUNDERS_FOR.lede}</p>
         </header>
-        <ul className={styles.tiles}>
-          {FOUNDERS_FOR.items.map((item) => (
-            <li key={item.text} className={styles.tile} data-tone={item.tone}>
-              {item.text}
+        <ol className={styles.criteria}>
+          {FOUNDERS_FOR.items.map((text, index) => (
+            <li key={text} className={styles.criterion}>
+              <span className={styles.number} aria-hidden="true">
+                {number(index)}
+              </span>
+              <span>{text}</span>
             </li>
           ))}
-        </ul>
+        </ol>
       </section>
+
+      <Record wins={wins} />
+      <Startups wins={wins} />
 
       <section className={styles.block} aria-labelledby="circle-get">
         <header className={styles.head}>
@@ -91,9 +199,9 @@ export function Founders() {
         </header>
         <ol className={styles.steps}>
           {FOUNDERS_STEPS.items.map((step, index) => (
-            <li key={step.title} className={styles.step} style={{ '--i': index } as CSSProperties}>
-              <span className={styles.stepNumber} aria-hidden="true">
-                {stepNumber(index)}
+            <li key={step.title} className={styles.step}>
+              <span className={styles.number} aria-hidden="true">
+                {number(index)}
               </span>
               <h3 className={styles.stepTitle}>{step.title}</h3>
               <p className={styles.stepText}>{step.text}</p>
