@@ -44,7 +44,7 @@ The energy of Jose's film: black and white with warm highlights, film grain, fla
 | 13.9 | 1.5 | WHAT STARTED HERE | A robot arm in a lab | Boston Dynamics, MIT, 1992 | Envato |
 | 15.4 | 1.5 | WHAT STARTED HERE | A dorm room at night, a laptop's glow | Meta's logo, "started as Facebook, a Harvard dorm, 2004" | Envato; Meta's approved logo |
 | 16.9 | 1.5 | WHAT STARTED HERE | Moderna's vials on the line, then a robot pipetting in its lab | Moderna, Cambridge, 2010 | Moderna's own footage, approved |
-| 18.4 | 1.5 | WHAT STARTED HERE | A robot vacuum crossing a floor | iRobot, the Roomba, MIT roboticists, 1990 | Envato |
+| 18.4 | 1.5 | WHAT STARTED HERE | The Roomba crossing a sunlit floor, then its green scan | iRobot, the Roomba, MIT roboticists, 1990 | iRobot's own footage, approved |
 | 19.9 | 1.5 | WHAT STARTED HERE | Code scrolling in a dark room | Dropbox, MIT students in Cambridge, 2007 | Envato |
 | 21.4 | 1.5 | WHAT STARTED HERE | A speaker cone pulsing | Bose, MIT professor Amar Bose, 1964 | Envato |
 | 22.9 | 2.1 | WHAT STARTED HERE | WHOOP's strap mid-workout, Sha'Carri Richardson, Cristiano Ronaldo | WHOOP, Harvard, 2012 | WHOOP's own pictures, approved |
@@ -84,17 +84,43 @@ While any source is missing, that shot renders as a labelled frame saying what g
 
 `film/clips/`, `film/archive/` and `film/brand/` stay out of git: the footage is licensed or approved for this film, not ours to publish raw.
 
-## What's approved
+## What's approved, and who to ask
+
+Approved for this film (keep each approval in writing with the project):
 
 | Company | What | Where it is |
 | --- | --- | --- |
 | Meta | Its company logo, for the Facebook card | `film/brand/meta-lockup-white.svg` |
 | WHOOP | Its body and athlete pictures, the athletes included | `film/brand/whoop/`, `film/brand/whoop-ambassadors/` |
 | Moderna | Four clips: vials on the line, vials into boxes, boxes, and a 4K lab reel from November 2020 | `film/brand/moderna/` |
+| iRobot | Two Roomba product films (Max 705 and Plus 505). Both copies are small, 420x236 at 15 fps, so they look soft at full size | `film/brand/irobot/` |
 
-Keep each approval in writing with the project. Still worth asking, with the email below: Boston Dynamics (press form at <https://bostondynamics.com/news/#press-form>), iRobot (publicrelations@irobot.com) and Bose (its press contact at <https://www.bose.com/pressroom>). Give each two weeks; without a written yes, their beats keep the stock b-roll. Dropbox isn't worth asking: its brand assets are only for articles about Dropbox.
+Every company the film names, and what to ask each for:
 
-NASA's footage needs no permission: it's generally not under copyright. Credit "Footage: NASA", keep the NASA insignia out of frame, use rocket and launch-pad shots rather than the astronauts, and imply no endorsement. Clips cut from any company's YouTube channel are out: YouTube's terms only allow embedding the player.
+| Company | In the film | What to ask for | Contact we found | Status |
+| --- | --- | --- | --- | --- |
+| Boston Dynamics | Card, 1.5 s | Two seconds of Spot or Atlas walking, from their press footage; their logo | Press form, <https://bostondynamics.com/news/#press-form> | To ask |
+| Meta (Facebook) | Card, 1.5 s | Done: the logo. Optional: a photo of thefacebook.com in 2004 | press@meta.com | Logo approved |
+| Moderna | Card, 1.5 s | Optional: their logo | media@modernatx.com | Footage approved |
+| iRobot | Card, 1.5 s | The two Roomba films at full resolution (1080p or 4K); their logo | publicrelations@irobot.com | Footage approved, full size to ask |
+| Dropbox | Card, 1.5 s | Their logo, or one product screenshot | brand@dropbox.com, press@dropbox.com | To ask (their brand page says to check in first) |
+| Bose | Card, 1.5 s | Two seconds of a speaker or headphones close up; their logo | The press contact on <https://www.bose.com/pressroom> | To ask |
+| WHOOP | Card, 2.1 s | Optional: their logo | press@whoop.com | Pictures approved |
+| HubSpot | Name in the closing roll | Their logo (the roll is a quarter second each, so footage isn't needed) | Their newsroom | Optional |
+| Wayfair | Name in the roll | Their logo | Their newsroom | Optional |
+| Reddit | Name in the roll | Their logo | Their newsroom | Optional |
+| Zipcar | Name in the roll | Their logo | Their newsroom | Optional |
+| Akamai | Name in the roll | Their logo | Their newsroom | Optional |
+| Polaroid | Name in the roll | Their logo | Their newsroom | Optional |
+| Harmonix | Name in the roll | Their logo | Their newsroom | Optional |
+| DraftKings | Name in the roll | Their logo | Their newsroom | Optional |
+| Draper (the MIT Instrumentation Lab, which designed Apollo's guidance computer) | Apollo card | Optional: an archive photo of the guidance computer or the lab's team, for a second under the card | Its communications office, <https://www.draper.com> | Optional; NASA's launch footage needs no asking |
+
+The telephone (Library of Congress) and Apollo 11's launch (NASA) are free to use and need nobody's permission. Each logo that comes back approved goes on its card the way Meta's does: put the file in `film/brand/` and add `logo:` to that shot in `film/shots.mjs`. Logos in the roll need a small change to the script, since the roll draws names as text today.
+
+Give each request two weeks. Without a written yes, a card keeps its stock footage and the name in our type. Clips cut from any company's YouTube channel are out: YouTube's terms only allow embedding the player.
+
+NASA's footage needs no permission: it's generally not under copyright. Credit "Footage: NASA", keep the NASA insignia out of frame, use rocket and launch-pad shots rather than the astronauts, and imply no endorsement.
 
 The email, to fill in for each company:
 
@@ -114,7 +140,7 @@ The email, to fill in for each company:
 
 ## What to download
 
-One paid service, Envato Elements, for one month ($39, <https://elements.envato.com/pricing>). Download every Envato clip below in that month and register each one to this project: the licence for a registered item lasts after you cancel. Everything else is free. Search Envato for the title, or for the item ID at the end of its address.
+One paid service, Envato Elements, for one month ($39, <https://elements.envato.com/pricing>). Download the 8 Envato clips below in that month and register each one to this project: the licence for a registered item lasts after you cancel. Everything else is free. Search Envato for the title, or for the item ID at the end of its address.
 
 | Save as | What | Where | Cost |
 | --- | --- | --- | --- |
@@ -124,7 +150,6 @@ One paid service, Envato Elements, for one month ($39, <https://elements.envato.
 | `film/clips/boston-night-aerial.mp4` | Aerial View of Boston, Massachusetts at Night | Envato, item NHUEEDQ | Envato |
 | `film/clips/robot-arm.mp4` | Robotic Arm Precision Task in Advanced Lab | Envato, item HVCGWKE | Envato |
 | `film/clips/dorm-laptop.mp4` | Young Person Working on Laptop at Night | Envato, item MBNZJ36 | Envato |
-| `film/clips/robot-vacuum.mp4` | Robot Vacuum Cleaning Floor in Modern Home | Envato, item NJRHYNL | Envato |
 | `film/clips/code.mp4` | Lines of Programming Code Scrolling on a Computer Monitor in Dark Office | Envato, item RU6RUNG | Envato |
 | `film/clips/speaker.mp4` | Speaker Cone Vibrating in Close Up | Envato, item 3W8KDZ6 | Envato |
 | `film/clips/green-line.mp4` | Urban Train Crossing at Traffic Signal (a Green Line car, vertical 4K) | <https://www.pexels.com/video/urban-train-crossing-at-traffic-signal-37898742/> | Free |
