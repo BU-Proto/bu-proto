@@ -22,6 +22,7 @@ import { WinTally } from '../components/WinTally'
 import type { LayoutOutlet } from '../components/Layout'
 import {
   FUND_NOTE,
+  HERO_COPY,
   HOME_EMPTY,
   JOIN_CTA,
   NEXT_UP,
@@ -30,7 +31,7 @@ import {
   SEMESTER,
 } from '../content/home'
 import { KIND_HUE, NEXT_EVENT } from '../content/events'
-import { BRAND } from '../content/site'
+import { BRAND, groupInvite } from '../content/site'
 import { WINS_EMPTY } from '../content/wins'
 import { WHY } from '../content/about'
 import type { HomeData } from '../lib/content'
@@ -47,14 +48,15 @@ const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 
 /**
  * How each beat is drawn in the score, by its row in RHYTHM: the bigger the night, the taller and
- * denser its column. A week shows its biggest beat. Year two has no column: it isn't on yet.
+ * denser its column. A week shows its biggest beat. A beat planned for later has no column.
  */
 const BEATS = [
-  { name: 'hack', height: 4, weight: 0.4 },
-  { name: 'trip', height: 8, weight: 0.66 },
+  { name: 'build', height: 4, weight: 0.4 },
+  { name: 'fireside', height: 7, weight: 0.56 },
+  { name: 'trip', height: 9, weight: 0.7 },
   { name: 'demo', height: 13, weight: 0.94 },
 ] as const
-const TRIP_ROW = 1
+const TRIP_ROW = RHYTHM.findIndex((beat) => beat.what === 'Hackathon trip')
 const SCORE_ROWS = 14
 const COLUMN_WIDTH = 8
 
@@ -203,7 +205,7 @@ export function Home() {
 
   return (
     <>
-      <title>{`${BRAND.name} · The home base for building things at BU`}</title>
+      <title>{`${BRAND.name} · ${HERO_COPY.tab}`}</title>
       <Hero />
 
       {/* Everything below the hero settles in as it comes up the screen (see motion/useReveal). */}
@@ -288,6 +290,7 @@ export function Home() {
                   <h3 className={lui.stepTitle}>{beat.what}</h3>
                 </div>
                 <p className={styles.when}>{beat.later ? SEMESTER.later : beat.when}</p>
+                {beat.group && <p className={styles.group}>{groupInvite(beat.group)}</p>}
                 <p className={lui.stepText}>
                   {beat.detail}
                   {row === TRIP_ROW && (
@@ -327,6 +330,9 @@ export function Home() {
                   {NEXT_UP.allHackathons}
                 </Link>
               </div>
+              <p className={styles.group} data-reveal="rise">
+                {groupInvite(NEXT_UP.applyByGroup)}
+              </p>
               {deadlines.length === 0 ? (
                 <p className={styles.quiet} data-reveal="rise">
                   {HOME_EMPTY.deadlines}

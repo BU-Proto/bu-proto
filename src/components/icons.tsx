@@ -37,6 +37,22 @@ export function CloseIcon(props: IconProps) {
   )
 }
 
+export function PauseIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 6v12M15 6v12" />
+    </Svg>
+  )
+}
+
+export function PlayIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M8 5.5v13l10.5-6.5z" />
+    </Svg>
+  )
+}
+
 export function PinIcon(props: IconProps) {
   return (
     <Svg strokeWidth={2} {...props}>

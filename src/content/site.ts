@@ -1,4 +1,4 @@
-// Copy shared by every page: the brand, the navigation and hack night's time and place.
+// Copy shared by every page: the brand, the navigation and build night's time and place.
 
 import type { Sampleable } from './types'
 
@@ -26,6 +26,10 @@ export interface NavChild {
   line: string
 }
 
+/**
+ * Proto is one community with groups inside it. CS is the first group: hackathons and everything
+ * that goes with them live under it. Business and Engineering get items here once they start.
+ */
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', to: '/' },
   {
@@ -33,28 +37,41 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: '/about',
     inPill: true,
     children: [
-      { label: 'What we offer', to: '/about#offer', line: 'Hack nights, trips and the playbook' },
+      { label: 'What we offer', to: '/about#offer', line: 'Build nights, firesides and demo night' },
       { label: 'The board', to: '/board', line: 'Who runs Proto, and the open seats' },
-      { label: 'Roles', to: '/roles', line: 'The seats we’re filling, and how to apply' },
+      { label: 'Roles', to: '/roles', line: 'The seats we\'re filling, and how to apply' },
     ],
   },
-  { label: 'Hackathons', to: '/hackathons', inPill: true },
-  { label: 'Grants', to: '/grants', inPill: true },
-  { label: 'Wins', to: '/wins', inPill: true },
+  { label: 'Events', to: '/events', inPill: true },
+  {
+    label: 'CS',
+    to: '/hackathons',
+    inPill: true,
+    children: [
+      { label: 'Hackathons', to: '/hackathons', line: 'Where we\'re going next, and when to apply' },
+      { label: 'Wins', to: '/wins', line: 'What our teams built and took home' },
+      { label: 'The playbook', to: '/resources/playbook', line: 'Our guides to hackathons, start to finish' },
+      { label: 'Grants', to: '/grants', line: 'A travel fund for hackathons, coming soon' },
+    ],
+  },
   {
     label: 'Resources',
     to: '/resources',
     inPill: true,
     children: [
-      { label: 'The playbook', to: '/resources/playbook', line: 'Our guides to hackathons, start to finish' },
-      { label: 'Spark!', to: '/resources/spark', line: 'BU’s lab for building things, with mentors' },
+      { label: 'Spark!', to: '/resources/spark', line: 'BU\'s lab for building things, with mentors' },
       { label: 'Innovate@BU', to: '/resources/innovate', line: 'Funding and mentors to launch a venture' },
     ],
   },
-  { label: 'Events', to: '/events', inPill: true },
   { label: 'Track Record', to: '/track-record' },
   { label: 'Join', to: '/join' },
 ]
+
+/**
+ * Every event is open to everyone. A group's own nights say whose they are, and that everyone else
+ * is welcome too: "CS group, everyone welcome".
+ */
+export const groupInvite = (group: string) => `${group} group, everyone welcome`
 
 /** Whether the page at `pathname` is one of an item's own pages (a child's hash doesn't count). */
 export const navItemHolds = (item: NavItem, pathname: string) =>
@@ -79,7 +96,7 @@ export interface ScheduleSlot {
   duration: string
 }
 
-/** Hack night's room and times aren't booked yet. */
+/** Build night's room and times aren't booked yet. */
 export const SCHEDULE: { location: string; slots: readonly ScheduleSlot[] } & Sampleable = {
   placeholder: true,
   location: 'CDS, 665 Commonwealth Ave, Boston',
@@ -101,7 +118,7 @@ export interface FooterGroup {
 }
 
 export const FOOTER = {
-  line: 'Hack nights, hackathon trips and demo nights for BU students who make things.',
+  line: 'A home in Boston for anyone who wants to build something. Started at BU, open to every school.',
   note: 'Proto is a working name. Nothing here is official with Spark! or Innovate@BU yet.',
   /** The site, sorted into columns. Legal links come from LEGAL_LINKS, the email from CONTACT_EMAIL. */
   groups: [
@@ -110,14 +127,15 @@ export const FOOTER = {
       links: [
         { label: 'About Proto', to: '/about' },
         { label: 'Events', to: '/events' },
-        { label: 'Hackathons', to: '/hackathons' },
+        { label: 'Track record', to: '/track-record' },
       ],
     },
     {
-      title: 'Our record',
+      title: 'CS',
       links: [
+        { label: 'Hackathons', to: '/hackathons' },
         { label: 'Wins', to: '/wins' },
-        { label: 'Track record', to: '/track-record' },
+        { label: 'The playbook', to: '/resources/playbook' },
       ],
     },
     {

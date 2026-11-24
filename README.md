@@ -1,6 +1,6 @@
 # bu-proto
 
-The site for **Proto** (working name), a BU-sponsored home base for students who make things, built with React, TypeScript, React Router and Vite. The concept behind every page is in [`docs/concept.md`](docs/concept.md).
+The site for **Proto** (working name), a home in Boston for anyone who builds things, started at BU, built with React, TypeScript, React Router and Vite. The concept behind every page is in [`docs/concept.md`](docs/concept.md).
 
 The background is an ASCII field: the gradient from the reference design rendered as monospace characters that drift and shimmer on their own. The cursor's wind slides the characters around and rewrites the ones along its path into a Stable-Fluids trail of `○ > _` glyphs that dissolves within about a second. The gradient's colors never move with the cursor.
 
@@ -32,7 +32,7 @@ npm run dev                      # http://localhost:5173
 
 | Route | Page |
 | --- | --- |
-| `/` | Home: hero, the three tracks, the rhythm, next event and hack night, upcoming deadlines, latest wins, join |
+| `/` | Home: the hero film (set in `src/content/home.ts`), the three tracks, the rhythm, next event, the CS group's hackathon deadlines, latest wins, join |
 | `/hackathons` | Upcoming hackathons as a departures board |
 | `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
 | `/wins` | Win cards: photo, project, placement, team, Devpost |
