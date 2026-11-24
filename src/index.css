@@ -35,6 +35,12 @@
   --coral: #ffb4a8;
   --coral-rgb: 255 180 168;
 
+  /* The Founders Circle's own colour: an old gold, for its mark, rules and buttons, never for
+     states. With it, a serif for its name and numbers, from the system's own book faces. */
+  --gold: #d4b26a;
+  --gold-rgb: 212 178 106;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+
   /*
    * The field's own light, as named colours: read across the field from its cerulean edge,
    * through the lilac, to the raspberry core. They mean one thing everywhere, size: the further

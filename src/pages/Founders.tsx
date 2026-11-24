@@ -3,7 +3,7 @@ import { Link, useLoaderData } from 'react-router'
 import type { Win } from '../../shared/api'
 import { Field, Form } from '../components/Form'
 import { inputClass } from '../components/formFields'
-import { PageIntro } from '../components/PageIntro'
+import { CircleMark } from '../components/CircleMark'
 import { PrivacyNote } from '../components/PrivacyNote'
 import { SampleTag } from '../components/SampleTag'
 import { Select } from '../components/Select'
@@ -16,6 +16,7 @@ import {
   FOUNDERS_NUMBERS,
   FOUNDERS_STARTUPS,
 } from '../content/founders'
+import { BRAND } from '../content/site'
 import { api } from '../lib/api'
 import { winPath } from '../lib/paths'
 import { reducedMotion } from '../lib/useInView'
@@ -55,7 +56,7 @@ function Numbers({ wins, startups }: { wins: readonly Win[]; startups: number })
           </div>
         ))}
       </dl>
-      <p className={styles.small}>
+      <p className={`${styles.small} ${styles.numbersNote}`}>
         {since && `${FOUNDERS_NUMBERS.since(since)} `}
         <Link className={ui.textLink} to={FOUNDERS_NUMBERS.link.href}>
           {FOUNDERS_NUMBERS.link.label}
@@ -65,6 +66,9 @@ function Numbers({ wins, startups }: { wins: readonly Win[]; startups: number })
   )
 }
 
+/** The Circle's numerals, for what members get: I, II, III, IV. */
+const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI']
+
 /** Arriving at /founders#apply, the application starts open. */
 const arrivedToApply = () => typeof window !== 'undefined' && window.location.hash === '#apply'
 
@@ -72,7 +76,9 @@ const arrivedToApply = () => typeof window !== 'undefined' && window.location.ha
  * The Founders Circle: the one part of Proto people apply to. It says as little as it can: the
  * numbers, what members get, a few of our startups, and the form with a line on who it's for. The
  * form stays folded away until someone asks for it, so the page stays short for everyone else.
- * Once opened it stays mounted when folded again, so nothing typed is lost.
+ * Once opened it stays mounted when folded again, so nothing typed is lost. Black tie: the
+ * Circle's mark over a serif title, old gold for rules and buttons, and the field behind turned to
+ * gold and kept low (the 'circle' ground in lib/pageGround).
  */
 export function Founders() {
   const wins = useLoaderData<Win[]>().filter((win) => !win.placeholder)
@@ -94,16 +100,25 @@ export function Founders() {
 
   return (
     <div className={styles.page}>
-      <PageIntro intro={FOUNDERS_INTRO}>
+      {/* The intro, centred under the Circle's mark. The field drains into harbor below it. */}
+      <header className={styles.hero} data-ground-after="">
+        <title>{`${FOUNDERS_INTRO.title} · ${BRAND.name}`}</title>
+        <CircleMark className={styles.heroMark} />
         <p className={styles.badge} data-fog-clear>
           {FOUNDERS_HEAD.badge}
         </p>
+        <h1 className={styles.title} data-fog-clear>
+          {FOUNDERS_INTRO.title}
+        </h1>
+        <p className={styles.lede} data-fog-clear>
+          {FOUNDERS_INTRO.lede}
+        </p>
         <div className={styles.headActions} data-fog-clear="box">
-          <button type="button" className={ui.primary} onClick={startApplying}>
+          <button type="button" className={`${ui.primary} ${styles.gold}`} onClick={startApplying}>
             {FOUNDERS_HEAD.apply}
           </button>
         </div>
-      </PageIntro>
+      </header>
 
       <Numbers wins={wins} startups={startups.length} />
 
@@ -112,8 +127,11 @@ export function Founders() {
           {FOUNDERS_GET.title}
         </h2>
         <ul className={styles.perks}>
-          {FOUNDERS_GET.items.map((perk) => (
+          {FOUNDERS_GET.items.map((perk, index) => (
             <li key={perk.title} className={styles.perk}>
+              <span className={styles.numeral} aria-hidden="true">
+                {NUMERALS[index]}
+              </span>
               <h3 className={styles.perkTitle}>
                 {perk.title}
                 <SampleTag show={perk.placeholder} />
@@ -163,7 +181,7 @@ export function Founders() {
           </p>
           <button
             type="button"
-            className={`${applying ? ui.secondary : ui.primary} ${styles.toggle}`}
+            className={`${applying ? ui.secondary : `${ui.primary} ${styles.gold}`} ${styles.toggle}`}
             aria-expanded={applying}
             aria-controls={opened ? 'apply-form' : undefined}
             onClick={() => toggle(!applying)}
