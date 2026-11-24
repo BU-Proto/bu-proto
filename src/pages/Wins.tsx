@@ -27,7 +27,7 @@ export function Wins() {
         <div className={styles.showcase}>
           <AccoladeFeatures wins={featured} eagerFirst />
           {rest.length > 0 && (
-            <section className={styles.more} aria-labelledby="more-prizes">
+            <section className={styles.more} aria-labelledby="more-prizes" data-grid>
               <h2 id="more-prizes" className={styles.moreTitle} data-fog-clear>
                 {WIN_SHOWCASE.moreTitle}
               </h2>

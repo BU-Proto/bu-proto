@@ -1,0 +1,247 @@
+/*
+ * A group's page, after brand.dropbox.com: the group's colour as one big tile (ink of the same hue
+ * on it), then what it runs as dark tiles on the hairline grid, each topped with the group's
+ * colour, then its next nights as ruled rows.
+ */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 32px;
+  padding: clamp(28px, 4vw, 48px);
+  background: var(--tone);
+  color: var(--tone-ink);
+}
+
+.heroWords {
+  display: grid;
+  gap: 14px;
+  max-width: 34ch;
+}
+
+.label {
+  margin: 0;
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(44px, 7vw, 96px);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: 0.95;
+}
+
+.lede {
+  margin: 0;
+  font-size: clamp(17px, 1.6vw, 21px);
+  line-height: 1.4;
+}
+
+.note {
+  justify-self: start;
+  margin: 4px 0 0;
+  padding: 5px 12px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.picture {
+  width: clamp(120px, 18vw, 240px);
+  height: auto;
+}
+
+.runs {
+  display: grid;
+  gap: 20px;
+  margin-top: 24px;
+  padding: 24px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 190px;
+  padding: 20px 22px 22px;
+  border-top: 4px solid var(--tone);
+  background: rgb(var(--navy-rgb) / 0.92);
+  box-shadow: inset 0 0 0 1px var(--slab-edge);
+}
+
+.number {
+  color: var(--tone);
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.activityName {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--display-weight);
+  letter-spacing: -0.02em;
+}
+
+.activityText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.activityLink {
+  margin-top: auto;
+  color: var(--tone);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.activityLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.welcome {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+.next {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.nextHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.empty {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+
+.events {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  padding: 16px 4px;
+  border-top: 1px solid var(--rule);
+}
+
+.date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.day {
+  color: var(--tone);
+  font-size: 44px;
+  font-weight: var(--display-weight);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.month {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.eventWords {
+  display: grid;
+  gap: 4px;
+}
+
+.eventTitle {
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.eventTitle:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.eventMeta {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.help {
+  margin: 24px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .picture {
+    justify-self: end;
+    width: 110px;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .activity {
+    min-height: 0;
+  }
+
+  .event {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .day {
+    font-size: 34px;
+  }
+}

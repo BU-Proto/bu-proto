@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import type { Win } from '../../shared/api'
 import { WIN_SHEET, WIN_SHOWCASE } from '../content/wins'
-import { asciiWord } from '../lib/glyphArt'
+import { hash } from '../lib/glyphArt'
 import { reducedMotion, useInView } from '../lib/useInView'
 import { accoladeOf, hackathonName, teamParts } from './accolade'
 import { BuMark } from './BuMark'
-import motion from './motion/motion.module.css'
+import { Pictogram } from './Pictogram'
 import { SampleTag } from './SampleTag'
 import ui from './ui.module.css'
 import styles from './WinSheet.module.css'
@@ -15,12 +15,11 @@ import { winPath } from '../lib/paths'
 const LETTER_COPIES = [0, 1, 2, 3]
 const ROLL_STEP = 62.5
 
-const DECODE_GLYPHS = ".,:;'-~=+<>*xo%#@○>_"
-const DECODE_RATE = 40
-const DECODE_NOISE = 5
+/** Characters a second the tag line types out at. */
+const TYPE_RATE = 40
 
-const noiseGlyphs = (count: number) =>
-  Array.from({ length: count }, () => DECODE_GLYPHS[Math.floor(Math.random() * DECODE_GLYPHS.length)]).join('')
+/** A win without a photo yet takes one of these colours, by its id. */
+const TONES = ['sky', 'iris', 'rose', 'amber', 'mint'] as const
 
 /**
  * Where, what and who, as separate parts: "HackHarvard 2026", "1st Place, Best Web API", "Team of
@@ -35,7 +34,7 @@ function tagParts(win: Win): string[] {
 }
 
 /**
- * The tag line, typed out behind a few loose glyphs, one part after another. Its hidden twin holds
+ * The tag line, typed out one part after another. Its hidden twin holds
  * the line's height, and a screen reader gets the parts as one plain sentence.
  */
 function TagLine({ parts, inView }: { parts: readonly string[]; inView: boolean }) {
@@ -71,13 +70,12 @@ function TagLine({ parts, inView }: { parts: readonly string[]; inView: boolean 
     const start = performance.now()
     const full = texts.join('')
     const tick = (now: number) => {
-      const shown = Math.floor(DECODE_RATE * ((now - start) / 1000))
-      const real = Math.max(0, shown - DECODE_NOISE)
-      if (real >= total) {
+      const shown = Math.floor(TYPE_RATE * ((now - start) / 1000))
+      if (shown >= total) {
         show(full)
         return
       }
-      show(full.slice(0, real) + noiseGlyphs(Math.min(DECODE_NOISE, total - real)))
+      show(full.slice(0, shown))
       frame.id = requestAnimationFrame(tick)
     }
     frame.id = requestAnimationFrame(tick)
@@ -106,7 +104,7 @@ function RollingTitle({ text }: { text: string }) {
     <h3 className={styles.name} aria-label={text} style={{ '--n': chars.length } as CSSProperties}>
       <span className={styles.mask}>
         <span className={styles.arrow} aria-hidden="true">
-          {'>'}
+          →
         </span>
         {chars.map((char, index) => {
           if (!char.trim()) return <span key={index} className={styles.space} aria-hidden="true" />
@@ -134,14 +132,14 @@ function RollingTitle({ text }: { text: string }) {
   )
 }
 
-/** The cover, or the project's name set in the field's fine ramp when there's no photo yet. */
+/** The cover, or a colour tile with a trophy when there's no photo yet. */
 function Art({ win, alt, eager }: { win: Win; alt: string; eager: boolean }) {
-  const lines = useMemo(() => (win.photo ? null : asciiWord(win.project).join('\n')), [win.photo, win.project])
   if (win.photo) return <img src={win.photo} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  const tone = TONES[Math.floor(hash(win.id, 7) * TONES.length)]
   return (
-    <pre className={`${motion.figure} ${styles.ascii}`} aria-hidden="true" data-trail-art>
-      {lines}
-    </pre>
+    <span className={styles.toneArt} data-tone={tone} aria-hidden="true">
+      <Pictogram name="trophy" className={styles.toneArtPicture} />
+    </span>
   )
 }
 

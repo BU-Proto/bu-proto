@@ -4,9 +4,9 @@ import { GROUP_TILES, GROUPS_INTRO, type GroupTile } from '../content/home'
 import { RevealWords } from './motion/RevealWords'
 import styles from './GroupsBento.module.css'
 
-/** Each group's simple drawing, in the ink of its tile. */
-function Picture({ name }: { name: GroupTile['picture'] }) {
-  const common = { className: styles.picture, viewBox: '0 0 120 120', 'aria-hidden': true, focusable: false } as const
+/** Each group's simple drawing, in the ink of its tile. Group pages use it too. */
+export function Picture({ name, className }: { name: GroupTile['picture']; className?: string }) {
+  const common = { className: className ?? styles.picture, viewBox: '0 0 120 120', 'aria-hidden': true, focusable: false } as const
   if (name === 'people') {
     const nodes = [
       [20, 28],
@@ -59,13 +59,13 @@ function Picture({ name }: { name: GroupTile['picture'] }) {
 }
 
 /**
- * Proto's groups as a bento of light tiles: everyone's nights across the top, then CS, Business
- * and Engineering side by side at the same size, none above the others. Each tile is its own colour with ink of the same hue, a name, a line, its pages and a
+ * Proto's groups as a bento of light tiles: everyone's nights across the top, then CS and
+ * Business side by side at the same size, neither above the other. Each tile is its own colour with ink of the same hue, a name, a line, its pages and a
  * drawing, after the section tiles on brand.dropbox.com.
  */
 export function GroupsBento() {
   return (
-    <section className={styles.groups} aria-labelledby="groups">
+    <section className={styles.groups} aria-labelledby="groups" data-grid>
       <header className={styles.head}>
         <h2 id="groups" className={styles.title} data-reveal="words">
           <RevealWords text={GROUPS_INTRO.title} />

@@ -42,8 +42,8 @@
   max-width: 19ch;
   margin: 0;
   font-size: clamp(42px, 6.4vw, 84px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
   line-height: 0.98;
   text-wrap: balance;
   text-shadow: 0 2px 34px rgb(var(--harbor-rgb) / 0.45);

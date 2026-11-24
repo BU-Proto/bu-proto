@@ -4,6 +4,7 @@ import { RevealWords } from '../components/motion/RevealWords'
 import motion from '../components/motion/motion.module.css'
 import { useReveal } from '../components/motion/useReveal'
 import ui from '../components/ui.module.css'
+import { TrackPicture } from '../components/WaysIn'
 import { ABOUT_INTRO, OFFER, WHAT, WHO, WHY } from '../content/about'
 import { JOIN_CTA, TRACKS } from '../content/home'
 import { BRAND } from '../content/site'
@@ -42,13 +43,11 @@ export function About() {
         <div className={styles.rowBody}>
           <p className={styles.statement}>{WHAT.text}</p>
           <p className={styles.note}>{WHAT.tracksLead}</p>
-          {/* A sequence, first-timer to founder, so an ordered list, each with its trail glyph. */}
+          {/* A sequence, first-timer to founder, so an ordered list, each with its drawing. */}
           <ol className={styles.tracks}>
             {TRACKS.map((track) => (
               <li key={track.name} className={styles.track} data-hue={track.hue}>
-                <span className={styles.glyph} aria-hidden="true">
-                  {track.glyph}
-                </span>
+                <TrackPicture name={track.picture} className={styles.glyph} />
                 <span className={styles.trackName}>{track.name}</span>
                 <span className={styles.trackWho}>{track.who}</span>
               </li>

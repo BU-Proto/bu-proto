@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, type CSSProperties } from 'react'
 import type { Win } from '../../shared/api'
-import { asciiWord, hash } from '../lib/glyphArt'
+import { hash } from '../lib/glyphArt'
 import { onFrame } from '../lib/smoothScroll'
 import { useInView } from '../lib/useInView'
 import styles from './WinOrbit.module.css'
@@ -152,21 +152,20 @@ function StampFace({ stamp }: { stamp: Stamp }) {
   )
 }
 
-const GLYPH_COLS = 104
-const GLYPH_ROWS = 35
+/** A win without a photo yet takes one of these colours, by its id. */
+const TONES = ['sky', 'iris', 'rose', 'amber', 'mint'] as const
 
 function WinCard({ win, loaded }: { win: Win; loaded: boolean }) {
-  const lines = useMemo(
-    () => (loaded && !win.photo ? asciiWord(win.project, GLYPH_COLS, GLYPH_ROWS).join('\n') : ''),
-    [loaded, win.photo, win.project],
-  )
   return (
     <div className={styles.card}>
       <div className={styles.shot}>
         {win.photo ? (
           loaded && <img src={win.photo} alt="" decoding="async" draggable={false} />
         ) : (
-          <pre className={styles.glyphs} data-trail-art>{lines}</pre>
+          // No photo yet: the project's name, bold, on a flat tile in ink of the tile's own hue.
+          <span className={styles.toneCard} data-tone={TONES[Math.floor(hash(win.id, 7) * TONES.length)]}>
+            {win.project}
+          </span>
         )}
       </div>
     </div>

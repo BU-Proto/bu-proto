@@ -74,8 +74,8 @@ export const FUND_NOTE: { text: string; link: Link } = {
 // constants.ts), so the names stay and only the words change.
 export interface Track {
   name: TrackName
-  /** One of the trail's own glyphs, drawn large behind the card. */
-  glyph: string
+  /** The flat drawing at the foot of the track's tile on the landing. */
+  picture: 'sprout' | 'blocks' | 'rocket'
   /** Down the stair the light warms, as it does across the field: Start sky, Launch rose. */
   hue: Hue
   who: string
@@ -90,7 +90,7 @@ export const TRACKS_INTRO = {
 export const TRACKS: readonly Track[] = [
   {
     name: 'Start',
-    glyph: '○',
+    picture: 'sprout',
     hue: 'sky',
     who: 'You want to make something and haven\'t started. Any school, any major.',
     offers: [
@@ -100,7 +100,7 @@ export const TRACKS: readonly Track[] = [
   },
   {
     name: 'Build',
-    glyph: '>',
+    picture: 'blocks',
     hue: 'iris',
     who: 'You\'re making something, on your own or with friends.',
     offers: [
@@ -110,7 +110,7 @@ export const TRACKS: readonly Track[] = [
   },
   {
     name: 'Launch',
-    glyph: '_',
+    picture: 'rocket',
     hue: 'rose',
     who: 'You\'re turning what you built into a company.',
     offers: [
@@ -134,7 +134,7 @@ export interface GroupTile {
 
 export const GROUPS_INTRO = {
   title: 'One community, with groups inside it',
-  lede: "Every event is open to everyone. A group's own nights say whose they are, and everyone else is welcome too.",
+  lede: "Every event is open to everyone. CS and Business run nights of their own too, and everyone else is welcome at those.",
   later: 'Later',
 } as const
 
@@ -143,7 +143,7 @@ export const GROUP_TILES: readonly GroupTile[] = [
     name: 'Everyone',
     tone: 'sky',
     picture: 'people',
-    text: 'Build nights every week, firesides most months and a demo night each semester. Open to all of Boston.',
+    text: 'Build nights every week, firesides every two weeks and a demo night each semester. Open to all of Boston.',
     links: [
       { label: 'Events', href: '/events' },
       { label: 'Join Proto', href: '/join' },
@@ -153,29 +153,22 @@ export const GROUP_TILES: readonly GroupTile[] = [
     name: 'CS',
     tone: 'iris',
     picture: 'prompt',
-    text: 'Hack nights, hackathon trips, the playbook and the wins. Anyone can come.',
+    text: 'For building with code: hack nights, hackathon trips, the playbook and the wins. Anyone can come.',
     links: [
+      { label: 'The CS group', href: '/cs' },
       { label: 'Hackathons', href: '/hackathons' },
       { label: 'Wins', href: '/wins' },
-      { label: 'The playbook', href: '/resources/playbook' },
-      { label: 'Grants', href: '/grants' },
     ],
   },
   {
     name: 'Business',
     tone: 'amber',
     picture: 'steps',
-    text: 'Nights of its own come later. Until then, every event is yours too.',
-    links: [],
-    later: true,
-  },
-  {
-    name: 'Engineering',
-    tone: 'mint',
-    picture: 'nut',
-    text: "Nights of its own come later. Bring what you're building to build night.",
-    links: [],
-    later: true,
+    text: 'For the company side: finding customers, pricing, pitching and raising money. Anyone can come.',
+    links: [
+      { label: 'The Business group', href: '/business' },
+      { label: 'Resources', href: '/resources' },
+    ],
   },
 ]
 
@@ -243,14 +236,14 @@ export const STARTED_HERE: {
 
 export const RHYTHM_INTRO = {
   title: 'The rhythm',
-  lede: 'A build night every week, a fireside and a group night most months, and demo night to close the semester.',
+  lede: 'A build night every week, a fireside every two weeks, a group night most months, and demo night to close the semester.',
 } as const
 
 // Row order is size order: the score draws each row taller than the one before (see Home.tsx).
 export const RHYTHM: readonly Beat[] = [
   { when: 'Weekly', what: 'Build night', detail: 'Open to anyone, with food. Bring what you\'re working on, or come to meet people who are.', weeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], hue: 'sky' },
-  { when: 'About monthly', what: 'Fireside', detail: 'A founder or investor talks about how companies get built, then takes questions from people building their own.', weeks: [2, 6, 10], hue: 'iris' },
-  { when: 'About monthly', what: 'Group nights', detail: 'A night for one group: CS now, business and engineering soon. Everyone else is welcome too.', weeks: [4, 8, 12], hue: 'iris' },
+  { when: 'Every two weeks', what: 'Fireside', detail: 'A founder or investor talks about how companies get built, then takes questions from people building their own.', weeks: [2, 4, 6, 8, 10, 12], hue: 'iris' },
+  { when: 'About monthly', what: 'Group nights', detail: 'A night for one group, CS or Business. Everyone else is welcome too.', weeks: [3, 7, 11], hue: 'iris' },
   { when: 'Each semester', what: 'Demo night', detail: 'Anyone can show anything: an app, a product, a company, half a prototype.', weeks: [14], hue: 'rose' },
 ]
 

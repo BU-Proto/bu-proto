@@ -4,7 +4,7 @@ import type { ProtoEvent } from '../../shared/api'
 import { GlyphEdge } from '../components/GlyphEdge'
 import { GroupsBento } from '../components/GroupsBento'
 import { StartedHereWall } from '../components/StartedHereWall'
-import { AsciiJourney } from '../components/AsciiJourney'
+import { Journey } from '../components/Journey'
 import { EventLedger } from '../components/EventLedger'
 import { Hero } from '../components/Hero'
 import { ScrubWords } from '../components/motion/ScrubWords'
@@ -35,7 +35,7 @@ import { dateParts, daysUntil } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useWheelEasing } from '../lib/smoothScroll'
 import { useRsvp } from '../lib/useRsvp'
-import { glyphTexture, rhythmColumn } from '../lib/glyphArt'
+import { glyphTexture } from '../lib/glyphArt'
 import { GROUND } from '../lib/pageGround'
 import styles from './Home.module.css'
 import { eventPath } from '../lib/paths'
@@ -43,17 +43,16 @@ import { eventPath } from '../lib/paths'
 const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 
 /**
- * How each beat is drawn in the score, by its row in RHYTHM: the bigger the night, the taller and
- * denser its column. A week shows its biggest beat. A beat planned for later has no column.
+ * How each beat is drawn in the score, by its row in RHYTHM: the bigger the night, the taller its
+ * bar, out of SCORE_ROWS. A week shows its biggest beat. A beat planned for later has no bar.
  */
 const BEATS = [
-  { name: 'build', height: 4, weight: 0.4 },
-  { name: 'fireside', height: 7, weight: 0.56 },
-  { name: 'group', height: 9, weight: 0.7 },
-  { name: 'demo', height: 13, weight: 0.94 },
+  { name: 'build', height: 4 },
+  { name: 'fireside', height: 7 },
+  { name: 'group', height: 9 },
+  { name: 'demo', height: 13 },
 ] as const
 const SCORE_ROWS = 14
-const COLUMN_WIDTH = 8
 
 function beatIndex(week: number): number {
   let index = -1
@@ -66,10 +65,8 @@ function beatIndex(week: number): number {
 const beatOf = (week: number) => BEATS[beatIndex(week)]?.name
 const hueOf = (week: number) => RHYTHM[beatIndex(week)]?.hue
 
-function weekArt(week: number): string {
-  const beat = BEATS[beatIndex(week)]
-  return rhythmColumn(beat?.height ?? 0, beat?.weight ?? 0, SCORE_ROWS, COLUMN_WIDTH, week).join('\n')
-}
+/** A week's bar height, as a share of the score's height. */
+const heightOf = (week: number) => (BEATS[beatIndex(week)]?.height ?? 0) / SCORE_ROWS
 
 /** The opening lead: the first sentence in full ink, the rest in the softer second voice. */
 const LEAD_BREAK = WHY.text.indexOf('. ') + 1
@@ -213,7 +210,7 @@ export function Home() {
         </div>
         {/* Main's order: the three ways in, how a semester goes, then what's on. */}
         <WaysIn />
-        <AsciiJourney />
+        <Journey />
         {/* Things that started in Boston, from every kind of field. */}
         <StartedHereWall />
         <EventLedger events={events} />
@@ -246,16 +243,14 @@ export function Home() {
             <div className={styles.weeks} aria-hidden="true">
               {WEEKS.map((week) => (
                 // The semester fills in week by week as the score comes into view.
-                <pre
+                <div
                   key={week}
                   className={styles.week}
                   data-beat={beatOf(week)}
                   data-hue={hueOf(week)}
                   data-reveal="column"
-                  style={after((week - 1) * 45)}
-                >
-                  {weekArt(week)}
-                </pre>
+                  style={{ ...after((week - 1) * 45), '--h': heightOf(week) } as CSSProperties}
+                />
               ))}
             </div>
             <div className={styles.axis} aria-hidden="true">

@@ -121,7 +121,7 @@
 .day {
   color: var(--hue);
   font-size: clamp(96px, 10vw, 144px);
-  font-weight: 200;
+  font-weight: var(--display-weight);
   letter-spacing: -0.06em;
   line-height: 0.8;
   font-variant-numeric: tabular-nums;
@@ -187,7 +187,7 @@
 .emptyTitle {
   margin: 0;
   font-size: clamp(30px, 3.4vw, 44px);
-  font-weight: 300;
+  font-weight: var(--display-weight);
   letter-spacing: -0.03em;
   line-height: 1.05;
   text-wrap: balance;
@@ -255,7 +255,7 @@
 .rowDay {
   color: var(--hue);
   font-size: 34px;
-  font-weight: 300;
+  font-weight: 600;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }

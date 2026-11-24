@@ -11,7 +11,6 @@ import styles from './EventLedger.module.css'
 import { eventPath } from '../lib/paths'
 
 /** Each size of night, by its glyph from the trail: small ○, medium >, big _. */
-const HUE_GLYPH = { sky: '○', iris: '>', rose: '_' } as const
 
 /** The giant words are set in the site's own face, light, as the big type is everywhere else. */
 const WORDS_FONT = '300 {size} Inter, system-ui, sans-serif'
@@ -167,8 +166,11 @@ export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
             <RevealWords text={EVENT_LEDGER.title} />
           </h2>
           <p className={styles.count} data-reveal="rise">
-            <span className={styles.icon} aria-hidden="true">
-              {'○>_'}
+            {/* The three sizes of night, as squares in their colours. */}
+            <span className={styles.swatches} aria-hidden="true">
+              <span data-hue="sky" />
+              <span data-hue="iris" />
+              <span data-hue="rose" />
             </span>
             <span className={styles.number}>{String(events.length).padStart(2, '0')}</span>
           </p>
@@ -179,9 +181,7 @@ export function EventLedger({ events }: { events: readonly ProtoEvent[] }) {
           groups.map(([kind, nights]) => (
             <div key={kind} className={styles.group} data-hue={KIND_HUE[kind]}>
               <h3 className={styles.kind}>
-                <span className={styles.glyph} aria-hidden="true">
-                  {HUE_GLYPH[KIND_HUE[kind]]}
-                </span>
+                <span className={styles.swatch} aria-hidden="true" />
                 {kind}
               </h3>
               <ol className={styles.nights}>

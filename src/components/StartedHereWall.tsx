@@ -10,7 +10,7 @@ import styles from './StartedHereWall.module.css'
  */
 export function StartedHereWall() {
   return (
-    <section className={styles.wall} aria-labelledby="started-here">
+    <section className={styles.wall} aria-labelledby="started-here" data-grid>
       <header className={styles.head}>
         <h2 id="started-here" className={styles.title} data-reveal="words">
           <RevealWords text={STARTED_HERE.title} />

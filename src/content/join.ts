@@ -13,7 +13,7 @@ export const PERKS: readonly { title: string; text: string }[] = [
   { title: 'The people you are missing', text: 'A co-founder, or the teammate with the skill you lack: engineers meet business people meet designers.' },
   { title: 'Firesides', text: 'Founders and investors on how companies get built, then questions from people building their own.' },
   { title: 'A stage', text: 'Demo night every semester. Show anything, finished or not.' },
-  { title: 'A group for your field', text: 'CS nights now, business and engineering soon. Every group is open to everyone.' },
+  { title: 'A group for your side of it', text: 'CS for building with code, Business for customers, pitching and funding. Both are open to everyone.' },
 ]
 
 export const JOIN_THANKS = {

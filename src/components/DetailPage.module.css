@@ -78,7 +78,7 @@
   /* In the colour of what it marks, where it has one: a win's placement is rose. */
   color: var(--hue, inherit);
   font-size: clamp(30px, 4.4vw, 56px);
-  font-weight: 200;
+  font-weight: var(--display-weight);
   letter-spacing: -0.035em;
   line-height: 1;
 }
@@ -277,7 +277,7 @@
 .ruled > li {
   padding: 5px 0;
   font-size: 18px;
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: -0.01em;
 }
 
@@ -354,7 +354,7 @@
 
 .neighbourName {
   font-size: clamp(28px, 4.6vw, 60px);
-  font-weight: 300;
+  font-weight: var(--display-weight);
   letter-spacing: -0.03em;
   line-height: 1.05;
   text-wrap: balance;

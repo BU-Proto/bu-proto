@@ -34,7 +34,7 @@
 .perkTitle {
   margin: 0;
   font-size: clamp(20px, 2.4vw, 26px);
-  font-weight: 300;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }

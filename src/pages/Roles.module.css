@@ -22,7 +22,7 @@
 .emptyTitle {
   margin: 0;
   font-size: clamp(28px, 3.2vw, 44px);
-  font-weight: 300;
+  font-weight: var(--display-weight);
   letter-spacing: -0.035em;
   line-height: 1.02;
   text-wrap: balance;

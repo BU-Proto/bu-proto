@@ -13,12 +13,11 @@ People who make things, or want to. Investors are where good work can lead, and 
 First comes one community on one calendar. Groups come after that, each with nights of its own:
 
 - CS, the first group. Hackathons, hack nights, hackathon trips, the playbook, wins and the travel fund all live here: everything Proto did as a hackathon group.
-- Business, later.
-- Engineering, later.
+- Business: pitch nights, finding customers, pricing and raising money, and teams for pitch competitions.
 
 Every event is open to everyone. Some are for the whole community (build nights, firesides, demo night). A group's own nights say whose they are and that everyone else is welcome too, and that's how they're promoted: "CS group, everyone welcome".
 
-On the site, CS is its own item in the nav (Hackathons, Wins, the playbook, Grants). Business and Engineering get items once they start.
+On the site, each group has a page (/cs and /business) under Groups in the nav.
 
 ## Three ways in
 
@@ -31,10 +30,10 @@ The tracks are stages, not groups, and anyone in any group can be on any of them
 ## Rhythm
 
 - Weekly: build night (was hack night). Open to anyone, with food. Bring what you're working on or come to meet people who are. Room and time not booked yet.
-- About monthly: a fireside. A founder or investor talks about how companies get built, then takes questions from people building their own.
-- About monthly: a group night, one group's own (CS now, with its hack nights and hackathon trips; business and engineering soon). Everyone else is welcome.
+- Every two weeks (the goal): a fireside. A founder or investor talks about how companies get built, then takes questions from people building their own.
+- About monthly: a group night, one group's own (CS: hack nights and hackathon trips; Business: pitch nights). Everyone else is welcome.
 - Each semester: demo night. Anyone can show anything, finished or not.
-- Later: our own hackathon (CS), and nights for Business and Engineering.
+- Later: our own hackathon (CS) and our own pitch competition (Business).
 
 ## Firesides
 

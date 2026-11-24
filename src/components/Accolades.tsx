@@ -3,18 +3,19 @@ import type { Win } from '../../shared/api'
 import { WIN_SHOWCASE } from '../content/wins'
 import { accoladeOf, teamParts } from './accolade'
 import { BuMark } from './BuMark'
+import { Pictogram } from './Pictogram'
 import { SampleTag } from './SampleTag'
 import styles from './Accolades.module.css'
 import { winPath } from '../lib/paths'
 
 type Level = 2 | 3
 
-/** The cover, or the trail's glyphs when a win has no photo yet. */
+/** The cover, or a trophy on a rose tile when a win has no photo yet. */
 function Cover({ win, alt, eager }: { win: Win; alt: string; eager?: boolean }) {
   if (win.photo) return <img src={win.photo} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" />
   return (
-    <span className={styles.noPhoto} aria-hidden="true">
-      {'○ > _'}
+    <span className={styles.noPhoto} data-tone="rose" aria-hidden="true">
+      <Pictogram name="trophy" className={styles.noPhotoPicture} />
     </span>
   )
 }

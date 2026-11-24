@@ -27,7 +27,7 @@ const CDS: CoverPhoto = {
 /** A cover at thumbnail size: Commons serves a 500px copy beside the 1920px one. */
 export const coverThumb = (src: string) => src.replace('/1920px-', '/500px-')
 
-const BASE_COVERS: Record<Exclude<EventKind, 'Fireside' | 'Social'>, CoverPhoto> = {
+const BASE_COVERS: Record<Exclude<EventKind, 'Fireside' | 'Social' | 'Pitch night'>, CoverPhoto> = {
   'Build night': CDS,
   'Hack night': CDS,
   'Demo night': {
@@ -67,11 +67,12 @@ const BASE_COVERS: Record<Exclude<EventKind, 'Fireside' | 'Social'>, CoverPhoto>
   },
 }
 
-/** Firesides share the panel's photo, socials the workshop's. */
+/** Firesides share the panel's photo, socials and pitch nights the workshop's. */
 export const EVENT_COVERS: Record<EventKind, CoverPhoto> = {
   ...BASE_COVERS,
   Fireside: BASE_COVERS.Panel,
   Social: BASE_COVERS.Workshop,
+  'Pitch night': BASE_COVERS.Workshop,
 }
 
 /** For hackathons without a cover: the BU Bridge, where every trip out of Boston starts. */

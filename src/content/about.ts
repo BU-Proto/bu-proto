@@ -20,7 +20,7 @@ export const WHAT = {
 
 export const WHY = {
   title: 'Why it exists',
-  text: 'Ideas go further with people around them. Proto is where anyone in Boston who wants to make something finds the people to make it with.',
+  text: "Every idea needs a team. Proto is where Boston's builders find theirs.",
 } as const
 
 export interface Offer {
@@ -47,7 +47,7 @@ export const OFFER = {
     },
     {
       name: 'Firesides',
-      text: 'About once a month, a founder or investor talks about how companies get built, then takes questions from people building their own.',
+      text: 'Every two weeks, a founder or investor talks about how companies get built, then takes questions from people building their own.',
       where: { label: 'Firesides', href: '/events#firesides' },
       hue: 'iris',
     },
@@ -59,7 +59,7 @@ export const OFFER = {
     },
     {
       name: 'Groups for each field',
-      text: 'Some nights belong to one group, and everyone else is welcome at them. The CS group runs hack nights, hackathon trips and the playbook. Business and engineering get nights of their own later.',
+      text: 'Some nights belong to one group, and everyone else is welcome at them. The CS group runs hack nights, hackathon trips and the playbook. The Business group runs pitch nights and takes teams to pitch competitions.',
       where: { label: 'The CS group', href: '/hackathons' },
     },
     {

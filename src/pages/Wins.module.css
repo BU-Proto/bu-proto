@@ -14,7 +14,7 @@
 .moreTitle {
   margin: 0;
   font-size: clamp(36px, 5vw, 64px);
-  font-weight: 300;
+  font-weight: var(--display-weight);
   letter-spacing: -0.035em;
   line-height: 1;
   text-shadow: var(--on-field-shadow);

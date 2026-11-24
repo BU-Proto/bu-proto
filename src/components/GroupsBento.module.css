@@ -1,6 +1,6 @@
 /*
  * The groups, as a bento: light tiles with 10px between them and square corners, each in its own
- * colour with ink of the same hue. Everyone's tile runs across the top; the three groups share the
+ * colour with ink of the same hue. Everyone's tile runs across the top; CS and Business share the
  * row under it, the same size each.
  */
 .groups {
@@ -23,8 +23,8 @@
   max-width: 14ch;
   margin: 0;
   font-size: clamp(40px, 6.4vw, 84px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
   line-height: 0.98;
 }
 
@@ -38,7 +38,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: minmax(250px, auto);
   gap: 10px;
   padding: 0;
@@ -101,7 +101,7 @@
   padding: 3px 9px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.08em;

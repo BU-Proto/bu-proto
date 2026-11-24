@@ -13,16 +13,24 @@
 /* The trail's three glyphs, lighting up one after another. */
 .glyphs {
   display: inline-flex;
-  gap: 0.35em;
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 22px;
-  line-height: 1;
-  text-shadow: var(--on-field-shadow);
+  gap: 8px;
 }
 
+/* Three dots in the field's colours, pulsing one after another. */
 .glyphs > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sky);
   opacity: 0.35;
+}
+
+.glyphs > span:nth-child(2) {
+  background: var(--iris);
+}
+
+.glyphs > span:nth-child(3) {
+  background: var(--rose);
 }
 
 @media (prefers-reduced-motion: no-preference) {

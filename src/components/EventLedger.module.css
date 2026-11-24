@@ -47,8 +47,8 @@
 .title {
   margin: 0;
   font-size: clamp(44px, 5.2vw, 76px);
-  font-weight: 300;
-  letter-spacing: -0.04em;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
   line-height: 1;
 }
 
@@ -59,18 +59,30 @@
   margin: 0;
 }
 
-/* The trail's three glyphs, catching the field's light in turn. */
-.icon {
-  font-family: var(--font-art);
-  font-size: clamp(20px, 2vw, 28px);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  animation: glint 7s ease-in-out infinite alternate;
+/* The three sizes of night as flat squares in their colours, the everyday one smallest. */
+.swatches {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.swatches span {
+  width: 12px;
+  height: 12px;
+  background: var(--hue);
+}
+
+.swatches span[data-hue='iris'] {
+  height: 18px;
+}
+
+.swatches span[data-hue='rose'] {
+  height: 24px;
 }
 
 .number {
   font-size: clamp(20px, 2vw, 28px);
-  font-weight: 300;
+  font-weight: var(--display-weight);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -96,10 +108,13 @@
   line-height: 1.8;
 }
 
-.glyph {
-  color: var(--hue);
-  font-family: var(--font-art);
-  font-weight: 500;
+/* A kind's colour, as a small flat square before its name. */
+.swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 0.6em;
+  background: var(--hue);
 }
 
 .nights {
@@ -225,20 +240,6 @@
   transition: transform 0.55s var(--ease-lusion);
 }
 
-@keyframes glint {
-  from {
-    color: var(--sky);
-  }
-
-  50% {
-    color: var(--iris);
-  }
-
-  to {
-    color: var(--rose);
-  }
-}
-
 @media (max-width: 760px) {
   .head,
   .group {
@@ -262,10 +263,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .icon {
-    animation: none;
-  }
-
   .night,
   .photo,
   .photo[data-raised],

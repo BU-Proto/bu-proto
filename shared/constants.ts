@@ -6,9 +6,10 @@ export type ContentResource = (typeof CONTENT_RESOURCES)[number]
 
 /**
  * Every kind of event, the community's own first. Hack night, Why hackathons and Prep night are
- * the CS group's (content/events.ts says so on the page); everyone is welcome at all of them.
+ * the CS group's, Pitch night the Business group's (content/events.ts says so on the page);
+ * everyone is welcome at all of them.
  */
-export const EVENT_KINDS = ['Build night', 'Fireside', 'Social', 'Demo night', 'Workshop', 'Panel', 'Hack night', 'Why hackathons', 'Prep night'] as const
+export const EVENT_KINDS = ['Build night', 'Fireside', 'Social', 'Demo night', 'Workshop', 'Panel', 'Hack night', 'Why hackathons', 'Prep night', 'Pitch night'] as const
 export type EventKind = (typeof EVENT_KINDS)[number]
 
 export const YEARS = ['First year', 'Second year', 'Third year', 'Fourth year', 'Grad student', 'Not a student', 'Other'] as const

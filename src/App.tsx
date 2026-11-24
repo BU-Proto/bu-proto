@@ -10,6 +10,7 @@ import { Board } from './pages/Board'
 import { EventDetail, EventLoadError } from './pages/EventDetail'
 import { Events } from './pages/Events'
 import { Grants } from './pages/Grants'
+import { BusinessGroup, CsGroup } from './pages/GroupPage'
 import { Hackathons } from './pages/Hackathons'
 import { Home } from './pages/Home'
 import { Join } from './pages/Join'
@@ -82,6 +83,9 @@ const router = createBrowserRouter([
         HydrateFallback: PageLoading,
       },
       { path: 'events', Component: Events, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
+      // The groups' pages list their own next nights, so they read the calendar too.
+      { path: 'cs', Component: CsGroup, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
+      { path: 'business', Component: BusinessGroup, loader: ({ request }) => fetchContent('events', request.signal), ...dataRoute },
       {
         path: 'events/:slug',
         Component: EventDetail,

@@ -68,8 +68,8 @@
   margin: 0 0 0 -0.05em;
   padding-top: 0.5em;
   font-size: clamp(56px, 8vw, 128px);
-  font-weight: 300;
-  letter-spacing: -0.04em;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
   line-height: 0.95;
 }
 
@@ -185,10 +185,19 @@
   object-fit: cover;
 }
 
-/* The art's grid is 156 cells across at 0.6em each. */
-.ascii {
-  --figure-size: calc(100cqw / 93.6);
-  color: var(--hue, var(--rose));
+/* No photo yet: a flat colour tile with a trophy in ink of the same hue. */
+.toneArt {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--tone);
+  color: var(--tone-ink);
+}
+
+.toneArtPicture {
+  width: 26%;
+  height: auto;
 }
 
 /* Where, what and who: sentence case in the dim ink, the parts set apart by space alone. */
@@ -222,9 +231,9 @@
 .name {
   margin: 0;
   /* A long name comes down to fit the column, leaving room for the hover's shift. */
-  font-size: min(clamp(26px, 3vw, 48px), calc(100cqw / (var(--n) * 0.54 + 1.6)));
-  font-weight: 300;
-  letter-spacing: -0.03em;
+  font-size: min(clamp(26px, 3vw, 48px), calc(100cqw / (var(--n) * 0.58 + 1.6)));
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
 }
 
 .mask {
@@ -242,7 +251,7 @@
   top: 0;
   left: -1em;
   color: var(--hue, var(--rose));
-  font-family: var(--font-art);
+  font-family: var(--font-label);
 }
 
 .letter {

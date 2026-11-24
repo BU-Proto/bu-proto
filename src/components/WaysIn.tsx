@@ -1,68 +1,40 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { TRACKS, TRACKS_INTRO } from '../content/home'
-import { asciiFigureAt, developing } from '../lib/figureMotion'
-import type { FigureShape } from '../lib/glyphArt'
+import { TRACKS, TRACKS_INTRO, type Track } from '../content/home'
 import { reducedMotion, useInView } from '../lib/useInView'
 import styles from './WaysIn.module.css'
 
-/** Each way's own glyph, drawn big in the field's ramp. */
-const FIGURES: Record<string, FigureShape> = { '○': 'ring', '>': 'chevron', _: 'bar' }
-
-/** The figure steps at this rate: a character swap reads as a tick, so it needn't be fast. */
-const FRAME_MS = 1000 / 14
-const DEVELOP_MS = 1100
-
 /**
- * A way's glyph, alive. The first time it's seen it develops out of loose glyphs, left to right,
- * then keeps moving while it's on screen. One text node is rewritten in place, so React never
- * re-renders for it. Still under reduced motion. Screen readers skip it: it repeats the name.
+ * Each way's flat drawing, in its tile's ink: a sprout for Start, stacked blocks for Build, a
+ * rocket for Launch. Bold, geometric shapes in one colour, after brand.dropbox.com's pictograms.
  */
-function WayFigure({ shape }: { shape: FigureShape }) {
-  const [ref, inView] = useInView<HTMLPreElement>('0px 0px -20% 0px')
-  const [first] = useState(() =>
-    typeof window === 'undefined' || reducedMotion() ? asciiFigureAt(shape, 0) : developing(asciiFigureAt(shape, 0), 0, 0),
-  )
-
-  useEffect(() => {
-    const node = ref.current
-    const text = node?.firstChild
-    if (!inView || !node || !(text instanceof Text) || reducedMotion()) return
-    const clock = { id: 0, due: 0, start: 0, onScreen: true }
-    const tick = (now: number) => {
-      clock.id = requestAnimationFrame(tick)
-      if (now < clock.due) return
-      clock.due = now + FRAME_MS
-      if (!clock.start) clock.start = now
-      const figure = asciiFigureAt(shape, now / 1000)
-      const progress = (now - clock.start) / DEVELOP_MS
-      text.data = progress >= 1 ? figure : developing(figure, progress, Math.floor(now / 70))
-    }
-    const sync = () => {
-      const run = clock.onScreen && !document.hidden
-      if (run && !clock.id) clock.id = requestAnimationFrame(tick)
-      else if (!run && clock.id) {
-        cancelAnimationFrame(clock.id)
-        clock.id = 0
-      }
-    }
-    const screen = new IntersectionObserver(([entry]) => {
-      clock.onScreen = entry?.isIntersecting ?? false
-      sync()
-    })
-    screen.observe(node)
-    document.addEventListener('visibilitychange', sync)
-    sync()
-    return () => {
-      cancelAnimationFrame(clock.id)
-      screen.disconnect()
-      document.removeEventListener('visibilitychange', sync)
-    }
-  }, [inView, shape, ref])
-
+/** A track's drawing; the About page shows it too, smaller. */
+export function TrackPicture({ name, className }: { name: Track['picture']; className?: string }) {
+  const common = { className: className ?? styles.picture, viewBox: '0 0 120 120', fill: 'currentColor', 'aria-hidden': true, focusable: false } as const
+  if (name === 'sprout') {
+    return (
+      <svg {...common}>
+        <rect x="55" y="50" width="10" height="58" rx="5" />
+        <path d="M60 70C38 70 20 56 16 30c26 0 42 14 44 40z" />
+        <path d="M60 56c6-24 24-38 46-38-2 26-20 40-46 38z" />
+        <rect x="24" y="102" width="72" height="10" rx="5" />
+      </svg>
+    )
+  }
+  if (name === 'blocks') {
+    return (
+      <svg {...common}>
+        <rect x="10" y="70" width="46" height="40" />
+        <rect x="64" y="70" width="46" height="40" />
+        <rect x="37" y="22" width="46" height="40" />
+      </svg>
+    )
+  }
   return (
-    <pre ref={ref} className={styles.art} aria-hidden="true">
-      {first}
-    </pre>
+    <svg {...common} fillRule="evenodd">
+      <path d="M60 6c20 15 27 44 21 76H39C33 50 40 21 60 6zm0 30a11 11 0 1 0 .01 0z" />
+      <path d="M39 62 20 88l20-2zM81 62l19 26-20-2z" />
+      <path d="M47 90h26l-13 24z" />
+    </svg>
   )
 }
 
@@ -75,10 +47,10 @@ function wayFromScroll(section: HTMLElement): number {
 }
 
 /**
- * The three ways in: three navy panels side by side, each with a pool of its size's light at its
- * foot. The way the page has reached opens wider, and so does the one under the pointer, with each
- * glyph alive at the bottom of its panel. All the words are always there; opening a panel only
- * gives it more room. On phones the panels stack.
+ * The three ways in: three colour tiles side by side, each in its size's light with ink of the
+ * same hue, and a flat drawing at its foot. The way the page has reached opens wider, and so does
+ * the one under the pointer. All the words are always there; opening a tile only gives it more
+ * room. On phones the tiles stack.
  */
 export function WaysIn() {
   const [ref, inView] = useInView<HTMLElement>('0px 0px -15% 0px')
@@ -119,7 +91,7 @@ export function WaysIn() {
           <li
             key={track.name}
             className={styles.way}
-            data-hue={track.hue}
+            data-tone={track.hue}
             data-open={index === open || undefined}
             style={{ '--i': index } as CSSProperties}
             onPointerEnter={(event) => {
@@ -137,7 +109,7 @@ export function WaysIn() {
               </ul>
             </div>
             <div className={styles.figure}>
-              <WayFigure shape={FIGURES[track.glyph] ?? 'ring'} />
+              <TrackPicture name={track.picture} />
             </div>
           </li>
         ))}

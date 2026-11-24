@@ -182,7 +182,7 @@
 .day {
   color: var(--hue);
   font-size: 60px;
-  font-weight: 300;
+  font-weight: var(--display-weight);
   letter-spacing: -0.05em;
   line-height: 0.86;
   font-variant-numeric: tabular-nums;

@@ -28,7 +28,7 @@ export interface NavChild {
 
 /**
  * Proto is one community with groups inside it. CS is the first group: hackathons and everything
- * that goes with them live under it. Business and Engineering get items here once they start.
+ * that goes with them live under it. Business is the second: pitch nights, customers and funding.
  */
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', to: '/' },
@@ -44,14 +44,15 @@ export const NAV_ITEMS: readonly NavItem[] = [
   },
   { label: 'Events', to: '/events', inPill: true },
   {
-    label: 'CS',
-    to: '/hackathons',
+    label: 'Groups',
+    to: '/cs',
     inPill: true,
     children: [
-      { label: 'Hackathons', to: '/hackathons', line: 'Where we\'re going next, and when to apply' },
+      { label: 'CS', to: '/cs', line: 'Hack nights, hackathon trips and the playbook' },
+      { label: 'Business', to: '/business', line: 'Pitch nights, customers and funding' },
+      { label: 'Hackathons', to: '/hackathons', line: "Where the CS group is going next" },
       { label: 'Wins', to: '/wins', line: 'Prizes, launches and first customers' },
-      { label: 'The playbook', to: '/resources/playbook', line: 'Our guides to hackathons, start to finish' },
-      { label: 'Grants', to: '/grants', line: 'A travel fund for hackathons, coming soon' },
+      { label: 'Grants', to: '/grants', line: 'Microgrants for a first version, coming soon' },
     ],
   },
   {
@@ -132,11 +133,12 @@ export const FOOTER = {
       ],
     },
     {
-      title: 'CS',
+      title: 'Groups',
       links: [
+        { label: 'CS', to: '/cs' },
+        { label: 'Business', to: '/business' },
         { label: 'Hackathons', to: '/hackathons' },
         { label: 'Wins', to: '/wins' },
-        { label: 'The playbook', to: '/resources/playbook' },
       ],
     },
     {

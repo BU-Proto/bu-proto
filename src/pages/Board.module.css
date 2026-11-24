@@ -38,8 +38,8 @@
 .leadTitle {
   margin: 0;
   font-size: clamp(34px, 4.6vw, 60px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
   line-height: 1;
   text-wrap: balance;
 }
@@ -103,32 +103,25 @@
 }
 
 /*
- * An open seat's frame: a dashed edge with the frozen field gathered just inside it and nothing
- * where the face would be. A dark wash keeps the live field from showing through as a picture.
+ * An open seat's frame: a flat tile in its own colour with an empty chair drawn in ink of the same
+ * hue, after the section tiles on brand.dropbox.com.
  */
 .empty {
-  border: 1px dashed rgb(var(--frost-rgb) / 0.5);
-  /* The field's light gathered at the foot of the frame, where someone would stand. */
-  background:
-    radial-gradient(80% 50% at 50% 100%, rgb(var(--iris-deep-rgb) / 0.26), transparent 75%),
-    rgb(var(--harbor-rgb) / 0.6);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  background: var(--tone);
+  color: var(--tone-ink);
 }
 
-.empty::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--texture) 0 0 / 595px 400px;
-  -webkit-mask-image: radial-gradient(ellipse 58% 52% at 50% 46%, transparent 40%, #000 92%);
-  mask-image: radial-gradient(ellipse 58% 52% at 50% 46%, transparent 40%, #000 92%);
+.seatPicture {
+  width: 38%;
+  height: auto;
 }
 
 .initials {
   color: rgb(var(--frost-rgb) / 0.9);
   font-size: clamp(56px, 7vw, 96px);
-  font-weight: 200;
+  font-weight: var(--display-weight);
   text-shadow: 0 2px 30px rgb(var(--harbor-rgb) / 0.3);
   letter-spacing: -0.04em;
   line-height: 1;
@@ -145,8 +138,8 @@
 .name {
   margin: 0;
   font-size: clamp(24px, 2.4vw, 30px);
-  font-weight: 300;
-  letter-spacing: -0.025em;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   line-height: 1.1;
   text-wrap: balance;
 }

@@ -55,6 +55,7 @@ export const KIND_HUE: Record<EventKind, Hue> = {
   'Build night': 'sky',
   Social: 'sky',
   Fireside: 'iris',
+  'Pitch night': 'iris',
   'Hack night': 'sky',
   'Why hackathons': 'iris',
   'Prep night': 'iris',
@@ -71,6 +72,7 @@ export const KIND_GROUP: Partial<Record<EventKind, string>> = {
   'Hack night': 'CS',
   'Why hackathons': 'CS',
   'Prep night': 'CS',
+  'Pitch night': 'Business',
 }
 
 /** Nothing scheduled: say what's coming and how to hear about it first. */
