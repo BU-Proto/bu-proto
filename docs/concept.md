@@ -48,7 +48,7 @@ Planned microgrants of $50 to $500 for hackathon travel, registration, API credi
 
 ## The home page film
 
-The hero plays a film in a frame above the headline. Until the Boston montage is cut, it's Jose's launch film. The montage pairs Boston places and schools with famous companies that started there; the shot list, sources and licences are in docs/hero-montage.md, and switching to it is one line in src/content/home.ts.
+The hero plays the Boston montage in a frame above the headline: what started here, cut with each company's own footage where we have it, ending on Proto. Today it's a basic cut made from the footage on hand; the full cut replaces it at the same paths. The shot list, sources, permissions and licences are in docs/hero-montage.md.
 
 ## Fits with BU and Boston
 

@@ -2,8 +2,9 @@
 // (brew install ffmpeg-full librsvg) and the Inter and JetBrains Mono fonts installed. It uses
 // Homebrew's ffmpeg-full when it's there, for its better scalers, and plain ffmpeg otherwise.
 //
-//   node film/render.mjs          both cuts and the poster
+//   node film/render.mjs          the full film: both cuts and the poster
 //   node film/render.mjs wide     the 16:9 cut only (or: phone)
+//   node film/render.mjs basic    the basic cut, from the footage on hand (add wide or phone too)
 //
 // Everything lands in film/out/. While any source is missing from film/, that shot renders as a
 // labelled placeholder and the files are named animatic*. Once every source is in place they're
@@ -18,7 +19,13 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { DRIFT_WORDS, END_LINE, FPS, LENGTH, PROMPT, RECAP, SHOTS } from './shots.mjs'
+import { BASIC_LENGTH, BASIC_RECAP, BASIC_SHOTS, DRIFT_WORDS, END_LINE, FPS, LENGTH, PROMPT, RECAP, SHOTS } from './shots.mjs'
+
+const ARGS = process.argv.slice(2)
+/** Which film: the full one from SHOTS, or the basic one from what we hold today. */
+const CUT = ARGS.includes('basic')
+  ? { name: 'basic', shots: BASIC_SHOTS, length: BASIC_LENGTH, recap: BASIC_RECAP }
+  : { name: 'full', shots: SHOTS, length: LENGTH, recap: RECAP }
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(HERE, '..')
@@ -88,17 +95,20 @@ function wrap(text, width) {
 /** Every shot must start where the one before ended, and the last must end at LENGTH. */
 function checkTimeline() {
   let at = 0
-  for (const shot of SHOTS) {
+  for (const shot of CUT.shots) {
     if (Math.abs(shot.at - at) > 1e-6) throw new Error(`${shot.id} starts at ${shot.at}, expected ${at}`)
     at = Math.round((shot.at + shot.dur) * 1000) / 1000
   }
-  if (Math.abs(at - LENGTH) > 1e-6) throw new Error(`the shots end at ${at}, expected ${LENGTH}`)
+  if (Math.abs(at - CUT.length) > 1e-6) throw new Error(`the shots end at ${at}, expected ${CUT.length}`)
 }
 
 // ---- Drawn frames -------------------------------------------------------------------------------
 
-/** The prompt bar over drifting, blurred Boston names, at time t into the opener. */
-function promptFrame(s, typed, cursor, t) {
+/**
+ * The prompt bar over drifting, blurred Boston names, at time t into the opener. Without the bar
+ * it's the names alone, the ground for a card whose company we have no footage of yet.
+ */
+function promptFrame(s, typed, cursor, t, bar = true) {
   const wide = s.w > s.h
   const barW = Math.round(s.w * (wide ? 0.7 : 0.88))
   const barH = Math.round(s.h * (wide ? 0.11 : 0.076))
@@ -117,11 +127,12 @@ function promptFrame(s, typed, cursor, t) {
     s,
     `<defs><filter id="blur" x="-10%" y="-60%" width="120%" height="220%"><feGaussianBlur stdDeviation="${(s.h * 0.009).toFixed(1)}"/></filter></defs>` +
       `<g filter="url(#blur)">${words.join('')}</g>` +
+      (bar ?
       // A slow push in on the bar, as if the camera were leaning towards it.
       `<g transform="translate(${s.w / 2} ${s.h / 2}) scale(${(1 + 0.03 * t).toFixed(4)}) translate(${-s.w / 2} ${-s.h / 2})">` +
       `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="${barH / 2}" fill="#1a1a1a" stroke="#fff" stroke-opacity="0.14" stroke-width="1.5"/>` +
       `<text x="${x + barH * 0.4}" y="${baseline + size * 0.06}" font-family="Inter" font-weight="300" font-size="${Math.round(size * 1.35)}" fill="#fff" fill-opacity="0.8">+</text>` +
-      `<text x="${x + barH * 1.0}" y="${baseline}" font-family="Inter" font-size="${size}" fill="#fff">${esc(typed)}<tspan font-weight="200" fill-opacity="${cursor ? 0.9 : 0}">|</tspan></text></g>`,
+      `<text x="${x + barH * 1.0}" y="${baseline}" font-family="Inter" font-size="${size}" fill="#fff">${esc(typed)}<tspan font-weight="200" fill-opacity="${cursor ? 0.9 : 0}">|</tspan></text></g>` : ''),
     '#000',
   )
 }
@@ -288,7 +299,10 @@ function renderShot(s, shot, index, dir) {
   const graph = []
   const waiting = missing(shot)
 
-  if (shot.kind === 'opener') {
+  if (shot.kind === 'type' || shot.base === 'drift') {
+    inputs.push(['-framerate', String(FPS), '-i', driftFrames(s, join(dir, `${shot.id}-drift`), frames, shot.at)])
+    graph.push(`[0]format=yuv420p,setsar=1[base]`)
+  } else if (shot.kind === 'opener') {
     inputs.push(['-framerate', String(FPS), '-i', openerFrames(s, join(dir, 'opener'), frames)])
     graph.push(`[0]format=yuv420p,setsar=1[base]`)
   } else if (shot.kind === 'end') {
@@ -325,8 +339,8 @@ function renderShot(s, shot, index, dir) {
   }
 
   let last = 'base'
-  // Big type needs a quieter picture under it.
-  if (shot.card || shot.names) {
+  // Big type needs a quieter picture under it. The drifting names are quiet already.
+  if ((shot.card || shot.names) && shot.kind !== 'type' && shot.base !== 'drift') {
     graph.push(`[${last}]drawbox=x=0:y=0:w=iw:h=ih:color=black@0.45:t=fill[dimmed]`)
     last = 'dimmed'
   }
@@ -359,25 +373,32 @@ function renderShot(s, shot, index, dir) {
   return { file, frames, placeholder: waiting.length > 0 && shot.kind !== 'opener' && shot.kind !== 'end', waiting }
 }
 
-/** The recap: a few frames from the middle of each shot in RECAP, in negative, then the bar. */
+/** The Boston names drifting, blurred, with no bar: from `start` seconds on, so each shot differs. */
+function driftFrames(s, dir, frames, start) {
+  mkdirSync(dir, { recursive: true })
+  for (let n = 0; n < frames; n += 1) png(promptFrame(s, '', false, start + n / FPS, false), join(dir, `d${String(n).padStart(3, '0')}.png`))
+  return join(dir, 'd%03d.png')
+}
+
+/** The recap: a few frames from the middle of each shot in the cut's recap, in negative, then the bar. */
 function renderRecap(s, shot, index, dir, rendered) {
   const frames = framesOf(shot)
   const file = join(dir, `${String(index).padStart(2, '0')}-${shot.id}.mp4`)
   const inputs = []
   const graph = []
-  RECAP.forEach((id, k) => {
+  CUT.recap.forEach((id, k) => {
     const source = rendered.get(id)
     const from = Math.max(0, Math.floor(source.frames / 2 - RECAP_FRAMES / 2))
     inputs.push(['-i', source.file])
     graph.push(`[${k}]trim=start_frame=${from}:end_frame=${from + RECAP_FRAMES},setpts=PTS-STARTPTS,negate[r${k}]`)
   })
-  const barFrames = frames - RECAP.length * RECAP_FRAMES
+  const barFrames = frames - CUT.recap.length * RECAP_FRAMES
   if (barFrames < FPS * 0.3) throw new Error('the recap is too short for its shots and the bar')
   const bar = png(promptFrame(s, PROMPT, true, 2), join(dir, 'recap-bar.png'))
   inputs.push(['-loop', '1', '-framerate', String(FPS), '-t', String(barFrames / FPS + 0.5), '-i', bar])
-  graph.push(`[${RECAP.length}]format=yuv420p,trim=end_frame=${barFrames},setpts=PTS-STARTPTS[bar]`)
+  graph.push(`[${CUT.recap.length}]format=yuv420p,trim=end_frame=${barFrames},setpts=PTS-STARTPTS[bar]`)
   const letterbox = `drawbox=x=0:y=0:w=iw:h=ih*0.11:color=black:t=fill,drawbox=x=0:y=ih*0.89:w=iw:h=ih*0.11:color=black:t=fill`
-  graph.push(`${RECAP.map((_, k) => `[r${k}]`).join('')}[bar]concat=n=${RECAP.length + 1}:v=1:a=0,${letterbox},format=yuv420p[v]`)
+  graph.push(`${CUT.recap.map((_, k) => `[r${k}]`).join('')}[bar]concat=n=${CUT.recap.length + 1}:v=1:a=0,${letterbox},format=yuv420p[v]`)
   ffmpeg([...inputs.flat(), '-filter_complex', graph.join(';'), '-map', '[v]', '-frames:v', String(frames), '-r', String(FPS), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '14', '-pix_fmt', 'yuv420p', file])
   return { file, frames, placeholder: false, waiting: [] }
 }
@@ -390,7 +411,7 @@ function renderSize(s) {
   mkdirSync(dir, { recursive: true })
   const rendered = new Map()
   const order = []
-  SHOTS.forEach((shot, index) => {
+  CUT.shots.forEach((shot, index) => {
     process.stdout.write(`  ${s.name} ${String(index + 1).padStart(2, '0')} ${shot.id}\n`)
     const result = shot.kind === 'recap' ? renderRecap(s, shot, index, dir, rendered) : renderShot(s, shot, index, dir)
     rendered.set(shot.id, result)
@@ -398,12 +419,12 @@ function renderSize(s) {
   })
 
   const animatic = order.some((shot) => shot.placeholder)
-  const name = animatic ? (s.name === 'wide' ? 'animatic' : 'animatic-phone') : s.file
+  const name = animatic ? `animatic${CUT.name === 'basic' ? '-basic' : ''}${s.name === 'wide' ? '' : '-phone'}` : s.file
   const list = join(dir, 'list.txt')
   writeFileSync(list, order.map((shot) => `file '${shot.file}'`).join('\n'))
   const output = join(OUT, `${name}.mp4`)
   const rate = `${s.maxrate}M`
-  ffmpeg(['-f', 'concat', '-safe', '0', '-i', list, '-vf', GRADE, '-r', String(FPS), '-frames:v', String(frameAt(LENGTH)), '-an', '-c:v', 'libx264', '-preset', 'slow', '-crf', '21', '-maxrate', rate, '-bufsize', `${s.maxrate * 2}M`, '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', output])
+  ffmpeg(['-f', 'concat', '-safe', '0', '-i', list, '-vf', GRADE, '-r', String(FPS), '-frames:v', String(frameAt(CUT.length)), '-an', '-c:v', 'libx264', '-preset', 'slow', '-crf', '21', '-maxrate', rate, '-bufsize', `${s.maxrate * 2}M`, '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', output])
 
   if (s.name === 'wide') {
     // The poster is the moment the line is typed out, before anything moves.
@@ -416,9 +437,9 @@ function renderSize(s) {
 
 checkTimeline()
 mkdirSync(OUT, { recursive: true })
-const which = process.argv[2]
+const which = ARGS.find((arg) => arg !== 'basic')
 const sizes = which ? [SIZES[which]] : [SIZES.wide, SIZES.phone]
-if (sizes.some((size) => !size)) throw new Error(`unknown size "${which}": use wide or phone`)
+if (sizes.some((size) => !size)) throw new Error(`unknown argument "${which}": use wide, phone or basic`)
 
 let waiting = []
 for (const size of sizes) {

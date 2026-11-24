@@ -20,7 +20,7 @@ export const WHAT = {
 
 export const WHY = {
   title: 'Why it exists',
-  text: 'Ideas go further with people around them. Proto is where anyone in Boston who wants to make something finds the people to make it with, and later the investors to back it.',
+  text: 'Ideas go further with people around them. Proto is where anyone in Boston who wants to make something finds the people to make it with.',
 } as const
 
 export interface Offer {

@@ -162,7 +162,11 @@
 
 /* ---- Cursors round the headline ------------------------------------------------------------- */
 
-/* Placed against the headline's box; they sit just outside it, never over the words. */
+/* The headline and its cursors: the cursors sit just outside the words, never over them. */
+.headlineBox {
+  position: relative;
+}
+
 .cursors {
   position: absolute;
   inset: 0;
@@ -209,7 +213,7 @@
 }
 
 .cursor[data-n='1'] {
-  top: 34%;
+  top: 30%;
   right: -16%;
   --dx: -12px;
   --dy: 10px;
@@ -218,8 +222,8 @@
 }
 
 .cursor[data-n='2'] {
-  top: 100%;
-  left: 4%;
+  top: 64%;
+  left: -17%;
   --dx: 10px;
   --dy: 6px;
   --dur: 8s;
@@ -227,8 +231,8 @@
 }
 
 .cursor[data-n='3'] {
-  top: 104%;
-  right: 10%;
+  top: 88%;
+  right: -11%;
   --dx: -10px;
   --dy: -6px;
   --dur: 7s;
@@ -271,8 +275,9 @@
   }
 }
 
-/* On a phone the headline fills the width: three cursors, above and below it. */
+/* On a phone the headline fills the width: two cursors, above it, clear of the note under it. */
 @media (max-width: 640px) {
+  .cursor[data-n='2'],
   .cursor[data-n='3'],
   .cursor[data-n='4'] {
     display: none;
@@ -284,13 +289,8 @@
   }
 
   .cursor[data-n='1'] {
-    top: 104%;
+    top: -60%;
     right: 4%;
-  }
-
-  .cursor[data-n='2'] {
-    top: 112%;
-    left: 8%;
   }
 
   .tag {

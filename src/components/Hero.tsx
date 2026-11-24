@@ -101,10 +101,13 @@ export function Hero() {
     <section className={styles.hero} data-film={HERO_FILM ? '' : undefined}>
       {HERO_FILM && <Film film={HERO_FILM} />}
       <div className={styles.copy}>
-        <h1 className={styles.headline} data-fog-clear>
-          {HERO_COPY.headline}
-        </h1>
-        <Cursors />
+        {/* The cursors are placed against the headline alone, so they keep clear of the note. */}
+        <div className={styles.headlineBox}>
+          <h1 className={styles.headline} data-fog-clear>
+            {HERO_COPY.headline}
+          </h1>
+          <Cursors />
+        </div>
         {HERO_FILM?.note && (
           <p className={styles.note} data-fog-clear>
             {HERO_FILM.note}

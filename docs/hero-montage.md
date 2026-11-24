@@ -1,15 +1,17 @@
 # The home page montage
 
-A 35-second film for the home page hero, with the energy of Jose's launch film and none of its footage. It opens on a prompt bar typing "Everyone can build anything", goes back to old Boston, through the city today, through the companies that started here, lifts off with Apollo 11, and ends on Proto: started at BU, open to Boston. Jose's film plays on the site until this one is ready.
+A 35-second film for the home page hero, with the energy of Jose's launch film and none of its footage. It opens on a prompt bar typing "Everyone can build anything", goes back to old Boston, through the city today, through the companies that started here, lifts off with Apollo 11, and ends on Proto: started at BU, open to Boston.
+
+The site plays a basic cut of it today (21.5 seconds, `node film/render.mjs basic`), made only from the footage we hold: the telephone card, Meta's logo, Moderna, iRobot and WHOOP in their own footage, cards for Boston Dynamics, Dropbox and Bose over the drifting Boston names, then the roll of names and the end card. The full cut replaces it at the same paths once its footage is in.
 
 The shot list lives in code, in `film/shots.mjs`, and `film/render.mjs` cuts the film from it. This page is the plan around it: the style, where every shot comes from, what's approved, and the licences.
 
 ## How it drops in
 
-The hero reads its film from `HERO_FILM` in `src/content/home.ts`. When the cut is done:
+The hero plays `BOSTON_MONTAGE` from `src/content/home.ts`. To put a new render on the site:
 
-1. Copy the three files from `film/out/` into `public/media/`.
-2. In `src/content/home.ts`, change `HERO_FILM` from `LAUNCH_FILM` to `BOSTON_MONTAGE`.
+1. Copy the three files from `film/out/` into `public/media/`, over the ones there.
+2. If the footage credited changes, update the film's `note` in `src/content/home.ts`: it prints under the headline.
 3. Run `npm run dev` and check it at phone and desktop width.
 
 | File | What | Limits |

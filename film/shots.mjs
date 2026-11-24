@@ -20,7 +20,7 @@ export const END_LINE = 'Started at BU. Open to Boston.'
 // or more); shots without one stay quick. A chapter label sits small in the corner, so it's always
 // clear which part of the story you're in.
 
-/** @typedef {{ id: string, at: number, dur: number, part: string, kind: 'opener' | 'still' | 'clip' | 'thenNow' | 'roll' | 'recap' | 'end', note: string, chapter?: string, src?: string, srcs?: string[], then?: string, in?: number, speed?: number, card?: string, cardAt?: number, cardFor?: number, names?: string[], logo?: string, cuts?: { src: string, in?: number, speed?: number }[], flashOut?: boolean }} Shot */
+/** @typedef {{ id: string, at: number, dur: number, part: string, kind: 'opener' | 'still' | 'clip' | 'thenNow' | 'roll' | 'type' | 'recap' | 'end', base?: 'drift', note: string, chapter?: string, src?: string, srcs?: string[], then?: string, in?: number, speed?: number, card?: string, cardAt?: number, cardFor?: number, names?: string[], logo?: string, cuts?: { src: string, in?: number, speed?: number }[], flashOut?: boolean }} Shot */
 
 // A card is "Name / where / when": the name set large in the middle, where and when small under
 // it, over the shot dimmed. Names are set in our own type, except where a company has approved
@@ -68,3 +68,29 @@ export const SHOTS = [
 
 /** The shots the recap flashes through, in order, before it lands back on the prompt bar. */
 export const RECAP = ['maps', 'bell', 'terminal', 'robot-arm', 'dorm', 'apollo']
+
+// ---- The basic cut --------------------------------------------------------------------------------
+//
+// What's on the site until the full film's footage is in: only what we hold today. Companies
+// without footage yet get their card over the drifting Boston names (kind 'type'), never over
+// another company's footage. `node film/render.mjs basic` renders it.
+
+export const BASIC_LENGTH = 21.5
+
+/** @type {Shot[]} */
+export const BASIC_SHOTS = [
+  { id: 'opener', at: 0, dur: 2.6, part: 'Opening', kind: 'opener', note: 'A prompt bar types the line; Boston names drift behind it', flashOut: true },
+  { id: 'bell', at: 2.6, dur: 1.5, part: 'Then', chapter: 'THEN', kind: 'type', note: 'The telephone', card: 'The telephone / A BU professor / 1876', flashOut: true },
+  { id: 'meta', at: 4.1, dur: 1.6, part: 'What started here', chapter: 'WHAT STARTED HERE', kind: 'type', note: "Meta's logo", card: 'Meta / Started as Facebook / A Harvard dorm / 2004', logo: 'brand/meta-lockup-white.svg' },
+  { id: 'moderna', at: 5.7, dur: 2.0, part: 'What started here', chapter: 'WHAT STARTED HERE', kind: 'clip', note: "Moderna's vials on the line, then its lab robot", cuts: [{ src: 'brand/moderna/moderna-vaccine-vials.mov', in: 0.4 }, { src: 'brand/moderna/moderna-b-roll-nov-2020.mov', in: 142 }], card: 'Moderna / Cambridge / 2010' },
+  { id: 'vacuum', at: 7.7, dur: 2.0, part: 'What started here', chapter: 'WHAT STARTED HERE', kind: 'clip', note: 'The Roomba gliding out from under a sofa, then a close-up', cuts: [{ src: 'brand/irobot/roomba-j9plus-broll.mp4', in: 1.2 }, { src: 'brand/irobot/roomba-j9plus-broll.mp4', in: 20.3 }], card: 'iRobot / The Roomba / MIT roboticists / 1990' },
+  { id: 'whoop', at: 9.7, dur: 2.1, part: 'What started here', chapter: 'WHAT STARTED HERE', kind: 'still', note: "WHOOP's own pictures", srcs: WHOOP_STILLS, card: 'WHOOP / Harvard / 2012' },
+  { id: 'boston-dynamics', at: 11.8, dur: 1.2, part: 'What started here', chapter: 'WHAT STARTED HERE', kind: 'type', note: 'Boston Dynamics', card: 'Boston Dynamics / MIT / 1992' },
+  { id: 'dropbox', at: 13.0, dur: 1.2, part: 'What started here', chapter: 'WHAT STARTED HERE', kind: 'type', note: 'Dropbox', card: 'Dropbox / MIT students in Cambridge / 2007' },
+  { id: 'bose', at: 14.2, dur: 1.2, part: 'What started here', chapter: 'WHAT STARTED HERE', kind: 'type', note: 'Bose', card: 'Bose / MIT professor Amar Bose / 1964' },
+  { id: 'more', at: 15.4, dur: 2.0, part: 'What started here', chapter: 'WHAT STARTED HERE', kind: 'roll', base: 'drift', note: 'More names, faster and faster', names: ['HubSpot', 'Wayfair', 'Reddit', 'Zipcar', 'Akamai', 'Polaroid', 'Harmonix', 'DraftKings'], flashOut: true },
+  { id: 'recap', at: 17.4, dur: 2.0, part: 'Recap', kind: 'recap', note: 'Four shots again in negative, then the prompt bar' },
+  { id: 'end', at: 19.4, dur: 2.1, part: 'End', kind: 'end', note: "Proto's mark and the line" },
+]
+
+export const BASIC_RECAP = ['moderna', 'vacuum', 'whoop', 'meta']

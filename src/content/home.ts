@@ -38,30 +38,22 @@ export interface HeroFilm {
   note?: string
 }
 
-/** Jose's launch film, on the hero until the Boston montage is cut. */
-export const LAUNCH_FILM: HeroFilm = {
-  src: '/media/hero.mp4',
-  poster: '/media/hero-poster-launch.jpg',
-  aspect: 16 / 9,
-}
-
 /**
- * The Boston montage: the city and its schools, each cut with a company that started there. The
- * shot list, sources and licences are in docs/hero-montage.md. Export the cuts to these paths.
+ * The Boston montage: what started here, cut with each company's own footage where we have it
+ * (film/render.mjs renders it; docs/hero-montage.md has the plan, the sources and the
+ * permissions). Today's files are the basic cut, from the footage on hand; the full cut replaces
+ * them at the same paths.
  */
 export const BOSTON_MONTAGE: HeroFilm = {
   src: '/media/boston-montage.mp4',
   phoneSrc: '/media/boston-montage-phone.mp4',
   poster: '/media/boston-montage-poster.jpg',
   aspect: 16 / 9,
-  note: 'Not affiliated with or endorsed by the companies or universities shown.',
+  note: 'Footage from Moderna, iRobot and WHOOP, used with their permission. Proto is not affiliated with the companies shown.',
 }
 
-/**
- * What the hero plays. Once the montage's files are in public/media, set this to BOSTON_MONTAGE.
- * Null leaves the hero to the field alone.
- */
-export const HERO_FILM: HeroFilm | null = LAUNCH_FILM
+/** What the hero plays. Null leaves the hero to the field alone. */
+export const HERO_FILM: HeroFilm | null = BOSTON_MONTAGE
 
 /** The hero film's pause control: anything that moves on its own for more than five seconds needs one. */
 export const HERO_FILM_CONTROLS = {
