@@ -59,8 +59,8 @@ function Picture({ name }: { name: GroupTile['picture'] }) {
 }
 
 /**
- * Proto's groups as a bento of light tiles: everyone's nights, then CS, then the groups still to
- * come. Each tile is its own colour with ink of the same hue, a name, a line, its pages and a
+ * Proto's groups as a bento of light tiles: everyone's nights across the top, then CS, Business
+ * and Engineering side by side at the same size, none above the others. Each tile is its own colour with ink of the same hue, a name, a line, its pages and a
  * drawing, after the section tiles on brand.dropbox.com.
  */
 export function GroupsBento() {
@@ -80,7 +80,7 @@ export function GroupsBento() {
             key={tile.name}
             className={styles.tile}
             data-tone={tile.tone}
-            data-size={index === 0 ? 'big' : index === 1 ? 'wide' : 'small'}
+            data-size={index === 0 ? 'big' : 'small'}
             data-reveal="rise"
             style={{ '--d': `${index * 90}ms` } as CSSProperties}
           >

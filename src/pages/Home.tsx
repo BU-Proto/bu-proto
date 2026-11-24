@@ -1,9 +1,9 @@
 import { useEffect, useMemo, type CSSProperties, type RefObject } from 'react'
 import { Link, useLoaderData, useOutletContext } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
-import { newestWins } from '../components/accolade'
 import { GlyphEdge } from '../components/GlyphEdge'
 import { GroupsBento } from '../components/GroupsBento'
+import { StartedHereWall } from '../components/StartedHereWall'
 import { AsciiJourney } from '../components/AsciiJourney'
 import { EventLedger } from '../components/EventLedger'
 import { Hero } from '../components/Hero'
@@ -16,13 +16,9 @@ import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import lui from '../components/landing.module.css'
 import ui from '../components/ui.module.css'
-import { WinOrbit } from '../components/WinOrbit'
-import { LatestWins } from '../components/WinSheet'
 import { WaysIn } from '../components/WaysIn'
-import { WinTally } from '../components/WinTally'
 import type { LayoutOutlet } from '../components/Layout'
 import {
-  FUND_NOTE,
   HERO_COPY,
   HOME_EMPTY,
   JOIN_CTA,
@@ -33,10 +29,9 @@ import {
 } from '../content/home'
 import { KIND_HUE, NEXT_EVENT } from '../content/events'
 import { BRAND, groupInvite } from '../content/site'
-import { WINS_EMPTY } from '../content/wins'
 import { WHY } from '../content/about'
 import type { HomeData } from '../lib/content'
-import { dateParts, daysUntil, formatDay } from '../lib/dates'
+import { dateParts, daysUntil } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useWheelEasing } from '../lib/smoothScroll'
 import { useRsvp } from '../lib/useRsvp'
@@ -54,10 +49,9 @@ const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 const BEATS = [
   { name: 'build', height: 4, weight: 0.4 },
   { name: 'fireside', height: 7, weight: 0.56 },
-  { name: 'trip', height: 9, weight: 0.7 },
+  { name: 'group', height: 9, weight: 0.7 },
   { name: 'demo', height: 13, weight: 0.94 },
 ] as const
-const TRIP_ROW = RHYTHM.findIndex((beat) => beat.what === 'Hackathon trip')
 const SCORE_ROWS = 14
 const COLUMN_WIDTH = 8
 
@@ -189,15 +183,10 @@ function useClosingShape(harborRef: RefObject<HTMLElement | null>) {
 }
 
 export function Home() {
-  const { events, hackathons, wins } = useLoaderData<HomeData>()
+  const { events } = useLoaderData<HomeData>()
   const nextEvent = events
     .filter((event) => daysUntil(event.date) >= 0)
     .sort((a, b) => a.date.localeCompare(b.date))[0]
-  const deadlines = hackathons
-    .filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
-    .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
-    .slice(0, 3)
-  const latest = newestWins(wins, 12)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   const revealRef = useReveal<HTMLDivElement>()
@@ -225,6 +214,8 @@ export function Home() {
         {/* Main's order: the three ways in, how a semester goes, then what's on. */}
         <WaysIn />
         <AsciiJourney />
+        {/* Things that started in Boston, from every kind of field. */}
+        <StartedHereWall />
         <EventLedger events={events} />
         {/* One community, with groups inside it: everyone's nights, CS, and the groups to come. */}
         <GroupsBento />
@@ -296,21 +287,12 @@ export function Home() {
                 {beat.group && <p className={styles.group}>{groupInvite(beat.group)}</p>}
                 <p className={lui.stepText}>
                   {beat.detail}
-                  {row === TRIP_ROW && (
-                    <>
-                      {' '}
-                      {FUND_NOTE.text}{' '}
-                      <Link className={ui.textLink} to={FUND_NOTE.link.href}>
-                        {FUND_NOTE.link.label}
-                      </Link>
-                    </>
-                  )}
                 </p>
               </li>
             ))}
           </ol>
 
-          {/* The rhythm's next real beat from the calendar, beside the next deadlines to go with it. */}
+          {/* The rhythm's next real beat from the calendar. */}
           <div className={styles.next}>
             <section className={styles.nextEvent} aria-labelledby="next-event">
               <div className={styles.nextHead} data-reveal="rise">
@@ -323,81 +305,9 @@ export function Home() {
               </div>
               {nextEvent ? <NextEvent event={nextEvent} /> : <NoEvent />}
             </section>
-
-            <section className={styles.applyBy} data-hue="iris" aria-labelledby="apply-by">
-              <div className={styles.nextHead} data-reveal="rise">
-                <h3 id="apply-by" className={styles.subTitle}>
-                  {NEXT_UP.applyBy}
-                </h3>
-                <Link className={ui.textLink} to="/hackathons">
-                  {NEXT_UP.allHackathons}
-                </Link>
-              </div>
-              <p className={styles.group} data-reveal="rise">
-                {groupInvite(NEXT_UP.applyByGroup)}
-              </p>
-              {deadlines.length === 0 ? (
-                <p className={styles.quiet} data-reveal="rise">
-                  {HOME_EMPTY.deadlines}
-                </p>
-              ) : (
-                <ol className={styles.deadlineList}>
-                  {deadlines.map((hackathon, index) => {
-                    const days = daysUntil(hackathon.applyBy)
-                    return (
-                      <li
-                        key={hackathon.id}
-                        className={styles.deadline}
-                        data-reveal="rise"
-                        style={{ '--d': `${index * 90}ms` } as CSSProperties}
-                      >
-                        <span className={styles.countdown}>
-                          {days}
-                          <small>{days === 1 ? 'day' : 'days'}</small>
-                        </span>
-                        <span className={styles.deadlineName}>
-                          {/* Hackathons have no page of their own: straight to its site, else the list. */}
-                          {hackathon.href ? (
-                            <a className={styles.stretch} href={hackathon.href} target="_blank" rel="noopener noreferrer">
-                              {hackathon.name}
-                            </a>
-                          ) : (
-                            <Link className={styles.stretch} to="/hackathons">
-                              {hackathon.name}
-                            </Link>
-                          )}
-                          <SampleTag show={hackathon.placeholder} />
-                        </span>
-                        <span className={styles.deadlineDate}>
-                          {NEXT_UP.closes} {formatDay(hackathon.applyBy)}
-                        </span>
-                      </li>
-                    )
-                  })}
-                </ol>
-              )}
-            </section>
           </div>
         </section>
 
-        {/* The record, as on main: the running tally, the wins in orbit, then the newest as cards. */}
-        <section className={styles.wins} data-hue="rose" aria-labelledby="latest-wins">
-          <div className={styles.tally}>
-            <div className={lui.wrap}>
-              <WinTally wins={wins} />
-            </div>
-          </div>
-          {latest.length === 0 ? (
-            <div className={styles.tally}>
-              <p className={`${lui.wrap} ${lui.body}`}>{WINS_EMPTY}</p>
-            </div>
-          ) : (
-            <>
-              <WinOrbit wins={latest} />
-              <LatestWins wins={latest.slice(0, 3)} id="latest-wins" />
-            </>
-          )}
-        </section>
 
         <LogoBand />
         {/* Harbor fills back up with the field for the last word. */}

@@ -19,7 +19,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BASIC_LENGTH, BASIC_RECAP, BASIC_SHOTS, DRIFT_WORDS, END_LINE, FPS, LENGTH, PROMPT, RECAP, SHOTS } from './shots.mjs'
+import { BASIC_LENGTH, BASIC_RECAP, BASIC_SHOTS, DRIFT_WORDS, END_LINE, FPS, LENGTH, PROMPT, PROMPT_PAUSE_AT, RECAP, SHOTS } from './shots.mjs'
 
 const ARGS = process.argv.slice(2)
 /** Which film: the full one from SHOTS, or the basic one from what we hold today. */
@@ -278,13 +278,25 @@ function missing(shot) {
   return wanted.filter((path) => !has(path))
 }
 
-/** The opener as a sequence of drawn frames: the line typed out, the cursor blinking after it. */
+/**
+ * The opener as a sequence of drawn frames: the line typed out, with a beat after "anything"
+ * before "in Boston", then the cursor blinking after it.
+ */
 function openerFrames(s, dir, frames) {
   mkdirSync(dir, { recursive: true })
   const typeFrom = 8
-  const typeTo = Math.round(frames * 0.7)
+  const typeTo = Math.round(frames * 0.8)
+  const pause = Math.round(FPS * 0.3)
+  const rate = PROMPT.length / (typeTo - typeFrom - pause)
+  const firstPart = PROMPT_PAUSE_AT / rate
+  const typedAt = (k) => {
+    if (k < 0) return 0
+    if (k < firstPart) return Math.round(k * rate)
+    if (k < firstPart + pause) return PROMPT_PAUSE_AT
+    return Math.min(PROMPT.length, PROMPT_PAUSE_AT + Math.round((k - firstPart - pause) * rate))
+  }
   for (let n = 0; n < frames; n += 1) {
-    const typed = PROMPT.slice(0, Math.max(0, Math.round(((n - typeFrom) / (typeTo - typeFrom)) * PROMPT.length)))
+    const typed = PROMPT.slice(0, typedAt(n - typeFrom))
     const typing = n >= typeFrom && n < typeTo
     const cursor = typing || Math.floor(n / 8) % 2 === 0
     png(promptFrame(s, typed, cursor, n / FPS), join(dir, `f${String(n).padStart(3, '0')}.png`))
@@ -429,7 +441,8 @@ function renderSize(s) {
   if (s.name === 'wide') {
     // The poster is the moment the line is typed out, before anything moves.
     const poster = join(OUT, animatic ? 'animatic-poster.jpg' : 'boston-montage-poster.jpg')
-    ffmpeg(['-ss', '1.9', '-i', output, '-frames:v', '1', '-q:v', '5', poster])
+    const typedOut = (CUT.shots[0].dur - 0.35).toFixed(2)
+    ffmpeg(['-ss', typedOut, '-i', output, '-frames:v', '1', '-q:v', '5', poster])
   }
   const waiting = [...new Set(order.flatMap((shot) => shot.waiting))]
   return { output, waiting }

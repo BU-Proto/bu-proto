@@ -1,6 +1,6 @@
 # The home page montage
 
-A 35-second film for the home page hero, with the energy of Jose's launch film and none of its footage. It opens on a prompt bar typing "Everyone can build anything", goes back to old Boston, through the city today, through the companies that started here, lifts off with Apollo 11, and ends on Proto: started at BU, open to Boston.
+A 35-second film for the home page hero, with the energy of Jose's launch film and none of its footage. It opens on a prompt bar typing "Anyone can build anything in Boston", goes back to old Boston, through the city today, through the companies that started here, lifts off with Apollo 11, and ends on Proto: started at BU, open to Boston.
 
 The site plays a basic cut of it today (21.5 seconds, `node film/render.mjs basic`), made only from the footage we hold: the telephone card, Meta's logo, Moderna, iRobot and WHOOP in their own footage, cards for Boston Dynamics, Dropbox and Bose over the drifting Boston names, then the roll of names and the end card. The full cut replaces it at the same paths once its footage is in.
 
@@ -27,7 +27,7 @@ The render keeps to these sizes on its own. The film is silent, so it needs no m
 The energy of Jose's film: black and white with warm highlights, film grain, flash frames, fast where nothing needs reading. And slow enough to follow:
 
 - A shot with a card holds 1.5 to 2 seconds, long enough to read it and see what's behind it. Shots without a card stay quick.
-- A chapter label sits small in the top corner the whole way through (THEN, THEN / NOW, NOW, WHAT STARTED HERE, LIFTOFF), so it's always clear where you are.
+- A chapter label sits small in the top corner the whole way through (THEN, THEN / NOW, NOW, STARTED IN BOSTON, ALSO STARTED IN BOSTON, LIFTOFF), so it's always clear where you are.
 - Cards are big and in the middle: the name large in Inter, where and when small under it in JetBrains Mono, over the shot dimmed. "Boston Dynamics" over "MIT · 1992".
 - The companies come one after another, each name filling the screen over its own shot, then a fast roll of more Boston names into the launch.
 - Names are set in our own type. A company's logo appears only where the company approved it for this film (Meta has).
@@ -36,21 +36,21 @@ The energy of Jose's film: black and white with warm highlights, film grain, fla
 
 | At (s) | For (s) | Chapter | On screen | Card | Source |
 | --- | --- | --- | --- | --- | --- |
-| 0.0 | 2.6 | | A prompt bar types "Everyone can build anything"; Boston names drift behind it, blurred | | Drawn by the script |
+| 0.0 | 2.6 | | A prompt bar types "Anyone can build anything in Boston"; Boston names drift behind it, blurred | | Drawn by the script |
 | 2.6 | 2.0 | THEN | Old maps of Boston, 1722 to 1900, the shoreline filling in | Boston, founded 1630 | Archive maps |
 | 4.6 | 1.0 | THEN | The harbour full of masts, c. 1906 | | Library of Congress |
 | 5.6 | 2.0 | THEN | Bell's notebook, March 10, 1876 | The telephone, a BU professor, 1876 | Library of Congress |
 | 7.6 | 2.0 | THEN | A vintage terminal, green text | Network email and the @, Cambridge, 1971 | Envato |
 | 9.6 | 1.6 | THEN / NOW | Back Bay from the State House dome, c. 1906, dissolving into Back Bay from the air today | | Library of Congress, then Envato |
 | 11.2 | 2.7 | NOW | Boston from the air at sunrise, a Green Line train, Boston from the air at night | | Envato, Pexels |
-| 13.9 | 1.5 | WHAT STARTED HERE | A robot arm in a lab | Boston Dynamics, MIT, 1992 | Envato |
-| 15.4 | 1.5 | WHAT STARTED HERE | A dorm room at night, a laptop's glow | Meta's logo, "started as Facebook, a Harvard dorm, 2004" | Envato; Meta's approved logo |
-| 16.9 | 1.5 | WHAT STARTED HERE | Moderna's vials on the line, then a robot pipetting in its lab | Moderna, Cambridge, 2010 | Moderna's own footage, approved |
-| 18.4 | 1.5 | WHAT STARTED HERE | The Roomba gliding out from under a sofa, then a close-up rolling towards the camera | iRobot, the Roomba, MIT roboticists, 1990 | iRobot's own footage, approved |
-| 19.9 | 1.5 | WHAT STARTED HERE | Code scrolling in a dark room | Dropbox, MIT students in Cambridge, 2007 | Envato |
-| 21.4 | 1.5 | WHAT STARTED HERE | A speaker cone pulsing | Bose, MIT professor Amar Bose, 1964 | Envato |
-| 22.9 | 2.1 | WHAT STARTED HERE | WHOOP's strap mid-workout, Sha'Carri Richardson, Cristiano Ronaldo | WHOOP, Harvard, 2012 | WHOOP's own pictures, approved |
-| 25.0 | 2.0 | WHAT STARTED HERE | HubSpot, Wayfair, Reddit, Zipcar, Akamai, Polaroid, Harmonix, DraftKings, faster and faster, over the city at night | | Envato |
+| 13.9 | 1.5 | STARTED IN BOSTON | A robot arm in a lab | Boston Dynamics, MIT, 1992 | Envato |
+| 15.4 | 1.5 | STARTED IN BOSTON | A dorm room at night, a laptop's glow | Meta's logo, "started as Facebook, a Harvard dorm, 2004" | Envato; Meta's approved logo |
+| 16.9 | 1.5 | STARTED IN BOSTON | Moderna's vials on the line, then a robot pipetting in its lab | Moderna, Cambridge, 2010 | Moderna's own footage, approved |
+| 18.4 | 1.5 | STARTED IN BOSTON | The Roomba gliding out from under a sofa, then a close-up rolling towards the camera | iRobot, the Roomba, MIT roboticists, 1990 | iRobot's own footage, approved |
+| 19.9 | 1.5 | STARTED IN BOSTON | Code scrolling in a dark room | Dropbox, MIT students in Cambridge, 2007 | Envato |
+| 21.4 | 1.5 | STARTED IN BOSTON | A speaker cone pulsing | Bose, MIT professor Amar Bose, 1964 | Envato |
+| 22.9 | 2.1 | STARTED IN BOSTON | WHOOP's strap mid-workout, Sha'Carri Richardson, Cristiano Ronaldo | WHOOP, Harvard, 2012 | WHOOP's own pictures, approved |
+| 25.0 | 2.0 | STARTED IN BOSTON | HubSpot, Wayfair, Reddit, Zipcar, Akamai, Polaroid, Harmonix, DraftKings, faster and faster, over the city at night | | Envato |
 | 27.0 | 4.0 | LIFTOFF | Apollo 11: ignition, liftoff, the climb | Apollo's guidance computer, designed at MIT, 1969 | NASA, public domain |
 | 31.0 | 2.2 | | Six shots again in negative, letterboxed, landing back on the prompt bar | | From the cut |
 | 33.2 | 1.8 | | Proto's mark and "Started at BU. Open to Boston." | | Drawn by the script |

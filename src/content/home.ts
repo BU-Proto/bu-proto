@@ -106,7 +106,6 @@ export const TRACKS: readonly Track[] = [
     offers: [
       'Find a co-founder or the teammate with the skill you\'re missing',
       'Feedback from people a step ahead of you',
-      'Hackathon trips with the CS group',
     ],
   },
   {
@@ -194,28 +193,64 @@ export interface Beat {
   hue: Hue
 }
 
-/** How a person's time at Proto goes, drawn as the ASCII journey on the landing. */
+/**
+ * What founders here have in common, whatever they study: drawn as the ASCII journey on the
+ * landing, one habit a step.
+ */
 export const JOURNEY = {
-  title: 'Show up. Team up.\nBuild. Ship.',
-  lede: 'Nobody arrives with a plan. You come to a build night with half an idea, meet people, and by the end of the semester it\'s in front of a room.',
+  title: 'Start. Team up.\nBuild. Ship.',
+  lede: 'Business, engineering, design or CS: the founders here have the same habits, whatever they studied.',
   steps: [
-    { name: 'Show up', text: 'Come to a build night or a fireside, with an idea or without one. Everyone starts in the same loose crowd.' },
-    { name: 'Team up', text: 'Ideas narrow down to one, and strangers with different skills turn into a team that\'s building it.' },
-    { name: 'Build', text: 'Keep what works and cut what doesn\'t, week after week, with people around to ask.' },
-    { name: 'Ship', text: 'Show it at demo night, then to users, and one day to an investor.' },
+    { name: 'Start', text: 'Before you feel ready, with half an idea. Build night is a good place to begin.' },
+    { name: 'Team up', text: 'The engineer finds someone who can sell it. The business student finds someone who can build it.' },
+    { name: 'Build', text: 'Week after week, with people around to ask and someone a step ahead of you.' },
+    { name: 'Ship', text: "Put it in front of the people it's for, then on stage at demo night, and one day in front of investors." },
   ],
 } as const
 
+/** One company or invention that started in Boston, for the wall on the landing. */
+export interface StartedHere {
+  name: string
+  field: string
+  /** Where and when it started: checked, see docs/hero-montage.md. */
+  origin: string
+  tone: Tone
+}
+
+/** Things that started in Boston, from every kind of field: the same start as Proto's founders. */
+export const STARTED_HERE: {
+  title: string
+  lede: string
+  coda: string
+  items: readonly StartedHere[]
+} = {
+  title: "It's been done here before",
+  lede: 'Each of these began with a few people in Boston and an idea. Some of them were students.',
+  coda: 'Business, science, hardware and software. Different fields, the same start.',
+  items: [
+    { name: 'Facebook', field: 'Social', origin: 'A Harvard dorm, Cambridge, Mass., 2004', tone: 'sky' },
+    { name: 'Boston Dynamics', field: 'Robotics', origin: 'Spun out of MIT, Cambridge, Mass., 1992', tone: 'mint' },
+    { name: 'Moderna', field: 'Biotech', origin: 'Cambridge, Mass., 2010', tone: 'rose' },
+    { name: 'Bose', field: 'Audio', origin: 'An MIT professor, Massachusetts, 1964', tone: 'amber' },
+    { name: 'Dropbox', field: 'Software', origin: 'MIT students, Cambridge, Mass., 2007', tone: 'iris' },
+    { name: 'WHOOP', field: 'Wearables', origin: 'Started at Harvard, Boston, Mass., 2012', tone: 'mint' },
+    { name: 'iRobot', field: 'Home robots', origin: 'MIT roboticists, Massachusetts, 1990', tone: 'sky' },
+    { name: 'Wayfair', field: 'Retail', origin: 'Boston, Mass., 2002', tone: 'amber' },
+    { name: 'HubSpot', field: 'Business software', origin: 'MIT grads, Cambridge, Mass., 2006', tone: 'rose' },
+    { name: 'The telephone', field: 'Communication', origin: 'A BU professor, Boston, Mass., 1876', tone: 'iris' },
+  ],
+}
+
 export const RHYTHM_INTRO = {
   title: 'The rhythm',
-  lede: 'A build night every week, a fireside and a hackathon trip most months, and demo night to close the semester.',
+  lede: 'A build night every week, a fireside and a group night most months, and demo night to close the semester.',
 } as const
 
 // Row order is size order: the score draws each row taller than the one before (see Home.tsx).
 export const RHYTHM: readonly Beat[] = [
   { when: 'Weekly', what: 'Build night', detail: 'Open to anyone, with food. Bring what you\'re working on, or come to meet people who are.', weeks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], hue: 'sky' },
   { when: 'About monthly', what: 'Fireside', detail: 'A founder or investor talks about how companies get built, then takes questions from people building their own.', weeks: [2, 6, 10], hue: 'iris' },
-  { when: 'About monthly', what: 'Hackathon trip', detail: 'We travel there together.', group: 'CS', weeks: [4, 8, 12], hue: 'iris' },
+  { when: 'About monthly', what: 'Group nights', detail: 'A night for one group: CS now, business and engineering soon. Everyone else is welcome too.', weeks: [4, 8, 12], hue: 'iris' },
   { when: 'Each semester', what: 'Demo night', detail: 'Anyone can show anything: an app, a product, a company, half a prototype.', weeks: [14], hue: 'rose' },
 ]
 
@@ -257,9 +292,9 @@ export const JOIN_CTA: {
   footnote: readonly string[]
   cta: Link
 } = {
-  title: 'Come build with us',
+  title: 'Start something',
   tag: 'Proto',
-  lede: 'It\'s free and there\'s no application. Tell us what you\'d like to make and we\'ll see you at build night.',
+  lede: 'It\'s free and there\'s no application. Bring an idea, or come and find one at build night.',
   hint: 'No application needed',
   aside: ['Nobody arrives ready.', 'We said come anyway.', 'They built something.'],
   footnote: ['* Build night,', 'every week'],
