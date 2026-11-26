@@ -11,26 +11,33 @@
 // - Lists come back as { items: T[] }, single records as { item: T }.
 
 import { z } from 'zod'
-import { ADMIN_LEVELS, AREAS, type AccessLevel, type Area } from './access'
+// Local imports carry their .ts extension so `npm test` can load this file straight from Node.
+import { ADMIN_LEVELS, AREAS, type AccessLevel, type Area } from './access.ts'
 import {
   APPLICATION_STATUSES,
   ASK_STATUSES,
   BOARD_SEATS,
   EVENT_KINDS,
+  FIELDS,
+  FOUNDER_COMMITMENTS,
+  FOUNDER_STAGES,
+  FOUNDER_STATUSES,
   FUND_AMOUNTS,
   FUND_STATUSES,
   MAX_ROLE_QUESTIONS,
   TRACKS,
+  WIN_KINDS,
   YEARS,
   type ApplicationStatus,
   type AskStatus,
   type ContentResource,
+  type FounderStatus,
   type FundStatus,
-} from './constants'
+} from './constants.ts'
 
-export * from './constants'
-export * from './access'
-export * from './crm'
+export * from './constants.ts'
+export * from './access.ts'
+export * from './crm.ts'
 
 // ---- Content the portal edits ---------------------------------------------------------------
 
@@ -78,6 +85,11 @@ export const eventInput = z.object({
   hosts: z.array(personInput).max(16),
   /** Photos from the night, for a recap once it's happened. */
   gallery: z.array(galleryImage).max(24),
+  /**
+   * For Founders Circle members and the people we invite (the event's guests). It still shows on
+   * the calendar, but the site takes no RSVPs for it.
+   */
+  inviteOnly: z.boolean().default(false),
   ...flags,
 })
 
@@ -111,6 +123,8 @@ export const hackathonInput = z.object({
 })
 
 export const winInput = z.object({
+  /** A hackathon prize, a pitch competition, a launch, first customers or money raised. */
+  kind: z.enum(WIN_KINDS).default('Hackathon'),
   project: text(80),
   blurb: optionalText(300),
   event: text(80),
@@ -307,6 +321,13 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
       { key: 'agenda', column: 'agenda', label: 'Schedule', type: 'list', hint: 'One line each, e.g. 7:00 Food, then 7:30 Kickoff.' },
       { key: 'hosts', column: 'hosts', label: 'Hosts and speakers', type: 'people', hint: 'People or orgs running it; each can link out.' },
       { key: 'gallery', column: 'gallery', label: 'Photos', type: 'images', hint: 'For a recap after the event.' },
+      {
+        key: 'inviteOnly',
+        column: 'invite_only',
+        label: 'Invite only',
+        type: 'boolean',
+        hint: "Only Founders Circle members and people you invite. The event shows on the calendar, but nobody can RSVP on the site. Once it's saved, add the people you invite as guests below the form.",
+      },
       ...FLAG_FIELDS,
     ],
   },
@@ -347,11 +368,12 @@ export const RESOURCE_SPECS: Record<ContentResource, ResourceSpec> = {
     // Newest first; an undated win ('') sorts after every dated one, then the portal's order.
     orderBy: 'date DESC, position ASC, id DESC',
     fields: [
+      { key: 'kind', column: 'kind', label: 'Kind of win', type: 'select', options: WIN_KINDS, hint: 'Hackathon wins show under CS; the rest under Business.' },
       { key: 'project', column: 'project', label: 'Project', type: 'text' },
       { key: 'blurb', column: 'blurb', label: 'One line', type: 'textarea', hint: 'Shown on the card and under the title.' },
-      { key: 'event', column: 'event', label: 'Hackathon', type: 'text' },
+      { key: 'event', column: 'event', label: 'Hackathon or competition', type: 'text', hint: 'e.g. HackMIT, the MIT $100K pitch' },
       { key: 'date', column: 'date', label: 'Date', type: 'date', hint: 'When the hackathon ended. Wins show newest first.' },
-      { key: 'placement', column: 'placement', label: 'Placement', type: 'text', hint: 'e.g. 1st overall, 2nd place, Best hardware hack' },
+      { key: 'placement', column: 'placement', label: 'Placement', type: 'text', hint: 'e.g. 1st overall, finalist, Best hardware hack' },
       { key: 'track', column: 'track', label: 'Track or prize category', type: 'text', hint: 'Optional, e.g. Healthcare track, Best use of AI' },
       { key: 'team', column: 'team', label: 'Team', type: 'people', hint: 'Each name can link to a LinkedIn, personal site or GitHub.' },
       { key: 'photo', column: 'photo', label: 'Cover photo', type: 'image', hint: 'Upload one, or paste a full URL or a path under public/, e.g. /photos/pantry-pal.jpg' },
@@ -456,19 +478,27 @@ const anyEmail = z.string().trim().toLowerCase().pipe(z.email('Enter an email').
 /** Bots fill every field; people never see this one. Must be empty. */
 const honeypot = { website: z.literal('').optional() }
 
-/** POST /api/join → 201 { ok: true }. Joining again with the same email updates the row (200). */
+/**
+ * POST /api/join → 201 { ok: true }. Joining again with the same email updates the row (200).
+ * Anyone in Boston can join: any email, any school or none, any field.
+ */
 export const joinInput = z.object({
   name: text(80),
   email: anyEmail,
+  /** Where they study, or nothing. */
+  school: optionalText(120).default(''),
+  field: z.enum(FIELDS),
   year: z.enum(YEARS),
   track: z.enum(TRACKS),
+  /** What they're building, or want to. Optional. */
+  building: optionalText(500).default(''),
   ...honeypot,
 })
 
-/** POST /api/fund-interest → 201 { ok: true } */
+/** POST /api/fund-interest → 201 { ok: true }. Open to anyone, like joining. */
 export const fundInterestInput = z.object({
   name: text(80),
-  email: buEmail,
+  email: anyEmail,
   year: z.enum(YEARS),
   target: text(200),
   spend: text(1000),
@@ -568,7 +598,80 @@ export const applicationPatch = z.object({ status: z.enum(APPLICATION_STATUSES),
 /** PATCH /api/admin/roles/:id/filled → { filled }: mark a role filled, or open again, from an application. */
 export const roleFilledPatch = z.object({ filled: z.boolean() })
 
-/** POST /api/events/:id/rsvp → 201 { ok: true, count } (200 if already RSVP'd). Any email, not just BU. */
+// ---- Founders Circle ----------------------------------------------------------------------------
+// A small, invite-only group inside Proto for founders already building something real. People
+// apply on /founders, we read every application and ask some of them to a call, and members get
+// invite-only events.
+
+/**
+ * POST /api/founders/apply → 201 { ok: true }. Open to anyone, like joining. Each one is its own
+ * application: applying again adds another row rather than replacing the first.
+ */
+export const founderApplicationInput = z.object({
+  name: text(80),
+  email: anyEmail,
+  /** Where they study, or nothing. */
+  school: optionalText(120).default(''),
+  /** The company or project's name. */
+  company: text(120),
+  /** The product, a site or a profile. Optional; typed by hand, so it's given its https://. */
+  link: typedLink.default(''),
+  stage: z.enum(FOUNDER_STAGES),
+  commitment: z.enum(FOUNDER_COMMITMENTS),
+  /** What they're building, and for whom. */
+  building: text(1000),
+  /** What they've done in the last three months. */
+  progress: text(1000),
+  /** Who else is on it. Optional. */
+  team: optionalText(500).default(''),
+  /** What would help most right now. Optional. */
+  help: optionalText(600).default(''),
+  ...honeypot,
+})
+export type FounderApplicationInput = z.input<typeof founderApplicationInput>
+/** A Founders Circle application once parsed: the optional answers are always strings. */
+export type FounderApplicationValues = z.output<typeof founderApplicationInput>
+
+/**
+ * GET /api/admin/founders → { items }: newest first.
+ * PATCH /api/admin/founders/:id → { item }. DELETE /api/admin/founders/:id → 204.
+ */
+export interface FounderApplication {
+  id: number
+  name: string
+  email: string
+  school: string
+  company: string
+  link: string
+  stage: string
+  commitment: string
+  building: string
+  progress: string
+  team: string
+  help: string
+  status: FounderStatus
+  /** Ours alone: the applicant never sees them. */
+  notes: string
+  /** The day of their call (yyyy-mm-dd), once one is set. */
+  interviewOn: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** A status, notes, or the call's day ('' or null clears it). */
+export const founderApplicationPatch = z
+  .object({
+    status: z.enum(FOUNDER_STATUSES),
+    notes: optionalText(2000),
+    interviewOn: z.union([isoDay, z.literal(''), z.null()]).transform((value) => value || null),
+  })
+  .partial()
+export type FounderApplicationPatch = z.input<typeof founderApplicationPatch>
+
+/**
+ * POST /api/events/:id/rsvp → 201 { ok: true, count } (200 if already RSVP'd). Any email, not just
+ * BU. An invite-only event takes no RSVPs: 403.
+ */
 export const rsvpInput = z.object({
   name: text(80),
   email: z.string().trim().toLowerCase().pipe(z.email('Enter an email')),
@@ -693,8 +796,11 @@ export interface Member {
   id: number
   name: string
   email: string
+  school: string
+  field: string
   year: string
   track: string
+  building: string
   notes: string
   unsubscribed: boolean
   createdAt: string
@@ -763,6 +869,9 @@ export interface Stats {
   /** Applications for a role nobody has looked at yet, and all of them. */
   applicationsNew: number
   applicationsTotal: number
+  /** Founders Circle applications nobody has looked at yet, and all of them. */
+  foundersNew: number
+  foundersTotal: number
   /** Conversations with an email nobody has opened yet. */
   inboxUnread: number
   admins: number
@@ -1369,8 +1478,11 @@ export interface EventImportPreview {
 
 // ---- Portal: automatic emails -------------------------------------------------------------------
 
-/** The emails the public forms send on their own: a welcome, and an RSVP, fund, board and role application confirmation. */
-export const AUTOMATIC_EMAIL_KEYS = ['welcome', 'rsvp', 'fund', 'board', 'application'] as const
+/**
+ * The emails the public forms send on their own: a welcome, and an RSVP, fund, board, role
+ * application and Founders Circle application confirmation.
+ */
+export const AUTOMATIC_EMAIL_KEYS = ['welcome', 'rsvp', 'fund', 'board', 'application', 'founders'] as const
 export type AutomaticEmailKey = (typeof AUTOMATIC_EMAIL_KEYS)[number]
 
 /**

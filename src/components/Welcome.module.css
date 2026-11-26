@@ -1,0 +1,64 @@
+/*
+ * Six statements on colour tiles, each in ink of its own hue, three across on a wide screen: the
+ * words large enough to read from across the room, the tiles square-cornered with 10px between.
+ */
+.welcome {
+  display: grid;
+  gap: calc(var(--cell) * 3);
+  width: min(1180px, 100% - 2 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-inline: auto;
+  padding: clamp(64px, 10vh, 120px) 0 clamp(32px, 6vh, 64px);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(40px, 6.4vw, 84px);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: 0.98;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: flex;
+  align-items: flex-end;
+  min-height: 170px;
+  padding: 22px 24px;
+  background: var(--tone);
+  color: var(--tone-ink);
+  font-size: clamp(21px, 2vw, 27px);
+  font-weight: var(--display-weight);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.coda {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(17px, 1.6vw, 21px);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tile {
+    min-height: 0;
+    padding: 18px 20px;
+  }
+}

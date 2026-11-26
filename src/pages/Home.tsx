@@ -1,10 +1,12 @@
 import { useEffect, useMemo, type CSSProperties, type RefObject } from 'react'
 import { Link, useLoaderData, useOutletContext } from 'react-router'
 import type { ProtoEvent } from '../../shared/api'
-import { newestWins } from '../components/accolade'
 import { GlyphEdge } from '../components/GlyphEdge'
-import { AsciiJourney } from '../components/AsciiJourney'
-import { EventLedger } from '../components/EventLedger'
+import { GroupsBento } from '../components/GroupsBento'
+import { StartedHereWall } from '../components/StartedHereWall'
+import { FilmSection } from '../components/FilmSection'
+import { Welcome } from '../components/Welcome'
+import { FoundersTeaser } from '../components/FoundersTeaser'
 import { Hero } from '../components/Hero'
 import { ScrubWords } from '../components/motion/ScrubWords'
 import { LogoBand } from '../components/LogoBand'
@@ -15,13 +17,10 @@ import { RsvpButton, RsvpForm } from '../components/Rsvp'
 import { SampleTag } from '../components/SampleTag'
 import lui from '../components/landing.module.css'
 import ui from '../components/ui.module.css'
-import { WinOrbit } from '../components/WinOrbit'
-import { LatestWins } from '../components/WinSheet'
 import { WaysIn } from '../components/WaysIn'
-import { WinTally } from '../components/WinTally'
 import type { LayoutOutlet } from '../components/Layout'
 import {
-  FUND_NOTE,
+  HERO_COPY,
   HOME_EMPTY,
   JOIN_CTA,
   NEXT_UP,
@@ -30,15 +29,13 @@ import {
   SEMESTER,
 } from '../content/home'
 import { KIND_HUE, NEXT_EVENT } from '../content/events'
-import { BRAND } from '../content/site'
-import { WINS_EMPTY } from '../content/wins'
-import { WHY } from '../content/about'
+import { BRAND, groupInvite } from '../content/site'
 import type { HomeData } from '../lib/content'
-import { dateParts, daysUntil, formatDay } from '../lib/dates'
+import { dateParts, daysUntil } from '../lib/dates'
 import { kindAddsInfo } from '../lib/events'
 import { useWheelEasing } from '../lib/smoothScroll'
 import { useRsvp } from '../lib/useRsvp'
-import { glyphTexture, rhythmColumn } from '../lib/glyphArt'
+import { glyphTexture } from '../lib/glyphArt'
 import { GROUND } from '../lib/pageGround'
 import styles from './Home.module.css'
 import { eventPath } from '../lib/paths'
@@ -46,17 +43,16 @@ import { eventPath } from '../lib/paths'
 const WEEKS = Array.from({ length: SEMESTER.weeks }, (_, index) => index + 1)
 
 /**
- * How each beat is drawn in the score, by its row in RHYTHM: the bigger the night, the taller and
- * denser its column. A week shows its biggest beat. Year two has no column: it isn't on yet.
+ * How each beat is drawn in the score, by its row in RHYTHM: the bigger the night, the taller its
+ * bar, out of SCORE_ROWS. A week shows its biggest beat. A beat planned for later has no bar.
  */
 const BEATS = [
-  { name: 'hack', height: 4, weight: 0.4 },
-  { name: 'trip', height: 8, weight: 0.66 },
-  { name: 'demo', height: 13, weight: 0.94 },
+  { name: 'build', height: 4 },
+  { name: 'fireside', height: 7 },
+  { name: 'group', height: 9 },
+  { name: 'demo', height: 13 },
 ] as const
-const TRIP_ROW = 1
 const SCORE_ROWS = 14
-const COLUMN_WIDTH = 8
 
 function beatIndex(week: number): number {
   let index = -1
@@ -69,14 +65,8 @@ function beatIndex(week: number): number {
 const beatOf = (week: number) => BEATS[beatIndex(week)]?.name
 const hueOf = (week: number) => RHYTHM[beatIndex(week)]?.hue
 
-function weekArt(week: number): string {
-  const beat = BEATS[beatIndex(week)]
-  return rhythmColumn(beat?.height ?? 0, beat?.weight ?? 0, SCORE_ROWS, COLUMN_WIDTH, week).join('\n')
-}
-
-/** The opening lead: the first sentence in full ink, the rest in the softer second voice. */
-const LEAD_BREAK = WHY.text.indexOf('. ') + 1
-const LEAD = { open: WHY.text.slice(0, LEAD_BREAK), rest: WHY.text.slice(LEAD_BREAK + 1) }
+/** A week's bar height, as a share of the score's height. */
+const heightOf = (week: number) => (BEATS[beatIndex(week)]?.height ?? 0) / SCORE_ROWS
 
 /** Step numbers as main shows them: 01, 02. */
 const stepNumber = (index: number) => String(index + 1).padStart(2, '0')
@@ -186,15 +176,11 @@ function useClosingShape(harborRef: RefObject<HTMLElement | null>) {
 }
 
 export function Home() {
-  const { events, hackathons, wins } = useLoaderData<HomeData>()
+  const { events } = useLoaderData<HomeData>()
+  // The next event anyone can come to: invite-only nights stay on the calendar, not at the top.
   const nextEvent = events
-    .filter((event) => daysUntil(event.date) >= 0)
+    .filter((event) => daysUntil(event.date) >= 0 && !event.inviteOnly)
     .sort((a, b) => a.date.localeCompare(b.date))[0]
-  const deadlines = hackathons
-    .filter((hackathon) => daysUntil(hackathon.applyBy) >= 0)
-    .sort((a, b) => a.applyBy.localeCompare(b.applyBy))
-    .slice(0, 3)
-  const latest = newestWins(wins, 12)
   const texture = useMemo(() => glyphTexture(GROUND.texture), [])
   const textureMask = useMemo(() => glyphTexture(GROUND.textureMask), [])
   const revealRef = useReveal<HTMLDivElement>()
@@ -203,26 +189,26 @@ export function Home() {
 
   return (
     <>
-      <title>{`${BRAND.name} · The home base for building things at BU`}</title>
-      <Hero />
+      <title>{`${BRAND.name} · ${HERO_COPY.tab}`}</title>
+      <Hero next={nextEvent} />
 
       {/* Everything below the hero settles in as it comes up the screen (see motion/useReveal). */}
       <div ref={revealRef} className={motion.reveal}>
       {/* Harbor: the field drains into it, and the three ways in stand on it. */}
       <div className={`${styles.bleed} ${styles.ink} ${styles.afterHero}`}>
         <GlyphEdge color={GROUND.harbor} mode="drain" rows={44} cell={10} />
-        {/* The opening lead, as on main: what Proto is for, in two voices. */}
-        <div className={lui.tight}>
-          <div className={lui.wrap}>
-            <p className={lui.lead} data-reveal="rise">
-              {LEAD.open} <em>{LEAD.rest}</em>
-            </p>
-          </div>
-        </div>
-        {/* Main's order: the three ways in, how a semester goes, then what's on. */}
+        {/* Who it's for, right under the top: anyone, at any stage, from any side. */}
+        <Welcome />
+        {/* The three ways in, how a semester goes, then what's on. */}
         <WaysIn />
-        <AsciiJourney />
-        <EventLedger events={events} />
+        {/* Things that started in Boston, from every kind of field. */}
+        <StartedHereWall />
+        {/* The Boston film, after the map: where things began, then what they were. */}
+        <FilmSection />
+        {/* One community, with groups inside it: everyone's nights, CS, and the groups to come. */}
+        <GroupsBento />
+        {/* The one invite-only part: founders already building apply to the Circle. */}
+        <FoundersTeaser />
       </div>
 
       {/* Harbor still, now with the field frozen into it: the rhythm and what's next on it, then
@@ -250,16 +236,14 @@ export function Home() {
             <div className={styles.weeks} aria-hidden="true">
               {WEEKS.map((week) => (
                 // The semester fills in week by week as the score comes into view.
-                <pre
+                <div
                   key={week}
                   className={styles.week}
                   data-beat={beatOf(week)}
                   data-hue={hueOf(week)}
                   data-reveal="column"
-                  style={after((week - 1) * 45)}
-                >
-                  {weekArt(week)}
-                </pre>
+                  style={{ ...after((week - 1) * 45), '--h': heightOf(week) } as CSSProperties}
+                />
               ))}
             </div>
             <div className={styles.axis} aria-hidden="true">
@@ -288,23 +272,15 @@ export function Home() {
                   <h3 className={lui.stepTitle}>{beat.what}</h3>
                 </div>
                 <p className={styles.when}>{beat.later ? SEMESTER.later : beat.when}</p>
+                {beat.group && <p className={styles.group}>{groupInvite(beat.group)}</p>}
                 <p className={lui.stepText}>
                   {beat.detail}
-                  {row === TRIP_ROW && (
-                    <>
-                      {' '}
-                      {FUND_NOTE.text}{' '}
-                      <Link className={ui.textLink} to={FUND_NOTE.link.href}>
-                        {FUND_NOTE.link.label}
-                      </Link>
-                    </>
-                  )}
                 </p>
               </li>
             ))}
           </ol>
 
-          {/* The rhythm's next real beat from the calendar, beside the next deadlines to go with it. */}
+          {/* The rhythm's next real beat from the calendar. */}
           <div className={styles.next}>
             <section className={styles.nextEvent} aria-labelledby="next-event">
               <div className={styles.nextHead} data-reveal="rise">
@@ -317,78 +293,9 @@ export function Home() {
               </div>
               {nextEvent ? <NextEvent event={nextEvent} /> : <NoEvent />}
             </section>
-
-            <section className={styles.applyBy} data-hue="iris" aria-labelledby="apply-by">
-              <div className={styles.nextHead} data-reveal="rise">
-                <h3 id="apply-by" className={styles.subTitle}>
-                  {NEXT_UP.applyBy}
-                </h3>
-                <Link className={ui.textLink} to="/hackathons">
-                  {NEXT_UP.allHackathons}
-                </Link>
-              </div>
-              {deadlines.length === 0 ? (
-                <p className={styles.quiet} data-reveal="rise">
-                  {HOME_EMPTY.deadlines}
-                </p>
-              ) : (
-                <ol className={styles.deadlineList}>
-                  {deadlines.map((hackathon, index) => {
-                    const days = daysUntil(hackathon.applyBy)
-                    return (
-                      <li
-                        key={hackathon.id}
-                        className={styles.deadline}
-                        data-reveal="rise"
-                        style={{ '--d': `${index * 90}ms` } as CSSProperties}
-                      >
-                        <span className={styles.countdown}>
-                          {days}
-                          <small>{days === 1 ? 'day' : 'days'}</small>
-                        </span>
-                        <span className={styles.deadlineName}>
-                          {/* Hackathons have no page of their own: straight to its site, else the list. */}
-                          {hackathon.href ? (
-                            <a className={styles.stretch} href={hackathon.href} target="_blank" rel="noopener noreferrer">
-                              {hackathon.name}
-                            </a>
-                          ) : (
-                            <Link className={styles.stretch} to="/hackathons">
-                              {hackathon.name}
-                            </Link>
-                          )}
-                          <SampleTag show={hackathon.placeholder} />
-                        </span>
-                        <span className={styles.deadlineDate}>
-                          {NEXT_UP.closes} {formatDay(hackathon.applyBy)}
-                        </span>
-                      </li>
-                    )
-                  })}
-                </ol>
-              )}
-            </section>
           </div>
         </section>
 
-        {/* The record, as on main: the running tally, the wins in orbit, then the newest as cards. */}
-        <section className={styles.wins} data-hue="rose" aria-labelledby="latest-wins">
-          <div className={styles.tally}>
-            <div className={lui.wrap}>
-              <WinTally wins={wins} />
-            </div>
-          </div>
-          {latest.length === 0 ? (
-            <div className={styles.tally}>
-              <p className={`${lui.wrap} ${lui.body}`}>{WINS_EMPTY}</p>
-            </div>
-          ) : (
-            <>
-              <WinOrbit wins={latest} />
-              <LatestWins wins={latest.slice(0, 3)} id="latest-wins" />
-            </>
-          )}
-        </section>
 
         <LogoBand />
         {/* Harbor fills back up with the field for the last word. */}

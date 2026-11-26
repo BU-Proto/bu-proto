@@ -18,7 +18,7 @@ import {
   type TimelineItem,
   type Today,
 } from '../../shared/crm'
-import type { ApplicationStatus, FundStatus } from '../../shared/api'
+import type { ApplicationStatus, FounderStatus, FundStatus } from '../../shared/api'
 import { bostonToday } from '../lib/dates'
 import { ApiError, idParam, parseInput } from '../lib/http'
 import { listThreads } from '../lib/inbox'
@@ -225,6 +225,7 @@ interface EventRow {
   time: string
   kind: string
   register_url: string | null
+  invite_only: number
   rsvps: number
 }
 
@@ -247,7 +248,7 @@ app.get('/api/admin/today', async (c) => {
     db.prepare(FOLLOW_UPS_SQL).bind(addDays(today, 7)),
     db
       .prepare(
-        `SELECT e.id, e.title, e.date, e.time, e.kind, e.register_url, (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = e.id) AS rsvps
+        `SELECT e.id, e.title, e.date, e.time, e.kind, e.register_url, e.invite_only, (SELECT COUNT(*) FROM rsvps r WHERE r.event_id = e.id) AS rsvps
          FROM events e WHERE e.published = 1 AND e.date >= ? ORDER BY e.date, e.id LIMIT 40`,
       )
       .bind(today),
@@ -286,7 +287,9 @@ app.get('/api/admin/today', async (c) => {
         id: row.id,
         title: row.title,
         date: row.date,
-        detail: [row.kind, row.time, row.register_url ? 'Sign-up on its own page' : plural(row.rsvps, 'RSVP')].filter(Boolean).join(' · '),
+        detail: [row.kind, row.time, row.invite_only ? 'Invite only' : row.register_url ? 'Sign-up on its own page' : plural(row.rsvps, 'RSVP')]
+          .filter(Boolean)
+          .join(' · '),
         href: `/admin/events/${row.id}`,
       })),
       ...(hackathons.results as HackathonRow[]).map((row) => ({
@@ -413,6 +416,27 @@ async function applicationItems(db: D1Database, waitingOnly: boolean): Promise<D
   }))
 }
 
+async function founderItems(db: D1Database, waitingOnly: boolean): Promise<Draft[]> {
+  const where = waitingOnly ? WAITING_WHERE.founder : `${WAITING_WHERE.founder} OR updated_at >= ${handledSince}`
+  const { results } = await db
+    .prepare(
+      `SELECT id, name, email, company, stage, building, status, created_at FROM founder_applications WHERE ${where}
+       ORDER BY created_at DESC, id DESC LIMIT 200`,
+    )
+    .all<{ id: number; name: string; email: string; company: string; stage: string; building: string; status: FounderStatus; created_at: string }>()
+  return results.map((row) => ({
+    source: 'founder' as const,
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    title: `${row.company} · ${row.stage}`,
+    snippet: snippet(row.building),
+    at: row.created_at,
+    waiting: row.status === 'new',
+    href: '/admin/founders',
+  }))
+}
+
 async function boardItems(db: D1Database, waitingOnly: boolean): Promise<Draft[]> {
   const where = waitingOnly ? WAITING_WHERE.board : `${WAITING_WHERE.board} OR created_at >= ${handledSince} OR reviewed_at >= ${handledSince}`
   const { results } = await db
@@ -436,6 +460,7 @@ const LOADERS: Record<QueueSource, (db: D1Database, waitingOnly: boolean) => Pro
   signup: signupItems,
   fund: fundItems,
   application: applicationItems,
+  founder: founderItems,
   board: boardItems,
 }
 
@@ -480,7 +505,8 @@ app.get('/api/admin/queue', async (c) => {
 // ---- POST /api/admin/queue/:source/:id/review --------------------------------------------------------
 
 // Only sign-ups and board interest are triaged here; the others have statuses of their own
-// (a conversation's, a fund request's, an application's), changed where they live.
+// (a conversation's, a fund request's, an application's, a Founders Circle application's), changed
+// where they live.
 const REVIEWABLE: Partial<Record<QueueSource, string>> = { signup: 'members', board: 'board_interest' }
 const reviewInput = z.object({ waiting: z.boolean().optional() }).default({})
 

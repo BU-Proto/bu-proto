@@ -441,7 +441,7 @@
 .everyLabel {
   color: var(--hue, var(--ink-soft));
   font-size: clamp(26px, 2.8vw, 36px);
-  font-weight: 300;
+  font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.05;
 }
@@ -587,7 +587,7 @@
   margin-bottom: 12px;
   color: var(--hue);
   font-size: 44px;
-  font-weight: 300;
+  font-weight: 600;
   letter-spacing: -0.05em;
   line-height: 0.86;
   font-variant-numeric: tabular-nums;
@@ -665,7 +665,7 @@
   margin: 0;
   color: var(--hue);
   font-size: clamp(40px, 5vw, 64px);
-  font-weight: 300;
+  font-weight: var(--display-weight);
   letter-spacing: -0.045em;
   line-height: 0.95;
   font-variant-numeric: tabular-nums;

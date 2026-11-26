@@ -43,6 +43,8 @@ export type EmailReason =
   | { kind: 'board' }
   /** Transactional: someone applied for a role (or, to owners, that they did). */
   | { kind: 'role' }
+  /** Transactional: someone applied to the Founders Circle. */
+  | { kind: 'founders' }
 
 export interface RenderedEmail {
   subject: string
@@ -244,7 +246,7 @@ function preheaderText(body: string): string {
 // ---- Hero --------------------------------------------------------------------------------------
 
 /** Each kind of email gets its own strip of glyphs in the plain-text version, the same every time. */
-const ART_SEED: Record<EmailReason['kind'], number> = { member: 1, event: 2, fund: 3, test: 4, admin: 5, board: 6, role: 7 }
+const ART_SEED: Record<EmailReason['kind'], number> = { member: 1, event: 2, fund: 3, test: 4, admin: 5, board: 6, role: 7, founders: 8 }
 
 /** The seal and the name, as the site's top bar and footer set them. */
 function brand(origin: string, name: string, size: number, style: string): string {
@@ -349,6 +351,8 @@ function reasonText(reason: EmailReason): string {
       return "You're getting this because of a board seat form sent on proto.boston."
     case 'role':
       return "You're getting this because of an application for a role sent on proto.boston."
+    case 'founders':
+      return "You're getting this because of a Founders Circle application sent on proto.boston."
   }
 }
 

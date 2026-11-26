@@ -7,14 +7,28 @@ import type { Hue, PageIntro } from './types'
 export const EVENTS_INTRO: PageIntro = {
   path: '~/proto/events',
   title: 'Events',
-  lede: 'Talks, workshops, prep nights and demo nights at BU. Everything is open to every track.',
+  lede: "Firesides with founders and investors, a build night every week and a demo night each semester. Every event is free and open to everyone, from any school or none, whatever you've built so far.",
 }
 
-/** The weekly beat beside the intro. No day or time: hack night's slot isn't booked yet. */
-export const HACK_NIGHT = {
-  title: 'Hack night is every week',
-  text: 'Open to everyone, with food. Bring something you’re building, or find a team there.',
+/** The weekly beat beside the intro. No day or time: build night's slot isn't booked yet. */
+export const BUILD_NIGHT = {
+  title: 'Build night is every week',
+  text: "Open to everyone, with food. First time? Just show up: bring what you're working on, or nothing at all, and meet whoever's there. You don't need to prepare anything.",
   next: 'The next one is',
+} as const
+
+/**
+ * Firesides on the events page: a founder or investor and an hour of questions. The ones in the
+ * calendar so far are filed as panels with "Fireside" in the title, and count too.
+ */
+export const FIRESIDES = {
+  id: 'firesides',
+  title: 'Firesides',
+  lede: "A founder or investor talks about how companies get built, then takes questions. Ask one or just listen: you don't need to be building anything yet.",
+  upcoming: 'Coming up',
+  past: 'Past',
+  empty: "The next fireside is being booked now. Join Proto and we'll email you when it is.",
+  join: { label: 'Join Proto', href: '/join' },
 } as const
 
 /** The next event, set large at the top of the page. */
@@ -26,18 +40,15 @@ export const NEXT_EVENT = {
 
 export const EVENTS_LATER = 'Also coming up'
 
-/** The landing's events section: the giant words behind it, and its heading. */
-export const EVENT_LEDGER = {
-  title: 'Events',
-  words: ['Hack', 'Build', 'Ship', 'Demo', 'Repeat'],
-  empty: 'This semester’s nights are being planned now.',
-} as const
-
 /**
  * Each kind of night in the field's colours, by its size in the rhythm: the weekly hack night
  * sky, the month's one-offs iris (as the hackathon trips are), the semester's demo night rose.
  */
 export const KIND_HUE: Record<EventKind, Hue> = {
+  'Build night': 'sky',
+  Social: 'sky',
+  Fireside: 'iris',
+  'Pitch night': 'iris',
   'Hack night': 'sky',
   'Why hackathons': 'iris',
   'Prep night': 'iris',
@@ -46,25 +57,36 @@ export const KIND_HUE: Record<EventKind, Hue> = {
   'Demo night': 'rose',
 }
 
+/**
+ * The kinds that are a group's own night. Everyone else is welcome too, and the page says so
+ * ("CS group, everyone welcome"); every other kind is for the whole community.
+ */
+export const KIND_GROUP: Partial<Record<EventKind, string>> = {
+  'Hack night': 'CS',
+  'Why hackathons': 'CS',
+  'Prep night': 'CS',
+  'Pitch night': 'Business',
+}
+
 /** Nothing scheduled: say what's coming and how to hear about it first. */
 export const EVENTS_EMPTY = {
   title: 'Nothing on the calendar yet',
-  text: 'This semester’s hack nights, talks and demo night are being planned now. Join Proto and we’ll email you before the first one.',
+  text: "This semester's build nights, firesides and demo night are being planned now. Join Proto and we'll email you before the first one.",
   join: { label: 'Join Proto', href: '/join' },
-  hackathons: { label: 'See upcoming hackathons', href: '/hackathons' },
+  more: { label: 'What Proto does', href: '/about#offer' },
 } as const
 
 export const RSVP = {
   label: 'RSVP',
   /** For an event with its own sign-up page: "Register on Luma". */
   registerOn: (site: string | null) => (site ? `Register on ${site}` : 'Register'),
-  going: 'You’re going ✓',
+  going: "You're going ✓",
   formLabel: (title: string) => `RSVP for ${title}`,
   submit: 'Count me in',
   pending: 'Saving…',
   cancel: 'Cancel',
-  hint: 'Any email works. We’ll only use it about this event.',
-  privacy: 'Your browser will remember that you RSVP’d.',
+  hint: "Any email works. We'll only use it about this event.",
+  privacy: "Your browser will remember that you RSVP'd.",
 } as const
 
 /** Copy for an event's own page, /events/:id. */
@@ -90,7 +112,7 @@ export const EVENT_DETAIL = {
 } as const
 
 export const EVENT_NOT_FOUND = {
-  title: 'That event isn’t here',
+  title: "That event isn't here",
   text: 'It may have been taken down, or the link is off by a digit. Everything coming up is on the events page.',
   back: 'See all events',
 } as const

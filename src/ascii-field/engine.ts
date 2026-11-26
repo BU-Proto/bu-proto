@@ -11,7 +11,7 @@ import {
   type GlyphAtlas,
   type WarpField,
 } from './renderer'
-import { FIELD, FOG, MONO_FAMILY, MONO_STACK, RAMPS, type FieldSettings } from './settings'
+import { FIELD, FOG, isDots, MONO_FAMILY, MONO_STACK, RAMPS, type FieldSettings } from './settings'
 import { buildClearMask, CLEAR_SELECTOR } from './textClearing'
 
 /** Pointer-downs inside elements marked `data-fog-ignore` (e.g. the tweak panel) don't splash. */
@@ -242,9 +242,10 @@ export class AsciiFieldEngine {
 
   // ---- setup --------------------------------------------------------------------------------
 
-  /** The mono face's advance at the current glyph size, CSS px. */
+  /** The mono face's advance at the current glyph size, CSS px. Halftone dots sit on square cells. */
   private measureAdvance(): number {
     const { cellSize } = this.settings
+    if (isDots(this.settings.ramp)) return cellSize
     this.measureCtx.font = `500 ${cellSize}px ${MONO_STACK}`
     return this.measureCtx.measureText('M').width || cellSize * 0.6
   }
@@ -298,14 +299,14 @@ export class AsciiFieldEngine {
     }
     this.warpScratch = new Float32Array(fluid.size * 2)
     this.layoutCells(geometry, fluid)
-    this.atlas = drawGlyphAtlas(this.atlasCanvas, RAMPS[this.settings.ramp], geometry, cellSize)
+    this.atlas = drawGlyphAtlas(this.atlasCanvas, RAMPS[this.settings.ramp], geometry, cellSize, isDots(this.settings.ramp))
     this.renderer.setGeometry(geometry, this.atlas)
     this.refreshClearMask()
   }
 
   private redrawAtlas(): void {
     if (!this.geometry) return
-    this.atlas = drawGlyphAtlas(this.atlasCanvas, RAMPS[this.settings.ramp], this.geometry, this.settings.cellSize)
+    this.atlas = drawGlyphAtlas(this.atlasCanvas, RAMPS[this.settings.ramp], this.geometry, this.settings.cellSize, isDots(this.settings.ramp))
     this.renderer.setAtlas(this.atlas)
   }
 
@@ -477,6 +478,9 @@ export class AsciiFieldEngine {
     const map = shapeMap(this.settings.shape, time)
     const steps = RAMPS[this.settings.ramp].length - 1
     const toGlyph = steps / (FIELD.DENSITY_HI - FIELD.DENSITY_LO)
+    // A halftone reads by its range of dot sizes, so the middle tones are pushed down: dark areas
+    // get pinpricks and only the brightest light gets full dots.
+    const halftone = isDots(this.settings.ramp)
     const ribBase = 1 - ribbing * 0.08
     const ribAmp = ribbing * 0.16
     const shimmerSin = FIELD.SHIMMER * Math.sin(time * FIELD.SHIMMER_SPEED)
@@ -506,7 +510,9 @@ export class AsciiFieldEngine {
             1
           dens += wave * amount * (1 - clearMask[k])
         }
-        const gi = Math.round((dens - FIELD.DENSITY_LO) * toGlyph)
+        let level = (dens - FIELD.DENSITY_LO) * toGlyph
+        if (halftone) level = level <= 0 ? 0 : steps * (level / steps) ** 1.7
+        const gi = Math.round(level)
         cells[k * 4] = gi < 0 ? 0 : gi > steps ? steps : gi
       }
     }

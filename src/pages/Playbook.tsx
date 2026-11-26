@@ -4,6 +4,7 @@ import { PageIntro } from '../components/PageIntro'
 import ui from '../components/ui.module.css'
 import { CONTENTS_LABEL, GUIDE_PAGE, GUIDES, guidePath, PLAYBOOK_HREF, PLAYBOOK_INTRO, type Guide } from '../content/resources'
 import styles from './Playbook.module.css'
+import { GroupTabs } from '../components/GroupTabs'
 
 type Written = Guide & { slug: string; lead: NonNullable<Guide['lead']> }
 
@@ -50,6 +51,7 @@ function Featured({ guide }: { guide: Written }) {
 export function Playbook() {
   return (
     <div className={ui.page}>
+      <GroupTabs group="cs" />
       <PageIntro intro={PLAYBOOK_INTRO} />
 
       {FEATURED && <Featured guide={FEATURED} />}

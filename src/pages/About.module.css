@@ -1,8 +1,8 @@
 /*
  * The about page, on the reading ground: the statement on the field, everything after it on
  * harbor. What, why and who are set as rows, their name small on the left and the words large on
- * the right, so they read as one sheet. The offers break out of that as a directory of the site,
- * the page's one big moment: each offer's name, what it is, and the page it lives on.
+ * the right, so they read as one sheet. The offers break out of that as a wall of colour tiles,
+ * the page's one big moment: each offer's drawing, name, one line and the page it lives on.
  */
 
 .page {
@@ -15,7 +15,7 @@
 .title {
   margin: 0;
   font-size: clamp(40px, 6.4vw, 84px);
-  font-weight: 300;
+  font-weight: var(--display-weight);
   letter-spacing: -0.035em;
   line-height: 0.98;
   text-wrap: balance;
@@ -52,7 +52,7 @@
 
 /* ---- What, why and who: a name on the left, the words on the right --------------------------- */
 
-/* The directory's own three columns, so a row's words start where an offer's line does. */
+/* Three columns: the name small on the left, the words across the middle. */
 .row {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) minmax(120px, 2fr);
@@ -82,7 +82,7 @@
   max-width: 30ch;
   margin: 0;
   font-size: clamp(24px, 2.6vw, 34px);
-  font-weight: 300;
+  font-weight: 500;
   letter-spacing: -0.022em;
   line-height: 1.24;
   text-wrap: pretty;
@@ -118,15 +118,15 @@
 
 /* Each track in its own light, as on the landing's stair: Start sky, Build iris, Launch rose. */
 .glyph {
+  width: 34px;
+  height: auto;
   color: var(--hue, var(--accent, #9df0a8));
-  font-size: 22px;
-  line-height: 1;
 }
 
 .trackName {
   margin-top: 8px;
   font-size: clamp(26px, 2.4vw, 32px);
-  font-weight: 300;
+  font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
@@ -137,12 +137,12 @@
   line-height: 1.45;
 }
 
-/* ---- What we offer: the directory ------------------------------------------------------------ */
+/* ---- What we offer: the tiles ----------------------------------------------------------------- */
 
 .offer {
   display: grid;
   gap: clamp(36px, 6vh, 64px);
-  /* No room below: the next row's rule closes the directory. */
+  /* No room below: the next row's rule closes the tiles. */
   padding: clamp(72px, 12vh, 140px) 0 0;
   border-top: 1px solid var(--rule, rgb(246 251 255 / 0.16));
   scroll-margin-top: 24px;
@@ -165,73 +165,116 @@
   text-wrap: pretty;
 }
 
-.directory {
+/* Eight tiles, four across: each in its own colour with its drawing, its name, one line and the
+   page it lives on. The fund (not running yet) is dark with a dashed edge; the Founders Circle is
+   black with its gold mark. The whole tile is the link. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* One offer: its name large, what it is beside it, and the page it lives on at the far edge. */
-.entry {
+.tile {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) minmax(120px, 2fr);
-  align-items: baseline;
-  gap: 8px clamp(20px, 3vw, 48px);
-  padding: clamp(22px, 3.6vh, 32px) 0;
-  border-top: 1px solid var(--rule, rgb(246 251 255 / 0.16));
+  grid-template-rows: auto 1fr auto auto;
+  gap: 8px;
+  min-height: 300px;
+  padding: 22px 22px 20px;
+  background: var(--tone, var(--navy));
+  color: var(--tone-ink, var(--ink));
+  transition: translate 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* The rhythm's beats carry their colour as a short length of their rule, like the landing's
-   score: hack night sky, the trip iris, demo night rose. */
-.entry[data-hue]::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: 0;
-  width: 56px;
-  height: 2px;
-  background: var(--hue, transparent);
+.tile:has(.stretch:hover) {
+  translate: 0 -4px;
 }
 
-.entryName {
+.tilePicture {
+  display: block;
+  width: 64px;
+  height: 64px;
+}
+
+.tilePicture svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* "Coming soon." and "By application", small above the name. */
+.tileFlag {
+  align-self: end;
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.tileName {
+  align-self: end;
   margin: 0;
-  font-size: clamp(26px, 2.8vw, 40px);
-  font-weight: 300;
-  letter-spacing: -0.03em;
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: var(--display-weight);
+  letter-spacing: -0.025em;
   line-height: 1.08;
   text-wrap: balance;
 }
 
-.entryText {
-  max-width: 42ch;
+/* The name sits at the foot when there's no flag above it. */
+.tileFlag + .tileName {
+  align-self: start;
+}
+
+.tileText {
   margin: 0;
-  color: var(--ink-soft, rgb(246 251 255 / 0.78));
-  font-size: 16px;
-  line-height: 1.5;
-  text-wrap: pretty;
-}
-
-.where {
-  justify-self: end;
-  color: var(--ink-soft, rgb(246 251 255 / 0.78));
   font-size: 15px;
-  font-weight: 500;
-  white-space: nowrap;
-  border-bottom: 1px solid transparent;
+  line-height: 1.4;
+  opacity: 0.85;
 }
 
-/* Not running yet: the name steps back, and the "not yet" colour says so first. */
-.entry[data-soon] .entryName {
-  color: var(--ink-soft, rgb(246 251 255 / 0.78));
+.tileWhere {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.soon {
-  color: var(--amber, #ffd38a);
-  font-weight: 500;
+/* The fund: not running yet, so dark, its edge dashed and its flag in the "not yet" colour. */
+.tile[data-soon] {
+  border: 1px dashed var(--rule-strong);
+  color: var(--ink-soft);
 }
 
-/* Each offer is one link: its name, stretched over the row. */
+.tile[data-soon] .tileFlag {
+  color: var(--amber);
+}
+
+/* The Founders Circle: black, with a gold edge, its mark and its label in gold. */
+.tile[data-circle] {
+  border: 1px solid rgb(var(--gold-rgb) / 0.45);
+  background: #050505;
+}
+
+.tile[data-circle] .tileFlag,
+.tile[data-circle] .tileWhere {
+  color: var(--gold);
+}
+
+.tile[data-circle] .tileName {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Each tile is one link: its name, stretched over the tile. */
+.stretch {
+  color: inherit;
+  text-decoration: none;
+}
+
 .stretch::after {
   content: '';
   position: absolute;
@@ -243,23 +286,15 @@
   outline: none;
 }
 
-.entry:has(.stretch:focus-visible) {
+.tile:has(.stretch:focus-visible) {
   outline: 2px solid var(--frost, #f6fbff);
-  outline-offset: 4px;
-  border-radius: 6px;
+  outline-offset: 3px;
 }
 
-.entry:has(.stretch:hover) .entryName a {
+.tile:has(.stretch:hover) .tileWhere,
+.tile:has(.stretch:focus-visible) .tileWhere {
   text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
-}
-
-/* The page it lives on, underlined like a link once the row is pointed at. */
-.entry:has(.stretch:hover) .where,
-.entry:has(.stretch:focus-visible) .where {
-  color: var(--ink, #f6fbff);
-  border-bottom-color: currentColor;
+  text-underline-offset: 4px;
 }
 
 /* ---- Who runs it ------------------------------------------------------------------------------ */
@@ -313,18 +348,13 @@
 
 /* ---- Narrow screens --------------------------------------------------------------------------- */
 
-@media (max-width: 900px) {
-  .entry {
-    grid-template-columns: minmax(0, 1fr) auto;
+@media (max-width: 1000px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .entryText {
-    grid-column: 1;
-  }
-
-  .where {
-    grid-column: 2;
-    grid-row: 1;
+  .tile {
+    min-height: 240px;
   }
 }
 
@@ -363,17 +393,26 @@
     margin-top: 0;
   }
 
-  /* The page it lives on drops under what it is, so the name keeps the full width. */
-  .entry {
-    grid-template-columns: minmax(0, 1fr);
+  /* Two across still, smaller: the drawing, the name and the line. */
+  .tile {
+    min-height: 0;
+    padding: 16px 14px 16px;
   }
 
-  .where {
-    grid-column: 1;
-    grid-row: auto;
-    justify-self: start;
-    margin-top: 4px;
-    color: var(--ink, #f6fbff);
-    border-bottom-color: rgb(var(--frost-rgb, 246 251 255) / 0.4);
+  .tilePicture {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tileName {
+    font-size: 19px;
+  }
+
+  .tileText {
+    font-size: 13.5px;
+  }
+
+  .tileWhere {
+    font-size: 13px;
   }
 }

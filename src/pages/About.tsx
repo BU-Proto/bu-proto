@@ -1,10 +1,14 @@
+import type { CSSProperties } from 'react'
 import { Link, useLoaderData } from 'react-router'
 import type { Role } from '../../shared/api'
 import { RevealWords } from '../components/motion/RevealWords'
 import motion from '../components/motion/motion.module.css'
 import { useReveal } from '../components/motion/useReveal'
+import { CircleMark } from '../components/CircleMark'
+import { Pictogram } from '../components/Pictogram'
 import ui from '../components/ui.module.css'
-import { ABOUT_INTRO, OFFER, WHAT, WHO, WHY } from '../content/about'
+import { TrackPicture } from '../components/WaysIn'
+import { ABOUT_INTRO, OFFER, WHAT, WHO, WHY, type Offer } from '../content/about'
 import { JOIN_CTA, TRACKS } from '../content/home'
 import { BRAND } from '../content/site'
 import { rolePath } from '../lib/paths'
@@ -13,8 +17,8 @@ import styles from './About.module.css'
 
 /**
  * What Proto is, as one page: the statement on the field, then on harbor what it is and why, the
- * offers as a directory of the site (each one's name, what it is, and the page it lives on), who
- * runs it, and the ask. The directory is the page's one big moment; the rest stays quiet.
+ * offers as a wall of tiles (each with its drawing, name, one line and the page it lives on), who
+ * runs it, and the ask. The tiles are the page's one big moment; the rest stays short.
  */
 export function About() {
   // Without the roles (they couldn't load) there's no telling which seats are open, so none are listed.
@@ -42,13 +46,11 @@ export function About() {
         <div className={styles.rowBody}>
           <p className={styles.statement}>{WHAT.text}</p>
           <p className={styles.note}>{WHAT.tracksLead}</p>
-          {/* A sequence, first-timer to founder, so an ordered list, each with its trail glyph. */}
+          {/* A sequence, first-timer to founder, so an ordered list, each with its drawing. */}
           <ol className={styles.tracks}>
             {TRACKS.map((track) => (
               <li key={track.name} className={styles.track} data-hue={track.hue}>
-                <span className={styles.glyph} aria-hidden="true">
-                  {track.glyph}
-                </span>
+                <TrackPicture name={track.picture} className={styles.glyph} />
                 <span className={styles.trackName}>{track.name}</span>
                 <span className={styles.trackWho}>{track.who}</span>
               </li>
@@ -76,24 +78,30 @@ export function About() {
             <p className={styles.offerLede}>{OFFER.lede}</p>
           </header>
 
-          <ul className={styles.directory}>
-            {OFFER.items.map((item) => (
+          <ul className={styles.tiles}>
+            {(OFFER.items as readonly Offer[]).map((item, index) => (
               <li
                 key={item.name}
-                className={styles.entry}
-                data-soon={'soon' in item || undefined}
-                data-hue={'hue' in item ? item.hue : undefined}
+                className={styles.tile}
+                data-tone={item.tone}
+                data-soon={item.soon ? '' : undefined}
+                data-circle={item.circle ? '' : undefined}
+                data-reveal="rise"
+                style={{ '--d': `${(index % 4) * 70}ms` } as CSSProperties}
               >
-                <h3 className={styles.entryName}>
+                <span className={styles.tilePicture}>
+                  {item.picture === 'circle' ? <CircleMark /> : <Pictogram name={item.picture} />}
+                </span>
+                {(item.soon || item.circle) && <span className={styles.tileFlag}>{item.soon ?? item.circle}</span>}
+                <h3 className={styles.tileName}>
                   <Link className={styles.stretch} to={item.where.href}>
                     {item.name}
                   </Link>
                 </h3>
-                <p className={styles.entryText}>
-                  {'soon' in item && <span className={styles.soon}>{item.soon} </span>}
-                  {item.text}
-                </p>
-                <span className={styles.where}>{item.where.label}</span>
+                <p className={styles.tileText}>{item.text}</p>
+                <span className={styles.tileWhere} aria-hidden="true">
+                  {item.where.label} →
+                </span>
               </li>
             ))}
           </ul>

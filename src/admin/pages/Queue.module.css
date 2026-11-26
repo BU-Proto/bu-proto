@@ -333,7 +333,7 @@ dialog.sheet {
   font-size: 13px;
 }
 
-/* A fund request's status: the chosen one gets its colour's dot, as on the Fund page. */
+/* A fund request's or Founders Circle application's status: the chosen one gets its colour's dot, as on the Fund page. */
 .status button[aria-pressed='true']::before {
   content: '';
   width: 7px;
@@ -346,11 +346,13 @@ dialog.sheet {
   --tone: var(--info-ink);
 }
 
-.status button[data-tone='reviewing'] {
+.status button[data-tone='reviewing'],
+.status button[data-tone='interview'] {
   --tone: var(--warn-ink);
 }
 
-.status button[data-tone='approved'] {
+.status button[data-tone='approved'],
+.status button[data-tone='accepted'] {
   --tone: var(--mint);
 }
 

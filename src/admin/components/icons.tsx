@@ -127,6 +127,17 @@ export function SheetIcon(props: IconProps) {
   )
 }
 
+/** A rocket: founders, and the Founders Circle they apply to. */
+export function RocketIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3.5c2.8 1.9 4.3 5 4.3 8.3V16H7.7v-4.2c0-3.3 1.5-6.4 4.3-8.3z" />
+      <circle cx="12" cy="10" r="1.7" />
+      <path d="M7.7 12.8L5 15.5v3l2.7-1.5M16.3 12.8l2.7 2.7v3l-2.7-1.5M10.3 18.5L12 21l1.7-2.5" />
+    </Svg>
+  )
+}
+
 export function PeopleIcon(props: IconProps) {
   return (
     <Svg {...props}>

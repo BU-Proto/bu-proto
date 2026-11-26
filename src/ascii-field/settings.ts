@@ -1,12 +1,19 @@
 import type { ShapeName } from './shapes'
 
-/** Character ramps for the background field, from empty to dense. */
+/**
+ * Character ramps for the background field, from empty to dense. `dots` is the halftone: its
+ * characters only count the steps, since each step is drawn as a dot of growing size, not a glyph.
+ */
 export const RAMPS = {
   classic: ' .:-=+*#%@',
   fine: " .,:;'-~=+<>*xo%#@",
   codex: ' ._-+>o',
   blocks: ' ░▒▓█',
+  dots: ' ••••••••••••••',
 } as const
+
+/** Whether a ramp is drawn as halftone dots on square cells, not as characters. */
+export const isDots = (ramp: RampName) => ramp === 'dots'
 
 export type RampName = keyof typeof RAMPS
 
@@ -15,6 +22,7 @@ export const RAMP_LABELS: Record<RampName, string> = {
   fine: 'fine (18 steps)',
   codex: '._-+>o',
   blocks: '░▒▓█',
+  dots: 'halftone dots',
 }
 
 /** Colors for the cursor trail's glyphs. */
@@ -57,7 +65,7 @@ export interface FieldSettings {
 }
 
 export const DEFAULT_FIELD_SETTINGS: FieldSettings = {
-  cellSize: 9,
+  cellSize: 10,
   baseColor: 0.9,
   glyphContrast: 0.6,
   wind: 1,
@@ -65,7 +73,7 @@ export const DEFAULT_FIELD_SETTINGS: FieldSettings = {
   push: 0.25,
   ribbing: 0.5,
   drift: 1,
-  ramp: 'fine',
+  ramp: 'dots',
   trailColor: 'white',
   shape: 'bloom',
 }

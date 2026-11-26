@@ -74,7 +74,7 @@
   /* The prize is the record's headline, so it's in a win's rose. */
   color: var(--rose);
   font-size: clamp(40px, 4.4vw, 64px);
-  font-weight: 300;
+  font-weight: var(--display-weight);
   letter-spacing: -0.045em;
   line-height: 0.96;
   text-wrap: balance;
@@ -98,7 +98,7 @@
   margin: clamp(6px, 1vh, 10px) 0 0;
   color: var(--ink-soft);
   font-size: clamp(18px, 1.6vw, 22px);
-  font-weight: 300;
+  font-weight: 400;
   letter-spacing: -0.02em;
 }
 
@@ -332,13 +332,13 @@
   width: 100%;
   height: 100%;
   min-height: 240px;
-  background:
-    radial-gradient(70% 70% at 50% 45%, rgb(var(--rose-deep-rgb) / 0.28), transparent 70%),
-    radial-gradient(60% 60% at 15% 100%, rgb(var(--iris-deep-rgb) / 0.22), transparent 70%);
-  color: rgb(var(--rose-rgb) / 0.5);
-  font-family: var(--font-mono);
-  font-size: clamp(48px, 8vw, 120px);
-  letter-spacing: 0.2em;
+  background: var(--tone);
+  color: var(--tone-ink);
+}
+
+.noPhotoPicture {
+  width: min(30%, 96px);
+  height: auto;
 }
 
 /* ---- Phones and narrow windows: the cover above, the text under it ---- */

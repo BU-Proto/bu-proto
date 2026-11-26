@@ -1,6 +1,17 @@
 import { useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useRevalidator, useSearchParams } from 'react-router'
-import { FUND_STATUSES, type BoardInterest, type FundInterest, type FundStatus, type MailThreadDetail, type MemberDetail, type RoleApplication } from '../../../shared/api'
+import {
+  FOUNDER_STATUSES,
+  FUND_STATUSES,
+  type BoardInterest,
+  type FounderApplication,
+  type FounderStatus,
+  type FundInterest,
+  type FundStatus,
+  type MailThreadDetail,
+  type MemberDetail,
+  type RoleApplication,
+} from '../../../shared/api'
 import { QUEUE_SOURCE_LABELS, QUEUE_SOURCES, type QueueItem, type QueueSource } from '../../../shared/crm'
 import { api } from '../../lib/api'
 import ui from '../admin.module.css'
@@ -18,7 +29,7 @@ import styles from './Queue.module.css'
 import { SegmentGroup } from '../components/SegmentGroup'
 
 // The Inbox: everything waiting on the team in one list (email that's on us, sign-ups nobody has
-// looked at, fund requests, role applications, board interest). Picking one opens it over the
+// looked at, fund requests, role applications, Founders Circle applications, board interest). Picking one opens it over the
 // list: what it says and what can be done about it. Recently handled ones stay in the list,
 // without the dot.
 
@@ -45,10 +56,12 @@ const FILTERS: { key: Filter; label: string; empty: string }[] = [
   { key: 'signup', label: 'Sign-ups', empty: 'No new sign-ups to look at.' },
   { key: 'fund', label: 'Fund requests', empty: 'No fund requests waiting.' },
   { key: 'application', label: 'Applications', empty: 'No role applications to read.' },
+  { key: 'founder', label: 'Founders Circle', empty: 'No Founders Circle applications to read.' },
   { key: 'board', label: 'Board interest', empty: 'Nobody has put their hand up for a seat lately.' },
 ]
 
 const FUND_LABELS: Record<FundStatus, string> = { new: 'New', reviewing: 'Reviewing', approved: 'Approved', declined: 'Declined' }
+const FOUNDER_LABELS: Record<FounderStatus, string> = { new: 'New', interview: 'Interview', accepted: 'Accepted', declined: 'Declined' }
 
 const keyOf = (item: Pick<QueueItem, 'source' | 'id'>) => `${item.source}-${item.id}`
 const isFilter = (value: string | null): value is QueueSource => (QUEUE_SOURCES as readonly string[]).includes(value ?? '')
@@ -422,6 +435,17 @@ function ItemSheet({ item, direction, position, titleId, onPrevious, onNext, onW
         </>
       )
       break
+    case 'founder':
+      body = <FounderBody id={item.id} onWaiting={(waiting) => onWaiting(item, waiting)} />
+      actions = (
+        <>
+          {openPerson}
+          <Link className={ui.button} to={item.href}>
+            Open Founders Circle
+          </Link>
+        </>
+      )
+      break
     case 'board':
       body = <BoardBody id={item.id} />
       actions = (
@@ -745,6 +769,93 @@ function ApplicationBody({ id }: { id: number }) {
     </>
   )
 }
+
+function FounderBody({ id, onWaiting }: { id: number; onWaiting: (waiting: boolean) => void }) {
+  const { data, error, setData } = useApi<{ items: FounderApplication[] }>('/admin/founders')
+  const gated = useGated()
+  const toast = useToast()
+  const guard = useAuthGuard()
+  const [saving, setSaving] = useState(false)
+  if (error) return <Failed message={error.message} />
+  if (!data) return <Loading />
+  const entry = data.items.find((row) => row.id === id)
+  if (!entry) return <p className={ui.dim}>This application is gone.</p>
+
+  const setStatus = async (status: FounderStatus, undo = true) => {
+    if (saving) return
+    const before = entry.status
+    setSaving(true)
+    try {
+      const { item } = await api<{ item: FounderApplication }>(`/admin/founders/${entry.id}`, { method: 'PATCH', body: { status } })
+      setData((prev) => prev && { items: prev.items.map((row) => (row.id === item.id ? item : row)) })
+      onWaiting(item.status === 'new')
+      toast({
+        text: `Marked ${FOUNDER_LABELS[item.status].toLowerCase()}`,
+        detail: entry.name,
+        action: undo ? { label: 'Undo', onAction: () => void setStatus(before, false) } : undefined,
+      })
+    } catch (failure) {
+      if (!guard(failure)) toast({ text: "That didn't save", detail: messageFor(failure), tone: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <>
+      <Facts
+        rows={{
+          Company: entry.company,
+          Link: entry.link && (
+            <a className={ui.link} href={entry.link} target="_blank" rel="noreferrer">
+              {entry.link.replace(/^https?:\/\//, '')}
+            </a>
+          ),
+          Stage: entry.stage,
+          'Time on it': entry.commitment,
+          School: entry.school,
+          Interview: entry.interviewOn,
+          Notes: entry.notes && <span className={styles.pre}>{entry.notes}</span>,
+        }}
+      />
+      <dl className={styles.answers}>
+        {FOUNDER_ANSWERS.filter(({ key }) => entry[key]).map(({ key, label }) => (
+          <div key={key}>
+            <dt>{label}</dt>
+            <dd className={styles.pre}>{entry[key]}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className={styles.statusRow}>
+        <span className={styles.statusLabel}>Status</span>
+        <SegmentGroup className={styles.status} label={`Status for ${entry.name}`}>
+          {FOUNDER_STATUSES.map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={ui.tab}
+              data-tone={value}
+              aria-pressed={entry.status === value}
+              disabled={saving}
+              onClick={() => entry.status !== value && void setStatus(value)}
+              {...gated('admin')}
+            >
+              {FOUNDER_LABELS[value]}
+            </button>
+          ))}
+        </SegmentGroup>
+      </div>
+    </>
+  )
+}
+
+/** A Founders Circle application's written answers, in the order the form asks them. */
+const FOUNDER_ANSWERS: { key: 'building' | 'progress' | 'team' | 'help'; label: string }[] = [
+  { key: 'building', label: "What they're building, and for whom" },
+  { key: 'progress', label: 'The last three months' },
+  { key: 'team', label: 'Who else is on it' },
+  { key: 'help', label: 'What would help most now' },
+]
 
 function BoardBody({ id }: { id: number }) {
   const { data, error } = useApi<{ items: BoardInterest[] }>('/admin/board-interest')

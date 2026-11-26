@@ -112,7 +112,13 @@ export async function protoContext(
 ): Promise<{ facts: DraftContext['facts']; events: DraftContext['events']; board: DraftContext['board'] }> {
   const [facts, events, board] = await db.batch([
     db.prepare('SELECT label, value, source FROM facts ORDER BY label COLLATE NOCASE'),
-    db.prepare(`SELECT title, date, time, place FROM events WHERE published = 1 AND placeholder = 0 AND date >= ? ORDER BY date, id LIMIT 8`).bind(today),
+    // An invite-only event says so in its title, so Claude never offers it to just anyone.
+    db
+      .prepare(
+        `SELECT CASE WHEN invite_only = 1 THEN title || ' (invite only)' ELSE title END AS title, date, time, place
+         FROM events WHERE published = 1 AND placeholder = 0 AND date >= ? ORDER BY date, id LIMIT 8`,
+      )
+      .bind(today),
     db.prepare('SELECT name, role FROM board_members WHERE published = 1 AND placeholder = 0 ORDER BY position, id'),
   ])
   return {

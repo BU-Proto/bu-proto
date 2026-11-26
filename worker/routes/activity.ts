@@ -463,21 +463,41 @@ app.get('/api/admin/events/:id/guests', async (c) => {
   return c.json({ items: results.map(toGuest) })
 })
 
+/**
+ * The contact a member is a guest as: the one with their email (People folds it into them), or a
+ * new one. Only for an invite-only event, which takes no RSVPs, so its guests are everyone coming.
+ */
+async function memberAsContact(db: D1Database, memberId: number, by: string): Promise<number> {
+  const member = await db.prepare('SELECT name, email FROM members WHERE id = ?').bind(memberId).first<{ name: string; email: string }>()
+  if (!member) throw new ApiError(400, 'Check the highlighted fields.', { contactKey: 'That person is no longer in People.' })
+  const existing = await db.prepare('SELECT id FROM contacts WHERE email = ? ORDER BY id LIMIT 1').bind(member.email).first<{ id: number }>()
+  if (existing) return existing.id
+  const row = await db
+    .prepare('INSERT INTO contacts (name, email, created_by) VALUES (?, ?, ?) RETURNING id')
+    .bind(member.name, member.email, by)
+    .first<{ id: number }>()
+  if (!row) throw new ApiError(500, 'Could not add the guest.')
+  return row.id
+}
+
 app.post('/api/admin/events/:id/guests', async (c) => {
   requireGate(c, 'community')
   const eventId = idParam(c)
   const input = await readBody(c, eventGuestInput)
   const db = c.env.DB
-  const event = await db.prepare('SELECT id FROM events WHERE id = ?').bind(eventId).first()
+  const event = await db.prepare('SELECT id, invite_only FROM events WHERE id = ?').bind(eventId).first<{ id: number; invite_only: number }>()
   if (!event) throw new ApiError(404, 'That event no longer exists.')
   const contact = await findPerson(db, input.contactKey, 'contactKey')
-  if (contact.ref.type !== 'contact') throw new ApiError(400, 'Check the highlighted fields.', { contactKey: 'Pick a contact. Members come as RSVPs.' })
-  const clash = await db.prepare('SELECT 1 FROM event_guests WHERE event_id = ? AND contact_id = ?').bind(eventId, contact.ref.id).first()
+  let contactId: number
+  if (contact.ref.type === 'contact') contactId = contact.ref.id
+  else if (event.invite_only) contactId = await memberAsContact(db, contact.ref.id, c.var.admin.email)
+  else throw new ApiError(400, 'Check the highlighted fields.', { contactKey: 'Pick a contact. Members come as RSVPs.' })
+  const clash = await db.prepare('SELECT 1 FROM event_guests WHERE event_id = ? AND contact_id = ?').bind(eventId, contactId).first()
   if (clash) throw new ApiError(409, `${contact.name} is already a guest.`, { contactKey: 'Already a guest' })
   const row = await db
     .prepare('INSERT INTO event_guests (event_id, contact_id, role, status, owner_email) VALUES (?, ?, ?, ?, ?) RETURNING id')
     // Whoever looks after the contact looks after them at the event, unless someone's named.
-    .bind(eventId, contact.ref.id, input.role, input.status, input.ownerEmail ?? contact.ownerEmail ?? c.var.admin.email)
+    .bind(eventId, contactId, input.role, input.status, input.ownerEmail ?? contact.ownerEmail ?? c.var.admin.email)
     .first<{ id: number }>()
   if (!row) throw new ApiError(500, 'Could not add the guest.')
   return c.json({ item: await loadGuest(db, eventId, row.id) }, 201)

@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useState } from 'react'
 import { useLoaderData } from 'react-router'
 import type { Hackathon } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
@@ -7,12 +7,13 @@ import { Status } from '../components/Status'
 import ui from '../components/ui.module.css'
 import { CARD, HACKATHONS_EMPTY, HACKATHONS_INTRO, MODE_LABEL, TRAVEL_NOTE } from '../content/hackathons'
 import { daysUntil, formatDay, formatMonth, formatRange } from '../lib/dates'
-import { glyphTexture, hash } from '../lib/glyphArt'
+import { hash } from '../lib/glyphArt'
 import { statusOf } from '../lib/hackathons'
 import styles from './Hackathons.module.css'
+import { GroupTabs } from '../components/GroupTabs'
 
-/** Frost, a little brighter than the page texture, so a card without a photo still has a ground. */
-const FALLBACK_INK = 'rgba(246, 251, 255, 0.16)'
+/** The colours a card without a photo can take: a flat tile with ink of its own hue. */
+const TONES = ['sky', 'iris', 'rose', 'amber', 'mint'] as const
 
 /** "hackrpi.com" from its URL, so the card says where it goes. */
 function hostOf(href: string): string {
@@ -29,12 +30,11 @@ function placeLine(hackathon: Hackathon): string[] {
   return [hackathon.location, MODE_LABEL[hackathon.mode]]
 }
 
-function HackathonCard({ hackathon, texture }: { hackathon: Hackathon; texture: string }) {
+function HackathonCard({ hackathon }: { hackathon: Hackathon }) {
   const host = hackathon.href ? hostOf(hackathon.href) : ''
   const [place, mode] = placeLine(hackathon)
-  // Each fallback card shows a different stretch of the frozen field, so a row of them isn't a
-  // row of copies.
-  const offset = `${Math.round(hash(hackathon.id, 3) * 595)}px ${Math.round(hash(3, hackathon.id) * 400)}px`
+  // Each card without a photo gets one of the tones, so a row of them isn't a row of copies.
+  const tone = TONES[Math.floor(hash(hackathon.id, 3) * TONES.length)]
   // MLH renames its images now and then, so an imported link can go dead: fall back, don't break.
   const [failed, setFailed] = useState({ photo: false, logo: false })
   const photo = failed.photo ? null : hackathon.photo
@@ -45,7 +45,7 @@ function HackathonCard({ hackathon, texture }: { hackathon: Hackathon; texture: 
       <div
         className={styles.art}
         data-photo={photo ? '' : undefined}
-        style={{ '--texture': texture ? `url(${texture})` : 'none', '--offset': offset } as CSSProperties}
+        data-tone={photo ? undefined : tone}
         aria-hidden="true"
       >
         {photo && (
@@ -119,7 +119,6 @@ function HackathonCard({ hackathon, texture }: { hackathon: Hackathon; texture: 
 /** Upcoming hackathons as cards, grouped by the month they start in. */
 export function Hackathons() {
   const hackathons = useLoaderData<Hackathon[]>()
-  const texture = useMemo(() => glyphTexture(FALLBACK_INK), [])
   const months = new Map<string, Hackathon[]>()
   for (const hackathon of hackathons
     .filter((item) => daysUntil(item.ends) >= 0)
@@ -131,6 +130,7 @@ export function Hackathons() {
   return (
     // The trips are the month's beat, so the page is in iris (see the palette in index.css).
     <div className={ui.page} data-hue="iris">
+      <GroupTabs group="cs" />
       <PageIntro intro={HACKATHONS_INTRO} />
 
       {months.size === 0 && (
@@ -146,7 +146,7 @@ export function Hackathons() {
           </h2>
           <ul className={styles.grid}>
             {items.map((hackathon) => (
-              <HackathonCard key={hackathon.id} hackathon={hackathon} texture={texture} />
+              <HackathonCard key={hackathon.id} hackathon={hackathon} />
             ))}
           </ul>
         </section>

@@ -1,8 +1,8 @@
 # bu-proto
 
-The site for **Proto** (working name), a BU-sponsored home base for students who make things, built with React, TypeScript, React Router and Vite. The concept behind every page is in [`docs/concept.md`](docs/concept.md).
+The site for **Proto** (working name), a home in Boston for anyone who builds things, started at BU, built with React, TypeScript, React Router and Vite. The concept behind every page is in [`docs/concept.md`](docs/concept.md).
 
-The background is an ASCII field: the gradient from the reference design rendered as monospace characters that drift and shimmer on their own. The cursor's wind slides the characters around and rewrites the ones along its path into a Stable-Fluids trail of `○ > _` glyphs that dissolves within about a second. The gradient's colors never move with the cursor.
+The background is a halftone field: the gradient from the reference design rendered as dots, each sized by the light under it, that drift and shimmer on their own. The cursor's wind slides the dots around and turns the ones along its path into a Stable-Fluids trail of rings and dots that dissolves within about a second. The gradient's colors never move with the cursor. (The field can still draw characters instead: `ramp` in `src/ascii-field/settings.ts` picks `dots`, the default, or one of the character ramps.)
 
 ## Run it
 
@@ -32,10 +32,14 @@ npm run dev                      # http://localhost:5173
 
 | Route | Page |
 | --- | --- |
-| `/` | Home: hero, the three tracks, the rhythm, next event and hack night, upcoming deadlines, latest wins, join |
-| `/hackathons` | Upcoming hackathons as a departures board |
+| `/` | Home: who Proto is for and the next event at the top, "Proto is for you if", the three tracks, the map of what started in Boston, the Boston film (`HOME_FILM` in `src/content/home.ts`), the groups, the Founders Circle, the rhythm and the next event, join |
+| `/cs`, `/business` | A group's page: what it runs, its next nights from the calendar, how to help. Each group's pages share a tab bar |
+| `/pitch-competitions` | The Business group's list of Boston pitch competitions, from `src/content/competitions.ts` (check the dates each year) |
+| `/business/playbook` | The Business group's guides (`src/content/businessGuides.ts`); each at `/business/playbook/<slug>` |
+| `/hackathons` | The CS group's upcoming hackathons |
+| `/founders` | The Founders Circle: the one part of Proto by application, for founders already building. Kept short: the numbers (counted live from every win posted), what members get, our startups, and the application. Applications land in the admin portal, where each moves from new to interview to a decision |
 | `/grants` | The microgrant fund: coming soon, the plan, and an interest list (not an application) |
-| `/wins` | Win cards: photo, project, placement, team, Devpost |
+| `/wins` | Win cards: hackathon prizes (CS) and pitch wins, launches, first customers and funding (Business); `?group=cs` or `?group=business` filters |
 | `/track-record` | Logo walls: where members have worked, sponsors, partners, other wins |
 | `/resources` | The resources hub: a card each for the playbook, Spark! and Innovate@BU |
 | `/resources/spark`, `/resources/innovate` | A BU program's page: what it is, where and when, what to go there for, its programs |
@@ -43,7 +47,7 @@ npm run dev                      # http://localhost:5173
 | `/events` | Upcoming events with RSVP |
 | `/board` | The board |
 | `/roles` | The parts of Proto that need someone, as a sign-up sheet; each role's page (`/roles/<id>`) has its write-up and the application form |
-| `/join` | What you get, the sign-up form and the Discord |
+| `/join` | What you get and the sign-up form: anyone can join, with their school (or none), field and what they're building |
 
 Anything else renders the 404 page. Every route is a client-side route; the Worker serves `index.html` for any path that isn't a file or under `/api` (`not_found_handling` in `wrangler.jsonc`), so deep links work on refresh.
 

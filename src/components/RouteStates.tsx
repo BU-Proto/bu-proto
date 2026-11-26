@@ -6,7 +6,7 @@ import styles from './RouteStates.module.css'
 /**
  * A page's HydrateFallback: Layout and the field are already up, so the page holds a screen's
  * height (Layout hides the footer meanwhile, so it doesn't jump up and back down) and shows the
- * trail's three glyphs pulsing where the page's title will land.
+ * three dots pulsing where the page's title will land.
  */
 export function PageLoading() {
   const { pathname } = useLocation()
@@ -16,9 +16,9 @@ export function PageLoading() {
       <title>{section ? `${section} · ${BRAND.name}` : BRAND.name}</title>
       <p className={styles.loading} role="status">
         <span className={styles.glyphs} aria-hidden="true">
-          <span>○</span>
-          <span>&gt;</span>
-          <span>_</span>
+          <span />
+          <span />
+          <span />
         </span>
         <span className={ui.srOnly}>{ROUTE_STATES.loading}</span>
       </p>

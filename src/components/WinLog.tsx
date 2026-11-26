@@ -5,6 +5,7 @@ import { WIN_SHOWCASE } from '../content/wins'
 import { dateParts } from '../lib/dates'
 import { accoladeOf, teamParts } from './accolade'
 import { BuMark } from './BuMark'
+import { Pictogram } from './Pictogram'
 import { SampleTag } from './SampleTag'
 import styles from './WinLog.module.css'
 import { winPath } from '../lib/paths'
@@ -43,8 +44,8 @@ export function WinLog({ wins }: { wins: readonly Win[] }) {
               {win.photo ? (
                 <img src={win.photo} alt="" loading="lazy" decoding="async" />
               ) : (
-                <span className={styles.noPhoto} aria-hidden="true">
-                  {'○ > _'}
+                <span className={styles.noPhoto} data-tone="rose" aria-hidden="true">
+                  <Pictogram name="trophy" className={styles.noPhotoPicture} />
                 </span>
               )}
             </div>

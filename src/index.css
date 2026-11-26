@@ -35,6 +35,12 @@
   --coral: #ffb4a8;
   --coral-rgb: 255 180 168;
 
+  /* The Founders Circle's own colour: an old gold, for its mark, rules and buttons, never for
+     states. With it, a serif for its name and numbers, from the system's own book faces. */
+  --gold: #d4b26a;
+  --gold-rgb: 212 178 106;
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+
   /*
    * The field's own light, as named colours: read across the field from its cerulean edge,
    * through the lilac, to the raspberry core. They mean one thing everywhere, size: the further
@@ -92,6 +98,11 @@
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
   /* ASCII art and glyph pictures, which need every character the same width to line up. */
   --font-art: var(--font-mono);
+  /* Type after brand.dropbox.com: display set bold and tight; labels in the UI face, with mono
+     kept for code and the field's own characters. */
+  --display-weight: 600;
+  --display-tracking: -0.04em;
+  --font-label: var(--font-ui);
 
   /*
    * The landing's grid, taken from main's layout: a 14px cell, a gutter either side and one
@@ -151,6 +162,44 @@
   --hue: var(--rose);
   --hue-rgb: var(--rose-rgb);
   --hue-deep-rgb: var(--rose-deep-rgb);
+}
+
+/* The visible grid, after brand.dropbox.com: faint hairlines every 96px on a section's ground,
+   centred, so the page's structure shows. Only on sections with no background of their own. */
+[data-grid] {
+  background-image:
+    linear-gradient(to right, rgb(var(--frost-rgb) / 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--frost-rgb) / 0.055) 1px, transparent 1px);
+  background-position: center top;
+  background-size: 96px 96px;
+}
+
+/* A light tile or tag carries data-tone: --tone is its colour, --tone-ink a dark shade of the same
+   hue for whatever sits on it, never black on colour. Used by the groups' tiles and the hero's
+   cursors. */
+[data-tone='sky'] {
+  --tone: var(--sky);
+  --tone-ink: #062a40;
+}
+
+[data-tone='iris'] {
+  --tone: var(--iris);
+  --tone-ink: #22165e;
+}
+
+[data-tone='rose'] {
+  --tone: var(--rose);
+  --tone-ink: #4d0a2a;
+}
+
+[data-tone='amber'] {
+  --tone: rgb(var(--amber-rgb));
+  --tone-ink: #4a2c00;
+}
+
+[data-tone='mint'] {
+  --tone: rgb(var(--mint-rgb));
+  --tone-ink: #0b3d17;
 }
 
 *,

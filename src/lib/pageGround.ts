@@ -17,16 +17,17 @@ export const GROUND = {
   textureMask: '#ffffff',
 } as const
 
-export type GroundName = 'home' | 'events' | 'hackathons' | 'record' | 'reading' | 'membership' | 'fund' | 'legal'
+export type GroundName = 'home' | 'events' | 'hackathons' | 'record' | 'reading' | 'membership' | 'fund' | 'legal' | 'circle'
 
 export interface PageGround {
   name: GroundName
   field: FieldSettings
   /**
-   * A CSS filter on the field's canvas, as saturation and brightness: a page can turn the field
-   * down, but not recolour it. Always both, so the browser can tween from one page's to the next.
+   * A CSS filter on the field's canvas, as saturation and brightness, and how far it's turned to
+   * gold (0 to 1). Only the Founders Circle's room is gold; every other page keeps the site's one
+   * palette. All three always, so the browser can tween from one page's to the next.
    */
-  light: readonly [saturate: number, brightness: number]
+  light: readonly [saturate: number, brightness: number, gold: number]
   /**
    * How far down the page the field runs. `full`: behind the whole page (the landing, which
    * draws its own grounds). `top`: the field frames the header, then drains into solid harbor
@@ -43,14 +44,14 @@ export const GROUNDS: Record<GroundName, PageGround> = {
   home: {
     name: 'home',
     field: field({ shape: 'tides', cellSize: 10, baseColor: 0.82, glyphContrast: 0.42, ribbing: 0.3, drift: 0.55 }),
-    light: [1, 1],
+    light: [1, 1, 0],
     reach: 'full',
   },
   // Events: the trail's own sparse ramp in bigger cells, the ribs pronounced.
   events: {
     name: 'events',
     field: field({ shape: 'ripple', ramp: 'codex', cellSize: 11, ribbing: 0.6, glyphContrast: 0.5, baseColor: 0.75, drift: 0.8 }),
-    light: [1, 0.95],
+    light: [1, 0.95, 0],
     reach: 'top',
   },
   // Hackathons: chunky block shades, like a departures board. Its brightest band runs behind the
@@ -58,21 +59,21 @@ export const GROUNDS: Record<GroundName, PageGround> = {
   hackathons: {
     name: 'hackathons',
     field: field({ shape: 'strata', ramp: 'blocks', cellSize: 12, ribbing: 0.3, glyphContrast: 0.4, baseColor: 0.75, drift: 0.7 }),
-    light: [0.95, 0.82],
+    light: [0.95, 0.82, 0],
     reach: 'top',
   },
   // Wins and the track record: the classic ramp in fine cells, deep fluting, a little dimmer.
   record: {
     name: 'record',
     field: field({ shape: 'rays', ramp: 'classic', cellSize: 8, ribbing: 0.8, glyphContrast: 0.55, baseColor: 0.6, drift: 0.6 }),
-    light: [0.9, 0.85],
+    light: [0.9, 0.85, 0],
     reach: 'top',
   },
   // Resources and guides: long reading, so the field quiets down and only frames the header.
   reading: {
     name: 'reading',
     field: field({ shape: 'aurora', cellSize: 8, baseColor: 0.55, glyphContrast: 0.35, ribbing: 0.25, drift: 0.4 }),
-    light: [0.7, 0.9],
+    light: [0.7, 0.9, 0],
     reach: 'top',
   },
   // Join, the board and the roles: forms and names, so the field frames the header and the form
@@ -80,7 +81,7 @@ export const GROUNDS: Record<GroundName, PageGround> = {
   membership: {
     name: 'membership',
     field: field({ shape: 'eclipse', ramp: 'classic', cellSize: 10, baseColor: 0.6, glyphContrast: 0.45, ribbing: 0.5, drift: 0.5 }),
-    light: [1, 0.95],
+    light: [1, 0.95, 0],
     reach: 'top',
   },
   // The fund: light trails climbing to the upper right, the way out of town. Softer glyphs than
@@ -88,14 +89,22 @@ export const GROUNDS: Record<GroundName, PageGround> = {
   fund: {
     name: 'fund',
     field: field({ shape: 'trails', ramp: 'classic', cellSize: 10, baseColor: 0.62, glyphContrast: 0.4, ribbing: 0.35, drift: 0.5 }),
-    light: [1, 0.95],
+    light: [1, 0.95, 0],
     reach: 'top',
   },
   // Legal: the quietest. A faint field over the header, then plain harbor.
   legal: {
     name: 'legal',
     field: field({ cellSize: 7, baseColor: 0.35, glyphContrast: 0.3, ribbing: 0.15, drift: 0.2, push: 0.1 }),
-    light: [0.4, 0.8],
+    light: [0.4, 0.8, 0],
+    reach: 'top',
+  },
+  // The Founders Circle: black tie. Fine halftone in a slow eclipse, a ring of light like its
+  // mark, turned to old gold and kept low so the page reads as quiet and serious.
+  circle: {
+    name: 'circle',
+    field: field({ shape: 'eclipse', cellSize: 8, baseColor: 0.5, glyphContrast: 0.35, ribbing: 0.15, drift: 0.3, push: 0.12 }),
+    light: [1.5, 0.7, 1],
     reach: 'top',
   },
 }
@@ -112,6 +121,7 @@ const ROUTES: readonly [prefix: string, ground: GroundName][] = [
   ['/grants', 'fund'],
   ['/board', 'membership'],
   ['/roles', 'membership'],
+  ['/founders', 'circle'],
   ['/privacy', 'legal'],
   ['/terms', 'legal'],
 ]
@@ -122,5 +132,6 @@ export function groundFor(pathname: string): PageGround {
   return GROUNDS[pathname === '/' ? 'home' : 'reading']
 }
 
-export const lightFilter = ([saturate, brightness]: PageGround['light']) =>
-  `saturate(${saturate}) brightness(${brightness})`
+/** Gold is the field washed to grey, then to sepia; saturation and brightness then set its depth. */
+export const lightFilter = ([saturate, brightness, gold]: PageGround['light']) =>
+  `grayscale(${gold}) sepia(${gold}) saturate(${saturate}) brightness(${brightness})`

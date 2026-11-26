@@ -18,7 +18,7 @@ import {
 import { protoContext } from '../lib/asks'
 import { standInListEmail, writeListEmail, type ListContext, type ListDraft } from '../lib/claude'
 import { bostonToday } from '../lib/dates'
-import { applicationDraft, boardDraft, fundDraft, nextEvent, renderDraft, rsvpDraft, sendDraft, welcomeDraft } from '../lib/confirmations'
+import { applicationDraft, boardDraft, foundersDraft, fundDraft, nextEvent, renderDraft, rsvpDraft, sendDraft, welcomeDraft } from '../lib/confirmations'
 import { randomToken } from '../lib/crypto'
 import {
   escapeHtml,
@@ -255,6 +255,10 @@ const AUTOMATIC_INFO: Record<AutomaticEmailKey, { title: string; when: string }>
     title: 'Role application confirmation',
     when: 'Sent when someone applies for a role. Applying again for the same role doesn’t send a second one. The owners also get a note with the application.',
   },
+  founders: {
+    title: 'Founders Circle application confirmation',
+    when: 'Sent when someone applies to the Founders Circle. It says we read every application and invite some applicants to a short call, and promises nothing more.',
+  },
 }
 
 /** Each automatic email as the signed-in admin would get it. Unsubscribe links use the preview token. */
@@ -273,6 +277,7 @@ async function automaticDrafts(c: Context<AppEnv>) {
       fund: fundDraft(person),
       board: boardDraft({ ...person, year: 'Third year', role: 'Head of Partnerships', note: '' }),
       application: applicationDraft(person, 'Head of Partnerships'),
+      founders: foundersDraft({ ...person, company: 'Pantry Pal' }, origin),
     } satisfies Record<AutomaticEmailKey, unknown>,
   }
 }

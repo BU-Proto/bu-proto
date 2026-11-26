@@ -2,14 +2,37 @@
 
 import type { Logo } from './trackRecord'
 import type { PageIntro } from './types'
+import type { WinKind } from '../../shared/constants'
+import type { GroupSlug } from './groups'
 
 export const WINS_INTRO: PageIntro = {
   path: '~/proto/wins',
   title: 'Wins',
-  lede: 'Things people built at hackathons, and what they took home.',
+  lede: 'What members built and where it went: launches, first customers, pitch competition wins, money raised, and hackathon prizes from the CS group.',
 }
 
-export const WINS_EMPTY = 'No wins posted yet. The first ones go up after the next hackathon.'
+/** Which group's a kind of win is: hackathon prizes the CS group's, the rest the Business group's. */
+export const WIN_GROUP: Record<WinKind, GroupSlug> = {
+  Hackathon: 'cs',
+  'Pitch competition': 'business',
+  Launch: 'business',
+  'First customers': 'business',
+  Funding: 'business',
+}
+
+/** The filter over the wins: everything, or one group's. */
+export const WIN_FILTERS: readonly { label: string; group: GroupSlug | null }[] = [
+  { label: 'All wins', group: null },
+  { label: 'CS: hackathons', group: 'cs' },
+  { label: 'Business: pitches, launches, customers', group: 'business' },
+]
+
+export const WINS_EMPTY_GROUP = {
+  cs: 'No hackathon wins posted yet. The first go up after the next hackathon.',
+  business: 'No Business wins posted yet. The first go up after the next pitch competition, launch or first sale.',
+} as const
+
+export const WINS_EMPTY = 'No wins posted yet. The first go up after the next hackathon, pitch competition or launch.'
 
 /** Copy for a win's own page, /wins/:id. */
 export const WIN_DETAIL = {
@@ -18,7 +41,7 @@ export const WIN_DETAIL = {
   stack: 'Built with',
   gallery: 'Photos',
   funding: 'Funding',
-  nextSteps: 'Where it’s going',
+  nextSteps: "Where it's going",
   github: 'GitHub',
   devpost: 'Devpost',
   previous: 'Previous win',
@@ -27,8 +50,8 @@ export const WIN_DETAIL = {
 } as const
 
 export const WIN_NOT_FOUND = {
-  title: 'That win isn’t here',
-  text: 'It may have been taken down, or the link is off by a digit. Every win we’ve posted is on the wins page.',
+  title: "That win isn't here",
+  text: "It may have been taken down, or the link is off by a digit. Every win we've posted is on the wins page.",
   back: 'See all wins',
 } as const
 
@@ -44,7 +67,7 @@ export const WIN_SHOWCASE = {
   at: 'at',
   builtBy: 'Built by',
   /** Over the projects that follow the lead win on /wins. */
-  moreTitle: 'More projects that won',
+  moreTitle: 'More wins',
 } as const
 
 /** The sheet the landing's latest wins sit on. */
@@ -71,10 +94,10 @@ export interface WonAtSchool extends Logo {
  * where the hackathons were held, and nothing here should read as a school backing Proto.
  */
 export const WON_AT = {
-  label: 'Schools whose hackathons we’ve won at',
-  title: 'Schools we’ve won at',
+  label: "Schools whose hackathons we've won at",
+  title: "Hackathons we've won at",
   /** Names each row of the band for screen readers, since the two rows hold different schools. */
-  rowLabel: (row: number, of: number) => (of > 1 ? `Schools we’ve won at, row ${row} of ${of}` : 'Schools we’ve won at'),
+  rowLabel: (row: number, of: number) => (of > 1 ? `Schools whose hackathons we've won at, row ${row} of ${of}` : "Schools whose hackathons we've won at"),
   schools: [
     { name: 'Harvard University', src: '/schools/harvard.png', size: [635, 160], events: /hackharvard/i },
     { name: 'MIT', src: '/schools/mit.png', size: [198, 160], events: /hackmit/i },

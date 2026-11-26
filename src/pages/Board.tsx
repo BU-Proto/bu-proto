@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useLoaderData } from 'react-router'
 import type { BoardMember, Role } from '../../shared/api'
 import { PageIntro } from '../components/PageIntro'
@@ -7,15 +7,12 @@ import ui from '../components/ui.module.css'
 import { BOARD_CONTACT, BOARD_FORMING, BOARD_INTRO, OPEN_SEAT } from '../content/board'
 import { PROTO_LINKEDIN } from '../content/site'
 import type { BoardPageData } from '../lib/content'
-import { glyphTexture } from '../lib/glyphArt'
+import { Pictogram } from '../components/Pictogram'
 import { rolePath } from '../lib/paths'
 import { openSeats } from '../lib/roles'
 import styles from './Board.module.css'
 
 type MemberLink = BoardMember['links'][number]
-
-// Faint enough that the empty frame reads as a gap in the board, not a picture.
-const EMPTY_INK = 'rgba(246, 251, 255, 0.4)'
 
 const initials = (name: string) =>
   name
@@ -165,19 +162,20 @@ function Member({ member }: { member: BoardMember }) {
   )
 }
 
+/** Open seats take these colours in turn: a flat tile where the portrait would be. */
+const SEAT_TONES = ['sky', 'iris', 'rose', 'amber', 'mint'] as const
+
 /**
- * A seat nobody has taken yet, laid out like a member so the board reads as one table: an empty
- * frame where the portrait would be, the role where the name would be. The button goes to the
+ * A seat nobody has taken yet, laid out like a member so the board reads as one table: a colour
+ * tile with an empty chair where the portrait would be, the role where the name would be. The button goes to the
  * seat's own role page, where the application is.
  */
-function Vacancy({ seat, texture }: { seat: Role; texture: string }) {
+function Vacancy({ seat, tone }: { seat: Role; tone: (typeof SEAT_TONES)[number] }) {
   return (
     <li className={`${styles.seat} ${styles.vacancy}`}>
-      <div
-        className={styles.empty}
-        style={texture ? ({ '--texture': `url(${texture})` } as CSSProperties) : undefined}
-        aria-hidden="true"
-      />
+      <div className={styles.empty} data-tone={tone} aria-hidden="true">
+        <Pictogram name="seat" className={styles.seatPicture} />
+      </div>
       <div className={styles.text}>
         <h3 className={styles.name} data-fog-clear>
           {seat.title}
@@ -201,7 +199,6 @@ function Vacancy({ seat, texture }: { seat: Role; texture: string }) {
 
 export function Board() {
   const { board, roles } = useLoaderData<BoardPageData>()
-  const texture = useMemo(() => glyphTexture(EMPTY_INK), [])
   // A seat is open until its role is marked filled in the portal.
   const open = openSeats(roles)
 
@@ -243,12 +240,12 @@ export function Board() {
           </h2>
         )}
 
-        <ul className={styles.grid}>
+        <ul className={styles.grid} data-grid>
           {board.map((member) => (
             <Member key={member.id} member={member} />
           ))}
-          {open.map((item) => (
-            <Vacancy key={item.id} seat={item} texture={texture} />
+          {open.map((item, index) => (
+            <Vacancy key={item.id} seat={item} tone={SEAT_TONES[index % SEAT_TONES.length]!} />
           ))}
         </ul>
       </section>

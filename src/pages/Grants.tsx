@@ -1,90 +1,58 @@
 import type { CSSProperties } from 'react'
 import { Field, Form } from '../components/Form'
-import { BU_EMAIL_PATTERN, inputClass } from '../components/formFields'
-import { AsciiFigure } from '../components/motion/AsciiFigure'
+import { inputClass } from '../components/formFields'
 import { PageIntro } from '../components/PageIntro'
+import { Pictogram, type PictogramName } from '../components/Pictogram'
 import { PrivacyNote } from '../components/PrivacyNote'
 import { Select } from '../components/Select'
 import ui from '../components/ui.module.css'
 import { GRANTS_INTRO, INTEREST, PLAN, ROUTE, STATUS } from '../content/grants'
 import { api } from '../lib/api'
-import { asciiDrawing, hash } from '../lib/glyphArt'
+import { hash } from '../lib/glyphArt'
 import { FUND_AMOUNTS, YEARS } from '../../shared/constants'
 import styles from './Grants.module.css'
-
-type Pen = (ctx: CanvasRenderingContext2D) => void
+import { GroupTabs } from '../components/GroupTabs'
 
 /**
- * A sign for each stop, as pen strokes in a -1..1 square: a question, a yes, the way there, and
- * play. They're drawn in the field's characters.
+ * Each stop's sign, a flat drawing on a tile of its own colour: a question, a yes, the way there,
+ * and play. The tiles read left to right from sky to rose.
  */
-const SIGNS: Record<'ask' | 'yes' | 'go' | 'demo', Pen> = {
-  ask: (ctx) => {
-    ctx.beginPath()
-    ctx.arc(0, -0.38, 0.4, Math.PI * 0.95, Math.PI * 2.5)
-    ctx.lineTo(0, 0.3)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.arc(0, 0.72, 0.17, 0, Math.PI * 2)
-    ctx.fill()
-  },
-  yes: (ctx) => {
-    ctx.beginPath()
-    ctx.moveTo(-0.64, 0.06)
-    ctx.lineTo(-0.2, 0.52)
-    ctx.lineTo(0.66, -0.52)
-    ctx.stroke()
-  },
-  go: (ctx) => {
-    ctx.beginPath()
-    ctx.moveTo(-0.7, 0)
-    ctx.lineTo(0.66, 0)
-    ctx.moveTo(0.18, -0.48)
-    ctx.lineTo(0.68, 0)
-    ctx.lineTo(0.18, 0.48)
-    ctx.stroke()
-  },
-  demo: (ctx) => {
-    ctx.beginPath()
-    ctx.moveTo(-0.4, -0.58)
-    ctx.lineTo(0.56, 0)
-    ctx.lineTo(-0.4, 0.58)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-  },
+const STOP_SIGNS: readonly { picture: PictogramName; tone: 'sky' | 'mint' | 'amber' | 'rose' }[] = [
+  { picture: 'ask', tone: 'sky' },
+  { picture: 'yes', tone: 'mint' },
+  { picture: 'go', tone: 'amber' },
+  { picture: 'demo', tone: 'rose' },
+]
+
+/** The stub's barcode: bars of a few widths, laid out once, the same every time. */
+const BAR_GAP = 2
+const BARS = Array.from({ length: 34 }, (_, i) => 1 + Math.floor(hash(i, 9) * 4)).reduce<{ x: number; width: number }[]>(
+  (bars, width) => [...bars, { x: bars.length ? bars[bars.length - 1]!.x + bars[bars.length - 1]!.width + BAR_GAP : 0, width }],
+  [],
+)
+const BARCODE_WIDTH = BARS.length ? BARS[BARS.length - 1]!.x + BARS[BARS.length - 1]!.width : 0
+
+function Barcode() {
+  return (
+    <svg className={styles.code} viewBox={`0 0 ${BARCODE_WIDTH} 40`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      {BARS.map((bar, index) => (
+        <rect key={index} x={bar.x} y={0} width={bar.width} height={40} />
+      ))}
+    </svg>
+  )
 }
-
-/** The stops' signs, in order. */
-const STOP_SIGNS = ['ask', 'yes', 'go', 'demo'] as const
-
-/** Rows of glyphs in a sign: enough that a curve reads as a curve. */
-const SIGN_ROWS = 28
-
-const sign = (name: keyof typeof SIGNS) => asciiDrawing(name, SIGNS[name], SIGN_ROWS)
-
-/**
- * The line between the ticket's two places, in the field's characters: `=` rails with the odd `+`
- * and `#`. Long enough to cross the widest ticket; the rest is clipped.
- */
-const RAIL = Array.from({ length: 200 }, (_, i) => {
-  const v = hash(i, 2)
-  return v > 0.92 ? '#' : v > 0.8 ? '+' : '='
-}).join('')
-
-/** The stub's code: bars and gaps in the same characters, a few rows deep so the bars join up. */
-const CODE = Array.from({ length: 56 }, (_, i) => (hash(i, 9) > 0.42 ? '|' : ' ')).join('')
 
 /**
  * The fund's coming-soon page, on plain harbor like the other inner pages. The plan is printed as
- * the thing it pays for, a ticket; then the way it'll work as a row of signs in the field's
- * characters; then the interest list.
+ * the thing it pays for, a ticket; then the way it'll work as a row of signs on colour tiles; then
+ * the interest list.
  */
 export function Grants() {
   const { fields } = INTEREST
 
   return (
     <div className={styles.page}>
+      <GroupTabs group="cs" />
       <PageIntro intro={GRANTS_INTRO}>
         {/* Said once, before anything else: there is no money yet. */}
         <p className={styles.status} data-fog-clear>
@@ -103,9 +71,7 @@ export function Grants() {
           <p className={styles.leg}>
             <span>{PLAN.from}</span>
             <span className={ui.srOnly}> to </span>
-            <span className={styles.rail} aria-hidden="true">
-              {RAIL}
-            </span>
+            <span className={styles.rail} aria-hidden="true" />
             <span>{PLAN.to}</span>
           </p>
           <p className={styles.headline}>{PLAN.headline}</p>
@@ -120,13 +86,7 @@ export function Grants() {
         </div>
         {/* The stub: what's still unsettled about all of the above. */}
         <div className={styles.stub}>
-          <p className={styles.code} aria-hidden="true">
-            {CODE}
-            {'\n'}
-            {CODE}
-            {'\n'}
-            {CODE}
-          </p>
+          <Barcode />
           <p className={styles.caveat}>
             <strong className={styles.caveatLead}>{PLAN.caveat.lead}</strong> {PLAN.caveat.text}
           </p>
@@ -141,11 +101,13 @@ export function Grants() {
           <p className={styles.lede}>{ROUTE.lede}</p>
         </div>
 
-        {/* The page's one motion: each sign develops out of loose glyphs, one after the other. */}
-        <ol className={styles.steps}>
+        {/* The four stops, each with its sign on a tile of its own colour. */}
+        <ol className={styles.steps} data-grid>
           {ROUTE.stops.map((stop, index) => (
             <li key={stop.title} className={styles.stop} style={{ '--col': index } as CSSProperties}>
-              <AsciiFigure lines={sign(STOP_SIGNS[index]!)} delay={index * SIGN_DELAY} className={styles.sign} />
+              <span className={styles.sign} data-tone={STOP_SIGNS[index]?.tone}>
+                <Pictogram name={STOP_SIGNS[index]?.picture ?? 'go'} />
+              </span>
               <h3 className={styles.stopTitle}>{stop.title}</h3>
               <p className={styles.stopText}>{stop.text}</p>
             </li>
@@ -162,7 +124,7 @@ export function Grants() {
         </div>
 
         <div className={`${ui.panel} ${styles.formWrap}`}>
-          {/* Interest list only, never an application. The trip first, then who you are. */}
+          {/* Interest list only, never an application. What you would build first, then who you are. */}
           <Form
             className={styles.form}
             submitLabel={INTEREST.submit}
@@ -204,8 +166,7 @@ export function Grants() {
                 type="email"
                 autoComplete="email"
                 placeholder={fields.email.placeholder}
-                pattern={BU_EMAIL_PATTERN}
-                title="Use your @bu.edu address"
+                maxLength={254}
                 required
               />
             </Field>
@@ -216,6 +177,3 @@ export function Grants() {
     </div>
   )
 }
-
-/** Milliseconds between one sign starting to develop and the next. */
-const SIGN_DELAY = 180

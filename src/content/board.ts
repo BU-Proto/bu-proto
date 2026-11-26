@@ -8,7 +8,7 @@ import type { PageIntro } from './types'
 export const BOARD_INTRO: PageIntro = {
   path: '~/proto/board',
   title: 'The board',
-  lede: 'Proto is run by BU students who build things themselves. They plan the hack nights, book the trips and find the sponsors, and they read every message.',
+  lede: 'Proto is run by BU students who build things themselves, for anyone in Boston who wants to build, at a school or not. They plan the build nights and firesides, and they read every message.',
 }
 
 export const BOARD_CONTACT = {
@@ -25,10 +25,10 @@ export const BOARD_FORMING = {
   /** `open` is how many seats are still open, at least one. */
   text: (open: number) =>
     open === 1
-      ? 'Andres and Jose are in place as co-presidents. We’re now choosing the person for the last seat. If it fits what you already do, we’d like to hear from you.'
-      : `Andres and Jose are in place as co-presidents. We’re now choosing the people for ${SEAT_COUNTS[open] ?? open} seats. If one fits what you already do, we’d like to hear from you.`,
+      ? "Andres and Jose are in place as co-presidents. We're now choosing the person for the last seat. If it fits what you already do, we'd like to hear from you."
+      : `Andres and Jose are in place as co-presidents. We're now choosing the people for ${SEAT_COUNTS[open] ?? open} seats. If one fits what you already do, we'd like to hear from you.`,
   /** Read out in place of the title once every seat is filled. */
-  filledTitle: 'Who’s on the board',
+  filledTitle: "Who's on the board",
 } as const
 
 export const OPEN_SEAT = {

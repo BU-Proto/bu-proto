@@ -38,8 +38,11 @@ interface MemberRow {
   id: number
   name: string
   email: string
+  school: string
+  field: string
   year: string
   track: string
+  building: string
   notes: string
   unsubscribed: number
   owner_email: string | null
@@ -77,7 +80,7 @@ interface NextRow {
   contact_id: number | null
 }
 
-const MEMBER_COLUMNS = 'id, name, email, year, track, notes, unsubscribed, owner_email, created_at'
+const MEMBER_COLUMNS = 'id, name, email, school, field, year, track, building, notes, unsubscribed, owner_email, created_at'
 const CONTACT_SELECT = `SELECT c.id, c.name, c.email, c.kind, c.org_id, o.name AS org_name, c.title, c.notes, c.link,
   c.owner_email, c.created_by, c.created_at FROM contacts c LEFT JOIN orgs o ON o.id = c.org_id`
 
@@ -85,7 +88,7 @@ const CONTACT_SELECT = `SELECT c.id, c.name, c.email, c.kind, c.org_id, o.name A
 function touchLabel(label: string): string {
   if (label in INTERACTION_KIND_LABELS) return INTERACTION_KIND_LABELS[label as InteractionKind]
   return (
-    { rsvp: 'RSVP', fund: 'Fund request', application: 'Applied', ask: 'Ask', email: 'Email', intro: 'Intro', deal: 'Deal' }[label] ??
+    { rsvp: 'RSVP', fund: 'Fund request', application: 'Applied', founder: 'Applied', ask: 'Ask', email: 'Email', intro: 'Intro', deal: 'Deal' }[label] ??
     label
   )
 }
@@ -99,6 +102,7 @@ const PERSON_TOUCHES = [
   "SELECT 'e' AS t, lower(email) AS ref, 'rsvp' AS label, MAX(created_at) AS at FROM rsvps GROUP BY lower(email)",
   "SELECT 'e' AS t, lower(email) AS ref, 'fund' AS label, MAX(created_at) AS at FROM fund_interest GROUP BY lower(email)",
   "SELECT 'e' AS t, lower(email) AS ref, 'application' AS label, MAX(created_at) AS at FROM role_applications GROUP BY lower(email)",
+  "SELECT 'e' AS t, lower(email) AS ref, 'founder' AS label, MAX(created_at) AS at FROM founder_applications GROUP BY lower(email)",
   "SELECT 'c' AS t, contact_id AS ref, 'ask' AS label, MAX(COALESCE(sent_at, created_at)) AS at FROM asks WHERE contact_id IS NOT NULL GROUP BY contact_id",
   "SELECT 'e' AS t, lower(to_email) AS ref, 'ask' AS label, MAX(COALESCE(sent_at, created_at)) AS at FROM asks GROUP BY lower(to_email)",
   "SELECT 'c' AS t, contact_id AS ref, 'email' AS label, MAX(last_message_at) AS at FROM mail_threads WHERE contact_id IS NOT NULL GROUP BY contact_id",
@@ -178,6 +182,9 @@ export async function loadPeople(db: D1Database): Promise<PeopleIndex> {
       title: atOrg?.title ?? '',
       year: member.year,
       track: member.track,
+      school: member.school,
+      field: member.field,
+      building: member.building,
       ownerEmail: member.owner_email ?? extra.find((contact) => contact.owner_email)?.owner_email ?? null,
       lastTouch: latestTouch([...keys.flatMap((key) => touches.get(key) ?? []), { label: 'Signed up', at: member.created_at }]),
       nextFollowUp: toNext(earliest(keys)),
@@ -199,6 +206,9 @@ export async function loadPeople(db: D1Database): Promise<PeopleIndex> {
       title: contact.title,
       year: null,
       track: null,
+      school: null,
+      field: null,
+      building: null,
       ownerEmail: contact.owner_email,
       lastTouch: latestTouch([...keys.flatMap((key) => touches.get(key) ?? []), { label: 'Added', at: contact.created_at }]),
       nextFollowUp: toNext(earliest(keys)),
@@ -395,6 +405,7 @@ export async function loadPersonDetail(db: D1Database, ref: PersonRef, index?: P
     db.prepare('SELECT id, target, spend, amount, status, created_at FROM fund_interest WHERE email = ?').bind(email),
     db.prepare('SELECT id, role_title, status, created_at FROM role_applications WHERE email = ?').bind(email),
     db.prepare('SELECT id, role, note, created_at FROM board_interest WHERE email = ?').bind(email),
+    db.prepare('SELECT id, company, stage, status, created_at FROM founder_applications WHERE email = ?').bind(email),
     db
       .prepare(
         `SELECT id, request, subject, status, owner_email, sent_at, created_at FROM asks
@@ -430,7 +441,7 @@ export async function loadPersonDetail(db: D1Database, ref: PersonRef, index?: P
       .bind(...contactIds),
     db.prepare(`${FOLLOW_UP_SELECT} WHERE f.member_id = ? OR f.contact_id IN ${ids} ${FOLLOW_UP_ORDER}`).bind(mid, ...contactIds),
   ])
-  const [rsvps, fund, applications, board, asks, threads, interactions, intros, guests, deals, followUps] = results.map(
+  const [rsvps, fund, applications, board, founders, asks, threads, interactions, intros, guests, deals, followUps] = results.map(
     (result) => result.results as unknown[],
   )
 
@@ -440,7 +451,7 @@ export async function loadPersonDetail(db: D1Database, ref: PersonRef, index?: P
       kind: 'joined',
       label: 'Joined',
       title: 'Signed up on proto.boston',
-      detail: [member.year, member.track].filter(Boolean).join(' · '),
+      detail: [member.school, member.field, member.year, member.track].filter(Boolean).join(' · '),
       at: member.created_at,
       href: null,
       by: null,
@@ -485,6 +496,17 @@ export async function loadPersonDetail(db: D1Database, ref: PersonRef, index?: P
       detail: capitalize(row.status),
       at: row.created_at,
       href: '/admin/roles/applications',
+      by: null,
+    })
+  }
+  for (const row of founders as { id: number; company: string; stage: string; status: string; created_at: string }[]) {
+    timeline.push({
+      kind: 'application',
+      label: 'Applied',
+      title: `Applied to the Founders Circle · ${row.company}`,
+      detail: [row.stage, capitalize(row.status)].filter(Boolean).join(' · '),
+      at: row.created_at,
+      href: '/admin/founders',
       by: null,
     })
   }

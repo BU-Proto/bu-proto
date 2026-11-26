@@ -4,10 +4,23 @@
 export const CONTENT_RESOURCES = ['events', 'hackathons', 'wins', 'board', 'roles'] as const
 export type ContentResource = (typeof CONTENT_RESOURCES)[number]
 
-export const EVENT_KINDS = ['Hack night', 'Why hackathons', 'Prep night', 'Panel', 'Workshop', 'Demo night'] as const
+/**
+ * Every kind of event, the community's own first. Hack night, Why hackathons and Prep night are
+ * the CS group's, Pitch night the Business group's (content/events.ts says so on the page);
+ * everyone is welcome at all of them.
+ */
+export const EVENT_KINDS = ['Build night', 'Fireside', 'Social', 'Demo night', 'Workshop', 'Panel', 'Hack night', 'Why hackathons', 'Prep night', 'Pitch night'] as const
 export type EventKind = (typeof EVENT_KINDS)[number]
 
-export const YEARS = ['First year', 'Second year', 'Third year', 'Fourth year', 'Grad student', 'Other'] as const
+export const YEARS = ['First year', 'Second year', 'Third year', 'Fourth year', 'Grad student', 'Not a student', 'Other'] as const
+
+/** What kind of win it was. Hackathon prizes are the CS group's; the rest are the Business group's. */
+export const WIN_KINDS = ['Hackathon', 'Pitch competition', 'Launch', 'First customers', 'Funding'] as const
+export type WinKind = (typeof WIN_KINDS)[number]
+
+/** What a member builds from: the groups Proto has or plans, and the rest. */
+export const FIELDS = ['Business', 'Engineering', 'Computer science', 'Design', 'Science', 'Something else'] as const
+export type Field = (typeof FIELDS)[number]
 export const TRACKS = ['Start', 'Build', 'Launch', 'Not sure yet'] as const
 export type Track = (typeof TRACKS)[number]
 
@@ -19,6 +32,21 @@ export type BoardSeat = (typeof BOARD_SEATS)[number]
 
 export const FUND_STATUSES = ['new', 'reviewing', 'approved', 'declined'] as const
 export type FundStatus = (typeof FUND_STATUSES)[number]
+
+/** How far along a Founders Circle applicant's company or project is, in their own pick. */
+export const FOUNDER_STAGES = ['Building a first version', 'Launched, with users', 'Making money', 'Raised money'] as const
+export type FounderStage = (typeof FOUNDER_STAGES)[number]
+
+/** How much of their time a Founders Circle applicant gives it. */
+export const FOUNDER_COMMITMENTS = ['Full time', 'Most of my time', 'Alongside school or work'] as const
+export type FounderCommitment = (typeof FOUNDER_COMMITMENTS)[number]
+
+/**
+ * Where a Founders Circle application stands: not looked at yet, asked to a call, in, or not.
+ * Our own triage: the applicant isn't told by the site.
+ */
+export const FOUNDER_STATUSES = ['new', 'interview', 'accepted', 'declined'] as const
+export type FounderStatus = (typeof FOUNDER_STATUSES)[number]
 
 /** Where an application for a role stands. Our own triage: the applicant isn't told by the site. */
 export const APPLICATION_STATUSES = ['new', 'reviewing', 'accepted', 'declined'] as const
